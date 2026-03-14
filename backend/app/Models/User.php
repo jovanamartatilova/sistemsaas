@@ -12,8 +12,28 @@ use Laravel\Sanctum\HasApiTokens;
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
-      use HasApiTokens;
+    use HasFactory, Notifiable, HasApiTokens;
+
+    /**
+     * The primary key for the model.
+     *
+     * @var string
+     */
+    protected $primaryKey = 'id_user';
+
+    /**
+     * The "type" of the auto-incrementing ID.
+     *
+     * @var string
+     */
+    protected $keyType = 'string';
+
+    /**
+     * Indicates if the IDs are auto-incrementing.
+     *
+     * @var bool
+     */
+    public $incrementing = false;
 
     /**
      * The attributes that are mass assignable.
@@ -21,9 +41,11 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
+        'id_user',
         'name',
         'email',
         'password',
+        'role',
     ];
 
     /**

@@ -161,7 +161,7 @@ class AuthController extends Controller
 
             // Generate reset token
             $resetToken = \Str::random(32);
-            
+
             // Store reset token in database
             \DB::table('password_resets')->where('email', $validated['email'])->delete();
             \DB::table('password_resets')->insert([
@@ -169,7 +169,7 @@ class AuthController extends Controller
                 'token' => $resetToken,
                 'created_at' => now(),
             ]);
-            
+
             // Create reset URL (frontend URL)
             $resetUrl = env('APP_URL', 'http://localhost:5173') . '/reset-password?token=' . $resetToken . '&email=' . urlencode($validated['email']);
 
