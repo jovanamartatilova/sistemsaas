@@ -61,7 +61,10 @@ export default function SignUpPerusahaan() {
       localStorage.setItem("auth_token", data.token);
       localStorage.setItem("company", JSON.stringify(data.company));
 
-      navigate("/profile");
+      // Update auth store so PrivateRoute sees isAuthenticated = true
+      useAuthStore.setState({ isAuthenticated: true, token: data.token, company: data.company });
+
+      navigate("/dashboard");
     } catch (err) {
       console.error("Registration error:", err);
       setErrorMsg(err.message);
@@ -79,8 +82,8 @@ export default function SignUpPerusahaan() {
       >
         {/* Background image */}
         <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: "url('/assets/images/bg.png')" }}
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: "url('/assets/images/bg.png')" }}
         />
 
         {/* Gradient overlay */}
@@ -104,36 +107,36 @@ export default function SignUpPerusahaan() {
 
         {/* Content */}
         <div className="relative z-10 flex flex-col justify-end p-12 pb-16">
-          {/* Back to login arrow — top left */}
-          <Link
-            to="/login"
-            className="absolute top-8 left-8 flex items-center gap-2 group"
-            style={{ color: "rgba(255,255,255,0.6)", textDecoration: "none" }}
-          >
-            <span
-              className="flex items-center justify-center w-9 h-9 rounded-full border border-white/20 group-hover:border-blue-400/60 group-hover:bg-blue-400/10 transition-all duration-300"
+          {/* Navigation — top left */}
+          <div className="absolute top-8 left-8 flex items-center gap-2">
+            {/* Back to Home */}
+            <Link
+              to="/"
+              className="flex items-center justify-center w-9 h-9 rounded-full border border-white/20 hover:border-blue-400/60 hover:bg-blue-400/10 transition-all duration-300 group"
+              style={{ textDecoration: "none" }}
+              title="Back to Landing Page"
             >
               <svg
                 width="16"
                 height="16"
                 viewBox="0 0 16 16"
                 fill="none"
-                className="group-hover:-translate-x-0.5 transition-transform duration-300"
+                className="text-white/60 group-hover:text-blue-300 group-hover:-translate-x-0.5 transition-all duration-300"
               >
-                <path
-                  d="M10 12L6 8L10 4"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
+                <path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-            </span>
-            <span className="text-sm font-medium group-hover:text-blue-300 transition-colors duration-300">
+            </Link>
+
+            {/* Switch to Login */}
+            <Link
+              to="/login"
+              className="text-sm font-medium hover:text-blue-300 transition-colors duration-300 text-left"
+              style={{ color: "rgba(255,255,255,0.6)", textDecoration: "none" }}
+            >
               Already have an account?{" "}
-              <span className="text-blue-400 group-hover:underline">Login</span>
-            </span>
-          </Link>
+              <span className="text-blue-400 hover:underline">Login</span>
+            </Link>
+          </div>
 
           {/* Tagline */}
           <div>
@@ -173,17 +176,26 @@ export default function SignUpPerusahaan() {
           background: "linear-gradient(160deg, #0d1f3c 0%, #0a1628 40%, #071220 100%)",
         }}
       >
-        {/* Mobile back link */}
-        <Link
-          to="/login"
-          className="lg:hidden absolute top-6 left-6 flex items-center gap-1.5 text-sm"
-          style={{ color: "rgba(255,255,255,0.55)", textDecoration: "none" }}
-        >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          Back to Login
-        </Link>
+        {/* Mobile navigation */}
+        <div className="lg:hidden absolute top-6 left-6 flex items-center gap-2">
+          <Link
+            to="/"
+            className="p-1 text-white/50 hover:text-white"
+            style={{ textDecoration: "none" }}
+          >
+            <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
+              <path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </Link>
+          <Link
+            to="/login"
+            className="text-sm"
+            style={{ color: "rgba(255,255,255,0.55)", textDecoration: "none" }}
+          >
+            Already have an account?{" "}
+            <span className="text-blue-400 underline">Login</span>
+          </Link>
+        </div>
 
         {/* Subtle background glow */}
         <div
@@ -200,7 +212,7 @@ export default function SignUpPerusahaan() {
                 src="/assets/images/logo.png"
                 alt="Logo"
                 className="w-23 h-23 object-contain"
-                />
+              />
             </div>
             <h1 className="text-2xl font-bold text-white mb-1" style={{ letterSpacing: "-0.3px" }}>
               Welcome To EarlyPath

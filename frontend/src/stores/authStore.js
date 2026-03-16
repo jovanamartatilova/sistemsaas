@@ -52,18 +52,21 @@ export const useAuthStore = create((set) => ({
 
   // Logout
   logout: async () => {
-    set({ loading: true });
+    // Clear state IMMEDIATELY for better UX
+    set({
+      company: null,
+      token: null,
+      isAuthenticated: false,
+      loading: false,
+      error: null,
+    });
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('company');
+
     try {
       await authService.logout();
-      set({
-        company: null,
-        token: null,
-        isAuthenticated: false,
-        loading: false,
-        error: null,
-      });
     } catch (error) {
-      set({ error: error.message, loading: false });
+      console.warn('Silent logout error (already cleared locally):', error);
     }
   },
 
