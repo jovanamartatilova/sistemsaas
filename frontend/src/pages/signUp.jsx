@@ -12,9 +12,20 @@ export default function SignUpPerusahaan() {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
-  const { loading, error } = useAuthStore();
+  const { error } = useAuthStore();
+  const [logo, setLogo] = useState(null);
+const [logoPreview, setLogoPreview] = useState(null);
+
+const handleLogo = (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    setLogo(file);
+    setLogoPreview(URL.createObjectURL(file));
+  }
+};
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -23,26 +34,30 @@ export default function SignUpPerusahaan() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMsg("");
+    setLoading(true);
 
     if (form.password !== form.password_confirmation) {
-      setErrorMsg("Password tidak cocok");
+      setErrorMsg("Password did not match");
+      setLoading(false);
       return;
     }
 
     try {
-      const response = await fetch("http://localhost:8000/api/auth/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: form.name,
-          email: form.email,
-          address: form.address,
-          password: form.password,
-          password_confirmation: form.password_confirmation,
-        }),
-      });
+      const formData = new FormData();
+formData.append('name', form.name);
+formData.append('email', form.email);
+formData.append('address', form.address);
+formData.append('password', form.password);
+formData.append('password_confirmation', form.password_confirmation);
+if (logo) formData.append('logo', logo);
+
+const response = await fetch("http://localhost:8000/api/auth/register", {
+  method: "POST",
+  headers: {
+    "Accept": "application/json",
+  },
+  body: formData,
+});
 
       const data = await response.json();
 
@@ -60,6 +75,9 @@ export default function SignUpPerusahaan() {
       // Save token & company data
       localStorage.setItem("auth_token", data.token);
       localStorage.setItem("company", JSON.stringify(data.company));
+      localStorage.setItem("public_url", data.public_url);
+
+      alert(`Registration successful! Your company page:\n${window.location.origin}/c/${data.company.slug}`);
 
       // Update auth store so PrivateRoute sees isAuthenticated = true
       useAuthStore.setState({ isAuthenticated: true, token: data.token, company: data.company });
@@ -68,6 +86,7 @@ export default function SignUpPerusahaan() {
     } catch (err) {
       console.error("Registration error:", err);
       setErrorMsg(err.message);
+      setLoading(false);
     }
   };
 
@@ -325,6 +344,40 @@ export default function SignUpPerusahaan() {
               />
             </div>
 
+            {/* Logo Upload */}
+<div>
+  <label className="block text-sm font-medium mb-1.5" style={{ color: "rgba(255,255,255,0.8)" }}>
+    Company Logo <span style={{ color: "rgba(255,255,255,0.3)" }}>(optional)</span>
+  </label>
+  <div className="flex items-center gap-4">
+    <div
+      className="w-16 h-16 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden"
+      style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)" }}
+    >
+      {logoPreview ? (
+        <img src={logoPreview} alt="preview" className="w-full h-full object-cover" />
+      ) : (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5">
+          <rect x="3" y="3" width="18" height="18" rx="2" />
+          <circle cx="8.5" cy="8.5" r="1.5" />
+          <path d="M21 15l-5-5L5 21" />
+        </svg>
+      )}
+    </div>
+    <label
+      htmlFor="logo-upload"
+      className="flex-1 px-4 py-3 rounded-xl text-sm cursor-pointer text-center transition-all duration-200"
+      style={{ background: "rgba(255,255,255,0.07)", border: "1px dashed rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.5)" }}
+      onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(74,158,255,0.4)"; e.currentTarget.style.color = "rgba(74,158,255,0.8)"; }}
+      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)"; e.currentTarget.style.color = "rgba(255,255,255,0.5)"; }}
+    >
+      {logo ? logo.name : "Click to upload logo"}
+      <input id="logo-upload" type="file" accept="image/jpg,image/jpeg,image/png,image/webp" onChange={handleLogo} className="hidden" />
+    </label>
+  </div>
+  <p className="text-xs mt-1.5" style={{ color: "rgba(255,255,255,0.25)" }}>JPG, PNG, atau WEBP. Maks 2MB.</p>
+</div>
+
             {/* Password */}
             <div>
               <label className="block text-sm font-medium mb-1.5" style={{ color: "rgba(255,255,255,0.8)" }}>
@@ -403,6 +456,32 @@ export default function SignUpPerusahaan() {
                 }}
               />
             </div>
+
+            {/* Terms & Policy */}
+<div className="flex items-start gap-3">
+  <input
+    type="checkbox"
+    id="terms"
+    required
+    className="mt-0.5 w-4 h-4 rounded cursor-pointer accent-blue-500"
+  />
+  <label htmlFor="terms" className="text-xs leading-relaxed cursor-pointer" style={{ color: "rgba(255,255,255,0.5)" }}>
+    I agree to the{" "}
+    <a href="/terms" target="_blank" className="transition-colors duration-200" style={{ color: "#4a9eff" }}
+      onMouseEnter={(e) => (e.currentTarget.style.color = "#7bb8ff")}
+      onMouseLeave={(e) => (e.currentTarget.style.color = "#4a9eff")}
+    >
+      Terms of Service
+    </a>
+    {" "}and{" "}
+    <a href="/privacy" target="_blank" className="transition-colors duration-200" style={{ color: "#4a9eff" }}
+      onMouseEnter={(e) => (e.currentTarget.style.color = "#7bb8ff")}
+      onMouseLeave={(e) => (e.currentTarget.style.color = "#4a9eff")}
+    >
+      Privacy Policy
+    </a>
+  </label>
+</div>
 
             {/* Submit */}
             <button
