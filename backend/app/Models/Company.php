@@ -35,4 +35,9 @@ class Company extends Model
             // 'password' => 'hashed', // Removed - handle hashing manually in controller
         ];
     }
+
+    public function vacancies()
+    {
+        return $this->hasMany(Vacancy::class, 'id_company', 'id_company');
+    }
 }
