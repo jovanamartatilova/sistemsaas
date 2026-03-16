@@ -54,17 +54,29 @@ export default function LoginPerusahaan() {
       localStorage.setItem("company", JSON.stringify(data.company));
 
 <<<<<<< HEAD
+<<<<<<< HEAD
       // Show success notification
       setSuccessMsg("Login successful!");
       
       // Redirect setelah notif ditampilkan
 =======
+=======
+>>>>>>> 07161d7c9952e72c11ab4eccc206fe770690d28a
       // Update auth store so PrivateRoute sees isAuthenticated = true
       useAuthStore.setState({ isAuthenticated: true, token: data.token, company: data.company });
 
       // Show success briefly then redirect
       setSuccessMsg("✓ Login berhasil!");
+<<<<<<< HEAD
 >>>>>>> origin/fe-awal
+=======
+=======
+      // Show success notification
+      setSuccessMsg("Login successful!");
+      
+      // Redirect setelah notif ditampilkan
+
+>>>>>>> 07161d7c9952e72c11ab4eccc206fe770690d28a
       setTimeout(() => {
         navigate("/dashboard");
       }, 800);
