@@ -51,10 +51,10 @@ export const authService = {
     try {
       await api.post('/logout');
       localStorage.removeItem('auth_token');
-      localStorage.removeItem('user');
+      localStorage.removeItem('company');
     } catch (error) {
       localStorage.removeItem('auth_token');
-      localStorage.removeItem('user');
+      localStorage.removeItem('company');
       throw error.response?.data || error.message;
     }
   },

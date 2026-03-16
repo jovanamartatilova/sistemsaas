@@ -11,12 +11,13 @@ export default function LoginPerusahaan() {
 
   const navigate = useNavigate();
   const { loading: authLoading } = useAuthStore();
+  const setAuth = useAuthStore((s) => s);
 
   const companyName = "EarlyPath";
 
-  const goToRegister = (e) => {
+  const goBack = (e) => {
     e.preventDefault();
-    navigate("/register");
+    navigate("/");
   };
 
   const handleChange = (e) => {
@@ -52,13 +53,21 @@ export default function LoginPerusahaan() {
       localStorage.setItem("auth_token", data.token);
       localStorage.setItem("company", JSON.stringify(data.company));
 
+<<<<<<< HEAD
       // Show success notification
       setSuccessMsg("Login successful!");
       
       // Redirect setelah notif ditampilkan
+=======
+      // Update auth store so PrivateRoute sees isAuthenticated = true
+      useAuthStore.setState({ isAuthenticated: true, token: data.token, company: data.company });
+
+      // Show success briefly then redirect
+      setSuccessMsg("✓ Login berhasil!");
+>>>>>>> origin/fe-awal
       setTimeout(() => {
-        navigate("/profile");
-      }, 1500);
+        navigate("/dashboard");
+      }, 800);
     } catch (err) {
       setErrorMsg(err.message);
       setLoading(false);
@@ -86,8 +95,8 @@ export default function LoginPerusahaan() {
       >
         {/* Background image */}
         <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat pointer-events-none"
-        style={{ backgroundImage: "url('/assets/images/bg.png')" }}
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat pointer-events-none"
+          style={{ backgroundImage: "url('/assets/images/bg.png')" }}
         />
 
         {/* Gradient overlay */}
@@ -105,30 +114,38 @@ export default function LoginPerusahaan() {
 
         {/* Content */}
         <div className="relative z-10 flex flex-col justify-end p-12 pb-16 w-full h-full">
-          {/* Back to Sign Up — top left */}
-          <button
-            onClick={goToRegister}
-            className="absolute top-8 left-8 flex items-center gap-2 group bg-transparent border-none"
-            style={{ color: "rgba(255,255,255,0.6)", textDecoration: "none", cursor: "pointer", padding: 0 }}
-          >
-            <span className="flex items-center justify-center w-9 h-9 rounded-full border border-white/20 group-hover:border-blue-400/60 group-hover:bg-blue-400/10 transition-all duration-300">
+          {/* Navigation — top left */}
+          <div className="absolute top-8 left-8 flex items-center gap-2">
+            {/* Back to Home */}
+            <button
+              onClick={goBack}
+              className="flex items-center justify-center w-9 h-9 rounded-full border border-white/20 hover:border-blue-400/60 hover:bg-blue-400/10 transition-all duration-300 bg-transparent group"
+              style={{ cursor: "pointer" }}
+              title="Back to Landing Page"
+            >
               <svg
                 width="16"
                 height="16"
                 viewBox="0 0 16 16"
                 fill="none"
-                className="group-hover:-translate-x-0.5 transition-transform duration-300"
+                className="text-white/60 group-hover:text-blue-300 group-hover:-translate-x-0.5 transition-all duration-300"
               >
                 <path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-            </span>
-            <span className="text-sm font-medium group-hover:text-blue-300 transition-colors duration-300">
+            </button>
+
+            {/* Switch to Register */}
+            <button
+              onClick={() => navigate("/register")}
+              className="text-sm font-medium bg-transparent border-none p-0 hover:text-blue-300 transition-colors duration-300 text-left"
+              style={{ color: "rgba(255,255,255,0.6)", cursor: "pointer" }}
+            >
               Don't have an account?{" "}
-              <span className="text-blue-400 group-hover:underline">
+              <span className="text-blue-400 hover:underline">
                 Sign up
               </span>
-            </span>
-          </button>
+            </button>
+          </div>
 
           {/* Bottom content */}
           <div>
@@ -167,20 +184,28 @@ export default function LoginPerusahaan() {
           background: "linear-gradient(160deg, #0d1f3c 0%, #0a1628 40%, #071220 100%)",
         }}
       >
-        {/* Mobile back link */}
-        <button
-          onClick={goToRegister}
-          className="lg:hidden absolute top-6 left-6 flex items-center gap-1.5 text-sm bg-transparent border-none"
-          style={{ color: "rgba(255,255,255,0.55)", textDecoration: "none", cursor: "pointer", padding: 0 }}
-        >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          Don't have an account?{" "}
-          <span className="text-blue-400 underline">
-            Sign up
-          </span>
-        </button>
+        {/* Mobile navigation */}
+        <div className="lg:hidden absolute top-6 left-6 flex items-center gap-2">
+          <button
+            onClick={goBack}
+            className="p-1 text-white/50 hover:text-white bg-transparent border-none"
+            style={{ cursor: "pointer" }}
+          >
+            <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
+              <path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+          <button
+            onClick={() => navigate("/register")}
+            className="text-sm bg-transparent border-none p-0"
+            style={{ color: "rgba(255,255,255,0.55)", cursor: "pointer" }}
+          >
+            Don't have an account?{" "}
+            <span className="text-blue-400 underline">
+              Sign up
+            </span>
+          </button>
+        </div>
 
         {/* Background glow */}
         <div
@@ -196,7 +221,7 @@ export default function LoginPerusahaan() {
                 src="/assets/images/logo.png"
                 alt="Logo"
                 className="w-23 h-23 object-contain"
-                />
+              />
             </div>
 
             {/* Welcome back heading */}
@@ -411,7 +436,7 @@ export default function LoginPerusahaan() {
           <p className="text-center mt-6 text-sm" style={{ color: "rgba(255,255,255,0.4)" }}>
             Don't have an account?{" "}
             <button
-              onClick={goToRegister}
+              onClick={() => navigate("/register")}
               className="font-semibold transition-colors duration-200 bg-transparent border-none"
               style={{ color: "#4a9eff", textDecoration: "none", cursor: "pointer", padding: 0 }}
               onMouseEnter={(e) => (e.currentTarget.style.color = "#7bb8ff")}
