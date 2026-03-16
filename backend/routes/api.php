@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CompanyPublicController;
 
 // Public auth routes
 Route::post('/auth/register', [AuthController::class, 'register']);
@@ -22,3 +23,17 @@ Route::get('/test', function () {
     ]);
 });
 
+// Halaman publik company (tidak perlu auth)
+Route::get('/c/{slug}', [CompanyPublicController::class, 'show']);
+Route::get('/c/{slug}/jobs', [CompanyPublicController::class, 'jobs']);
+
+// Auth routes untuk kandidat
+Route::post('/auth/register-candidate/{slug}', [AuthController::class, 'registerCandidate']);
+Route::post('/auth/login-candidate', [AuthController::class, 'loginCandidate']);
+Route::post('/auth/forgot-password-candidate', [AuthController::class, 'forgotPasswordCandidate']);
+Route::post('/auth/reset-password-candidate', [AuthController::class, 'resetPasswordCandidate']);
+
+// Auth routes untuk aktivasi akun dan login staff
+Route::post('/auth/activate-account', [AuthController::class, 'activateAccount']);
+Route::post('/auth/login-staff', [AuthController::class, 'loginStaff']);
+Route::get('/auth/check-activation-token/{token}', [AuthController::class, 'checkActivationToken']);
