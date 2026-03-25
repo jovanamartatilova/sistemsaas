@@ -28,6 +28,8 @@ import ManajemenProgram from './pages/ManajemenProgram';
 import LandingPage from './pages/LandingPage';
 import HomePage from './pages/HomePage';
 import ProfilePage from './pages/ProfilePage';
+// Super Admin
+import SuperAdminPages from "./pages/SuperAdminPages";
 
 export default function App() {
   const { token, isAuthenticated, company } = useAuthStore();
@@ -112,6 +114,8 @@ export default function App() {
                         </PrivateRoute>
                     } 
                 />
+
+                <Route path="/superadmin/*" element={<SuperAdminPages />} />
 
 
                </Routes>
