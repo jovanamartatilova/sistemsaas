@@ -111,10 +111,12 @@ function ProgramCard({ program, onEdit, onDelete }) {
 }
 
 function ProgramModal({ open, program, onClose, onSubmit }) {
+    const [activeTab, setActiveTab] = useState("detail");
     const [competencies, setCompetencies] = useState([{ name: "", learning_hours: "", description: "" }]);
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
+        if (open) setActiveTab("detail");
         if (open && program) {
             fetchCompetencies();
         } else {
@@ -171,7 +173,16 @@ function ProgramModal({ open, program, onClose, onSubmit }) {
                     <button onClick={onClose} style={{ position: "absolute", top: 22, right: 28, width: 34, height: 34, borderRadius: 8, border: "1px solid #e2e8f0", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 16, color: "#64748b" }}>✕</button>
                 </div>
 
-                <div style={{ padding: "24px 28px", overflowY: "auto", maxHeight: "65vh", textAlign: "left" }}>
+                {program && (
+                    <div style={{ display: "flex", borderBottom: "1px solid #e2e8f0", padding: "0 28px", background: "#f8fafc" }}>
+                        <button onClick={() => setActiveTab("detail")} style={{ padding: "12px 16px", background: "none", border: "none", borderBottom: activeTab === "detail" ? "2.5px solid #2563c4" : "2.5px solid transparent", color: activeTab === "detail" ? "#2563c4" : "#64748b", fontWeight: 600, fontSize: 13.5, cursor: "pointer", transition: "0.2s" }}>Manajemen Kompetensi</button>
+                        <button onClick={() => setActiveTab("pelamar")} style={{ padding: "12px 16px", background: "none", border: "none", borderBottom: activeTab === "pelamar" ? "2.5px solid #2563c4" : "2.5px solid transparent", color: activeTab === "pelamar" ? "#2563c4" : "#64748b", fontWeight: 600, fontSize: 13.5, cursor: "pointer", transition: "0.2s" }}>Daftar Pelamar</button>
+                    </div>
+                )}
+
+                {activeTab === "detail" ? (
+                    <>
+                        <div style={{ padding: "24px 28px", overflowY: "auto", maxHeight: "65vh", textAlign: "left" }}>
                     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
                         {competencies.map((c, i) => (
                             <div key={i} style={{ border: "1px solid #e1e7ef", borderRadius: 12, padding: 20, position: "relative" }}>
@@ -214,6 +225,25 @@ function ProgramModal({ open, program, onClose, onSubmit }) {
                         </button>
                     </div>
                 </div>
+                    </>
+                ) : (
+                    <div style={{ padding: "60px 28px", overflowY: "auto", maxHeight: "65vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center" }}>
+                        <div style={{ width: 80, height: 80, background: "#f1f5f9", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", color: "#94a3b8", marginBottom: 20 }}>
+                            <Icon.Users />
+                        </div>
+                        {program?.vacancy_status === "draft" ? (
+                            <>
+                                <h3 style={{ fontSize: 18, fontWeight: 800, color: "#0f172a", marginBottom: 10 }}>Belum Bisa Menerima Pelamar</h3>
+                                <p style={{ fontSize: 14, color: "#64748b", maxWidth: 340, lineHeight: 1.6, textAlign: "center" }}>Silakan <b>Publish</b> lowongan ini terlebih dahulu agar calon peserta dapat melihat dan melamar posisi ini.</p>
+                            </>
+                        ) : (
+                            <>
+                                <h3 style={{ fontSize: 18, fontWeight: 800, color: "#0f172a", marginBottom: 10 }}>Belum Ada Pelamar</h3>
+                                <p style={{ fontSize: 14, color: "#64748b", maxWidth: 340, lineHeight: 1.6, textAlign: "center" }}>Lowongan ini sudah dipublish, namun saat ini belum ada kandidat yang mengirimkan lamaran ke posisi manapun.</p>
+                            </>
+                        )}
+                    </div>
+                )}
             </div>
         </div>
     );
