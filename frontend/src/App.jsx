@@ -14,6 +14,7 @@ import ForgotPasswordCandidate from './pages/forgotPasswordCandidate';
 import ResetPasswordCandidate from './pages/resetPasswordCandidate';
 import ActivateAccount from './pages/activateAccount';
 import LoginStaff from './pages/loginStaff';
+import CandidateDashboard from './pages/candidateDashboard';
 
 export default function App() {
   const { token, isAuthenticated } = useAuthStore();
@@ -32,16 +33,8 @@ export default function App() {
         <Route path="/c/:slug/reset-password" element={<ResetPasswordCandidate />} />
         <Route path="/activate" element={<ActivateAccount />} />
         <Route path="/c/:slug/staff/login" element={<LoginStaff />} />
-        
-        <Route
-          path="/profile"
-          element={
-            <PrivateRoute>
-              <ProfilePage />
-            </PrivateRoute>
-          }
-        />
-
+        <Route path="/c/:slug/dashboard" element={<CandidateDashboard />} />
+        <Route path="/profile"element={<PrivateRoute><ProfilePage /></PrivateRoute>} />
         {/* Redirect root ke login atau profile */}
         <Route path="/" element={<Navigate to={isAuthenticated ? "/profile" : "/login"} replace />} />
       </Routes>

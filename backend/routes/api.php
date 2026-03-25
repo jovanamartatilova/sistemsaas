@@ -14,6 +14,7 @@ Route::post('/auth/reset-password', [AuthController::class, 'resetPassword']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/auth/profile', [AuthController::class, 'profile']);
     Route::post('/auth/logout', [AuthController::class, 'logout']);
+    Route::get('/c/{slug}/my-submission', [CompanyPublicController::class, 'mySubmission']);
 });
 
 // Test endpoint
@@ -26,6 +27,7 @@ Route::get('/test', function () {
 // Halaman publik company (tidak perlu auth)
 Route::get('/c/{slug}', [CompanyPublicController::class, 'show']);
 Route::get('/c/{slug}/jobs', [CompanyPublicController::class, 'jobs']);
+Route::get('/c/{slug}/vacancies', [CompanyPublicController::class, 'vacancies']);
 
 // Auth routes untuk kandidat
 Route::post('/auth/register-candidate/{slug}', [AuthController::class, 'registerCandidate']);
