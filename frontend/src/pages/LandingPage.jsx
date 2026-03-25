@@ -82,6 +82,25 @@ const IconClose = () => (
     <line x1="6" y1="6" x2="18" y2="18" />
   </svg>
 );
+const IconCal = () => (
+  <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+    <rect x="3" y="4" width="18" height="18" rx="2" />
+    <line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
+  </svg>
+);
+const IconLocation = () => (
+  <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" />
+  </svg>
+);
+const IconDeadline = () => (
+  <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+    <rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
+  </svg>
+);
+const IconDot = () => (
+  <svg width="10" height="10" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5" /></svg>
+);
 
 // ── Data ─────────────────────────────────────────────────────────────────────
 const features = [
@@ -161,6 +180,71 @@ const footerLinks = {
   Resources: ["Documentation", "API Reference", "Support", "Status"],
 };
 
+// ── VacancyDetailModal ────────────────────────────────────────────────────────
+const VacancyDetailModal = ({ vacancy, onClose }) => {
+  if (!vacancy) return null;
+  const navigate = useNavigate();
+
+  return (
+    <div onClick={(e) => e.target === e.currentTarget && onClose()} style={{ position: "fixed", inset: 0, background: "rgba(10,22,40,0.85)", backdropFilter: "blur(8px)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
+      <div style={{ background: "#0d1a28", borderRadius: "24px", width: "100%", maxWidth: "600px", maxHeight: "90vh", overflowY: "auto", position: "relative", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.08)" }}>
+        <button onClick={onClose} style={{ position: "absolute", top: "20px", right: "20px", width: "40px", height: "40px", borderRadius: "50%", background: "rgba(255,255,255,0.1)", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 10, color: "#fff", fontSize: "18px" }}>✕</button>
+
+        {/* Header Photo */}
+        <div style={{ width: "100%", height: "260px", background: vacancy.photo ? `url(http://127.0.0.1:8000/storage/${vacancy.photo}) center/cover` : "rgba(255,255,255,0.05)" }}></div>
+
+        <div style={{ padding: "32px", textAlign: "left" }}>
+          <p style={{ fontSize: "14px", fontWeight: "600", color: "#4a9eff", marginBottom: "8px" }}>{vacancy.company?.name}</p>
+          <h2 style={{ fontSize: "28px", fontWeight: "800", color: "#fff", margin: "0 0 16px" }}>{vacancy.title}</h2>
+          
+          <div style={{ marginBottom: "28px" }}>
+            <h4 style={{ fontSize: "15px", fontWeight: "700", color: "rgba(255,255,255,0.9)", margin: "0 0 8px" }}>Deskripsi</h4>
+            <div style={{ fontSize: "15px", color: "rgba(255,255,255,0.6)", lineHeight: "1.7", margin: 0, whiteSpace: "pre-wrap" }}>{vacancy.description}</div>
+          </div>
+
+          <div style={{ marginBottom: "28px" }}>
+            <h4 style={{ fontSize: "15px", fontWeight: "700", color: "rgba(255,255,255,0.9)", margin: "0 0 8px" }}>Posisi yang Dibuka:</h4>
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+              {(vacancy.positions || []).map((p, idx) => (
+                <div key={idx} style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "15px", color: "rgba(255,255,255,0.6)" }}>
+                  <IconDot /> <span>{p.name || p}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "32px", padding: "20px", background: "rgba(255,255,255,0.03)", borderRadius: "16px", border: "1px solid rgba(255,255,255,0.05)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "14.5px", color: "rgba(255,255,255,0.7)" }}>
+              <IconLocation /> <span>{vacancy.location || "Jakarta"}</span>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "14.5px", color: "rgba(255,255,255,0.5)", fontStyle: "italic" }}>
+              <IconCal /> <span>{vacancy.deadline} - {vacancy.deadline} ({vacancy.duration_months} Bulan)</span>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "14.5px", color: "#fb7185", fontWeight: "600" }}>
+              <IconDeadline /> <span>Pendaftaran Deadline: {vacancy.deadline}</span>
+            </div>
+          </div>
+
+          <div style={{ display: "flex", gap: "10px", marginBottom: "40px" }}>
+            <span style={{ fontSize: "11px", fontWeight: "700", textTransform: "capitalize", padding: "6px 14px", borderRadius: "8px", background: "rgba(74,158,255,0.1)", color: "#4a9eff" }}>{vacancy.type}</span>
+            <span style={{ fontSize: "12px", fontWeight: "700", textTransform: "capitalize", padding: "6px 14px", borderRadius: "8px", background: "rgba(16,185,129,0.1)", color: "#10b981" }}>{vacancy.payment_type}</span>
+            <span style={{ fontSize: "11px", fontWeight: "700", background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.5)", padding: "6px 14px", borderRadius: "8px", marginLeft: "auto" }}>{vacancy.quota} Kuota</span>
+          </div>
+
+          <button
+            onClick={() => navigate(`/register-applicant?vacancy_id=${vacancy.id_vacancy}`)}
+            style={{ width: "100%", padding: "16px", background: "linear-gradient(135deg, #2d7dd2 0%, #4a9eff 100%)", border: "none", borderRadius: "12px", color: "#fff", fontSize: "16px", fontWeight: "700", cursor: "pointer", transition: "0.2s", boxShadow: "0 10px 15px -3px rgba(74,158,255,0.4)" }}
+            onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"}
+            onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}
+          >
+            Daftar Sekarang
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ── Main Component ────────────────────────────────────────────────────────────
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -169,6 +253,7 @@ export default function LandingPage() {
   const [activeStep, setActiveStep] = useState(0);
   const [vacancies, setVacancies] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedVacancy, setSelectedVacancy] = useState(null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
@@ -793,7 +878,12 @@ export default function LandingPage() {
             </h2>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "20px" }}>
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
+            gap: "24px",
+            justifyContent: "center"
+          }}>
             {loading ? (
               <div style={{ gridColumn: "1 / -1", textAlign: "center", padding: "40px", color: "rgba(255,255,255,0.4)" }}>
                 Memuat lowongan...
@@ -806,54 +896,72 @@ export default function LandingPage() {
               vacancies.map((pos, i) => (
                 <div
                   key={i}
+                  onClick={() => setSelectedVacancy(pos)}
                   style={{
                     background: "rgba(255,255,255,0.03)",
-                    border: "1px solid rgba(255,255,255,0.07)",
+                    border: "1px solid rgba(255,255,255,0.08)",
                     borderRadius: "16px",
-                    padding: "24px",
-                    transition: "all 0.3s",
+                    overflow: "hidden",
+                    display: "flex",
+                    flexDirection: "column",
+                    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
                     cursor: "pointer",
+                    position: "relative",
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = "translateY(-4px)";
-                    e.currentTarget.style.borderColor = "rgba(167,139,250,0.3)";
-                    e.currentTarget.style.background = "rgba(255,255,255,0.06)";
+                    e.currentTarget.style.transform = "translateY(-6px)";
+                    e.currentTarget.style.background = "rgba(255,255,255,0.05)";
+                    e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)";
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.transform = "translateY(0)";
-                    e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)";
                     e.currentTarget.style.background = "rgba(255,255,255,0.03)";
+                    e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)";
                   }}
                 >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px" }}>
-                    <div style={{ width: "40px", height: "40px", borderRadius: "10px", background: "rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
-                      {pos.company?.logo_path ? (
-                        <img src={`http://localhost:8000/storage/${pos.company.logo_path}`} alt={pos.company.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                      ) : (
-                        <IconBriefcase />
+                  {/* Banner Image */}
+                  <div style={{ width: "100%", height: "180px", position: "relative", overflow: "hidden", background: pos.photo ? `url(http://127.0.0.1:8000/storage/${pos.photo}) center/cover` : "rgba(255,255,255,0.05)" }}>
+                  </div>
+
+                  <div style={{ padding: "20px 24px", flex: 1, display: "flex", flexDirection: "column" }}>
+                    <p style={{ fontSize: "12px", fontWeight: "600", color: "#4a9eff", marginBottom: "4px" }}>{pos.company?.name}</p>
+                    <h3 style={{ fontSize: "19px", fontWeight: "800", color: "#fff", margin: "0 0 14px", lineHeight: "1.3" }}>
+                      {pos.title} - Batch {pos.batch}
+                    </h3>
+                    
+                    <div style={{ fontSize: "13px", fontWeight: "500", color: "rgba(255,255,255,0.5)", fontStyle: "italic", marginBottom: "6px" }}>
+                      Positions:
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "2px", marginBottom: "18px" }}>
+                      {(pos.positions || []).slice(0, 4).map((p, idx) => (
+                        <div key={idx} style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "14px", color: "rgba(255,255,255,0.6)" }}>
+                          <IconDot /> <span>{p.name || p}</span>
+                        </div>
+                      ))}
+                      {(pos.positions || []).length > 4 && (
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "14px", color: "rgba(255,255,255,0.6)" }}>
+                          <IconDot /> <span>etc.</span>
+                        </div>
                       )}
                     </div>
-                    <span style={{ fontSize: "11px", fontWeight: "700", textTransform: "uppercase", padding: "4px 8px", borderRadius: "6px", background: "rgba(52,211,153,0.1)", color: "#34d399", border: "1px solid rgba(52,211,153,0.2)" }}>
-                      Open
-                    </span>
-                  </div>
-                  <h4 style={{ fontSize: "16px", fontWeight: "700", color: "#fff", marginBottom: "4px" }}>{pos.position?.name || "Nama Lowongan"}</h4>
-                  <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.45)", marginBottom: "16px" }}>{pos.company?.name || "Perusahaan"}</p>
 
-                  <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "20px" }}>
-                    <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.5)", display: "flex", alignItems: "center", gap: "4px" }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
-                      {pos.duration_months} Bln
+                    <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: "8px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "14.5px", color: "rgba(255,255,255,0.4)", fontStyle: "italic" }}>
+                        <IconCal /> <span>{pos.deadline} - {pos.deadline} ({pos.duration_months} Bulan)</span>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "14.5px", color: "rgba(255,255,255,0.5)" }}>
+                        <IconLocation /> <span>{pos.location?.split(",")[0]}</span>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "14.5px", color: "#fb7185", fontWeight: "600" }}>
+                        <IconDeadline /> <span style={{ fontStyle: "italic" }}>Deadline: {pos.deadline}</span>
+                      </div>
                     </div>
-                    <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.5)", display: "flex", alignItems: "center", gap: "4px" }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
-                      {pos.quota} Kuota
-                    </div>
-                  </div>
 
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
-                    <span style={{ fontSize: "10px", padding: "3px 8px", borderRadius: "4px", background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.5)", border: "1px solid rgba(255,255,255,0.08)" }}>{pos.type}</span>
-                    <span style={{ fontSize: "10px", padding: "3px 8px", borderRadius: "4px", background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.5)", border: "1px solid rgba(255,255,255,0.08)" }}>{pos.payment_type}</span>
+                    <div style={{ display: "flex", gap: "8px", marginTop: "18px", paddingTop: "16px", borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+                       <span style={{ fontSize: "10px", fontWeight: "700", textTransform: "uppercase", padding: "4px 10px", borderRadius: "6px", background: "rgba(74,158,255,0.1)", color: "#4a9eff" }}>{pos.type}</span>
+                       <span style={{ fontSize: "10px", fontWeight: "700", textTransform: "uppercase", padding: "4px 10px", borderRadius: "6px", background: "rgba(16,185,129,0.1)", color: "#10b981" }}>{pos.payment_type}</span>
+                       <span style={{ fontSize: "10px", fontWeight: "700", marginLeft: "auto", color: "rgba(255,255,255,0.4)" }}>Pelamar · {pos.quota} Kuota</span>
+                    </div>
                   </div>
                 </div>
               ))
@@ -1027,6 +1135,16 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+
+      {/* Vacancy Detail Modal */}
+      <VacancyDetailModal
+        vacancy={selectedVacancy}
+        onClose={() => setSelectedVacancy(null)}
+        onApply={() => {
+          setSelectedVacancy(null);
+          navigate(`/register-applicant?vacancy_id=${selectedVacancy.id_vacancy}`);
+        }}
+      />
 
       {/* Responsive CSS */}
       <style>{`

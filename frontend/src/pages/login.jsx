@@ -58,7 +58,11 @@ export default function LoginPerusahaan() {
       // Show success briefly then redirect
       setSuccessMsg("✓ Login berhasil!");
       setTimeout(() => {
-        navigate("/dashboard");
+        if (data.company.role === "applicant" || data.company.role === "student") {
+          navigate("/applicant/portal");
+        } else {
+          navigate("/dashboard");
+        }
       }, 800);
     } catch (err) {
       setErrorMsg(err.message);
