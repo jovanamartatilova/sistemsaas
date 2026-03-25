@@ -148,7 +148,6 @@ export default function LoginPerusahaan() {
                 Sign up
               </span>
             </button>
-          </div>
 
           {/* Bottom content */}
           <div>
