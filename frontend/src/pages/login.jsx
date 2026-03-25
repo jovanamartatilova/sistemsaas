@@ -35,6 +35,7 @@ export default function LoginPerusahaan() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Accept": "application/json",
         },
         body: JSON.stringify({
           name: form.username,
@@ -52,11 +53,17 @@ export default function LoginPerusahaan() {
       localStorage.setItem("auth_token", data.token);
       localStorage.setItem("company", JSON.stringify(data.company));
 
+      // Show success notification
+      setSuccessMsg("Login successful!");
+      
+      // Redirect setelah notif ditampilkan
+
       // Update auth store so PrivateRoute sees isAuthenticated = true
       useAuthStore.setState({ isAuthenticated: true, token: data.token, company: data.company });
 
       // Show success briefly then redirect
       setSuccessMsg("✓ Login berhasil!");
+
       setTimeout(() => {
         if (data.company.role === "applicant" || data.company.role === "student") {
           navigate("/applicant/portal");
@@ -337,6 +344,32 @@ export default function LoginPerusahaan() {
                 </button>
               </div>
             </div>
+
+            {/* Terms & Policy */}
+<div className="flex items-start gap-3">
+  <input
+    type="checkbox"
+    id="terms"
+    required
+    className="mt-0.5 w-4 h-4 rounded cursor-pointer accent-blue-500"
+  />
+  <label htmlFor="terms" className="text-xs leading-relaxed cursor-pointer" style={{ color: "rgba(255,255,255,0.5)" }}>
+    By signing in, you agree to our{" "}
+    <a href="/terms" target="_blank" className="transition-colors duration-200" style={{ color: "#4a9eff" }}
+      onMouseEnter={(e) => (e.currentTarget.style.color = "#7bb8ff")}
+      onMouseLeave={(e) => (e.currentTarget.style.color = "#4a9eff")}
+    >
+      Terms of Service
+    </a>
+    {" "}and{" "}
+    <a href="/privacy" target="_blank" className="transition-colors duration-200" style={{ color: "#4a9eff" }}
+      onMouseEnter={(e) => (e.currentTarget.style.color = "#7bb8ff")}
+      onMouseLeave={(e) => (e.currentTarget.style.color = "#4a9eff")}
+    >
+      Privacy Policy
+    </a>
+  </label>
+</div>
 
             {/* Submit */}
             <button

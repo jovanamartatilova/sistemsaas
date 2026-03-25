@@ -18,6 +18,7 @@ class Company extends Model
         'name',
         'email',
         'address',
+        'slug',
         'password',
         'phone',
         'description',
