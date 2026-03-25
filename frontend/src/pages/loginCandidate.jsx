@@ -65,6 +65,7 @@ export default function LoginCandidate() {
       localStorage.setItem("company", JSON.stringify(data.company));
 
       setSuccessMsg("✓ Login berhasil!");
+
       setTimeout(() => navigate(`/c/${slug}`), 1500);
     } catch (err) {
       setErrorMsg(err.message);

@@ -13,23 +13,24 @@ export default function SignUpPerusahaan() {
   const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [loading, setLoading] = useState(false);
+  
+  const [logo, setLogo] = useState(null);
+  const [logoPreview, setLogoPreview] = useState(null);
 
   const navigate = useNavigate();
   const { error } = useAuthStore();
-  const [logo, setLogo] = useState(null);
-const [logoPreview, setLogoPreview] = useState(null);
+  
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
 
-const handleLogo = (e) => {
+  const handleLogo = (e) => {
   const file = e.target.files[0];
   if (file) {
     setLogo(file);
     setLogoPreview(URL.createObjectURL(file));
   }
 };
-
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -76,12 +77,11 @@ const response = await fetch("http://localhost:8000/api/auth/register", {
       localStorage.setItem("auth_token", data.token);
       localStorage.setItem("company", JSON.stringify(data.company));
       localStorage.setItem("public_url", data.public_url);
+      
+       useAuthStore.setState({ isAuthenticated: true, token: data.token, company: data.company });
 
       alert(`Registration successful! Your company page:\n${window.location.origin}/c/${data.company.slug}`);
-
       // Update auth store so PrivateRoute sees isAuthenticated = true
-      useAuthStore.setState({ isAuthenticated: true, token: data.token, company: data.company });
-
       navigate("/dashboard");
     } catch (err) {
       console.error("Registration error:", err);
@@ -101,8 +101,8 @@ const response = await fetch("http://localhost:8000/api/auth/register", {
       >
         {/* Background image */}
         <div
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: "url('/assets/images/bg.png')" }}
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: "url('/assets/images/bg.png')" }}
         />
 
         {/* Gradient overlay */}
@@ -126,36 +126,44 @@ const response = await fetch("http://localhost:8000/api/auth/register", {
 
         {/* Content */}
         <div className="relative z-10 flex flex-col justify-end p-12 pb-16">
-          {/* Navigation — top left */}
-          <div className="absolute top-8 left-8 flex items-center gap-2">
-            {/* Back to Home */}
-            <Link
-              to="/"
-              className="flex items-center justify-center w-9 h-9 rounded-full border border-white/20 hover:border-blue-400/60 hover:bg-blue-400/10 transition-all duration-300 group"
-              style={{ textDecoration: "none" }}
-              title="Back to Landing Page"
-            >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 16 16"
-                fill="none"
-                className="text-white/60 group-hover:text-blue-300 group-hover:-translate-x-0.5 transition-all duration-300"
-              >
-                <path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </Link>
 
-            {/* Switch to Login */}
-            <Link
-              to="/login"
-              className="text-sm font-medium hover:text-blue-300 transition-colors duration-300 text-left"
-              style={{ color: "rgba(255,255,255,0.6)", textDecoration: "none" }}
-            >
-              Already have an account?{" "}
-              <span className="text-blue-400 hover:underline">Login</span>
-            </Link>
-          </div>
+          {/* Navigation — top left */}
+<div className="absolute top-8 left-8 flex items-center gap-2">
+  {/* Back to Home */}
+  <Link
+    to="/"
+    className="flex items-center justify-center w-9 h-9 rounded-full border border-white/20 hover:border-blue-400/60 hover:bg-blue-400/10 transition-all duration-300 group"
+    style={{ textDecoration: "none" }}
+    title="Back to Landing Page"
+  >
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      className="group-hover:-translate-x-0.5 transition-transform duration-300"
+    >
+      <path
+        d="M10 12L6 8L10 4"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  </Link>
+
+  {/* Login link */}
+  <Link
+    to="/login"
+    className="text-sm font-medium hover:text-blue-300 transition-colors duration-300"
+    style={{ color: "rgba(255,255,255,0.6)", textDecoration: "none" }}
+  >
+    Already have an account?{" "}
+    <span className="text-blue-400 hover:underline">Login</span>
+  </Link>
+</div>
+         
 
           {/* Tagline */}
           <div>
@@ -195,6 +203,19 @@ const response = await fetch("http://localhost:8000/api/auth/register", {
           background: "linear-gradient(160deg, #0d1f3c 0%, #0a1628 40%, #071220 100%)",
         }}
       >
+
+        {/* Mobile back link */}
+        <Link
+          to="/login"
+          className="lg:hidden absolute top-6 left-6 flex items-center gap-1.5 text-sm"
+          style={{ color: "rgba(255,255,255,0.55)", textDecoration: "none" }}
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          Back to Login
+        </Link>
+
         {/* Mobile navigation */}
         <div className="lg:hidden absolute top-6 left-6 flex items-center gap-2">
           <Link
@@ -216,6 +237,7 @@ const response = await fetch("http://localhost:8000/api/auth/register", {
           </Link>
         </div>
 
+
         {/* Subtle background glow */}
         <div
           className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full blur-3xl opacity-5 pointer-events-none"
@@ -231,7 +253,7 @@ const response = await fetch("http://localhost:8000/api/auth/register", {
                 src="/assets/images/logo.png"
                 alt="Logo"
                 className="w-23 h-23 object-contain"
-              />
+                />
             </div>
             <h1 className="text-2xl font-bold text-white mb-1" style={{ letterSpacing: "-0.3px" }}>
               Welcome To EarlyPath

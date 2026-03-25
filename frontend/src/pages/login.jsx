@@ -15,6 +15,11 @@ export default function LoginPerusahaan() {
 
   const companyName = "EarlyPath";
 
+  const goToRegister = (e) => {
+    e.preventDefault();
+    navigate("/register");
+  };
+  
   const goBack = (e) => {
     e.preventDefault();
     navigate("/");
@@ -53,11 +58,7 @@ export default function LoginPerusahaan() {
       localStorage.setItem("auth_token", data.token);
       localStorage.setItem("company", JSON.stringify(data.company));
 
-      // Show success notification
-      setSuccessMsg("Login successful!");
-      
-      // Redirect setelah notif ditampilkan
-
+   
       // Update auth store so PrivateRoute sees isAuthenticated = true
       useAuthStore.setState({ isAuthenticated: true, token: data.token, company: data.company });
 
@@ -71,6 +72,7 @@ export default function LoginPerusahaan() {
           navigate("/dashboard");
         }
       }, 800);
+
     } catch (err) {
       setErrorMsg(err.message);
       setLoading(false);
@@ -98,8 +100,8 @@ export default function LoginPerusahaan() {
       >
         {/* Background image */}
         <div
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat pointer-events-none"
-          style={{ backgroundImage: "url('/assets/images/bg.png')" }}
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat pointer-events-none"
+        style={{ backgroundImage: "url('/assets/images/bg.png')" }}
         />
 
         {/* Gradient overlay */}
@@ -117,10 +119,8 @@ export default function LoginPerusahaan() {
 
         {/* Content */}
         <div className="relative z-10 flex flex-col justify-end p-12 pb-16 w-full h-full">
-          {/* Navigation — top left */}
-          <div className="absolute top-8 left-8 flex items-center gap-2">
-            {/* Back to Home */}
-            <button
+          {/* Back to Sign Up — top left */}
+          <button
               onClick={goBack}
               className="flex items-center justify-center w-9 h-9 rounded-full border border-white/20 hover:border-blue-400/60 hover:bg-blue-400/10 transition-all duration-300 bg-transparent group"
               style={{ cursor: "pointer" }}
@@ -131,11 +131,11 @@ export default function LoginPerusahaan() {
                 height="16"
                 viewBox="0 0 16 16"
                 fill="none"
-                className="text-white/60 group-hover:text-blue-300 group-hover:-translate-x-0.5 transition-all duration-300"
+                className="group-hover:-translate-x-0.5 transition-transform duration-300"
               >
                 <path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
+              </svg>    
+          </button>
 
             {/* Switch to Register */}
             <button
@@ -439,7 +439,8 @@ export default function LoginPerusahaan() {
           <p className="text-center mt-6 text-sm" style={{ color: "rgba(255,255,255,0.4)" }}>
             Don't have an account?{" "}
             <button
-              onClick={() => navigate("/register")}
+             onClick={goToRegister}
+        
               className="font-semibold transition-colors duration-200 bg-transparent border-none"
               style={{ color: "#4a9eff", textDecoration: "none", cursor: "pointer", padding: 0 }}
               onMouseEnter={(e) => (e.currentTarget.style.color = "#7bb8ff")}

@@ -52,7 +52,7 @@ export const useAuthStore = create((set) => ({
 
   // Logout
   logout: async () => {
-    // Clear state IMMEDIATELY for better UX
+  
     set({
       company: null,
       token: null,
