@@ -47,17 +47,19 @@ export const authService = {
     }
   },
 
-  logout: async () => {
-    try {
-      await api.post('/logout');
-      localStorage.removeItem('auth_token');
-      localStorage.removeItem('user');
-    } catch (error) {
-      localStorage.removeItem('auth_token');
-      localStorage.removeItem('user');
-      throw error.response?.data || error.message;
-    }
-  },
+logout: async () => {
+  try {
+    await api.post('/logout');
+
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('company'); 
+  } catch (error) {
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('company'); 
+
+    throw error.response?.data || error.message;
+  }
+},
 
   getProfile: async () => {
     try {

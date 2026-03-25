@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 
 // ── DUMMY DATA ── ganti ini nanti pakai fetch API beneran
 const DUMMY_SUBMISSION = {
