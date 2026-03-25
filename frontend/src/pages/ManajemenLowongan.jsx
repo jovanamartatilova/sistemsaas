@@ -1,15 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../stores/authStore";
+import axios from "axios";
 
-// ── Initial data ──────────────────────────────────────────────────────────────
-const INIT_JOBS = [
-    { id: 1, image: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=600&q=80", nama: "Software Engineering Intern", desc: "Program magang intensif untuk calon software engineer berbasis tim lintas fungsi.", kota: "Jakarta", provinsi: "DKI Jakarta", alamat: "Jl. Sudirman No. 1, Menara 88", startDate: "10 April 2026", endDate: "10 Juni 2026", durasi: "2 Bulan", batch: 7, kuota: 100, deadline: "30 Mar 2026", tipe: "flagship", payment: "paid", posisi: ["Frontend Developer", "Backend Developer", "DevOps", "QA Engineer"], status: "published", pelamar: 421 },
-    { id: 2, image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=600&q=80", nama: "Data Science & Analytics", desc: "Eksplorasi data, machine learning, dan business intelligence di lingkungan startup.", kota: "Bandung", provinsi: "Jawa Barat", alamat: "Jl. Asia Afrika No. 8", startDate: "15 Mei 2026", endDate: "15 Agustus 2026", durasi: "3 Bulan", batch: 4, kuota: 50, deadline: "15 Apr 2026", tipe: "reguler", payment: "paid", posisi: ["Data Analyst", "ML Engineer"], status: "published", pelamar: 183 },
-    { id: 3, image: "https://images.unsplash.com/photo-1561070791-2526d30994b5?auto=format&fit=crop&w=600&q=80", nama: "UI/UX Design Internship", desc: "Rancang pengalaman pengguna untuk produk digital yang digunakan jutaan orang.", kota: "Jakarta", provinsi: "DKI Jakarta", alamat: "Jl. Gatot Subroto Kav. 51", startDate: "01 Mei 2026", endDate: "30 Juni 2026", durasi: "2 Bulan", batch: 3, kuota: 30, deadline: "20 Apr 2026", tipe: "reguler", payment: "unpaid", posisi: ["UI Designer", "UX Researcher"], status: "published", pelamar: 90 },
-    { id: 4, image: "", nama: "Mobile Developer Intern", desc: "Kembangkan aplikasi mobile dengan React Native dan Flutter bersama tim engineering.", kota: "Surabaya", provinsi: "Jawa Timur", alamat: "Jl. Pemuda No. 17", startDate: "10 Agustus 2026", endDate: "10 Desember 2026", durasi: "4 Bulan", batch: 2, kuota: 20, deadline: "10 May 2026", tipe: "flagship", payment: "paid", posisi: ["React Native Dev", "Flutter Dev"], status: "draft", pelamar: 0 },
-    { id: 5, image: "", nama: "Digital Marketing Intern", desc: "Kelola kampanye digital, konten media sosial, dan analitik pemasaran.", kota: "Yogyakarta", provinsi: "DIY", alamat: "Jl. Malioboro No. 5", startDate: "01 Juni 2026", endDate: "01 Agustus 2026", durasi: "2 Bulan", batch: 1, kuota: 15, deadline: "25 Apr 2026", tipe: "reguler", payment: "unpaid", posisi: ["Content Creator", "SEO Specialist"], status: "draft", pelamar: 0 },
-];
+// ── Initial data removed - now using backend API ─────────────────────────────
 
 const MONTHS_FULL = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
 const MONTHS_SHORT = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
@@ -64,7 +58,8 @@ const Icon = {
     Dot: () => <svg width="10" height="10" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5" /></svg>,
     Edit: () => <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>,
     Trash: () => <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>,
-    Upload: () => <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></svg>
+    Upload: () => <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></svg>,
+    Lock: () => <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
 };
 
 // ── Calendar component ─────────────────────────────────────────────────────────
@@ -202,18 +197,29 @@ function JobCard({ job, onEdit, onDelete }) {
 
     return (
         <div
+            onClick={() => onEdit(job.id)}
             style={{
                 background: "#fff", border: "1px solid #e2e8f0", borderRadius: 16, display: "flex", flexDirection: "column",
                 boxShadow: hov ? "0 12px 32px rgba(0,0,0,.08)" : "0 1px 3px rgba(0,0,0,.06)", overflow: "hidden",
-                transition: "all .2s ease", cursor: "default", position: "relative"
+                transition: "all .2s ease", cursor: "pointer", position: "relative"
             }}
             onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
         >
             {/* Poster / Image Banner */}
-            <div style={{ width: "100%", height: 180, background: job.image ? `url(${job.image}) center/cover` : "#e2e8f0", position: "relative" }}>
+            <div style={{ width: "100%", height: 180, background: job.photo ? `url(http://127.0.0.1:8000/storage/${job.photo}) center/cover` : (job.image ? `url(${job.image}) center/cover` : "#e2e8f0"), position: "relative" }}>
                 {job.status === "draft" && (
                     <div style={{ position: "absolute", top: 12, left: 12, background: "rgba(255,255,255,0.9)", backdropFilter: "blur(4px)", padding: "4px 10px", borderRadius: 20, fontSize: 11, fontWeight: 700, color: "#64748b", border: "1px solid rgba(0,0,0,0.1)" }}>
                         DRAFT
+                    </div>
+                )}
+                {job.status === "published" && (
+                    <div style={{ position: "absolute", top: 12, left: 12, background: "rgba(59,130,246,0.15)", backdropFilter: "blur(4px)", padding: "4px 10px", borderRadius: 20, fontSize: 11, fontWeight: 700, color: "#3b82f6", border: "1px solid rgba(59,130,246,0.2)" }}>
+                        PUBLISHED
+                    </div>
+                )}
+                {job.status === "closed" && (
+                    <div style={{ position: "absolute", top: 12, left: 12, background: "rgba(239,68,68,0.15)", backdropFilter: "blur(4px)", padding: "4px 10px", borderRadius: 20, fontSize: 11, fontWeight: 700, color: "#ef4444", border: "1px solid rgba(239,68,68,0.2)" }}>
+                        CLOSED
                     </div>
                 )}
                 {/* Tipe flagships etc */}
@@ -293,7 +299,8 @@ function JobCard({ job, onEdit, onDelete }) {
 
 // ── Modal ─────────────────────────────────────────────────────────────────────
 function Modal({ open, editingJob, onClose, onSubmit }) {
-    const [form, setForm] = useState({ nama: "", desc: "", kota: "", provinsi: "", alamat: "", durasi: "", batch: "", kuota: "", image: "" });
+    const [activeTab, setActiveTab] = useState("detail");
+    const [form, setForm] = useState({ title: "", desc: "", kota: "", provinsi: "", alamat: "", durasi: "", batch: "", kuota: "", image: "", photoFile: null });
     const fileInpRef = useRef(null);
     const [tipe, setTipe] = useState("");
     const [payment, setPayment] = useState("");
@@ -304,16 +311,18 @@ function Modal({ open, editingJob, onClose, onSubmit }) {
 
     useEffect(() => {
         if (open) {
+            setActiveTab("detail");
             if (editingJob) {
-                setForm({ nama: editingJob.nama, desc: editingJob.desc, kota: editingJob.kota, provinsi: editingJob.provinsi, alamat: editingJob.alamat, durasi: editingJob.durasi, batch: editingJob.batch, kuota: editingJob.kuota, image: editingJob.image || "" });
-                setTipe(editingJob.tipe);
-                setPayment(editingJob.payment);
+                const cleanDurasi = (editingJob.durasi || String(editingJob.duration_months || "")).replace(" Bulan", "");
+                setForm({ title: editingJob.title || editingJob.nama, desc: editingJob.desc, kota: editingJob.kota, provinsi: editingJob.provinsi, alamat: editingJob.alamat, durasi: cleanDurasi, batch: editingJob.batch, kuota: editingJob.kuota, image: editingJob.photo || editingJob.image || "", photoFile: null });
+                setTipe(editingJob.tipe || editingJob.type);
+                setPayment(editingJob.payment || editingJob.payment_type);
                 setDeadline(editingJob.deadline);
                 setStartDate(editingJob.startDate || "");
                 setEndDate(editingJob.endDate || "");
-                setPosisi([...editingJob.posisi]);
+                setPosisi([...(editingJob.posisi || [(editingJob.position?.name || "")])]);
             } else {
-                setForm({ nama: "", desc: "", kota: "", provinsi: "", alamat: "", durasi: "", batch: "", kuota: "", image: "" });
+                setForm({ title: "", desc: "", kota: "", provinsi: "", alamat: "", durasi: "", batch: "", kuota: "", image: "", photoFile: null });
                 setTipe(""); setPayment(""); setDeadline(""); setStartDate(""); setEndDate(""); setPosisi([""]);
             }
         }
@@ -322,17 +331,25 @@ function Modal({ open, editingJob, onClose, onSubmit }) {
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (file) {
-            // In a real app, you'd upload this. For demo, we use a blob URL.
             const url = URL.createObjectURL(file);
-            setForm({ ...form, image: url });
+            setForm({ ...form, image: url, photoFile: file });
         }
     };
 
     const handleSubmit = (status) => {
         const filled = posisi.filter(Boolean);
-        if (!form.nama || !form.desc || !form.kota || !form.provinsi || !form.durasi || !form.batch || !form.kuota || !startDate || !endDate || !deadline || !tipe || !payment || filled.length === 0) {
-            return "validation";
+
+        // Relaxed validation
+        if (!form.title) return alert("Nama Lowongan wajib diisi.");
+        if (filled.length === 0) return alert("Minimal satu posisi harus diisi.");
+
+        // If publishing, check for other essential fields
+        if (status === "published") {
+            if (!form.desc || !form.kota || !form.provinsi || !form.durasi || !form.batch || !form.kuota || !startDate || !endDate || !deadline || !tipe || !payment) {
+                return alert("Harap isi semua field wajib sebelum mem-publish lowongan.");
+            }
         }
+
         onSubmit({ ...form, batch: +form.batch, kuota: +form.kuota, startDate, endDate, deadline, tipe, payment, posisi: filled, status });
     };
 
@@ -355,8 +372,17 @@ function Modal({ open, editingJob, onClose, onSubmit }) {
                     <button onClick={onClose} style={{ position: "absolute", top: 22, right: 28, width: 34, height: 34, borderRadius: 8, border: "1px solid #e2e8f0", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 16, color: "#64748b" }}>✕</button>
                 </div>
 
+                {editingJob && (
+                    <div style={{ display: "flex", borderBottom: "1px solid #e2e8f0", padding: "0 28px", background: "#f8fafc" }}>
+                        <button onClick={() => setActiveTab("detail")} style={{ padding: "12px 16px", background: "none", border: "none", borderBottom: activeTab === "detail" ? "2.5px solid #2563c4" : "2.5px solid transparent", color: activeTab === "detail" ? "#2563c4" : "#64748b", fontWeight: 600, fontSize: 13.5, cursor: "pointer", transition: "0.2s" }}>Detail Lowongan</button>
+                        <button onClick={() => setActiveTab("pelamar")} style={{ padding: "12px 16px", background: "none", border: "none", borderBottom: activeTab === "pelamar" ? "2.5px solid #2563c4" : "2.5px solid transparent", color: activeTab === "pelamar" ? "#2563c4" : "#64748b", fontWeight: 600, fontSize: 13.5, cursor: "pointer", transition: "0.2s" }}>Daftar Pelamar</button>
+                    </div>
+                )}
+
                 {/* Body */}
-                <div style={{ padding: "24px 28px", overflowY: "auto", maxHeight: "65vh" }}>
+                {activeTab === "detail" ? (
+                    <>
+                        <div style={{ padding: "24px 28px", overflowY: "auto", maxHeight: "65vh" }}>
                     {/* Section helper */}
                     {[{ title: "Info Dasar" }].map(() => null)}
 
@@ -372,7 +398,7 @@ function Modal({ open, editingJob, onClose, onSubmit }) {
                         </div>
                     </FGroup>
                     <FGroup label="Nama Lowongan" req style={{ marginTop: 14 }}>
-                        <input style={inp} value={form.nama} onChange={e => setForm({ ...form, nama: e.target.value })} placeholder="cth. Software Engineer Intern Batch 8" onFocus={focusInp} onBlur={blurInp} />
+                        <input style={inp} value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} placeholder="cth. Software Engineer Intern Batch 8" onFocus={focusInp} onBlur={blurInp} />
                     </FGroup>
                     <FGroup label="Deskripsi Lowongan" req style={{ marginTop: 14 }}>
                         <textarea style={{ ...inp, minHeight: 88, resize: "vertical", lineHeight: 1.6 }} value={form.desc} onChange={e => setForm({ ...form, desc: e.target.value })} placeholder="Deskripsikan program magang ini secara singkat…" onFocus={focusInp} onBlur={blurInp} />
@@ -447,21 +473,53 @@ function Modal({ open, editingJob, onClose, onSubmit }) {
                 {/* Footer */}
                 <div style={{ padding: "18px 28px", borderTop: "1px solid #e2e8f0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                     <div style={{ fontSize: 12, color: "#64748b" }}>Field bertanda <b style={{ color: "#ef4444" }}>*</b> wajib diisi.</div>
-                    <div style={{ display: "flex", gap: 10 }}>
-                        <button onClick={() => { const res = handleSubmit("draft"); if (res === "validation") alert("Harap isi semua field yang wajib diisi."); }}
-                            style={{ display: "flex", alignItems: "center", gap: 6, background: "#fff", color: "#334155", border: "1.5px solid #e2e8f0", borderRadius: 8, padding: "9px 18px", fontFamily: "inherit", fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "all .15s" }}
+                    <div style={{ display: "flex", gap: 8 }}>
+                        {/* Simpan sebagai Draft */}
+                        <button onClick={() => handleSubmit("draft")}
+                            style={{ display: "flex", alignItems: "center", gap: 5, background: "#fff", color: "#475569", border: "1.2px solid #e2e8f0", borderRadius: 8, padding: "8px 14px", fontFamily: "inherit", fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "all .15s" }}
                             onMouseEnter={e => { e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.color = "#2563c4"; }}
-                            onMouseLeave={e => { e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.color = "#334155"; }}>
-                            <Icon.Save /> Simpan sebagai Draft
+                            onMouseLeave={e => { e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.color = "#475569"; }}>
+                            <Icon.Save /> Draft
                         </button>
-                        <button onClick={() => { const res = handleSubmit("published"); if (res === "validation") alert("Harap isi semua field yang wajib diisi."); }}
-                            style={{ display: "flex", alignItems: "center", gap: 6, background: "#2563c4", color: "#fff", border: "none", borderRadius: 8, padding: "10px 20px", fontFamily: "inherit", fontSize: 13, fontWeight: 700, cursor: "pointer", boxShadow: "0 2px 8px rgba(37,99,235,.3)", transition: "all .15s" }}
+
+                        {/* Special "Closed" button for published jobs */}
+                        {editingJob?.status === "published" && (
+                            <button onClick={() => handleSubmit("closed")}
+                                style={{ display: "flex", alignItems: "center", gap: 5, background: "#ef4444", color: "#fff", border: "none", borderRadius: 8, padding: "8px 14px", fontFamily: "inherit", fontSize: 13, fontWeight: 700, cursor: "pointer", boxShadow: "0 2px 6px rgba(239, 68, 68, 0.2)", transition: "all .15s" }}
+                                onMouseEnter={e => { e.currentTarget.style.background = "#dc2626"; }}
+                                onMouseLeave={e => { e.currentTarget.style.background = "#ef4444"; }}>
+                                <Icon.Lock /> Closed
+                            </button>
+                        )}
+
+                        {/* Simpan or Publish */}
+                        <button onClick={() => handleSubmit("published")}
+                            style={{ display: "flex", alignItems: "center", gap: 5, background: "#2563c4", color: "#fff", border: "none", borderRadius: 8, padding: "8px 14px", fontFamily: "inherit", fontSize: 13, fontWeight: 700, cursor: "pointer", boxShadow: "0 2px 6px rgba(37,99,235,0.25)", transition: "all .15s" }}
                             onMouseEnter={e => { e.currentTarget.style.background = "#1d4ed8"; }}
                             onMouseLeave={e => { e.currentTarget.style.background = "#2563c4"; }}>
-                            <Icon.Send /> Publish
+                            <Icon.Send /> {editingJob?.status === "published" ? "Simpan" : "Publish"}
                         </button>
                     </div>
                 </div>
+                    </>
+                ) : (
+                    <div style={{ padding: "60px 28px", overflowY: "auto", maxHeight: "65vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center" }}>
+                        <div style={{ width: 80, height: 80, background: "#f1f5f9", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", color: "#94a3b8", marginBottom: 20 }}>
+                            <Icon.Users />
+                        </div>
+                        {editingJob?.status === "draft" ? (
+                            <>
+                                <h3 style={{ fontSize: 18, fontWeight: 800, color: "#0f172a", marginBottom: 10 }}>Belum Bisa Menerima Pelamar</h3>
+                                <p style={{ fontSize: 14, color: "#64748b", maxWidth: 340, lineHeight: 1.6, textAlign: "center" }}>Silakan <b>Publish</b> lowongan ini terlebih dahulu dengan kembali ke tab Detail, agar calon peserta dapat melihat dan melamar posisi ini.</p>
+                            </>
+                        ) : (
+                            <>
+                                <h3 style={{ fontSize: 18, fontWeight: 800, color: "#0f172a", marginBottom: 10 }}>Belum Ada Pelamar</h3>
+                                <p style={{ fontSize: 14, color: "#64748b", maxWidth: 340, lineHeight: 1.6, textAlign: "center" }}>Lowongan ini sudah dipublish, namun saat ini belum ada kandidat yang mengirimkan lamaran ke posisi manapun.</p>
+                            </>
+                        )}
+                    </div>
+                )}
             </div>
         </div>
     );
@@ -517,8 +575,9 @@ function SideItem({ icon, label, active, badge, onClick }) {
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function ManajemenLowongan() {
     const navigate = useNavigate();
-    const { logout } = useAuthStore();
-    const [jobs, setJobs] = useState(INIT_JOBS);
+    const { logout, token } = useAuthStore();
+    const [jobs, setJobs] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [nextId, setNextId] = useState(6);
     const [filter, setFilter] = useState("all");
     const [search, setSearch] = useState("");
@@ -528,6 +587,45 @@ export default function ManajemenLowongan() {
     const [deletingId, setDeletingId] = useState(null);
     const [toast, setToast] = useState({ msg: "", type: "success", visible: false });
     const [activeNav, setActiveNav] = useState("Manajemen Lowongan");
+
+    useEffect(() => {
+        fetchJobs();
+    }, []);
+
+    const fetchJobs = async () => {
+        try {
+            setLoading(true);
+            const res = await axios.get("http://127.0.0.1:8000/api/vacancies", {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            // Map the backend data to frontend field names if they differ
+            const mappedJobs = res.data.map(j => {
+                const locParts = (j.location || "").split(", ");
+                return {
+                    ...j,
+                    id: j.id_vacancy,
+                    nama: j.title,
+                    desc: j.description, // Added this mapping
+                    kota: locParts[0] || "",
+                    provinsi: locParts[1] || "",
+                    alamat: locParts[2] || "",
+                    startDate: j.deadline,
+                    endDate: j.deadline,
+                    durasi: j.duration_months + " Bulan",
+                    tipe: j.type,
+                    payment: j.payment_type,
+                    kuota: j.quota,
+                    posisi: (j.positions || []).map(p => p.name || p)
+                };
+            });
+            setJobs(mappedJobs);
+        } catch (err) {
+            console.error("Failed to fetch jobs:", err);
+            showToast("Gagal mengambil data dari server.", "error");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const company = (() => { try { return JSON.parse(localStorage.getItem("company")); } catch { return null; } })();
     const companyName = company?.name || "Admin";
@@ -545,17 +643,71 @@ export default function ManajemenLowongan() {
         return mf && ms;
     });
 
-    const handleModalSubmit = (data) => {
-        if (editingJob) {
-            setJobs(js => js.map(j => j.id === editingJob.id ? { ...j, ...data } : j));
-            showToast(`Lowongan berhasil ${data.status === "published" ? "diperbarui & dipublish" : "disimpan sebagai draft"}.`);
-        } else {
-            setJobs(js => [...js, { id: nextId, pelamar: 0, ...data }]);
-            setNextId(n => n + 1);
-            showToast(`Lowongan berhasil ${data.status === "published" ? "dipublish" : "disimpan sebagai draft"}.`);
+    const handleModalSubmit = async (data) => {
+        try {
+            const formData = new FormData();
+            formData.append("title", data.title);
+            formData.append("description", data.desc);
+            formData.append("city", data.kota);
+            formData.append("province", data.provinsi);
+            formData.append("address", data.alamat);
+            formData.append("duration_months", parseInt(data.durasi));
+            formData.append("batch", parseInt(data.batch));
+            formData.append("quota", parseInt(data.kuota));
+            formData.append("deadline", data.deadline);
+            formData.append("type", data.tipe);
+            formData.append("payment_type", data.payment);
+            formData.append("status", data.status);
+
+            data.posisi.forEach((p, i) => {
+                formData.append(`positions[${i}]`, p);
+            });
+
+            if (data.photoFile) {
+                formData.append("photo", data.photoFile);
+            }
+
+            if (editingJob) {
+                // For PUT with files in Laravel, we use POST with _method = PUT
+                formData.append("_method", "PUT");
+                await axios.post(`http://127.0.0.1:8000/api/vacancies/${editingJob.id_vacancy}`, formData, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "multipart/form-data"
+                    }
+                });
+                showToast(`Lowongan berhasil diperbarui.`);
+            } else {
+                await axios.post("http://127.0.0.1:8000/api/vacancies", formData, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "multipart/form-data"
+                    }
+                });
+                showToast(`Lowongan berhasil ${data.status === "published" ? "dipublish" : "disimpan sebagai draft"}.`);
+            }
+            fetchJobs();
+            setModalOpen(false);
+            setEditingJob(null);
+        } catch (err) {
+            console.error("Failed to save job:", err);
+            const msg = err.response?.data?.message || (err.response?.data?.errors ? Object.values(err.response.data.errors).flat()[0] : null) || "Gagal menyimpan lowongan.";
+            showToast(msg, "error");
         }
-        setModalOpen(false);
-        setEditingJob(null);
+    };
+
+    const handleDelete = async (id) => {
+        if (!confirm("Yakin ingin menghapus lowongan ini?")) return;
+        try {
+            await axios.delete(`http://127.0.0.1:8000/api/vacancies/${id}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            showToast("Lowongan berhasil dihapus.");
+            fetchJobs();
+        } catch (err) {
+            console.error("Failed to delete job:", err);
+            showToast("Gagal menghapus lowongan.", "error");
+        }
     };
 
     const handleLogout = () => { setLogoutModalOpen(true); };
@@ -563,7 +715,7 @@ export default function ManajemenLowongan() {
     const navItems = [
         { label: "Dashboard", icon: <Icon.Dashboard />, path: "/dashboard", section: "MAIN MENU" },
         { label: "Manajemen User", icon: <Icon.Users />, path: "#", badge: 0 },
-        { label: "Manajemen Program", icon: <Icon.Program />, path: "#" },
+        { label: "Manajemen Program", icon: <Icon.Program />, path: "/program" },
         { label: "Manajemen Lowongan", icon: <Icon.Lowongan />, path: "/lowongan" },
     ];
     const navItems2 = [
@@ -728,7 +880,12 @@ export default function ManajemenLowongan() {
 
                     {/* Filter tabs */}
                     <div style={{ display: "flex", gap: 8, marginBottom: 22, flexWrap: "wrap" }}>
-                        {[{ key: "all", label: "Semua", count: jobs.length }, { key: "published", label: "Published", count: jobs.filter(j => j.status === "published").length }, { key: "draft", label: "Draft", count: jobs.filter(j => j.status === "draft").length }].map(t => (
+                        {[
+                            { key: "all", label: "Semua", count: jobs.length },
+                            { key: "published", label: "Published", count: jobs.filter(j => j.status === "published").length },
+                            { key: "draft", label: "Draft", count: jobs.filter(j => j.status === "draft").length },
+                            { key: "closed", label: "Closed", count: jobs.filter(j => j.status === "closed").length }
+                        ].map(t => (
                             <div key={t.key} onClick={() => setFilter(t.key)}
                                 style={{
                                     padding: "6px 16px", borderRadius: 20, fontSize: 12.5, fontWeight: 600, cursor: "pointer",
@@ -782,7 +939,7 @@ export default function ManajemenLowongan() {
                         <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
                             <button onClick={() => setDeletingId(null)}
                                 style={{ padding: "8px 16px", border: "1px solid #e2e8f0", borderRadius: 8, background: "#fff", fontFamily: "inherit", fontSize: 13, fontWeight: 600, cursor: "pointer", color: "#334155" }}>Batal</button>
-                            <button onClick={() => { setJobs(js => js.filter(j => j.id !== deletingId)); setDeletingId(null); showToast("Lowongan berhasil dihapus."); }}
+                            <button onClick={() => { handleDelete(deletingId); setDeletingId(null); }}
                                 style={{ padding: "8px 16px", border: "none", borderRadius: 8, background: "#ef4444", color: "#fff", fontFamily: "inherit", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>Ya, Hapus</button>
                         </div>
                     </div>

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../stores/authStore";
 import { authService } from "../api/authService";
+import axios from "axios";
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
 const IC = {
@@ -263,13 +264,27 @@ function BarSparkline({ months }) {
 // ── Main Dashboard ─────────────────────────────────────────────────────────────
 export default function DashboardPage() {
     const navigate = useNavigate();
-    const { logout } = useAuthStore();
+    const { logout, token } = useAuthStore();
     const [company, setCompany] = useState(null);
     const [activeNav, setActiveNav] = useState("Dashboard");
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [logoutModalOpen, setLogoutModalOpen] = useState(false);
+    const [liveStats, setLiveStats] = useState({ active_programs: 0, active_vacancies: 0, total_applicants: 0, pending_review: 0 });
 
     useEffect(() => {
+        const fetchStats = async () => {
+            if (!token) return;
+            try {
+                const res = await axios.get("http://localhost:8000/api/dashboard/stats", {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                setLiveStats(res.data);
+            } catch (err) {
+                console.error("Failed to fetch dashboard stats:", err);
+            }
+        };
+        fetchStats();
+
         const stored = localStorage.getItem("company");
         if (stored) {
             try { setCompany(JSON.parse(stored)); } catch (_) { }
@@ -281,7 +296,7 @@ export default function DashboardPage() {
                 localStorage.setItem("company", JSON.stringify(res.company));
             }
         }).catch(() => { });
-    }, []);
+    }, [token]);
 
     const handleLogout = () => {
         setLogoutModalOpen(true);
@@ -296,11 +311,11 @@ export default function DashboardPage() {
             icon: <IC.Program />,
             iconBg: "#eff6ff",
             iconColor: "#3b82f6",
-            title: "Program Magang Aktif",
-            value: "0",
+            title: "Program Aktif",
+            value: liveStats.active_programs.toString(),
             trend: "+0%",
             trendUp: true,
-            sub: "0 program berakhir bulan ini",
+            sub: "Semua program magang yang sedang aktif",
             barColors: ["#3b82f6", "#60a5fa", "#93c5fd", "#3b82f6", "#60a5fa", "#93c5fd", "#3b82f6"],
         },
         {
@@ -308,10 +323,10 @@ export default function DashboardPage() {
             iconBg: "#f0fdf4",
             iconColor: "#16a34a",
             title: "Lowongan Aktif",
-            value: "0",
+            value: liveStats.active_vacancies.toString(),
             trend: "+0%",
             trendUp: true,
-            sub: "0 lowongan dibuka minggu ini",
+            sub: "Total posisi yang dibuka",
             barColors: ["#4ade80", "#86efac", "#4ade80", "#86efac", "#4ade80", "#bbf7d0", "#4ade80"],
         },
         {
@@ -341,7 +356,7 @@ export default function DashboardPage() {
     const navItems = [
         { label: "Dashboard", icon: <IC.Dashboard />, path: "/dashboard", section: "MAIN MENU" },
         { label: "Manajemen User", icon: <IC.Users />, path: "#", badge: 0 },
-        { label: "Manajemen Program", icon: <IC.Program />, path: "#" },
+        { label: "Manajemen Program", icon: <IC.Program />, path: "/program" },
         { label: "Manajemen Lowongan", icon: <IC.Lowongan />, path: "/lowongan" },
     ];
     const navItems2 = [

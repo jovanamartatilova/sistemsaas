@@ -12,6 +12,46 @@ use Illuminate\Support\Str;
 class AuthController extends Controller
 {
     /**
+     * Register a new student
+     */
+    public function registerStudent(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'name' => 'required|string|max:50',
+                'email' => 'required|string|email|max:50|unique:users',
+                'password' => 'required|string|min:6|confirmed',
+            ]);
+
+            $user = User::create([
+                'id_user' => $this->generateUserId(),
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'password' => Hash::make($validated['password']),
+                'role' => 'student',
+            ]);
+
+            $token = $user->createToken('auth_token')->plainTextToken;
+
+            return response()->json([
+                'message' => 'Student registered successfully',
+                'user' => $user,
+                'token' => $token,
+            ], 201);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Registration failed',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
      * Register a new company
      */
 public function register(Request $request)
