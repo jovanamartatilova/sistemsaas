@@ -71,10 +71,10 @@ export default function ResetPassword() {
     try {
       const response = await fetch("http://localhost:8000/api/auth/reset-password", {
         method: "POST",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
           "Accept": "application/json",
-         },
+        },
         body: JSON.stringify({
           token,
           email,
@@ -150,25 +150,25 @@ export default function ResetPassword() {
             className="absolute top-8 left-8 flex items-center gap-2 group bg-transparent border-none"
             style={{ color: "rgba(255,255,255,0.6)", cursor: "pointer", padding: 0 }}
           >
-          <span className="flex items-center justify-center w-9 h-9 rounded-full border border-white/20 group-hover:border-blue-400/60 group-hover:bg-blue-400/10 transition-all duration-300">
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 16 16"
-              fill="none"
-              className="group-hover:-translate-x-0.5 transition-transform duration-300"
-            >
-              <path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </span>
-          <span className="text-sm font-medium group-hover:text-blue-300 transition-colors duration-300">
-            Back to{" "}
-            <span className="text-blue-400 group-hover:underline">Login</span>
-          </span>
-        </button>
+            <span className="flex items-center justify-center w-9 h-9 rounded-full border border-white/20 group-hover:border-blue-400/60 group-hover:bg-blue-400/10 transition-all duration-300">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 16 16"
+                fill="none"
+                className="group-hover:-translate-x-0.5 transition-transform duration-300"
+              >
+                <path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </span>
+            <span className="text-sm font-medium group-hover:text-blue-300 transition-colors duration-300">
+              Back to{" "}
+              <span className="text-blue-400 group-hover:underline">Login</span>
+            </span>
+          </button>
 
-        {/* Bottom content */}
-        <div>
+          {/* Bottom content */}
+          <div>
             <h2
               className="text-4xl font-bold text-white mb-4 leading-tight text-left"
               style={{ fontFamily: "'Georgia', serif", letterSpacing: "-0.5px" }}
@@ -229,7 +229,7 @@ export default function ResetPassword() {
               <img
                 src="/assets/images/logo.png"
                 alt="Logo"
-                className="w-23 h-23 object-contain"
+                className="w-32 h-32 object-contain"
               />
             </div>
 

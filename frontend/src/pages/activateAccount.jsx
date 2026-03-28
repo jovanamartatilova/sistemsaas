@@ -235,7 +235,7 @@ export default function ActivateAccount() {
               {company?.logo_path ? (
                 <img src={`http://localhost:8000/storage/${company.logo_path}`} alt={company.name} className="w-16 h-16 object-contain rounded-2xl" />
               ) : (
-                <img src="/assets/images/logo.png" alt="Logo" className="w-23 h-23 object-contain" />
+                <img src="/assets/images/logo.png" alt="Logo" className="w-32 h-32 object-contain" />
               )}
             </div>
             <h1 className="text-2xl font-bold text-white mb-1" style={{ letterSpacing: "-0.3px" }}>

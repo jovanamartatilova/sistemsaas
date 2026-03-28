@@ -164,7 +164,7 @@ function Navbar() {
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 h-16 flex items-center px-[5%] gap-8 bg-white/95 backdrop-blur-md border-b border-black/[0.07] transition-shadow duration-300 ${scrolled ? 'shadow-md' : ''}`}>
       <a href="#" className="flex items-center mr-auto no-underline">
-        <img src="/assets/images/logo.png" alt="EarlyPath" className="h-9 w-auto" />
+        <img src="/assets/images/logo.png" alt="EarlyPath" className="h-12 w-auto" />
       </a>
 
       <div className="hidden md:flex items-center gap-1">
@@ -295,7 +295,7 @@ function JobCard({ job }) {
           Sisa <span className="font-semibold text-slate-600">{job.quota}</span> kuota
         </div>
         <Link
-          to={`/c/${job.slug}`}
+          to={`/c/${job.slug}/register`}
           className="flex items-center gap-1.5 bg-[#0d1b3e] text-white text-xs font-semibold px-3.5 py-2 rounded-lg no-underline hover:bg-[#162d5a] transition-colors"
         >
           Daftar <IconArrow className="w-3 h-3" />
@@ -432,7 +432,7 @@ function Footer() {
   return (
     <footer className="bg-[#08112a] py-10 px-[5%] text-center border-t border-white/[0.06]">
       <div className="inline-flex items-center justify-center mb-4">
-        <img src="/assets/images/logo.png" alt="EarlyPath" className="h-7 w-auto opacity-50" />
+        <img src="/assets/images/logo.png" alt="EarlyPath" className="h-12 w-auto opacity-50" />
       </div>
       <div className="text-xs text-white/30">© 2026 EarlyPath. All rights reserved.</div>
     </footer>

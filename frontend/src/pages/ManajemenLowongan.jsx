@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuthStore } from "../stores/authStore";
 import axios from "axios";
 
@@ -383,124 +383,124 @@ function Modal({ open, editingJob, onClose, onSubmit }) {
                 {activeTab === "detail" ? (
                     <>
                         <div style={{ padding: "24px 28px", overflowY: "auto", maxHeight: "65vh" }}>
-                    {/* Section helper */}
-                    {[{ title: "Info Dasar" }].map(() => null)}
+                            {/* Section helper */}
+                            {[{ title: "Info Dasar" }].map(() => null)}
 
-                    {/* Info Dasar */}
-                    <SectionTitle>Info Dasar</SectionTitle>
-                    <FGroup label="Upload Poster Magang (Opsional)">
-                        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                            <button onClick={() => fileInpRef.current.click()} style={{ padding: "9px 16px", border: "1.5px solid #e2e8f0", borderRadius: 8, background: "#fff", fontFamily: "inherit", fontSize: 13, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 8, color: "#475569" }}>
-                                <Icon.Upload /> Pilih File
-                            </button>
-                            <input type="file" ref={fileInpRef} hidden accept="image/*" onChange={handleFileChange} />
-                            {form.image && <div style={{ fontSize: 12, color: "#10b981", fontWeight: 600 }}>Berhasil dipilih!</div>}
-                        </div>
-                    </FGroup>
-                    <FGroup label="Nama Lowongan" req style={{ marginTop: 14 }}>
-                        <input style={inp} value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} placeholder="cth. Software Engineer Intern Batch 8" onFocus={focusInp} onBlur={blurInp} />
-                    </FGroup>
-                    <FGroup label="Deskripsi Lowongan" req style={{ marginTop: 14 }}>
-                        <textarea style={{ ...inp, minHeight: 88, resize: "vertical", lineHeight: 1.6 }} value={form.desc} onChange={e => setForm({ ...form, desc: e.target.value })} placeholder="Deskripsikan program magang ini secara singkat…" onFocus={focusInp} onBlur={blurInp} />
-                    </FGroup>
+                            {/* Info Dasar */}
+                            <SectionTitle>Info Dasar</SectionTitle>
+                            <FGroup label="Upload Poster Magang (Opsional)">
+                                <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                                    <button onClick={() => fileInpRef.current.click()} style={{ padding: "9px 16px", border: "1.5px solid #e2e8f0", borderRadius: 8, background: "#fff", fontFamily: "inherit", fontSize: 13, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 8, color: "#475569" }}>
+                                        <Icon.Upload /> Pilih File
+                                    </button>
+                                    <input type="file" ref={fileInpRef} hidden accept="image/*" onChange={handleFileChange} />
+                                    {form.image && <div style={{ fontSize: 12, color: "#10b981", fontWeight: 600 }}>Berhasil dipilih!</div>}
+                                </div>
+                            </FGroup>
+                            <FGroup label="Nama Lowongan" req style={{ marginTop: 14 }}>
+                                <input style={inp} value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} placeholder="cth. Software Engineer Intern Batch 8" onFocus={focusInp} onBlur={blurInp} />
+                            </FGroup>
+                            <FGroup label="Deskripsi Lowongan" req style={{ marginTop: 14 }}>
+                                <textarea style={{ ...inp, minHeight: 88, resize: "vertical", lineHeight: 1.6 }} value={form.desc} onChange={e => setForm({ ...form, desc: e.target.value })} placeholder="Deskripsikan program magang ini secara singkat…" onFocus={focusInp} onBlur={blurInp} />
+                            </FGroup>
 
-                    {/* Lokasi */}
-                    <SectionTitle style={{ marginTop: 24 }}>Lokasi Magang</SectionTitle>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
-                        <FGroup label="Kota" req>
-                            <input style={inp} value={form.kota} onChange={e => setForm({ ...form, kota: e.target.value })} placeholder="cth. Jakarta" onFocus={focusInp} onBlur={blurInp} />
-                        </FGroup>
-                        <FGroup label="Provinsi" req>
-                            <input style={inp} value={form.provinsi} onChange={e => setForm({ ...form, provinsi: e.target.value })} placeholder="cth. DKI Jakarta" onFocus={focusInp} onBlur={blurInp} />
-                        </FGroup>
-                    </div>
-                    <FGroup label="Alamat Lengkap">
-                        <input style={inp} value={form.alamat} onChange={e => setForm({ ...form, alamat: e.target.value })} placeholder="cth. Jl. Sudirman No. 1, Gedung Menara 88" onFocus={focusInp} onBlur={blurInp} />
-                    </FGroup>
-
-                    {/* Detail */}
-                    <SectionTitle style={{ marginTop: 24 }}>Detail Program</SectionTitle>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
-                        <FGroup label="Tanggal Mulai" req>
-                            <CalendarPicker value={startDate} onChange={setStartDate} />
-                        </FGroup>
-                        <FGroup label="Tanggal Selesai" req>
-                            <CalendarPicker value={endDate} onChange={setEndDate} />
-                        </FGroup>
-                    </div>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
-                        <FGroup label="Durasi (Bulan)" req>
-                            <input style={inp} type="number" min="1" value={form.durasi} onChange={e => setForm({ ...form, durasi: e.target.value })} placeholder="cth. 3" onFocus={focusInp} onBlur={blurInp} />
-                        </FGroup>
-                        <FGroup label="Batch" req>
-                            <input style={inp} type="number" min="1" value={form.batch} onChange={e => setForm({ ...form, batch: e.target.value })} placeholder="cth. 8" onFocus={focusInp} onBlur={blurInp} />
-                        </FGroup>
-                    </div>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
-                        <FGroup label="Kuota Pemagang" req>
-                            <input style={inp} type="number" min="1" value={form.kuota} onChange={e => setForm({ ...form, kuota: e.target.value })} placeholder="cth. 50" onFocus={focusInp} onBlur={blurInp} />
-                        </FGroup>
-                        <FGroup label="Deadline Pendaftaran" req>
-                            <CalendarPicker value={deadline} onChange={setDeadline} />
-                        </FGroup>
-                    </div>
-                    <FGroup label="Tipe Magang" req style={{ marginBottom: 14 }}>
-                        <PillGroup options={[{ value: "reguler", label: "Reguler" }, { value: "flagship", label: "Flagship" }]} value={tipe} onChange={setTipe} />
-                    </FGroup>
-                    <FGroup label="Payment Type" req style={{ marginBottom: 14 }}>
-                        <PillGroup options={[{ value: "unpaid", label: "Unpaid" }, { value: "paid", label: "Paid" }]} value={payment} onChange={setPayment} />
-                    </FGroup>
-
-                    {/* Posisi */}
-                    <SectionTitle style={{ marginTop: 24 }}>Posisi yang Dibuka</SectionTitle>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                        {posisi.map((p, i) => (
-                            <div key={i} style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                                <input style={{ ...inp, flex: 1 }} value={p} onChange={e => { const next = [...posisi]; next[i] = e.target.value; setPosisi(next); }} placeholder="cth. Frontend Developer" onFocus={focusInp} onBlur={blurInp} />
-                                <button onClick={() => posisi.length > 1 && setPosisi(posisi.filter((_, j) => j !== i))}
-                                    style={{ width: 32, height: 32, borderRadius: 8, border: "1px solid #fca5a5", background: "#fff1f2", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#ef4444", fontSize: 14, flexShrink: 0 }}>✕</button>
+                            {/* Lokasi */}
+                            <SectionTitle style={{ marginTop: 24 }}>Lokasi Magang</SectionTitle>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
+                                <FGroup label="Kota" req>
+                                    <input style={inp} value={form.kota} onChange={e => setForm({ ...form, kota: e.target.value })} placeholder="cth. Jakarta" onFocus={focusInp} onBlur={blurInp} />
+                                </FGroup>
+                                <FGroup label="Provinsi" req>
+                                    <input style={inp} value={form.provinsi} onChange={e => setForm({ ...form, provinsi: e.target.value })} placeholder="cth. DKI Jakarta" onFocus={focusInp} onBlur={blurInp} />
+                                </FGroup>
                             </div>
-                        ))}
-                    </div>
-                    <button onClick={() => setPosisi([...posisi, ""])}
-                        style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", border: "1.5px dashed #e2e8f0", borderRadius: 8, background: "transparent", fontFamily: "inherit", fontSize: 13, color: "#64748b", cursor: "pointer", marginTop: 8, transition: "all .15s" }}
-                        onMouseEnter={e => { e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.color = "#2563c4"; e.currentTarget.style.background = "#eff6ff"; }}
-                        onMouseLeave={e => { e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.color = "#64748b"; e.currentTarget.style.background = "transparent"; }}>
-                        <Icon.Plus /> Tambah Posisi
-                    </button>
-                </div>
+                            <FGroup label="Alamat Lengkap">
+                                <input style={inp} value={form.alamat} onChange={e => setForm({ ...form, alamat: e.target.value })} placeholder="cth. Jl. Sudirman No. 1, Gedung Menara 88" onFocus={focusInp} onBlur={blurInp} />
+                            </FGroup>
 
-                {/* Footer */}
-                <div style={{ padding: "18px 28px", borderTop: "1px solid #e2e8f0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <div style={{ fontSize: 12, color: "#64748b" }}>Field bertanda <b style={{ color: "#ef4444" }}>*</b> wajib diisi.</div>
-                    <div style={{ display: "flex", gap: 8 }}>
-                        {/* Simpan sebagai Draft */}
-                        <button onClick={() => handleSubmit("draft")}
-                            style={{ display: "flex", alignItems: "center", gap: 5, background: "#fff", color: "#475569", border: "1.2px solid #e2e8f0", borderRadius: 8, padding: "8px 14px", fontFamily: "inherit", fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "all .15s" }}
-                            onMouseEnter={e => { e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.color = "#2563c4"; }}
-                            onMouseLeave={e => { e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.color = "#475569"; }}>
-                            <Icon.Save /> Draft
-                        </button>
+                            {/* Detail */}
+                            <SectionTitle style={{ marginTop: 24 }}>Detail Program</SectionTitle>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
+                                <FGroup label="Tanggal Mulai" req>
+                                    <CalendarPicker value={startDate} onChange={setStartDate} />
+                                </FGroup>
+                                <FGroup label="Tanggal Selesai" req>
+                                    <CalendarPicker value={endDate} onChange={setEndDate} />
+                                </FGroup>
+                            </div>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
+                                <FGroup label="Durasi (Bulan)" req>
+                                    <input style={inp} type="number" min="1" value={form.durasi} onChange={e => setForm({ ...form, durasi: e.target.value })} placeholder="cth. 3" onFocus={focusInp} onBlur={blurInp} />
+                                </FGroup>
+                                <FGroup label="Batch" req>
+                                    <input style={inp} type="number" min="1" value={form.batch} onChange={e => setForm({ ...form, batch: e.target.value })} placeholder="cth. 8" onFocus={focusInp} onBlur={blurInp} />
+                                </FGroup>
+                            </div>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
+                                <FGroup label="Kuota Pemagang" req>
+                                    <input style={inp} type="number" min="1" value={form.kuota} onChange={e => setForm({ ...form, kuota: e.target.value })} placeholder="cth. 50" onFocus={focusInp} onBlur={blurInp} />
+                                </FGroup>
+                                <FGroup label="Deadline Pendaftaran" req>
+                                    <CalendarPicker value={deadline} onChange={setDeadline} />
+                                </FGroup>
+                            </div>
+                            <FGroup label="Tipe Magang" req style={{ marginBottom: 14 }}>
+                                <PillGroup options={[{ value: "reguler", label: "Reguler" }, { value: "flagship", label: "Flagship" }]} value={tipe} onChange={setTipe} />
+                            </FGroup>
+                            <FGroup label="Payment Type" req style={{ marginBottom: 14 }}>
+                                <PillGroup options={[{ value: "unpaid", label: "Unpaid" }, { value: "paid", label: "Paid" }]} value={payment} onChange={setPayment} />
+                            </FGroup>
 
-                        {/* Special "Closed" button for published jobs */}
-                        {editingJob?.status === "published" && (
-                            <button onClick={() => handleSubmit("closed")}
-                                style={{ display: "flex", alignItems: "center", gap: 5, background: "#ef4444", color: "#fff", border: "none", borderRadius: 8, padding: "8px 14px", fontFamily: "inherit", fontSize: 13, fontWeight: 700, cursor: "pointer", boxShadow: "0 2px 6px rgba(239, 68, 68, 0.2)", transition: "all .15s" }}
-                                onMouseEnter={e => { e.currentTarget.style.background = "#dc2626"; }}
-                                onMouseLeave={e => { e.currentTarget.style.background = "#ef4444"; }}>
-                                <Icon.Lock /> Closed
+                            {/* Posisi */}
+                            <SectionTitle style={{ marginTop: 24 }}>Posisi yang Dibuka</SectionTitle>
+                            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                                {posisi.map((p, i) => (
+                                    <div key={i} style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                                        <input style={{ ...inp, flex: 1 }} value={p} onChange={e => { const next = [...posisi]; next[i] = e.target.value; setPosisi(next); }} placeholder="cth. Frontend Developer" onFocus={focusInp} onBlur={blurInp} />
+                                        <button onClick={() => posisi.length > 1 && setPosisi(posisi.filter((_, j) => j !== i))}
+                                            style={{ width: 32, height: 32, borderRadius: 8, border: "1px solid #fca5a5", background: "#fff1f2", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#ef4444", fontSize: 14, flexShrink: 0 }}>✕</button>
+                                    </div>
+                                ))}
+                            </div>
+                            <button onClick={() => setPosisi([...posisi, ""])}
+                                style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", border: "1.5px dashed #e2e8f0", borderRadius: 8, background: "transparent", fontFamily: "inherit", fontSize: 13, color: "#64748b", cursor: "pointer", marginTop: 8, transition: "all .15s" }}
+                                onMouseEnter={e => { e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.color = "#2563c4"; e.currentTarget.style.background = "#eff6ff"; }}
+                                onMouseLeave={e => { e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.color = "#64748b"; e.currentTarget.style.background = "transparent"; }}>
+                                <Icon.Plus /> Tambah Posisi
                             </button>
-                        )}
+                        </div>
 
-                        {/* Simpan or Publish */}
-                        <button onClick={() => handleSubmit("published")}
-                            style={{ display: "flex", alignItems: "center", gap: 5, background: "#2563c4", color: "#fff", border: "none", borderRadius: 8, padding: "8px 14px", fontFamily: "inherit", fontSize: 13, fontWeight: 700, cursor: "pointer", boxShadow: "0 2px 6px rgba(37,99,235,0.25)", transition: "all .15s" }}
-                            onMouseEnter={e => { e.currentTarget.style.background = "#1d4ed8"; }}
-                            onMouseLeave={e => { e.currentTarget.style.background = "#2563c4"; }}>
-                            <Icon.Send /> {editingJob?.status === "published" ? "Simpan" : "Publish"}
-                        </button>
-                    </div>
-                </div>
+                        {/* Footer */}
+                        <div style={{ padding: "18px 28px", borderTop: "1px solid #e2e8f0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                            <div style={{ fontSize: 12, color: "#64748b" }}>Field bertanda <b style={{ color: "#ef4444" }}>*</b> wajib diisi.</div>
+                            <div style={{ display: "flex", gap: 8 }}>
+                                {/* Simpan sebagai Draft */}
+                                <button onClick={() => handleSubmit("draft")}
+                                    style={{ display: "flex", alignItems: "center", gap: 5, background: "#fff", color: "#475569", border: "1.2px solid #e2e8f0", borderRadius: 8, padding: "8px 14px", fontFamily: "inherit", fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "all .15s" }}
+                                    onMouseEnter={e => { e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.color = "#2563c4"; }}
+                                    onMouseLeave={e => { e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.color = "#475569"; }}>
+                                    <Icon.Save /> Draft
+                                </button>
+
+                                {/* Special "Closed" button for published jobs */}
+                                {editingJob?.status === "published" && (
+                                    <button onClick={() => handleSubmit("closed")}
+                                        style={{ display: "flex", alignItems: "center", gap: 5, background: "#ef4444", color: "#fff", border: "none", borderRadius: 8, padding: "8px 14px", fontFamily: "inherit", fontSize: 13, fontWeight: 700, cursor: "pointer", boxShadow: "0 2px 6px rgba(239, 68, 68, 0.2)", transition: "all .15s" }}
+                                        onMouseEnter={e => { e.currentTarget.style.background = "#dc2626"; }}
+                                        onMouseLeave={e => { e.currentTarget.style.background = "#ef4444"; }}>
+                                        <Icon.Lock /> Closed
+                                    </button>
+                                )}
+
+                                {/* Simpan or Publish */}
+                                <button onClick={() => handleSubmit("published")}
+                                    style={{ display: "flex", alignItems: "center", gap: 5, background: "#2563c4", color: "#fff", border: "none", borderRadius: 8, padding: "8px 14px", fontFamily: "inherit", fontSize: 13, fontWeight: 700, cursor: "pointer", boxShadow: "0 2px 6px rgba(37,99,235,0.25)", transition: "all .15s" }}
+                                    onMouseEnter={e => { e.currentTarget.style.background = "#1d4ed8"; }}
+                                    onMouseLeave={e => { e.currentTarget.style.background = "#2563c4"; }}>
+                                    <Icon.Send /> {editingJob?.status === "published" ? "Simpan" : "Publish"}
+                                </button>
+                            </div>
+                        </div>
                     </>
                 ) : (
                     <div style={{ padding: "60px 28px", overflowY: "auto", maxHeight: "65vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center" }}>
@@ -757,10 +757,10 @@ export default function ManajemenLowongan() {
                 }}
             >
                 {/* Logo */}
-                <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "4px 6px 20px" }}>
-                    <img src="/assets/images/logo.png" alt="EarlyPath" style={{ height: "34px", objectFit: "contain", flexShrink: 0 }} />
+                <Link to="/" style={{ display: "flex", alignItems: "center", gap: "10px", padding: "4px 6px 20px", textDecoration: "none" }}>
+                    <img src="/assets/images/logo.png" alt="EarlyPath" style={{ height: "46px", objectFit: "contain", flexShrink: 0 }} />
                     <span style={{ fontSize: "15px", fontWeight: "800", color: "#fff", letterSpacing: "-0.3px", whiteSpace: "nowrap" }}>EarlyPath</span>
-                </div>
+                </Link>
 
                 {/* Nav */}
                 <p style={{ fontSize: "10px", fontWeight: "700", color: "rgba(255,255,255,0.25)", letterSpacing: "1.2px", padding: "6px 14px 4px", textTransform: "uppercase" }}>
