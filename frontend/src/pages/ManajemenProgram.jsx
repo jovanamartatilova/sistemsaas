@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuthStore } from "../stores/authStore";
 import axios from "axios";
 
@@ -183,48 +183,48 @@ function ProgramModal({ open, program, onClose, onSubmit }) {
                 {activeTab === "detail" ? (
                     <>
                         <div style={{ padding: "24px 28px", overflowY: "auto", maxHeight: "65vh", textAlign: "left" }}>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-                        {competencies.map((c, i) => (
-                            <div key={i} style={{ border: "1px solid #e1e7ef", borderRadius: 12, padding: 20, position: "relative" }}>
-                                <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 12, marginBottom: 12 }}>
-                                    <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-                                        <label style={{ fontSize: 12, fontWeight: 600, color: "#334155" }}>Nama Kompetensi *</label>
-                                        <input style={inp} value={c.name} onChange={e => handleChange(i, "name", e.target.value)} placeholder="cth. Dasar-dasar Figma" onFocus={focusInp} onBlur={blurInp} />
+                            <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+                                {competencies.map((c, i) => (
+                                    <div key={i} style={{ border: "1px solid #e1e7ef", borderRadius: 12, padding: 20, position: "relative" }}>
+                                        <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 12, marginBottom: 12 }}>
+                                            <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                                                <label style={{ fontSize: 12, fontWeight: 600, color: "#334155" }}>Nama Kompetensi *</label>
+                                                <input style={inp} value={c.name} onChange={e => handleChange(i, "name", e.target.value)} placeholder="cth. Dasar-dasar Figma" onFocus={focusInp} onBlur={blurInp} />
+                                            </div>
+                                            <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                                                <label style={{ fontSize: 12, fontWeight: 600, color: "#334155" }}>Jam Belajar *</label>
+                                                <input style={inp} type="number" value={c.learning_hours} onChange={e => handleChange(i, "learning_hours", e.target.value)} placeholder="cth. 40" onFocus={focusInp} onBlur={blurInp} />
+                                            </div>
+                                        </div>
+                                        <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                                            <label style={{ fontSize: 12, fontWeight: 600, color: "#334155" }}>Deskripsi Kompetensi</label>
+                                            <textarea style={{ ...inp, minHeight: 60, resize: "vertical" }} value={c.description} onChange={e => handleChange(i, "description", e.target.value)} placeholder="Berikan deskripsi singkat tentang kompetensi ini…" onFocus={focusInp} onBlur={blurInp} />
+                                        </div>
+                                        <button onClick={() => competencies.length > 1 && handleRemove(i)}
+                                            style={{ position: "absolute", top: -10, right: -10, width: 28, height: 28, borderRadius: "50%", border: "1px solid #fca5a5", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#ef4444", fontSize: 14 }}>✕</button>
                                     </div>
-                                    <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-                                        <label style={{ fontSize: 12, fontWeight: 600, color: "#334155" }}>Jam Belajar *</label>
-                                        <input style={inp} type="number" value={c.learning_hours} onChange={e => handleChange(i, "learning_hours", e.target.value)} placeholder="cth. 40" onFocus={focusInp} onBlur={blurInp} />
-                                    </div>
-                                </div>
-                                <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-                                    <label style={{ fontSize: 12, fontWeight: 600, color: "#334155" }}>Deskripsi Kompetensi</label>
-                                    <textarea style={{ ...inp, minHeight: 60, resize: "vertical" }} value={c.description} onChange={e => handleChange(i, "description", e.target.value)} placeholder="Berikan deskripsi singkat tentang kompetensi ini…" onFocus={focusInp} onBlur={blurInp} />
-                                </div>
-                                <button onClick={() => competencies.length > 1 && handleRemove(i)}
-                                    style={{ position: "absolute", top: -10, right: -10, width: 28, height: 28, borderRadius: "50%", border: "1px solid #fca5a5", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#ef4444", fontSize: 14 }}>✕</button>
+                                ))}
                             </div>
-                        ))}
-                    </div>
 
-                    <button onClick={handleAdd}
-                        style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "10px 16px", border: "1.5px dashed #e2e8f0", borderRadius: 10, background: "transparent", fontFamily: "inherit", fontSize: 13, color: "#64748b", cursor: "pointer", marginTop: 24, transition: "all .15s", width: "100%", justifyContent: "center" }}
-                        onMouseEnter={e => { e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.color = "#2563c4"; e.currentTarget.style.background = "#eff6ff"; }}
-                        onMouseLeave={e => { e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.color = "#64748b"; e.currentTarget.style.background = "transparent"; }}>
-                        <Icon.Plus /> Tambah Kompetensi
-                    </button>
-                </div>
+                            <button onClick={handleAdd}
+                                style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "10px 16px", border: "1.5px dashed #e2e8f0", borderRadius: 10, background: "transparent", fontFamily: "inherit", fontSize: 13, color: "#64748b", cursor: "pointer", marginTop: 24, transition: "all .15s", width: "100%", justifyContent: "center" }}
+                                onMouseEnter={e => { e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.color = "#2563c4"; e.currentTarget.style.background = "#eff6ff"; }}
+                                onMouseLeave={e => { e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.color = "#64748b"; e.currentTarget.style.background = "transparent"; }}>
+                                <Icon.Plus /> Tambah Kompetensi
+                            </button>
+                        </div>
 
-                <div style={{ padding: "18px 28px", borderTop: "1px solid #e2e8f0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <div style={{ fontSize: 12, color: "#64748b" }}>Field bertanda <b style={{ color: "#ef4444" }}>*</b> wajib diisi.</div>
-                    <div style={{ display: "flex", gap: 8 }}>
-                        <button onClick={() => handleSubmit("published")}
-                            style={{ display: "flex", alignItems: "center", gap: 5, background: "#2563c4", color: "#fff", border: "none", borderRadius: 8, padding: "8px 14px", fontFamily: "inherit", fontSize: 13, fontWeight: 700, cursor: "pointer", boxShadow: "0 2px 6px rgba(37,99,235,0.25)", transition: "all .15s" }}
-                            onMouseEnter={e => { e.currentTarget.style.background = "#1d4ed8"; }}
-                            onMouseLeave={e => { e.currentTarget.style.background = "#2563c4"; }}>
-                            <Icon.Save /> Simpan
-                        </button>
-                    </div>
-                </div>
+                        <div style={{ padding: "18px 28px", borderTop: "1px solid #e2e8f0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                            <div style={{ fontSize: 12, color: "#64748b" }}>Field bertanda <b style={{ color: "#ef4444" }}>*</b> wajib diisi.</div>
+                            <div style={{ display: "flex", gap: 8 }}>
+                                <button onClick={() => handleSubmit("published")}
+                                    style={{ display: "flex", alignItems: "center", gap: 5, background: "#2563c4", color: "#fff", border: "none", borderRadius: 8, padding: "8px 14px", fontFamily: "inherit", fontSize: 13, fontWeight: 700, cursor: "pointer", boxShadow: "0 2px 6px rgba(37,99,235,0.25)", transition: "all .15s" }}
+                                    onMouseEnter={e => { e.currentTarget.style.background = "#1d4ed8"; }}
+                                    onMouseLeave={e => { e.currentTarget.style.background = "#2563c4"; }}>
+                                    <Icon.Save /> Simpan
+                                </button>
+                            </div>
+                        </div>
                     </>
                 ) : (
                     <div style={{ padding: "60px 28px", overflowY: "auto", maxHeight: "65vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center" }}>
@@ -325,13 +325,13 @@ export default function ManajemenProgram() {
         return mf && ms;
     });
 
-        const handleModalSubmit = async (id_position, competencies, status) => {
-            try {
-                await axios.post(`http://127.0.0.1:8000/api/programs/${id_position}/competencies`, { competencies, status }, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                showToast(`Kompetensi berhasil disimpan.`);
-                setModalOpen(false);
+    const handleModalSubmit = async (id_position, competencies, status) => {
+        try {
+            await axios.post(`http://127.0.0.1:8000/api/programs/${id_position}/competencies`, { competencies, status }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            showToast(`Kompetensi berhasil disimpan.`);
+            setModalOpen(false);
             setSelectedProg(null);
             fetchPrograms();
         } catch (err) {
@@ -397,10 +397,10 @@ export default function ManajemenProgram() {
                 }}
             >
                 {/* Logo */}
-                <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "4px 6px 20px" }}>
-                    <img src="/assets/images/logo.png" alt="EarlyPath" style={{ height: "34px", objectFit: "contain", flexShrink: 0 }} />
+                <Link to="/" style={{ display: "flex", alignItems: "center", gap: "10px", padding: "4px 6px 20px", textDecoration: "none" }}>
+                    <img src="/assets/images/logo.png" alt="EarlyPath" style={{ height: "46px", objectFit: "contain", flexShrink: 0 }} />
                     <span style={{ fontSize: "15px", fontWeight: "800", color: "#fff", letterSpacing: "-0.3px", whiteSpace: "nowrap" }}>EarlyPath</span>
-                </div>
+                </Link>
 
                 {/* Nav */}
                 <p style={{ fontSize: "10px", fontWeight: "700", color: "rgba(255,255,255,0.25)", letterSpacing: "1.2px", padding: "6px 14px 4px", textTransform: "uppercase" }}>

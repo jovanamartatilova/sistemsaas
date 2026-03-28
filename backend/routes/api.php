@@ -31,6 +31,8 @@ Route::post('/auth/activate-account', [AuthController::class, 'activateAccount']
 Route::post('/auth/login-staff', [AuthController::class, 'loginStaff']);
 Route::get('/auth/check-activation-token/{token}', [AuthController::class, 'checkActivationToken']);
 
+use App\Http\Controllers\SubmissionController;
+
 // Protected auth routes
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/auth/profile', [AuthController::class, 'profile']);
@@ -38,6 +40,7 @@ Route::middleware('auth:sanctum')->group(function () {
   
     // Candidate
     Route::get('/c/{slug}/my-submission', [CompanyPublicController::class, 'mySubmission']);
+    Route::post('/c/{slug}/apply', [SubmissionController::class, 'apply']);
 
     // Vacancy Management
     Route::get('/vacancies', [VacancyController::class, 'index']);

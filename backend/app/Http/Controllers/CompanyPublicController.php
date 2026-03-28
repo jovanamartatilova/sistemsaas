@@ -17,7 +17,7 @@ public function vacancies($slug)
 {
     $company = Company::where('slug', $slug)->firstOrFail();
     $vacancies = \App\Models\Vacancy::where('id_company', $company->id_company)
-        ->where('status', 'active')
+        ->where('status', 'published')
         ->with('positions')
         ->get();
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuthStore } from "../stores/authStore";
 import { authService } from "../api/authService";
 import axios from "axios";
@@ -408,10 +408,10 @@ export default function DashboardPage() {
                 }}
             >
                 {/* Logo */}
-                <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "4px 6px 20px" }}>
-                    <img src="/assets/images/logo.png" alt="EarlyPath" style={{ height: "34px", objectFit: "contain", flexShrink: 0 }} />
+                <Link to="/" style={{ display: "flex", alignItems: "center", gap: "10px", padding: "4px 6px 20px", textDecoration: "none" }}>
+                    <img src="/assets/images/logo.png" alt="EarlyPath" style={{ height: "46px", objectFit: "contain", flexShrink: 0 }} />
                     <span style={{ fontSize: "15px", fontWeight: "800", color: "#fff", letterSpacing: "-0.3px", whiteSpace: "nowrap" }}>EarlyPath</span>
-                </div>
+                </Link>
 
                 {/* Nav */}
                 <p style={{ fontSize: "10px", fontWeight: "700", color: "rgba(255,255,255,0.25)", letterSpacing: "1.2px", padding: "6px 14px 4px", textTransform: "uppercase" }}>

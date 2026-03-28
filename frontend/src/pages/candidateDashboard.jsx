@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 
 const MENU = [
   {
@@ -208,16 +208,16 @@ export default function CandidateDashboard() {
           }}
         >
           {/* Logo */}
-          <div className="px-5 py-5 flex items-center gap-3"
-            style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-            <img src="/assets/images/logo.png" alt="Logo" className="h-7 object-contain" />
+          <Link to="/" className="px-5 py-5 flex items-center gap-3 decoration-none"
+            style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", textDecoration: "none" }}>
+            <img src="/assets/images/logo.png" alt="Logo" className="h-12 object-contain" />
             <div>
               <p className="text-xs font-semibold text-white leading-none">EarlyPath</p>
               <p className="text-xs mt-0.5 truncate" style={{ color: "rgba(255,255,255,0.35)", maxWidth: "130px" }}>
                 {company?.name}
               </p>
             </div>
-          </div>
+          </Link>
 
           {/* Nav */}
           <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
@@ -313,8 +313,8 @@ export default function CandidateDashboard() {
           </div>
 
           {/* Company logo kanan */}
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center"
+          <Link to={`/c/${slug}`} className="flex items-center gap-3" style={{ textDecoration: "none" }}>
+            <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center transition-all hover:opacity-80"
               style={{ background: "rgba(74,158,255,0.12)", border: "1px solid rgba(74,158,255,0.2)" }}>
               {company?.logo_path ? (
                 <img src={`http://localhost:8000/storage/${company.logo_path}`} alt="" className="w-full h-full object-cover" />
@@ -324,7 +324,7 @@ export default function CandidateDashboard() {
                 </span>
               )}
             </div>
-          </div>
+          </Link>
         </header>
 
         {/* Page content */}
