@@ -99,7 +99,6 @@ function today() {
   return new Date().toLocaleDateString("en-US", { weekday: "long", day: "numeric", month: "short", year: "numeric" });
 }
 
-// ── FIX: shared TH style — verticalAlign + whiteSpace supaya header tidak miring
 const TH = {
   padding: "10px 16px",
   textAlign: "left",
@@ -154,8 +153,6 @@ function TenantDetailModal({ tenant, onClose }) {
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(10,22,40,0.5)", zIndex: 400, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
       <div style={{ background: "#fff", borderRadius: "16px", width: "100%", maxWidth: "480px", boxShadow: "0 24px 64px rgba(0,0,0,0.2)", overflow: "hidden" }}>
-        
-        {/* Header */}
         <div style={{ padding: "20px 24px 16px", borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", gap: "14px" }}>
           <div style={{ width: "44px", height: "44px", borderRadius: "11px", background: "#eff6ff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", fontWeight: "800", color: "#3b82f6", flexShrink: 0 }}>
             {initials(tenant.name)}
@@ -171,8 +168,6 @@ function TenantDetailModal({ tenant, onClose }) {
             <IC.Close />
           </button>
         </div>
-
-        {/* Company Info */}
         <div style={{ padding: "4px 24px 8px" }}>
           <Row icon={<IC.Mail />}   label="EMAIL"   value={tenant.email} />
           <Row icon={<IC.MapPin />} label="ADDRESS" value={tenant.address} />
@@ -182,13 +177,11 @@ function TenantDetailModal({ tenant, onClose }) {
             <div style={{ fontSize: "13px", color: "#475569", lineHeight: "1.6" }}>{tenant.description || "No description provided."}</div>
           </div>
         </div>
-
-        {/* Stats */}
         <div style={{ padding: "14px 24px", background: "#f8fafc", display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px" }}>
           {[
-            { label: "Total Users",     value: tenant.users_count ?? 0,     color: "#3b82f6" },
-            { label: "Total Vacancies", value: tenant.vacancies_count ?? 0,  color: "#10b981" },
-            { label: "Registered",      value: tenant.created_at ?? "—",     color: "#f59e0b", small: true },
+            { label: "Total Users",     value: tenant.users_count ?? 0,    color: "#3b82f6" },
+            { label: "Total Vacancies", value: tenant.vacancies_count ?? 0, color: "#10b981" },
+            { label: "Registered",      value: tenant.created_at ?? "—",    color: "#f59e0b", small: true },
           ].map(s => (
             <div key={s.label} style={{ background: "#fff", borderRadius: "10px", padding: "10px 12px", border: "1px solid #f1f5f9", textAlign: "center" }}>
               <div style={{ fontSize: s.small ? "11px" : "20px", fontWeight: "800", color: s.color }}>{s.value}</div>
@@ -196,8 +189,6 @@ function TenantDetailModal({ tenant, onClose }) {
             </div>
           ))}
         </div>
-
-        {/* Footer */}
         <div style={{ padding: "14px 24px", borderTop: "1px solid #f1f5f9", display: "flex", justifyContent: "flex-end" }}>
           <button onClick={onClose} style={{ padding: "9px 22px", borderRadius: "9px", border: "1px solid #e2e8f0", background: "#fff", fontSize: "13px", fontWeight: "700", color: "#64748b", cursor: "pointer" }}>Close</button>
         </div>
@@ -407,7 +398,7 @@ function TenantManagementPage() {
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [selectedTenant, setSelectedTenant] = useState(null); // untuk modal Detail
+  const [selectedTenant, setSelectedTenant] = useState(null);
 
   const fetchTenants = () => {
     setLoading(true); setError(null);
@@ -468,7 +459,6 @@ function TenantManagementPage() {
             <div style={{ padding: "12px 18px", borderBottom: "1px solid #f1f5f9" }}>
               <span style={{ fontSize: "12px", color: "#64748b" }}>Showing <strong style={{ color: "#1e293b" }}>{tenants.length}</strong> tenants</span>
             </div>
-            {/* FIX: pakai TH style + hapus tableLayout fixed */}
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ background: "#f8fafc" }}>
@@ -506,7 +496,6 @@ function TenantManagementPage() {
                       </td>
                       <td style={{ padding: "12px 16px", verticalAlign: "middle" }}>
                         <div style={{ display: "flex", gap: "6px" }}>
-                          {/* Tombol Detail — buka modal */}
                           <button onClick={() => setSelectedTenant(t)}
                             style={{ padding: "4px 12px", borderRadius: "7px", border: "1px solid #e2e8f0", background: "#fff", fontSize: "11.5px", fontWeight: "600", color: "#475569", cursor: "pointer" }}
                             onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
@@ -531,7 +520,6 @@ function TenantManagementPage() {
         )}
       </div>
 
-      {/* Detail Modal */}
       {selectedTenant && <TenantDetailModal tenant={selectedTenant} onClose={() => setSelectedTenant(null)} />}
     </main>
   );
@@ -576,7 +564,8 @@ function UserManagementPage() {
       <div style={{ background: "#fff", borderRadius: "12px", padding: "14px 18px", marginBottom: "16px", display: "flex", gap: "12px", alignItems: "center", boxShadow: "0 1px 3px rgba(0,0,0,0.04)", flexWrap: "wrap" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "7px", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "9px", padding: "7px 12px", flex: "1 1 220px" }}>
           <IC.Search />
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search name or email..." style={{ border: "none", background: "transparent", outline: "none", fontSize: "12.5px", color: "#64748b", width: "100%" }} />
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search name or email..."
+            style={{ border: "none", background: "transparent", outline: "none", fontSize: "12.5px", color: "#64748b", width: "100%" }} />
         </div>
         <div style={{ position: "relative" }}>
           <select value={roleFilter} onChange={e => setRoleFilter(e.target.value)}
@@ -603,48 +592,12 @@ function UserManagementPage() {
             <div style={{ padding: "12px 18px", borderBottom: "1px solid #f1f5f9" }}>
               <span style={{ fontSize: "12px", color: "#64748b" }}>Showing <strong style={{ color: "#1e293b" }}>{users.length}</strong> users</span>
             </div>
-            {/* FIX: pakai TH style + hapus tableLayout fixed */}
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ background: "#f8fafc" }}>
                   {["USER", "ROLE", "COMPANY", "PHONE", "REGISTERED"].map(h => (
                     <th key={h} style={TH}>{h}</th>
                   ))}
-        <div style={{ padding: "12px 18px", borderBottom: "1px solid #f1f5f9" }}>
-          <span style={{ fontSize: "12px", color: "#64748b" }}>Menampilkan <strong style={{ color: "#1e293b" }}>{filtered.length}</strong> dari <strong style={{ color: "#1e293b" }}>{USERS.length}</strong> user</span>
-        </div>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead>
-            <tr style={{ background: "#f8fafc" }}>
-              {["USER", "ROLE", "TENANT", "NO. HP", "UNIVERSITAS", "TERDAFTAR"].map(h => (
-                <th key={h} style={{ padding: "10px 16px", textAlign: "left", fontSize: "10.5px", fontWeight: "700", color: "#94a3b8", letterSpacing: "0.5px", borderBottom: "1px solid #f1f5f9" }}>{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((u, i) => {
-              const rs = roleStyle[u.role] || { bg: "#f8fafc", color: "#475569", border: "#e2e8f0" };
-              const ac = avatarColors[i % avatarColors.length];
-              return (
-                <tr key={u.id} style={{ borderBottom: "1px solid #f8fafc", transition: "background 0.15s", cursor: "pointer" }}
-                  onMouseEnter={e => e.currentTarget.style.background = "#fafbfc"}
-                  onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-                  <td style={{ padding: "11px 16px" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                      <div style={{ width: "30px", height: "30px", borderRadius: "8px", background: `${ac}18`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10.5px", fontWeight: "800", color: ac, flexShrink: 0 }}>{initials(u.name)}</div>
-                      <div>
-                        <div style={{ fontSize: "13px", fontWeight: "600", color: "#1e293b" }}>{u.name}</div>
-                        <div style={{ fontSize: "11px", color: "#94a3b8" }}>{u.email}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td style={{ padding: "11px 16px" }}>
-                    <span style={{ background: rs.bg, color: rs.color, border: `1px solid ${rs.border}`, borderRadius: "6px", fontSize: "11.5px", fontWeight: "700", padding: "3px 9px" }}>{u.role}</span>
-                  </td>
-                  <td style={{ padding: "11px 16px", fontSize: "12.5px", color: "#475569" }}>{u.tenant}</td>
-                  <td style={{ padding: "11px 16px", fontSize: "12.5px", color: "#475569", fontFamily: "'Poppins', sans-serif" }}>{u.phone}</td>
-                  <td style={{ padding: "11px 16px", fontSize: "12.5px", color: u.university === "—" ? "#cbd5e1" : "#475569" }}>{u.university}</td>
-                  <td style={{ padding: "11px 16px", fontSize: "12px", color: "#64748b" }}>{u.registered}</td>
                 </tr>
               </thead>
               <tbody>
@@ -704,9 +657,9 @@ export default function SuperAdminPages() {
   };
 
   const pageConfig = {
-    dashboard: { title: "Dashboard",        sub: "Overview" },
-    tenant:    { title: "Tenant Management", sub: "Tenant List" },
-    users:     { title: "User Management",   sub: "User List" },
+    dashboard: { title: "Dashboard",         sub: "Overview" },
+    tenant:    { title: "Tenant Management",  sub: "Tenant List" },
+    users:     { title: "User Management",    sub: "User List" },
   };
 
   const DashboardLayout = ({ children, pageTitle }) => (
@@ -717,15 +670,6 @@ export default function SuperAdminPages() {
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 99px; }
         @keyframes spin { to { transform: rotate(360deg); } }
-  return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#f1f5f9", fontFamily: "'Poppins', sans-serif" }}>
-      <style>{`
-        * {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  font-family: 'Poppins', sans-serif;
-}
       `}</style>
       <Sidebar onLogout={() => setLogoutModal(true)} />
       <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
@@ -748,17 +692,13 @@ export default function SuperAdminPages() {
     </div>
   );
 
-
   return (
     <Routes>
-      <Route path="/login" element={isLoggedIn ? <Navigate to="/superadmin/dashboard" replace /> : <LoginForm onLoginSuccess={() => { setIsLoggedIn(true); navigate("/superadmin/dashboard"); }} />} />
-      <Route path="/"         element={isLoggedIn ? <DashboardLayout pageTitle={pageConfig.dashboard}><DashboardPage /></DashboardLayout>        : <Navigate to="/superadmin/login" replace />} />
+      <Route path="/login"     element={isLoggedIn ? <Navigate to="/superadmin/dashboard" replace /> : <LoginForm onLoginSuccess={() => { setIsLoggedIn(true); navigate("/superadmin/dashboard"); }} />} />
+      <Route path="/"          element={isLoggedIn ? <DashboardLayout pageTitle={pageConfig.dashboard}><DashboardPage /></DashboardLayout>       : <Navigate to="/superadmin/login" replace />} />
       <Route path="/dashboard" element={isLoggedIn ? <DashboardLayout pageTitle={pageConfig.dashboard}><DashboardPage /></DashboardLayout>       : <Navigate to="/superadmin/login" replace />} />
       <Route path="/tenants"   element={isLoggedIn ? <DashboardLayout pageTitle={pageConfig.tenant}><TenantManagementPage /></DashboardLayout>   : <Navigate to="/superadmin/login" replace />} />
       <Route path="/users"     element={isLoggedIn ? <DashboardLayout pageTitle={pageConfig.users}><UserManagementPage /></DashboardLayout>      : <Navigate to="/superadmin/login" replace />} />
     </Routes>
   );
 }
-
-}
-
