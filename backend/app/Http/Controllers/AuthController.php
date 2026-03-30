@@ -251,6 +251,45 @@ public function registerCandidate(Request $request, $slug)
     }
 
     /**
+     * Login SuperAdmin with email and password
+     */
+    public function loginSuperAdmin(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'email' => 'required|email',
+                'password' => 'required|string',
+            ]);
+
+            $user = User::where('email', $validated['email'])
+    ->where('role', 'super_admin')
+    ->first();
+
+            if (!$user || !Hash::check($validated['password'], $user->password)) {
+                return response()->json(['message' => 'Email or password is incorrect'], 401);
+            }
+
+            $token = $user->createToken('superadmin_token')->plainTextToken;
+
+            return response()->json([
+                'message' => 'Login successful',
+                'user' => [
+                    'id' => $user->id_user,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'role' => $user->role,
+                ],
+                'token' => $token,
+            ], 200);
+
+        } catch (ValidationException $e) {
+            return response()->json(['message' => 'Validation failed', 'errors' => $e->errors()], 422);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Login failed', 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
      * Logout user
      */
     public function logout(Request $request)
@@ -587,6 +626,8 @@ public function registerCandidate(Request $request, $slug)
             return response()->json(['message' => 'An error occurred', 'error' => $e->getMessage()], 500);
         }
     }
+
+
 
     /**
      * Login HR/Mentor

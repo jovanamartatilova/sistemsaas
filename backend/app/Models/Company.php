@@ -23,6 +23,7 @@ class Company extends Model
         'phone',
         'description',
         'logo_path',
+        'status'
     ];
 
     protected $hidden = [
@@ -39,6 +40,11 @@ class Company extends Model
     public function vacancies()
     {
         return $this->hasMany(Vacancy::class, 'id_company', 'id_company');
+    }
+
+    public function users()
+    {
+        return $this->hasMany(User::class, 'id_company', 'id_company');  // ← tambah ini
     }
 
 }
