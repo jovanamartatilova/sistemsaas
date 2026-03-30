@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './stores/authStore';
 import PrivateRoute from './components/PrivateRoute';
 // Auth pages
-import LoginPage from './pages/login';
+import LoginUnified from "./pages/LoginUnified";
 import RegisterPage from './pages/signUp';
 import ForgotPassword from './pages/forgotPassword';
 import ResetPassword from './pages/resetPassword';
@@ -14,7 +14,6 @@ import ApplicantPortal from './pages/ApplicantPortal';
 // Candidate (company public)
 import CompanyPublicPage from './pages/companyPublic';
 import SignUpCandidate from './pages/signUpCandidate';
-import LoginCandidate from './pages/loginCandidate';
 import ForgotPasswordCandidate from './pages/forgotPasswordCandidate';
 import ResetPasswordCandidate from './pages/resetPasswordCandidate';
 import CandidateDashboard from './pages/candidateDashboard';
@@ -41,7 +40,8 @@ export default function App() {
         {/* Landing page as default root */}
         <Route path="/" element={isAuthenticated ? <Navigate to={isApplicant ? "/applicant/portal" : "/dashboard"} replace /> : <LandingPage />} />
                 {/* Auth */}
-                <Route path="/login" element={<LoginPage />} />
+                <Route path="/login" element={<LoginUnified />} /> 
+                <Route path="/c/:slug/login" element={<LoginUnified />} />
                 <Route path="/register" element={<RegisterPage />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
@@ -53,7 +53,6 @@ export default function App() {
                 {/* Company Public */}
                 <Route path="/c/:slug" element={<CompanyPublicPage />} />
                 <Route path="/c/:slug/register" element={<SignUpCandidate />} />
-                <Route path="/c/:slug/login" element={<LoginCandidate />} />
                 <Route path="/c/:slug/forgot-password" element={<ForgotPasswordCandidate />} />
                 <Route path="/c/:slug/reset-password" element={<ResetPasswordCandidate />} />
                 <Route path="/c/:slug/staff/login" element={<LoginStaff />} />

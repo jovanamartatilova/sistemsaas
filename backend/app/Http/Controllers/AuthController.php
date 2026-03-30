@@ -95,7 +95,7 @@ if ($request->hasFile('logo')) {
     $token = $company->createToken('company_token')->plainTextToken;
 
     return response()->json([
-        'message' => 'Perusahaan berhasil terdaftar',
+        'message' => 'Registration Company Successful',
         'company' => $company,
         'token'   => $token,
         'public_url' => '/c/' . $slug, // kirim ke frontend
@@ -135,7 +135,7 @@ public function registerCandidate(Request $request, $slug)
     $token = $user->createToken('candidate_token')->plainTextToken;
 
     return response()->json([
-        'message' => 'Akun berhasil dibuat',
+        'message' => 'Account successfully created',
         'user'    => $user,
         'company' => $company,
         'token'   => $token,
@@ -574,7 +574,7 @@ public function activateAccount(Request $request)
         $token = $user->createToken('staff_token')->plainTextToken;
 
         return response()->json([
-            'message' => 'Akun berhasil diaktifkan',
+            'message' => 'Account successfully activated',
             'user'    => $user,
             'company' => $company,
             'token'   => $token,
