@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class VacancyController extends Controller
@@ -29,7 +30,7 @@ class VacancyController extends Controller
      */
     public function index(Request $request)
     {
-        $vacancies = Vacancy::with('positions')
+        $vacancies = Vacancy::with(['positions', 'submissions.user', 'submissions.position'])
             ->where('id_company', $request->user()->id_company)
             ->get();
 
@@ -57,33 +58,44 @@ class VacancyController extends Controller
 
         try {
             $validated = $request->validate([
-            'positions' => 'required|array|min:1',
-            'positions.*' => 'required|string|max:100',
+                'positions' => 'required|array|min:1',
+                'positions.*.name' => 'required|string|max:100',
+                'positions.*.quota' => 'required|integer|min:0',
             'title' => 'required|string|max:100',
-            'description' => 'required|string|max:255',
+            'description' => 'required|string',
             'city' => 'required|string|max:50',
             'province' => 'required|string|max:50',
             'address' => 'required|string|max:100',
-            'duration_months' => 'required|integer',
             'type' => 'required|string|max:20',
-            'deadline' => 'required|string|max:30', // From frontend format
+            'deadline' => 'required|string|max:30', 
+            'start_date' => 'required|string|max:30',
+            'end_date' => 'required|string|max:30',
             'payment_type' => 'required|string|max:15',
             'batch' => 'required|integer',
-            'quota' => 'required|integer',
             'status' => 'required|string|in:draft,published,closed',
             'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
         ]);
 
-        // Handle Positions (create each as a row in positions table as requested)
+        $photoPath = null;
+        $formattedDeadline = null;
+        $formattedStartDate = null;
+        $formattedEndDate = null;
+
+        // Handle Positions (create each as a row in positions table with its own quota)
         $positionIds = [];
-        foreach ($validated['positions'] as $posName) {
-            $position = Position::firstOrCreate(
-                ['name' => $posName],
-                ['id_position' => 'POS' . strtoupper(Str::random(7))]
-            );
+        foreach ($validated['positions'] as $posData) {
+            $posName = is_array($posData) ? ($posData['name'] ?? '') : $posData;
+            $posQuota = is_array($posData) ? (int)($posData['quota'] ?? 0) : 0;
+            
+            $position = Position::create([
+                'id_position' => 'POS' . strtoupper(Str::random(7)),
+                'name' => $posName,
+                'quota' => $posQuota,
+            ]);
             $positionIds[] = $position->id_position;
         }
 
+        // Handle Photo Upload
         // Handle Photo Upload
         $photoPath = null;
         if ($request->hasFile('photo')) {
@@ -99,11 +111,18 @@ class VacancyController extends Controller
             }
         }
 
-        // Format Deadline: '23 Mar 2026' -> '2026-03-23'
+        // Format Dates
         try {
             $formattedDeadline = Carbon::parse($validated['deadline'])->format('Y-m-d');
+            $formattedStartDate = Carbon::parse($validated['start_date'])->format('Y-m-d');
+            $formattedEndDate = Carbon::parse($validated['end_date'])->format('Y-m-d');
         } catch (\Exception $e) {
-            $formattedDeadline = $validated['deadline']; // Fallback
+            Log::error('Date parsing failed:', ['deadline' => $validated['deadline'], 'start' => $validated['start_date'], 'end' => $validated['end_date']]);
+            return response()->json([
+                'errors' => [
+                    'dates' => ['Format tanggal tidak valid. Silakan gunakan format yang benar.']
+                ]
+            ], 422);
         }
 
         // Combine Location: (kota, provinsi, sama alamat lengkap) -> kolom lokasi
@@ -116,12 +135,12 @@ class VacancyController extends Controller
             'description' => $validated['description'],
             'photo' => $photoPath,
             'location' => $location,
-            'duration_months' => $validated['duration_months'],
             'type' => $validated['type'],
             'deadline' => $formattedDeadline,
+            'start_date' => $formattedStartDate,
+            'end_date' => $formattedEndDate,
             'payment_type' => $validated['payment_type'],
             'batch' => $validated['batch'],
-            'quota' => $validated['quota'],
             'status' => $validated['status'],
             'publish_date' => $validated['status'] === 'published' ? now() : null,
         ]);
@@ -150,18 +169,19 @@ class VacancyController extends Controller
 
         $validated = $request->validate([
             'positions' => 'sometimes|array',
-            'positions.*' => 'sometimes|string|max:100',
+            'positions.*.name' => 'required_with:positions|string|max:100',
+            'positions.*.quota' => 'required_with:positions|integer|min:0',
             'title' => 'sometimes|string|max:100',
-            'description' => 'sometimes|string|max:255',
+            'description' => 'sometimes|string',
             'city' => 'sometimes|string|max:50',
             'province' => 'sometimes|string|max:50',
             'address' => 'sometimes|string|max:100',
-            'duration_months' => 'sometimes|integer',
             'type' => 'sometimes|string|max:20',
             'deadline' => 'sometimes|string|max:30',
+            'start_date' => 'sometimes|string|max:30',
+            'end_date' => 'sometimes|string|max:30',
             'payment_type' => 'sometimes|string|max:15',
             'batch' => 'sometimes|integer',
-            'quota' => 'sometimes|integer',
             'status' => 'sometimes|string|in:draft,published,closed',
             'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
         ]);
@@ -174,11 +194,23 @@ class VacancyController extends Controller
             $validated['photo'] = $request->file('photo')->store('vacancies', 'public');
         }
 
-        // Handle Deadline
-        if (isset($validated['deadline'])) {
-            try {
+        // Handle Dates
+        try {
+            if (isset($validated['deadline'])) {
                 $validated['deadline'] = Carbon::parse($validated['deadline'])->format('Y-m-d');
-            } catch (\Exception $e) {}
+            }
+            if (isset($validated['start_date'])) {
+                $validated['start_date'] = Carbon::parse($validated['start_date'])->format('Y-m-d');
+            }
+            if (isset($validated['end_date'])) {
+                $validated['end_date'] = Carbon::parse($validated['end_date'])->format('Y-m-d');
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'errors' => [
+                    'dates' => ['Format tanggal tidak valid. Silakan gunakan format yang benar.']
+                ]
+            ], 422);
         }
 
         // Handle Location
@@ -190,16 +222,36 @@ class VacancyController extends Controller
         }
 
         // Handle Position change
-        if (isset($validated['positions']) && count($validated['positions']) > 0) {
-            $positionIds = [];
-            foreach ($validated['positions'] as $posName) {
-                $position = Position::firstOrCreate(
-                    ['name' => $posName],
-                    ['id_position' => 'POS' . strtoupper(Str::random(7))]
-                );
-                $positionIds[] = $position->id_position;
+        if (isset($validated['positions'])) {
+            // Get old positions to cleanup
+            $oldPositionIds = $vacancy->positions()->pluck('positions.id_position')->toArray();
+            
+            // Detach pivot
+            $vacancy->positions()->detach();
+
+            // Delete old position records if they aren't linked to other vacancies
+            // (In our new logic they should only belong to this one)
+            foreach ($oldPositionIds as $idPos) {
+                $count = DB::table('vacancy_positions')->where('id_position', $idPos)->count();
+                if ($count === 0) {
+                    Position::where('id_position', $idPos)->delete();
+                }
             }
-            $vacancy->positions()->sync($positionIds);
+
+            // Create new positions
+            $newPositionIds = [];
+            foreach ($validated['positions'] as $posData) {
+                $posName = is_array($posData) ? ($posData['name'] ?? '') : $posData;
+                $posQuota = is_array($posData) ? (int)($posData['quota'] ?? 0) : 0;
+
+                $newPos = Position::create([
+                    'id_position' => 'POS' . strtoupper(Str::random(7)),
+                    'name' => $posName,
+                    'quota' => $posQuota,
+                ]);
+                $newPositionIds[] = $newPos->id_position;
+            }
+            $vacancy->positions()->attach($newPositionIds);
         }
 
         if (isset($validated['status']) && $validated['status'] === 'published' && !$vacancy->publish_date) {

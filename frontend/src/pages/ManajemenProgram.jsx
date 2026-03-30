@@ -41,7 +41,17 @@ const Icon = {
     Logout: () => <svg width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>,
     Edit: () => <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>,
     Trash: () => <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>,
-    Lock: () => <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+    Lock: () => <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>,
+    ChevronRight: () => <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6" /></svg>,
+    FileText: () => <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg>
+};
+
+const formatDate = (dateStr) => {
+    if (!dateStr) return "-";
+    const MONTHS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+    const [y, m, d] = dateStr.split("-");
+    const month = MONTHS[parseInt(m) - 1];
+    return `${parseInt(d)} ${month} ${y}`;
 };
 
 function Toast({ msg, type, visible }) {
@@ -101,9 +111,19 @@ function ProgramCard({ program, onEdit, onDelete }) {
                     {program.vacancy_title} - Batch {program.vacancy_batch}
                 </p>
 
-                <div style={{ marginTop: "auto", display: "flex", alignItems: "center", gap: 8, fontSize: 14, color: "#9ca3af", fontStyle: "italic" }}>
-                    <Icon.Cal />
-                    <span>{program.vacancy_deadline} - {program.vacancy_deadline} ({program.vacancy_duration_months} Bulan)</span>
+                <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: 10 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13.5, color: "#64748b", fontStyle: "italic" }}>
+                        <Icon.Cal />
+                        <span>{formatDate(program.vacancy_start_date || program.vacancy_deadline)} - {formatDate(program.vacancy_end_date || program.vacancy_deadline)}</span>
+                    </div>
+                    <div style={{ display: "flex", gap: 8 }}>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: "#2563eb", background: "#eff6ff", padding: "4px 10px", borderRadius: 8, border: "1px solid #dbeafe" }}>
+                            {program.position_quota || 0} Kuota Posisi
+                        </span>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: "#64748b", background: "#f8fafc", padding: "4px 10px", borderRadius: 8, border: "1px solid #e2e8f0" }}>
+                            {program.applicant_count || 0} Pelamar
+                        </span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -227,24 +247,89 @@ function ProgramModal({ open, program, onClose, onSubmit }) {
                         </div>
                     </>
                 ) : (
-                    <div style={{ padding: "60px 28px", overflowY: "auto", maxHeight: "65vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center" }}>
-                        <div style={{ width: 80, height: 80, background: "#f1f5f9", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", color: "#94a3b8", marginBottom: 20 }}>
-                            <Icon.Users />
-                        </div>
-                        {program?.vacancy_status === "draft" ? (
-                            <>
-                                <h3 style={{ fontSize: 18, fontWeight: 800, color: "#0f172a", marginBottom: 10 }}>Belum Bisa Menerima Pelamar</h3>
-                                <p style={{ fontSize: 14, color: "#64748b", maxWidth: 340, lineHeight: 1.6, textAlign: "center" }}>Silakan <b>Publish</b> lowongan ini terlebih dahulu agar calon peserta dapat melihat dan melamar posisi ini.</p>
-                            </>
+                    <div style={{ padding: "24px 28px", overflowY: "auto", maxHeight: "65vh" }}>
+                        {(!program?.applicants || program.applicants.length === 0) ? (
+                            <div style={{ padding: "40px 0", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
+                                <div style={{ width: 80, height: 80, background: "#f1f5f9", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", color: "#94a3b8", marginBottom: 20 }}>
+                                    <Icon.Users />
+                                </div>
+                                {program?.vacancy_status === "draft" ? (
+                                    <>
+                                        <h3 style={{ fontSize: 18, fontWeight: 800, color: "#0f172a", marginBottom: 10 }}>Belum Bisa Menerima Pelamar</h3>
+                                        <p style={{ fontSize: 14, color: "#64748b", maxWidth: 340, lineHeight: 1.6 }}>Silakan <b>Publish</b> lowongan ini terlebih dahulu agar calon peserta dapat melihat dan melamar posisi ini.</p>
+                                    </>
+                                ) : (
+                                    <>
+                                        <h3 style={{ fontSize: 18, fontWeight: 800, color: "#0f172a", marginBottom: 10 }}>Belum Ada Pelamar</h3>
+                                        <p style={{ fontSize: 14, color: "#64748b", maxWidth: 340, lineHeight: 1.6 }}>Saat ini belum ada kandidat yang mengirimkan lamaran ke posisi ini.</p>
+                                    </>
+                                )}
+                            </div>
                         ) : (
-                            <>
-                                <h3 style={{ fontSize: 18, fontWeight: 800, color: "#0f172a", marginBottom: 10 }}>Belum Ada Pelamar</h3>
-                                <p style={{ fontSize: 14, color: "#64748b", maxWidth: 340, lineHeight: 1.6, textAlign: "center" }}>Lowongan ini sudah dipublish, namun saat ini belum ada kandidat yang mengirimkan lamaran ke posisi manapun.</p>
-                            </>
+                            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                                {program.applicants.map((sub, idx) => (
+                                    <ApplicantItem key={sub.id_submission || idx} sub={sub} />
+                                ))}
+                            </div>
                         )}
                     </div>
                 )}
             </div>
+        </div>
+    );
+}
+
+function ApplicantItem({ sub }) {
+    const [expanded, setExpanded] = useState(false);
+    const docBtn = { display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", border: "1px solid #e2e8f0", borderRadius: 8, background: "#fff", fontSize: 12, fontWeight: 600, color: "#475569", cursor: "pointer", transition: "all .15s", textDecoration: "none" };
+
+    return (
+        <div style={{ border: "1px solid #e2e8f0", borderRadius: 12, overflow: "hidden", background: expanded ? "#f8fafc" : "#fff", transition: "all .2s" }}>
+            <div onClick={() => setExpanded(!expanded)} style={{ padding: "14px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#eff6ff", color: "#3b82f6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 800 }}>
+                        {(sub.user?.name || "U").slice(0, 1).toUpperCase()}
+                    </div>
+                    <div style={{ textAlign: "left" }}>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>{sub.user?.name}</div>
+                        <div style={{ fontSize: 12, color: "#64748b" }}>Email: <span style={{ color: "#2563c4", fontWeight: 600 }}>{sub.user?.email || "-"}</span></div>
+                    </div>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 8px", borderRadius: 6, background: sub.status === "accepted" ? "#ecfdf5" : sub.status === "rejected" ? "#fef2f2" : "#fff7ed", color: sub.status === "accepted" ? "#059669" : sub.status === "rejected" ? "#dc2626" : "#c2410c", border: `1px solid ${sub.status === "accepted" ? "#10b98133" : sub.status === "rejected" ? "#ef444433" : "#f9731633"}`, textTransform: "capitalize" }}>
+                        {sub.status || "Pending"}
+                    </span>
+                    <div style={{ transform: expanded ? "rotate(90deg)" : "rotate(0deg)", transition: "0.2s", color: "#64748b" }}><Icon.ChevronRight /></div>
+                </div>
+            </div>
+            {expanded && (
+                <div style={{ padding: "0 20px 20px", marginTop: -4, textAlign: "left" }}>
+                    <div style={{ height: 1.5, background: "#e2e8f0", marginBottom: 16, opacity: 0.5 }} />
+                    <div style={{ fontSize: 12, fontWeight: 700, color: "#64748b", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.5px" }}>Dokumen Lamaran</div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                        {sub.cv_file && (
+                            <a href={`http://127.0.0.1:8000/storage/${sub.cv_file}`} target="_blank" rel="noopener noreferrer" style={docBtn} onMouseEnter={e => { e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.color = "#2563c4"; }} onMouseLeave={e => { e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.color = "#475569"; }}>
+                                <Icon.FileText /> CV / Resume
+                            </a>
+                        )}
+                        {sub.portfolio_file && (
+                            <a href={`http://127.0.0.1:8000/storage/${sub.portfolio_file}`} target="_blank" rel="noopener noreferrer" style={docBtn} onMouseEnter={e => { e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.color = "#2563c4"; }} onMouseLeave={e => { e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.color = "#475569"; }}>
+                                <Icon.FileText /> Portofolio
+                            </a>
+                        )}
+                        {sub.cover_letter_file && (
+                            <a href={`http://127.0.0.1:8000/storage/${sub.cover_letter_file}`} target="_blank" rel="noopener noreferrer" style={docBtn} onMouseEnter={e => { e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.color = "#2563c4"; }} onMouseLeave={e => { e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.color = "#475569"; }}>
+                                <Icon.FileText /> Surat Lamaran
+                            </a>
+                        )}
+                        {sub.institution_letter_file && (
+                            <a href={`http://127.0.0.1:8000/storage/${sub.institution_letter_file}`} target="_blank" rel="noopener noreferrer" style={docBtn} onMouseEnter={e => { e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.color = "#2563c4"; }} onMouseLeave={e => { e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.color = "#475569"; }}>
+                                <Icon.FileText /> Surat Pengantar
+                            </a>
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
@@ -368,9 +453,8 @@ export default function ManajemenProgram() {
     const TOPBAR_H = 56;
 
     return (
-        <div style={{ display: "flex", minHeight: "100vh", background: "#f8fafc", fontFamily: "'Plus Jakarta Sans','Inter',sans-serif" }}>
+        <div style={{ display: "flex", minHeight: "100vh", background: "#f8fafc", fontFamily: "'Poppins', sans-serif" }}>
             <style>{`
-                @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
                 * { box-sizing: border-box; }
                 ::-webkit-scrollbar { width: 5px; }
                 ::-webkit-scrollbar-track { background: transparent; }
