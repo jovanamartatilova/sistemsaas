@@ -1,5 +1,6 @@
 import { useNavigate, Link } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useAuthStore } from "../stores/authStore";
 
 // ── Minimal icons as inline SVG ─────────────────────────────────────────────
 const IconBriefcase = () => (
@@ -102,6 +103,23 @@ const IconDot = () => (
   <svg width="10" height="10" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5" /></svg>
 );
 
+const IconUser = () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
+    </svg>
+);
+const IconLayout = () => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" />
+        <rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" />
+    </svg>
+);
+const IconLogOut = ({ size = 18 }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" />
+    </svg>
+);
+
 // ── Data ─────────────────────────────────────────────────────────────────────
 const features = [
   {
@@ -180,6 +198,16 @@ const footerLinks = {
   Resources: ["Documentation", "API Reference", "Support", "Status"],
 };
 
+const formatDate = (dateStr) => {
+  if (!dateStr) return "-";
+  const MONTHS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+  const parts = String(dateStr).split("-");
+  if (parts.length !== 3) return dateStr;
+  const [y, m, d] = parts;
+  const month = MONTHS[parseInt(m) - 1];
+  return `${parseInt(d)} ${month} ${y}`;
+};
+
 // ── VacancyDetailModal ────────────────────────────────────────────────────────
 const VacancyDetailModal = ({ vacancy, onClose }) => {
   if (!vacancy) return null;
@@ -196,7 +224,7 @@ const VacancyDetailModal = ({ vacancy, onClose }) => {
         <div style={{ padding: "32px", textAlign: "left" }}>
           <p style={{ fontSize: "14px", fontWeight: "600", color: "#4a9eff", marginBottom: "8px" }}>{vacancy.company?.name}</p>
           <h2 style={{ fontSize: "28px", fontWeight: "800", color: "#fff", margin: "0 0 16px" }}>{vacancy.title}</h2>
-          
+
           <div style={{ marginBottom: "28px" }}>
             <h4 style={{ fontSize: "15px", fontWeight: "700", color: "rgba(255,255,255,0.9)", margin: "0 0 8px" }}>Deskripsi</h4>
             <div style={{ fontSize: "15px", color: "rgba(255,255,255,0.6)", lineHeight: "1.7", margin: 0, whiteSpace: "pre-wrap" }}>{vacancy.description}</div>
@@ -204,10 +232,13 @@ const VacancyDetailModal = ({ vacancy, onClose }) => {
 
           <div style={{ marginBottom: "28px" }}>
             <h4 style={{ fontSize: "15px", fontWeight: "700", color: "rgba(255,255,255,0.9)", margin: "0 0 8px" }}>Posisi yang Dibuka:</h4>
-            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
               {(vacancy.positions || []).map((p, idx) => (
-                <div key={idx} style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "15px", color: "rgba(255,255,255,0.6)" }}>
-                  <IconDot /> <span>{p.name || p}</span>
+                <div key={idx} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 12px", background: "rgba(255,255,255,0.03)", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.05)" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "15px", color: "rgba(255,255,255,0.8)" }}>
+                    <IconDot /> <span>{p.name || p}</span>
+                  </div>
+                  <span style={{ fontSize: "12px", fontWeight: "700", color: "#4a9eff", background: "rgba(74,158,255,0.1)", padding: "2px 8px", borderRadius: "6px" }}>{p.quota || 0} Kuota</span>
                 </div>
               ))}
             </div>
@@ -217,22 +248,29 @@ const VacancyDetailModal = ({ vacancy, onClose }) => {
             <div style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "14.5px", color: "rgba(255,255,255,0.7)" }}>
               <IconLocation /> <span>{vacancy.location || "Jakarta"}</span>
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "14.5px", color: "rgba(255,255,255,0.5)", fontStyle: "italic" }}>
-              <IconCal /> <span>{vacancy.deadline} - {vacancy.deadline} ({vacancy.duration_months} Bulan)</span>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: "12px", fontSize: "14.5px", color: "rgba(255,255,255,0.5)", fontStyle: "italic", textAlign: "left" }}>
+              <IconCal /> <span>{formatDate(vacancy.start_date || vacancy.deadline)} - {formatDate(vacancy.end_date || vacancy.deadline)}</span>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "14.5px", color: "#fb7185", fontWeight: "600" }}>
-              <IconDeadline /> <span>Pendaftaran Deadline: {vacancy.deadline}</span>
+              <IconDeadline /> <span>Pendaftaran Deadline: {formatDate(vacancy.deadline)}</span>
             </div>
           </div>
 
           <div style={{ display: "flex", gap: "10px", marginBottom: "40px" }}>
             <span style={{ fontSize: "11px", fontWeight: "700", textTransform: "capitalize", padding: "6px 14px", borderRadius: "8px", background: "rgba(74,158,255,0.1)", color: "#4a9eff" }}>{vacancy.type}</span>
             <span style={{ fontSize: "12px", fontWeight: "700", textTransform: "capitalize", padding: "6px 14px", borderRadius: "8px", background: "rgba(16,185,129,0.1)", color: "#10b981" }}>{vacancy.payment_type}</span>
-            <span style={{ fontSize: "11px", fontWeight: "700", background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.5)", padding: "6px 14px", borderRadius: "8px", marginLeft: "auto" }}>{vacancy.quota} Kuota</span>
+            <span style={{ fontSize: "11px", fontWeight: "700", background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.5)", padding: "6px 14px", borderRadius: "8px", marginLeft: "auto" }}>{vacancy.total_quota || 0} Total Kuota</span>
           </div>
 
           <button
-            onClick={() => navigate(`/register-applicant?vacancy_id=${vacancy.id_vacancy}`)}
+            onClick={() => {
+              const slug = vacancy.company?.slug || "";
+              if (slug) {
+                navigate(`/c/${slug}/register?vacancy_id=${vacancy.id_vacancy}`);
+              } else {
+                alert("Perusahaan belum lengkap profilnya.");
+              }
+            }}
             style={{ width: "100%", padding: "16px", background: "linear-gradient(135deg, #2d7dd2 0%, #4a9eff 100%)", border: "none", borderRadius: "12px", color: "#fff", fontSize: "16px", fontWeight: "700", cursor: "pointer", transition: "0.2s", boxShadow: "0 10px 15px -3px rgba(74,158,255,0.4)" }}
             onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"}
             onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}
@@ -254,6 +292,33 @@ export default function LandingPage() {
   const [vacancies, setVacancies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedVacancy, setSelectedVacancy] = useState(null);
+
+  const { isAuthenticated, logout } = useAuthStore();
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [logoutModalOpen, setLogoutModalOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  // Dashboard link logic
+  const getDashboardPath = () => {
+    const user = JSON.parse(localStorage.getItem("user"));
+    const company = JSON.parse(localStorage.getItem("company"));
+
+    if (user && user.role === 'candidate' && company) {
+      return `/c/${company.slug}/dashboard`;
+    }
+    return "/dashboard";
+  };
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
@@ -284,7 +349,7 @@ export default function LandingPage() {
       style={{
         background: "linear-gradient(180deg, #06101e 0%, #081828 100%)",
         minHeight: "100vh",
-        fontFamily: "'Inter', 'Segoe UI', sans-serif",
+        fontFamily: "'Poppins', sans-serif",
         color: "#e8eaf0",
         overflowX: "hidden",
       }}
@@ -311,9 +376,13 @@ export default function LandingPage() {
         }}
       >
         {/* Logo */}
-        <div style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer" }} onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
-          <img src="/assets/images/logo.png" alt="EarlyPath" style={{ height: "38px", objectFit: "contain" }} />
-        </div>
+        <Link
+          to="/"
+          style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", textDecoration: "none" }}
+        >
+          <img src="/assets/images/logo.png" alt="EarlyPath" style={{ height: "46px", objectFit: "contain" }} />
+          <span style={{ fontSize: 18, fontWeight: 800, color: "#fff", letterSpacing: "-0.5px" }}>EarlyPath</span>
+        </Link>
 
         {/* Desktop Nav Links */}
         <div style={{ display: "flex", alignItems: "center", gap: "32px" }} className="hidden-mobile">
@@ -338,55 +407,143 @@ export default function LandingPage() {
 
         {/* CTA Buttons */}
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }} className="hidden-mobile">
-          <button
-            onClick={() => navigate("/login")}
-            style={{
-              background: "transparent",
-              border: "1px solid rgba(255,255,255,0.2)",
-              color: "rgba(255,255,255,0.8)",
-              padding: "8px 20px",
-              borderRadius: "8px",
-              fontSize: "14px",
-              fontWeight: "500",
-              cursor: "pointer",
-              transition: "all 0.2s",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = "rgba(74,158,255,0.5)";
-              e.currentTarget.style.color = "#4a9eff";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)";
-              e.currentTarget.style.color = "rgba(255,255,255,0.8)";
-            }}
-          >
-            Sign In
-          </button>
-          <button
-            onClick={() => navigate("/register")}
-            style={{
-              background: "linear-gradient(135deg, #2d7dd2 0%, #4a9eff 100%)",
-              border: "none",
-              color: "#fff",
-              padding: "8px 20px",
-              borderRadius: "8px",
-              fontSize: "14px",
-              fontWeight: "600",
-              cursor: "pointer",
-              boxShadow: "0 4px 16px rgba(74,158,255,0.35)",
-              transition: "all 0.2s",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "translateY(-1px)";
-              e.currentTarget.style.boxShadow = "0 6px 24px rgba(74,158,255,0.5)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow = "0 4px 16px rgba(74,158,255,0.35)";
-            }}
-          >
-            Get Started
-          </button>
+          {!isAuthenticated ? (
+            <>
+              <button
+                onClick={() => navigate("/login")}
+                style={{
+                  background: "transparent",
+                  border: "1px solid rgba(255,255,255,0.2)",
+                  color: "rgba(255,255,255,0.8)",
+                  padding: "8px 20px",
+                  borderRadius: "8px",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = "rgba(74,158,255,0.5)";
+                  e.currentTarget.style.color = "#4a9eff";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)";
+                  e.currentTarget.style.color = "rgba(255,255,255,0.8)";
+                }}
+              >
+                Sign In
+              </button>
+              <button
+                onClick={() => navigate("/register")}
+                style={{
+                  background: "linear-gradient(135deg, #2d7dd2 0%, #4a9eff 100%)",
+                  border: "none",
+                  color: "#fff",
+                  padding: "8px 20px",
+                  borderRadius: "8px",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                  boxShadow: "0 4px 16px rgba(74,158,255,0.35)",
+                  transition: "all 0.2s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "translateY(-1px)";
+                  e.currentTarget.style.boxShadow = "0 6px 24px rgba(74,158,255,0.5)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow = "0 4px 16px rgba(74,158,255,0.35)";
+                }}
+              >
+                Get Started
+              </button>
+            </>
+          ) : (
+            <div style={{ position: "relative" }} ref={dropdownRef}>
+              <button
+                onClick={() => setShowDropdown(!showDropdown)}
+                style={{
+                  width: "40px",
+                  height: "40px",
+                  borderRadius: "50%",
+                  background: "rgba(255,255,255,0.05)",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "#fff",
+                  transition: "0.2s",
+                  padding: 0
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.1)"}
+                onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.05)"}
+              >
+                <IconUser />
+              </button>
+
+              {showDropdown && (
+                <div style={{
+                  position: "absolute",
+                  top: "calc(100% + 12px)",
+                  right: 0,
+                  width: "200px",
+                  background: "#0d1a28",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  borderRadius: "16px",
+                  padding: "8px",
+                  boxShadow: "0 20px 40px rgba(0,0,0,0.4)",
+                  zIndex: 1000,
+                }}>
+                  <div
+                    onClick={() => {
+                      setShowDropdown(false);
+                      navigate(getDashboardPath());
+                    }}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                      padding: "12px 16px",
+                      color: "#fff",
+                      fontSize: "14px",
+                      fontWeight: "500",
+                      cursor: "pointer",
+                      borderRadius: "10px",
+                      transition: "0.2s"
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = "rgba(74,158,255,0.1)"}
+                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                  >
+                    <IconLayout /> Dashboard
+                  </div>
+                  <div
+                    onClick={() => {
+                      setShowDropdown(false);
+                      setLogoutModalOpen(true);
+                    }}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                      padding: "12px 16px",
+                      color: "#fb7185",
+                      fontSize: "14px",
+                      fontWeight: "500",
+                      cursor: "pointer",
+                      borderRadius: "10px",
+                      transition: "0.2s"
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = "rgba(251,113,133,0.1)"}
+                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                  >
+                    <IconLogOut /> Logout
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Mobile hamburger */}
@@ -435,12 +592,33 @@ export default function LandingPage() {
             </a>
           ))}
           <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "8px" }}>
-            <button onClick={() => navigate("/login")} style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", padding: "10px", borderRadius: "8px", fontSize: "14px", cursor: "pointer" }}>
-              Sign In
-            </button>
-            <button onClick={() => navigate("/register")} style={{ background: "linear-gradient(135deg, #2d7dd2, #4a9eff)", border: "none", color: "#fff", padding: "10px", borderRadius: "8px", fontSize: "14px", fontWeight: "600", cursor: "pointer" }}>
-              Get Started
-            </button>
+            {!isAuthenticated ? (
+              <>
+                <button onClick={() => navigate("/login")} style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", padding: "10px", borderRadius: "8px", fontSize: "14px", cursor: "pointer" }}>
+                  Sign In
+                </button>
+                <button onClick={() => navigate("/register")} style={{ background: "linear-gradient(135deg, #2d7dd2, #4a9eff)", border: "none", color: "#fff", padding: "10px", borderRadius: "8px", fontSize: "14px", fontWeight: "600", cursor: "pointer" }}>
+                  Get Started
+                </button>
+              </>
+            ) : (
+              <>
+                <button 
+                  onClick={() => navigate(getDashboardPath())} 
+                  style={{ display: "flex", alignItems: "center", gap: "8px", background: "transparent", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", padding: "10px", borderRadius: "8px", fontSize: "14px", cursor: "pointer" }}
+                >
+                  <IconLayout /> Dashboard
+                </button>
+                <button
+                  onClick={() => {
+                    setLogoutModalOpen(true);
+                  }}
+                  style={{ display: "flex", alignItems: "center", gap: "8px", background: "rgba(251,113,133,0.1)", border: "1px solid rgba(251,113,133,0.3)", color: "#fb7185", padding: "10px", borderRadius: "8px", fontSize: "14px", fontWeight: "600", cursor: "pointer" }}
+                >
+                  <IconLogOut size={16} /> Logout
+                </button>
+              </>
+            )}
           </div>
         </div>
       )}
@@ -555,49 +733,51 @@ export default function LandingPage() {
           </div>
 
           {/* CTA buttons */}
-          <div style={{ display: "flex", justifyContent: "center", gap: "14px", flexWrap: "wrap" }}>
-            <button
-              onClick={() => navigate("/register")}
-              style={{
-                background: "linear-gradient(135deg, #2d7dd2 0%, #4a9eff 100%)",
-                border: "none",
-                color: "#fff",
-                padding: "14px 36px",
-                borderRadius: "10px",
-                fontSize: "15px",
-                fontWeight: "700",
-                cursor: "pointer",
-                boxShadow: "0 8px 32px rgba(74,158,255,0.4)",
-                transition: "all 0.25s",
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 12px 40px rgba(74,158,255,0.55)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 8px 32px rgba(74,158,255,0.4)"; }}
-            >
-              Start for Free <IconArrow />
-            </button>
-            <button
-              onClick={() => navigate("/login")}
-              style={{
-                background: "rgba(255,255,255,0.06)",
-                border: "1px solid rgba(255,255,255,0.15)",
-                color: "#fff",
-                padding: "14px 36px",
-                borderRadius: "10px",
-                fontSize: "15px",
-                fontWeight: "600",
-                cursor: "pointer",
-                transition: "all 0.25s",
-                backdropFilter: "blur(8px)",
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.3)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)"; }}
-            >
-              Sign In
-            </button>
-          </div>
+          {!isAuthenticated && (
+            <div style={{ display: "flex", justifyContent: "center", gap: "14px", flexWrap: "wrap" }}>
+              <button
+                onClick={() => navigate("/register")}
+                style={{
+                  background: "linear-gradient(135deg, #2d7dd2 0%, #4a9eff 100%)",
+                  border: "none",
+                  color: "#fff",
+                  padding: "14px 36px",
+                  borderRadius: "10px",
+                  fontSize: "15px",
+                  fontWeight: "700",
+                  cursor: "pointer",
+                  boxShadow: "0 8px 32px rgba(74,158,255,0.4)",
+                  transition: "all 0.25s",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 12px 40px rgba(74,158,255,0.55)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 8px 32px rgba(74,158,255,0.4)"; }}
+              >
+                Start for Free <IconArrow />
+              </button>
+              <button
+                onClick={() => navigate("/login")}
+                style={{
+                  background: "rgba(255,255,255,0.06)",
+                  border: "1px solid rgba(255,255,255,0.15)",
+                  color: "#fff",
+                  padding: "14px 36px",
+                  borderRadius: "10px",
+                  fontSize: "15px",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                  transition: "all 0.25s",
+                  backdropFilter: "blur(8px)",
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.3)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)"; }}
+              >
+                Sign In
+              </button>
+            </div>
+          )}
         </div>
       </section>
 
@@ -703,7 +883,7 @@ export default function LandingPage() {
                         fontSize: "12px",
                         fontWeight: "700",
                         color: activeStep === i ? "#4a9eff" : "rgba(255,255,255,0.25)",
-                        fontFamily: "monospace",
+                        fontFamily: "'Poppins', sans-serif",
                         minWidth: "28px",
                         marginTop: "2px",
                       }}
@@ -928,7 +1108,7 @@ export default function LandingPage() {
                     <h3 style={{ fontSize: "19px", fontWeight: "800", color: "#fff", margin: "0 0 14px", lineHeight: "1.3" }}>
                       {pos.title} - Batch {pos.batch}
                     </h3>
-                    
+
                     <div style={{ fontSize: "13px", fontWeight: "500", color: "rgba(255,255,255,0.5)", fontStyle: "italic", marginBottom: "6px" }}>
                       Positions:
                     </div>
@@ -946,21 +1126,21 @@ export default function LandingPage() {
                     </div>
 
                     <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: "8px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "14.5px", color: "rgba(255,255,255,0.4)", fontStyle: "italic" }}>
-                        <IconCal /> <span>{pos.deadline} - {pos.deadline} ({pos.duration_months} Bulan)</span>
+                      <div style={{ display: "flex", alignItems: "flex-start", gap: "8px", fontSize: "14.5px", color: "rgba(255,255,255,0.4)", fontStyle: "italic", textAlign: "left" }}>
+                        <IconCal /> <span>Periode: {formatDate(pos.start_date || pos.deadline)} - {formatDate(pos.end_date || pos.deadline)}</span>
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "14.5px", color: "rgba(255,255,255,0.5)" }}>
                         <IconLocation /> <span>{pos.location?.split(",")[0]}</span>
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "14.5px", color: "#fb7185", fontWeight: "600" }}>
-                        <IconDeadline /> <span style={{ fontStyle: "italic" }}>Deadline: {pos.deadline}</span>
+                        <IconDeadline /> <span style={{ fontStyle: "italic" }}>Deadline: {formatDate(pos.deadline)}</span>
                       </div>
                     </div>
 
                     <div style={{ display: "flex", gap: "8px", marginTop: "18px", paddingTop: "16px", borderTop: "1px solid rgba(255,255,255,0.08)" }}>
-                       <span style={{ fontSize: "10px", fontWeight: "700", textTransform: "uppercase", padding: "4px 10px", borderRadius: "6px", background: "rgba(74,158,255,0.1)", color: "#4a9eff" }}>{pos.type}</span>
-                       <span style={{ fontSize: "10px", fontWeight: "700", textTransform: "uppercase", padding: "4px 10px", borderRadius: "6px", background: "rgba(16,185,129,0.1)", color: "#10b981" }}>{pos.payment_type}</span>
-                       <span style={{ fontSize: "10px", fontWeight: "700", marginLeft: "auto", color: "rgba(255,255,255,0.4)" }}>Pelamar · {pos.quota} Kuota</span>
+                      <span style={{ fontSize: "10px", fontWeight: "700", textTransform: "uppercase", padding: "4px 10px", borderRadius: "6px", background: "rgba(74,158,255,0.1)", color: "#4a9eff" }}>{pos.type}</span>
+                      <span style={{ fontSize: "10px", fontWeight: "700", textTransform: "uppercase", padding: "4px 10px", borderRadius: "6px", background: "rgba(16,185,129,0.1)", color: "#10b981" }}>{pos.payment_type}</span>
+                      <span style={{ fontSize: "10px", fontWeight: "700", marginLeft: "auto", color: "rgba(255,255,255,0.4)" }}>Pelamar · {pos.total_quota || 0} Kuota</span>
                     </div>
                   </div>
                 </div>
@@ -992,98 +1172,100 @@ export default function LandingPage() {
       </section>
 
       {/* ── CTA SECTION ─────────────────────────────────────────────────── */}
-      <section style={{ padding: "100px 24px" }}>
-        <div
-          style={{
-            maxWidth: "820px",
-            margin: "0 auto",
-            textAlign: "center",
-            background: "linear-gradient(135deg, rgba(74,158,255,0.06) 0%, rgba(167,139,250,0.06) 100%)",
-            border: "1px solid rgba(255,255,255,0.08)",
-            borderRadius: "28px",
-            padding: "72px 48px",
-            position: "relative",
-            overflow: "hidden",
-          }}
-        >
-          <div style={{ position: "absolute", top: "-80px", right: "-80px", width: "300px", height: "300px", borderRadius: "50%", background: "rgba(74,158,255,0.06)", filter: "blur(60px)", pointerEvents: "none" }} />
-          <div style={{ position: "absolute", bottom: "-60px", left: "-60px", width: "240px", height: "240px", borderRadius: "50%", background: "rgba(167,139,250,0.06)", filter: "blur(60px)", pointerEvents: "none" }} />
-
-          <p style={{ fontSize: "13px", fontWeight: "600", color: "#4a9eff", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "16px" }}>
-            Get Started Today
-          </p>
-          <h2
+      {!isAuthenticated && (
+        <section style={{ padding: "100px 24px" }}>
+          <div
             style={{
-              fontSize: "clamp(30px, 5vw, 52px)",
-              fontWeight: "800",
-              color: "#fff",
-              letterSpacing: "-1.5px",
-              lineHeight: "1.1",
-              margin: "0 0 18px",
+              maxWidth: "820px",
+              margin: "0 auto",
+              textAlign: "center",
+              background: "linear-gradient(135deg, rgba(74,158,255,0.06) 0%, rgba(167,139,250,0.06) 100%)",
+              border: "1px solid rgba(255,255,255,0.08)",
+              borderRadius: "28px",
+              padding: "72px 48px",
+              position: "relative",
+              overflow: "hidden",
             }}
           >
-            Ready to transform your{" "}
-            <span style={{ background: "linear-gradient(135deg, #4a9eff, #a78bfa)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-              internship program?
-            </span>
-          </h2>
-          <p style={{ fontSize: "16px", color: "rgba(255,255,255,0.5)", lineHeight: "1.7", maxWidth: "500px", margin: "0 auto 40px" }}>
-            Join thousands of companies already using EarlyPath to find, manage, and certify exceptional intern talent.
-          </p>
+            <div style={{ position: "absolute", top: "-80px", right: "-80px", width: "300px", height: "300px", borderRadius: "50%", background: "rgba(74,158,255,0.06)", filter: "blur(60px)", pointerEvents: "none" }} />
+            <div style={{ position: "absolute", bottom: "-60px", left: "-60px", width: "240px", height: "240px", borderRadius: "50%", background: "rgba(167,139,250,0.06)", filter: "blur(60px)", pointerEvents: "none" }} />
 
-          <div style={{ display: "flex", justifyContent: "center", gap: "14px", flexWrap: "wrap" }}>
-            <button
-              onClick={() => navigate("/register")}
+            <p style={{ fontSize: "13px", fontWeight: "600", color: "#4a9eff", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "16px" }}>
+              Get Started Today
+            </p>
+            <h2
               style={{
-                background: "linear-gradient(135deg, #2d7dd2 0%, #4a9eff 100%)",
-                border: "none",
+                fontSize: "clamp(30px, 5vw, 52px)",
+                fontWeight: "800",
                 color: "#fff",
-                padding: "14px 40px",
-                borderRadius: "10px",
-                fontSize: "15px",
-                fontWeight: "700",
-                cursor: "pointer",
-                boxShadow: "0 8px 32px rgba(74,158,255,0.4)",
-                transition: "all 0.25s",
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
+                letterSpacing: "-1.5px",
+                lineHeight: "1.1",
+                margin: "0 0 18px",
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 12px 40px rgba(74,158,255,0.55)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 8px 32px rgba(74,158,255,0.4)"; }}
             >
-              Start Now <IconArrow />
-            </button>
-            <button
-              onClick={() => navigate("/login")}
-              style={{
-                background: "rgba(255,255,255,0.06)",
-                border: "1px solid rgba(255,255,255,0.15)",
-                color: "#fff",
-                padding: "14px 32px",
-                borderRadius: "10px",
-                fontSize: "15px",
-                fontWeight: "600",
-                cursor: "pointer",
-                transition: "all 0.25s",
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; }}
-            >
-              Sign In
-            </button>
-          </div>
+              Ready to transform your{" "}
+              <span style={{ background: "linear-gradient(135deg, #4a9eff, #a78bfa)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                internship program?
+              </span>
+            </h2>
+            <p style={{ fontSize: "16px", color: "rgba(255,255,255,0.5)", lineHeight: "1.7", maxWidth: "500px", margin: "0 auto 40px" }}>
+              Join thousands of companies already using EarlyPath to find, manage, and certify exceptional intern talent.
+            </p>
 
-          <div style={{ display: "flex", justifyContent: "center", gap: "24px", marginTop: "36px", flexWrap: "wrap" }}>
-            {["No credit card required", "Free 14-day trial", "Cancel anytime"].map((txt) => (
-              <div key={txt} style={{ display: "flex", alignItems: "center", gap: "7px", fontSize: "13px", color: "rgba(255,255,255,0.4)" }}>
-                <IconCheck color="rgba(74,158,255,0.8)" />
-                {txt}
-              </div>
-            ))}
+            <div style={{ display: "flex", justifyContent: "center", gap: "14px", flexWrap: "wrap" }}>
+              <button
+                onClick={() => navigate("/register")}
+                style={{
+                  background: "linear-gradient(135deg, #2d7dd2 0%, #4a9eff 100%)",
+                  border: "none",
+                  color: "#fff",
+                  padding: "14px 40px",
+                  borderRadius: "10px",
+                  fontSize: "15px",
+                  fontWeight: "700",
+                  cursor: "pointer",
+                  boxShadow: "0 8px 32px rgba(74,158,255,0.4)",
+                  transition: "all 0.25s",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 12px 40px rgba(74,158,255,0.55)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 8px 32px rgba(74,158,255,0.4)"; }}
+              >
+                Start Now <IconArrow />
+              </button>
+              <button
+                onClick={() => navigate("/login")}
+                style={{
+                  background: "rgba(255,255,255,0.06)",
+                  border: "1px solid rgba(255,255,255,0.15)",
+                  color: "#fff",
+                  padding: "14px 32px",
+                  borderRadius: "10px",
+                  fontSize: "15px",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                  transition: "all 0.25s",
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; }}
+              >
+                Sign In
+              </button>
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "center", gap: "24px", marginTop: "36px", flexWrap: "wrap" }}>
+              {["No credit card required", "Free 14-day trial", "Cancel anytime"].map((txt) => (
+                <div key={txt} style={{ display: "flex", alignItems: "center", gap: "7px", fontSize: "13px", color: "rgba(255,255,255,0.4)" }}>
+                  <IconCheck color="rgba(74,158,255,0.8)" />
+                  {txt}
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* ── FOOTER ──────────────────────────────────────────────────────── */}
       <footer style={{ borderTop: "1px solid rgba(255,255,255,0.06)", padding: "60px 24px 40px" }}>
@@ -1091,7 +1273,7 @@ export default function LandingPage() {
           <div style={{ display: "grid", gridTemplateColumns: "2fr repeat(3, 1fr)", gap: "40px", marginBottom: "48px", flexWrap: "wrap" }}>
             {/* Brand */}
             <div>
-              <img src="/assets/images/logo.png" alt="EarlyPath" style={{ height: "36px", objectFit: "contain", marginBottom: "16px" }} />
+              <img src="/assets/images/logo.png" alt="EarlyPath" style={{ height: "46px", objectFit: "contain", marginBottom: "16px" }} />
               <p style={{ fontSize: "14px", color: "rgba(255,255,255,0.4)", lineHeight: "1.7", maxWidth: "240px" }}>
                 Empowering talent and organizations to connect, collaborate, and grow together.
               </p>
@@ -1148,8 +1330,6 @@ export default function LandingPage() {
 
       {/* Responsive CSS */}
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-        
         .hidden-mobile { display: flex !important; }
         .show-mobile { display: none !important; }
 
@@ -1158,6 +1338,36 @@ export default function LandingPage() {
           .show-mobile { display: flex !important; }
         }
       `}</style>
+      {/* Logout confirm modal */}
+      {logoutModalOpen && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(10,22,40,.8)", backdropFilter: "blur(4px)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
+          <div style={{ background: "#1a1f2e", borderRadius: 24, padding: 32, width: "100%", maxWidth: 380, boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.1)", textAlign: "center" }}>
+            <div style={{ width: 64, height: 64, borderRadius: 20, background: "rgba(251,113,133,0.1)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fb7185", margin: "0 auto 20px" }}>
+              <IconLogOut size={32} />
+            </div>
+            <h3 style={{ fontSize: 20, fontWeight: 800, marginBottom: 8, color: "#fff" }}>Yakin Keluar?</h3>
+            <p style={{ fontSize: 14, color: "rgba(255,255,255,0.5)", lineHeight: 1.6, marginBottom: 28 }}>Anda harus login kembali untuk mengakses dashboard Anda.</p>
+            <div style={{ display: "flex", gap: 12 }}>
+              <button 
+                onClick={() => setLogoutModalOpen(false)} 
+                style={{ flex: 1, padding: "12px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.1)", background: "transparent", fontSize: 14, fontWeight: 700, color: "rgba(255,255,255,0.7)", cursor: "pointer", transition: "0.2s" }}
+                onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.05)"}
+                onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+              >
+                Batal
+              </button>
+              <button 
+                onClick={() => { logout(); setLogoutModalOpen(false); navigate("/"); }} 
+                style={{ flex: 1, padding: "12px", borderRadius: 12, border: "none", background: "#fb7185", fontSize: 14, fontWeight: 700, color: "#fff", cursor: "pointer", transition: "0.2s", boxShadow: "0 8px 20px rgba(251,113,133,0.3)" }}
+                onMouseEnter={e => e.currentTarget.style.transform = "translateY(-1px)"}
+                onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}
+              >
+                Ya, Keluar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

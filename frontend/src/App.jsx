@@ -7,16 +7,15 @@ import LoginUnified from "./pages/LoginUnified";
 import RegisterPage from './pages/signUp';
 import ForgotPassword from './pages/forgotPassword';
 import ResetPassword from './pages/resetPassword';
-// Applicant
-import RegisterApplicant from './pages/RegisterApplicant';
-import LoginApplicant from './pages/LoginApplicant';
-import ApplicantPortal from './pages/ApplicantPortal';
 // Candidate (company public)
 import CompanyPublicPage from './pages/companyPublic';
 import SignUpCandidate from './pages/signUpCandidate';
 import ForgotPasswordCandidate from './pages/forgotPasswordCandidate';
 import ResetPasswordCandidate from './pages/resetPasswordCandidate';
+import LoginCandidate from './pages/loginCandidate';
 import CandidateDashboard from './pages/candidateDashboard';
+import SubmissionForm from './pages/SubmissionForm';
+
 // Staff
 import ActivateAccount from './pages/activateAccount';
 import LoginStaff from './pages/loginStaff';
@@ -31,14 +30,14 @@ import ProfilePage from './pages/ProfilePage';
 import SuperAdminPages from "./pages/SuperAdminPages";
 
 export default function App() {
-  const { token, isAuthenticated, company } = useAuthStore();
-  const isApplicant = company?.role === "applicant";
-  
-  return (
-    <BrowserRouter>
-      <Routes>
-        {/* Landing page as default root */}
-        <Route path="/" element={isAuthenticated ? <Navigate to={isApplicant ? "/applicant/portal" : "/dashboard"} replace /> : <LandingPage />} />
+    const { token, isAuthenticated, company } = useAuthStore();
+    const isApplicant = company?.role === "applicant";
+
+    return (
+        <BrowserRouter>
+            <Routes>
+                {/* Landing page as default root */}
+                <Route path="/" element={<LandingPage />} />
                 {/* Auth */}
                 <Route path="/login" element={<LoginUnified />} /> 
                 <Route path="/c/:slug/login" element={<LoginUnified />} />
@@ -46,39 +45,49 @@ export default function App() {
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
 
-                {/* Applicant */}
-                <Route path="/register-applicant" element={<RegisterApplicant />} />
-                <Route path="/applicant/login" element={<LoginApplicant />} />
-                  
+
                 {/* Company Public */}
                 <Route path="/c/:slug" element={<CompanyPublicPage />} />
                 <Route path="/c/:slug/register" element={<SignUpCandidate />} />
                 <Route path="/c/:slug/forgot-password" element={<ForgotPasswordCandidate />} />
                 <Route path="/c/:slug/reset-password" element={<ResetPasswordCandidate />} />
+                <Route path="/c/:slug/login" element={<LoginCandidate />} />
+                <Route path="/c/:slug/forgot-password" element={<ForgotPassword />} />
+                <Route path="/c/:slug/reset-password" element={<ResetPassword />} />
                 <Route path="/c/:slug/staff/login" element={<LoginStaff />} />
 
-               {/* Candidate Dashboard */}
-                <Route 
-                    path="/c/:slug/dashboard" 
+
+                {/* Candidate Dashboard & Apply */}
+                <Route
+                    path="/c/:slug/dashboard"
                     element={
                         <PrivateRoute>
                             <CandidateDashboard />
                         </PrivateRoute>
-                    } 
+                    }
                 />
+                <Route
+                    path="/c/:slug/apply/:vacancyId/:positionId"
+                    element={
+                        <PrivateRoute>
+                            <SubmissionForm />
+                        </PrivateRoute>
+                    }
+                />
+
                 {/* Activation */}
                 <Route path="/activate" element={<ActivateAccount />} />
-                
+
                 {/* Home tambahan */}
                 <Route path="/home" element={<HomePage />} />
                 {/* Protected */}
-                <Route 
-                    path="/dashboard" 
+                <Route
+                    path="/dashboard"
                     element={
                         <PrivateRoute>
                             <DashboardPage />
                         </PrivateRoute>
-                    } 
+                    }
                 />
                 <Route
                     path="/program"
@@ -88,7 +97,7 @@ export default function App() {
                         </PrivateRoute>
                     }
                 />
-               
+
                 <Route
                     path="/lowongan"
                     element={
@@ -97,29 +106,21 @@ export default function App() {
                         </PrivateRoute>
                     }
                 />
+
                 <Route
-                    path="/applicant/portal"
-                    element={
-                        <PrivateRoute>
-                            <ApplicantPortal />
-                        </PrivateRoute>
-                    }
-                />
-                <Route 
-                    path="/profile" 
+                    path="/profile"
                     element={
                         <PrivateRoute>
                             <ProfilePage />
                         </PrivateRoute>
-                    } 
+                    }
                 />
 
                 <Route path="/superadmin/*" element={<SuperAdminPages />} />
 
 
-               </Routes>
-    </BrowserRouter>
-  );
+            </Routes>
+        </BrowserRouter>
+    );
 }
 
-   

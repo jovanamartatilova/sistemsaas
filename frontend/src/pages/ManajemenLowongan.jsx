@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuthStore } from "../stores/authStore";
 import axios from "axios";
 
@@ -59,7 +59,27 @@ const Icon = {
     Edit: () => <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>,
     Trash: () => <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>,
     Upload: () => <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></svg>,
-    Lock: () => <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+    Lock: () => <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>,
+    ChevronRight: () => <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6" /></svg>,
+    FileText: () => <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg>
+};
+
+const formatDateToFrontend = (dateStr) => {
+    if (!dateStr) return "";
+    const [y, m, d] = dateStr.split("-");
+    const month = MONTHS_SHORT[parseInt(m) - 1];
+    return `${parseInt(d)} ${month} ${y}`;
+};
+
+const formatDateToBackend = (dateStr) => {
+    if (!dateStr) return "";
+    const parts = String(dateStr).split(" ");
+    if (parts.length !== 3) return dateStr;
+    const [d, mStr, y] = parts;
+    const m = MONTHS_SHORT.indexOf(mStr) + 1;
+    const mm = m < 10 ? `0${m}` : m;
+    const dd = parseInt(d) < 10 ? `0${parseInt(d)}` : d;
+    return `${y}-${mm}-${dd}`;
 };
 
 // ── Calendar component ─────────────────────────────────────────────────────────
@@ -268,7 +288,7 @@ function JobCard({ job, onEdit, onDelete }) {
                 <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: 8 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14.5, color: "#9ca3af", fontStyle: "italic" }}>
                         <Icon.Cal />
-                        <span>{job.startDate} - {job.endDate} ({job.durasi})</span>
+                        <span>{job.startDate} - {job.endDate}</span>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14.5, color: "#000" }}>
                         <Icon.Location />
@@ -300,30 +320,34 @@ function JobCard({ job, onEdit, onDelete }) {
 // ── Modal ─────────────────────────────────────────────────────────────────────
 function Modal({ open, editingJob, onClose, onSubmit }) {
     const [activeTab, setActiveTab] = useState("detail");
-    const [form, setForm] = useState({ title: "", desc: "", kota: "", provinsi: "", alamat: "", durasi: "", batch: "", kuota: "", image: "", photoFile: null });
+    const [form, setForm] = useState({ title: "", desc: "", kota: "", provinsi: "", alamat: "", batch: "", image: "", photoFile: null });
     const fileInpRef = useRef(null);
     const [tipe, setTipe] = useState("");
     const [payment, setPayment] = useState("");
     const [deadline, setDeadline] = useState("");
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
-    const [posisi, setPosisi] = useState([""]);
+    const [posisi, setPosisi] = useState([{ name: "", quota: "" }]);
 
     useEffect(() => {
         if (open) {
             setActiveTab("detail");
             if (editingJob) {
-                const cleanDurasi = (editingJob.durasi || String(editingJob.duration_months || "")).replace(" Bulan", "");
-                setForm({ title: editingJob.title || editingJob.nama, desc: editingJob.desc, kota: editingJob.kota, provinsi: editingJob.provinsi, alamat: editingJob.alamat, durasi: cleanDurasi, batch: editingJob.batch, kuota: editingJob.kuota, image: editingJob.photo || editingJob.image || "", photoFile: null });
+                setForm({ title: editingJob.title || editingJob.nama, desc: editingJob.desc, kota: editingJob.kota, provinsi: editingJob.provinsi, alamat: editingJob.alamat, batch: editingJob.batch, image: editingJob.photo || editingJob.image || "", photoFile: null });
                 setTipe(editingJob.tipe || editingJob.type);
                 setPayment(editingJob.payment || editingJob.payment_type);
                 setDeadline(editingJob.deadline);
                 setStartDate(editingJob.startDate || "");
                 setEndDate(editingJob.endDate || "");
-                setPosisi([...(editingJob.posisi || [(editingJob.position?.name || "")])]);
+                
+                const mappedPosArr = (editingJob.positions || []).map(p => ({
+                    name: p.name || "",
+                    quota: p.quota || p.pivot?.quota || 0
+                }));
+                setPosisi(mappedPosArr.length > 0 ? mappedPosArr : [{ name: "", quota: "" }]);
             } else {
-                setForm({ title: "", desc: "", kota: "", provinsi: "", alamat: "", durasi: "", batch: "", kuota: "", image: "", photoFile: null });
-                setTipe(""); setPayment(""); setDeadline(""); setStartDate(""); setEndDate(""); setPosisi([""]);
+                setForm({ title: "", desc: "", kota: "", provinsi: "", alamat: "", batch: "", image: "", photoFile: null });
+                setTipe(""); setPayment(""); setDeadline(""); setStartDate(""); setEndDate(""); setPosisi([{ name: "", quota: "" }]);
             }
         }
     }, [open, editingJob]);
@@ -337,7 +361,7 @@ function Modal({ open, editingJob, onClose, onSubmit }) {
     };
 
     const handleSubmit = (status) => {
-        const filled = posisi.filter(Boolean);
+        const filled = posisi.filter(p => p.name.trim());
 
         // Relaxed validation
         if (!form.title) return alert("Nama Lowongan wajib diisi.");
@@ -345,12 +369,15 @@ function Modal({ open, editingJob, onClose, onSubmit }) {
 
         // If publishing, check for other essential fields
         if (status === "published") {
-            if (!form.desc || !form.kota || !form.provinsi || !form.durasi || !form.batch || !form.kuota || !startDate || !endDate || !deadline || !tipe || !payment) {
+            if (!form.desc || !form.kota || !form.provinsi || !form.batch || !startDate || !endDate || !deadline || !tipe || !payment) {
                 return alert("Harap isi semua field wajib sebelum mem-publish lowongan.");
+            }
+            if (filled.some(p => !p.quota || p.quota <= 0)) {
+                return alert("Semua posisi wajib memiliki kuota.");
             }
         }
 
-        onSubmit({ ...form, batch: +form.batch, kuota: +form.kuota, startDate, endDate, deadline, tipe, payment, posisi: filled, status });
+        onSubmit({ ...form, batch: +form.batch, startDate, endDate, deadline, tipe, payment, posisi: filled, status });
     };
 
     const inp = { textAlign: "left", border: "1.5px solid #e2e8f0", borderRadius: 8, padding: "9px 13px", fontFamily: "inherit", fontSize: 13.5, color: "#0f172a", background: "#fff", outline: "none", width: "100%", transition: "border-color .15s, box-shadow .15s" };
@@ -383,144 +410,210 @@ function Modal({ open, editingJob, onClose, onSubmit }) {
                 {activeTab === "detail" ? (
                     <>
                         <div style={{ padding: "24px 28px", overflowY: "auto", maxHeight: "65vh" }}>
-                    {/* Section helper */}
-                    {[{ title: "Info Dasar" }].map(() => null)}
+                            {/* Section helper */}
+                            {[{ title: "Info Dasar" }].map(() => null)}
 
-                    {/* Info Dasar */}
-                    <SectionTitle>Info Dasar</SectionTitle>
-                    <FGroup label="Upload Poster Magang (Opsional)">
-                        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                            <button onClick={() => fileInpRef.current.click()} style={{ padding: "9px 16px", border: "1.5px solid #e2e8f0", borderRadius: 8, background: "#fff", fontFamily: "inherit", fontSize: 13, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 8, color: "#475569" }}>
-                                <Icon.Upload /> Pilih File
-                            </button>
-                            <input type="file" ref={fileInpRef} hidden accept="image/*" onChange={handleFileChange} />
-                            {form.image && <div style={{ fontSize: 12, color: "#10b981", fontWeight: 600 }}>Berhasil dipilih!</div>}
-                        </div>
-                    </FGroup>
-                    <FGroup label="Nama Lowongan" req style={{ marginTop: 14 }}>
-                        <input style={inp} value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} placeholder="cth. Software Engineer Intern Batch 8" onFocus={focusInp} onBlur={blurInp} />
-                    </FGroup>
-                    <FGroup label="Deskripsi Lowongan" req style={{ marginTop: 14 }}>
-                        <textarea style={{ ...inp, minHeight: 88, resize: "vertical", lineHeight: 1.6 }} value={form.desc} onChange={e => setForm({ ...form, desc: e.target.value })} placeholder="Deskripsikan program magang ini secara singkat…" onFocus={focusInp} onBlur={blurInp} />
-                    </FGroup>
+                            {/* Info Dasar */}
+                            <SectionTitle>Info Dasar</SectionTitle>
+                            <FGroup label="Upload Poster Magang (Opsional)">
+                                <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                                    <button onClick={() => fileInpRef.current.click()} style={{ padding: "9px 16px", border: "1.5px solid #e2e8f0", borderRadius: 8, background: "#fff", fontFamily: "inherit", fontSize: 13, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 8, color: "#475569" }}>
+                                        <Icon.Upload /> Pilih File
+                                    </button>
+                                    <input type="file" ref={fileInpRef} hidden accept="image/*" onChange={handleFileChange} />
+                                    {form.image && <div style={{ fontSize: 12, color: "#10b981", fontWeight: 600 }}>Berhasil dipilih!</div>}
+                                </div>
+                            </FGroup>
+                            <FGroup label="Nama Lowongan" req style={{ marginTop: 14 }}>
+                                <input style={inp} value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} placeholder="cth. Software Engineer Intern Batch 8" onFocus={focusInp} onBlur={blurInp} />
+                            </FGroup>
+                            <FGroup label="Deskripsi Lowongan" req style={{ marginTop: 14 }}>
+                                <textarea style={{ ...inp, minHeight: 88, resize: "vertical", lineHeight: 1.6 }} value={form.desc} onChange={e => setForm({ ...form, desc: e.target.value })} placeholder="Deskripsikan program magang ini secara singkat…" onFocus={focusInp} onBlur={blurInp} />
+                            </FGroup>
 
-                    {/* Lokasi */}
-                    <SectionTitle style={{ marginTop: 24 }}>Lokasi Magang</SectionTitle>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
-                        <FGroup label="Kota" req>
-                            <input style={inp} value={form.kota} onChange={e => setForm({ ...form, kota: e.target.value })} placeholder="cth. Jakarta" onFocus={focusInp} onBlur={blurInp} />
-                        </FGroup>
-                        <FGroup label="Provinsi" req>
-                            <input style={inp} value={form.provinsi} onChange={e => setForm({ ...form, provinsi: e.target.value })} placeholder="cth. DKI Jakarta" onFocus={focusInp} onBlur={blurInp} />
-                        </FGroup>
-                    </div>
-                    <FGroup label="Alamat Lengkap">
-                        <input style={inp} value={form.alamat} onChange={e => setForm({ ...form, alamat: e.target.value })} placeholder="cth. Jl. Sudirman No. 1, Gedung Menara 88" onFocus={focusInp} onBlur={blurInp} />
-                    </FGroup>
-
-                    {/* Detail */}
-                    <SectionTitle style={{ marginTop: 24 }}>Detail Program</SectionTitle>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
-                        <FGroup label="Tanggal Mulai" req>
-                            <CalendarPicker value={startDate} onChange={setStartDate} />
-                        </FGroup>
-                        <FGroup label="Tanggal Selesai" req>
-                            <CalendarPicker value={endDate} onChange={setEndDate} />
-                        </FGroup>
-                    </div>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
-                        <FGroup label="Durasi (Bulan)" req>
-                            <input style={inp} type="number" min="1" value={form.durasi} onChange={e => setForm({ ...form, durasi: e.target.value })} placeholder="cth. 3" onFocus={focusInp} onBlur={blurInp} />
-                        </FGroup>
-                        <FGroup label="Batch" req>
-                            <input style={inp} type="number" min="1" value={form.batch} onChange={e => setForm({ ...form, batch: e.target.value })} placeholder="cth. 8" onFocus={focusInp} onBlur={blurInp} />
-                        </FGroup>
-                    </div>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
-                        <FGroup label="Kuota Pemagang" req>
-                            <input style={inp} type="number" min="1" value={form.kuota} onChange={e => setForm({ ...form, kuota: e.target.value })} placeholder="cth. 50" onFocus={focusInp} onBlur={blurInp} />
-                        </FGroup>
-                        <FGroup label="Deadline Pendaftaran" req>
-                            <CalendarPicker value={deadline} onChange={setDeadline} />
-                        </FGroup>
-                    </div>
-                    <FGroup label="Tipe Magang" req style={{ marginBottom: 14 }}>
-                        <PillGroup options={[{ value: "reguler", label: "Reguler" }, { value: "flagship", label: "Flagship" }]} value={tipe} onChange={setTipe} />
-                    </FGroup>
-                    <FGroup label="Payment Type" req style={{ marginBottom: 14 }}>
-                        <PillGroup options={[{ value: "unpaid", label: "Unpaid" }, { value: "paid", label: "Paid" }]} value={payment} onChange={setPayment} />
-                    </FGroup>
-
-                    {/* Posisi */}
-                    <SectionTitle style={{ marginTop: 24 }}>Posisi yang Dibuka</SectionTitle>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                        {posisi.map((p, i) => (
-                            <div key={i} style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                                <input style={{ ...inp, flex: 1 }} value={p} onChange={e => { const next = [...posisi]; next[i] = e.target.value; setPosisi(next); }} placeholder="cth. Frontend Developer" onFocus={focusInp} onBlur={blurInp} />
-                                <button onClick={() => posisi.length > 1 && setPosisi(posisi.filter((_, j) => j !== i))}
-                                    style={{ width: 32, height: 32, borderRadius: 8, border: "1px solid #fca5a5", background: "#fff1f2", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#ef4444", fontSize: 14, flexShrink: 0 }}>✕</button>
+                            {/* Lokasi */}
+                            <SectionTitle style={{ marginTop: 24 }}>Lokasi Magang</SectionTitle>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
+                                <FGroup label="Kota" req>
+                                    <input style={inp} value={form.kota} onChange={e => setForm({ ...form, kota: e.target.value })} placeholder="cth. Jakarta" onFocus={focusInp} onBlur={blurInp} />
+                                </FGroup>
+                                <FGroup label="Provinsi" req>
+                                    <input style={inp} value={form.provinsi} onChange={e => setForm({ ...form, provinsi: e.target.value })} placeholder="cth. DKI Jakarta" onFocus={focusInp} onBlur={blurInp} />
+                                </FGroup>
                             </div>
-                        ))}
-                    </div>
-                    <button onClick={() => setPosisi([...posisi, ""])}
-                        style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", border: "1.5px dashed #e2e8f0", borderRadius: 8, background: "transparent", fontFamily: "inherit", fontSize: 13, color: "#64748b", cursor: "pointer", marginTop: 8, transition: "all .15s" }}
-                        onMouseEnter={e => { e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.color = "#2563c4"; e.currentTarget.style.background = "#eff6ff"; }}
-                        onMouseLeave={e => { e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.color = "#64748b"; e.currentTarget.style.background = "transparent"; }}>
-                        <Icon.Plus /> Tambah Posisi
-                    </button>
-                </div>
+                            <FGroup label="Alamat Lengkap">
+                                <input style={inp} value={form.alamat} onChange={e => setForm({ ...form, alamat: e.target.value })} placeholder="cth. Jl. Sudirman No. 1, Gedung Menara 88" onFocus={focusInp} onBlur={blurInp} />
+                            </FGroup>
 
-                {/* Footer */}
-                <div style={{ padding: "18px 28px", borderTop: "1px solid #e2e8f0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <div style={{ fontSize: 12, color: "#64748b" }}>Field bertanda <b style={{ color: "#ef4444" }}>*</b> wajib diisi.</div>
-                    <div style={{ display: "flex", gap: 8 }}>
-                        {/* Simpan sebagai Draft */}
-                        <button onClick={() => handleSubmit("draft")}
-                            style={{ display: "flex", alignItems: "center", gap: 5, background: "#fff", color: "#475569", border: "1.2px solid #e2e8f0", borderRadius: 8, padding: "8px 14px", fontFamily: "inherit", fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "all .15s" }}
-                            onMouseEnter={e => { e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.color = "#2563c4"; }}
-                            onMouseLeave={e => { e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.color = "#475569"; }}>
-                            <Icon.Save /> Draft
-                        </button>
+                            {/* Detail */}
+                            <SectionTitle style={{ marginTop: 24 }}>Detail Program</SectionTitle>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
+                                <FGroup label="Tanggal Mulai" req>
+                                    <CalendarPicker value={startDate} onChange={setStartDate} />
+                                </FGroup>
+                                <FGroup label="Tanggal Selesai" req>
+                                    <CalendarPicker value={endDate} onChange={setEndDate} />
+                                </FGroup>
+                            </div>
+                            <div style={{ marginBottom: 14 }}>
+                                <FGroup label="Batch" req>
+                                    <input style={inp} type="number" min="1" value={form.batch} onChange={e => setForm({ ...form, batch: e.target.value })} placeholder="cth. 8" onFocus={focusInp} onBlur={blurInp} />
+                                </FGroup>
+                            </div>
+                            <div style={{ marginBottom: 14 }}>
+                                <FGroup label="Deadline Pendaftaran" req>
+                                    <CalendarPicker value={deadline} onChange={setDeadline} />
+                                </FGroup>
+                            </div>
+                            <FGroup label="Tipe Magang" req style={{ marginBottom: 14 }}>
+                                <PillGroup options={[{ value: "reguler", label: "Reguler" }, { value: "flagship", label: "Flagship" }]} value={tipe} onChange={setTipe} />
+                            </FGroup>
+                            <FGroup label="Payment Type" req style={{ marginBottom: 14 }}>
+                                <PillGroup options={[{ value: "unpaid", label: "Unpaid" }, { value: "paid", label: "Paid" }]} value={payment} onChange={setPayment} />
+                            </FGroup>
 
-                        {/* Special "Closed" button for published jobs */}
-                        {editingJob?.status === "published" && (
-                            <button onClick={() => handleSubmit("closed")}
-                                style={{ display: "flex", alignItems: "center", gap: 5, background: "#ef4444", color: "#fff", border: "none", borderRadius: 8, padding: "8px 14px", fontFamily: "inherit", fontSize: 13, fontWeight: 700, cursor: "pointer", boxShadow: "0 2px 6px rgba(239, 68, 68, 0.2)", transition: "all .15s" }}
-                                onMouseEnter={e => { e.currentTarget.style.background = "#dc2626"; }}
-                                onMouseLeave={e => { e.currentTarget.style.background = "#ef4444"; }}>
-                                <Icon.Lock /> Closed
+                            {/* Posisi */}
+                            <SectionTitle style={{ marginTop: 24 }}>Posisi yang Dibuka</SectionTitle>
+                            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                                {posisi.map((p, i) => (
+                                    <div key={i} style={{ display: "flex", gap: 10, alignItems: "flex-end" }}>
+                                        <div style={{ flex: 1 }}>
+                                            <div style={{ fontSize: 11.5, fontWeight: 700, color: "#64748b", marginBottom: 5 }}>Nama Posisi {i + 1}</div>
+                                            <input style={inp} value={p.name} onChange={e => { const next = [...posisi]; next[i].name = e.target.value; setPosisi(next); }} placeholder="cth. Frontend Developer" onFocus={focusInp} onBlur={blurInp} />
+                                        </div>
+                                        <div style={{ width: 90 }}>
+                                            <div style={{ fontSize: 11.5, fontWeight: 700, color: "#64748b", marginBottom: 5 }}>Kuota</div>
+                                            <input style={inp} type="number" min="1" value={p.quota} onChange={e => { const next = [...posisi]; next[i].quota = e.target.value; setPosisi(next); }} placeholder="0" onFocus={focusInp} onBlur={blurInp} />
+                                        </div>
+                                        <button onClick={() => posisi.length > 1 && setPosisi(posisi.filter((_, j) => j !== i))}
+                                            style={{ width: 38, height: 38, borderRadius: 8, border: "1px solid #fca5a5", background: "#fff1f2", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#ef4444", fontSize: 14, flexShrink: 0 }}>✕</button>
+                                    </div>
+                                ))}
+                            </div>
+                            <button onClick={() => setPosisi([...posisi, { name: "", quota: "" }])}
+                                style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", border: "1.5px dashed #e2e8f0", borderRadius: 8, background: "transparent", fontFamily: "inherit", fontSize: 13, color: "#64748b", cursor: "pointer", marginTop: 8, transition: "all .15s" }}
+                                onMouseEnter={e => { e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.color = "#2563c4"; e.currentTarget.style.background = "#eff6ff"; }}
+                                onMouseLeave={e => { e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.color = "#64748b"; e.currentTarget.style.background = "transparent"; }}>
+                                <Icon.Plus /> Tambah Posisi
                             </button>
-                        )}
+                        </div>
 
-                        {/* Simpan or Publish */}
-                        <button onClick={() => handleSubmit("published")}
-                            style={{ display: "flex", alignItems: "center", gap: 5, background: "#2563c4", color: "#fff", border: "none", borderRadius: 8, padding: "8px 14px", fontFamily: "inherit", fontSize: 13, fontWeight: 700, cursor: "pointer", boxShadow: "0 2px 6px rgba(37,99,235,0.25)", transition: "all .15s" }}
-                            onMouseEnter={e => { e.currentTarget.style.background = "#1d4ed8"; }}
-                            onMouseLeave={e => { e.currentTarget.style.background = "#2563c4"; }}>
-                            <Icon.Send /> {editingJob?.status === "published" ? "Simpan" : "Publish"}
-                        </button>
-                    </div>
-                </div>
+                        {/* Footer */}
+                        <div style={{ padding: "18px 28px", borderTop: "1px solid #e2e8f0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                            <div style={{ fontSize: 12, color: "#64748b" }}>Field bertanda <b style={{ color: "#ef4444" }}>*</b> wajib diisi.</div>
+                            <div style={{ display: "flex", gap: 8 }}>
+                                {/* Simpan sebagai Draft */}
+                                <button onClick={() => handleSubmit("draft")}
+                                    style={{ display: "flex", alignItems: "center", gap: 5, background: "#fff", color: "#475569", border: "1.2px solid #e2e8f0", borderRadius: 8, padding: "8px 14px", fontFamily: "inherit", fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "all .15s" }}
+                                    onMouseEnter={e => { e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.color = "#2563c4"; }}
+                                    onMouseLeave={e => { e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.color = "#475569"; }}>
+                                    <Icon.Save /> Draft
+                                </button>
+
+                                {/* Special "Closed" button for published jobs */}
+                                {editingJob?.status === "published" && (
+                                    <button onClick={() => handleSubmit("closed")}
+                                        style={{ display: "flex", alignItems: "center", gap: 5, background: "#ef4444", color: "#fff", border: "none", borderRadius: 8, padding: "8px 14px", fontFamily: "inherit", fontSize: 13, fontWeight: 700, cursor: "pointer", boxShadow: "0 2px 6px rgba(239, 68, 68, 0.2)", transition: "all .15s" }}
+                                        onMouseEnter={e => { e.currentTarget.style.background = "#dc2626"; }}
+                                        onMouseLeave={e => { e.currentTarget.style.background = "#ef4444"; }}>
+                                        <Icon.Lock /> Closed
+                                    </button>
+                                )}
+
+                                {/* Simpan or Publish */}
+                                <button onClick={() => handleSubmit("published")}
+                                    style={{ display: "flex", alignItems: "center", gap: 5, background: "#2563c4", color: "#fff", border: "none", borderRadius: 8, padding: "8px 14px", fontFamily: "inherit", fontSize: 13, fontWeight: 700, cursor: "pointer", boxShadow: "0 2px 6px rgba(37,99,235,0.25)", transition: "all .15s" }}
+                                    onMouseEnter={e => { e.currentTarget.style.background = "#1d4ed8"; }}
+                                    onMouseLeave={e => { e.currentTarget.style.background = "#2563c4"; }}>
+                                    <Icon.Send /> {editingJob?.status === "published" ? "Simpan" : "Publish"}
+                                </button>
+                            </div>
+                        </div>
                     </>
                 ) : (
-                    <div style={{ padding: "60px 28px", overflowY: "auto", maxHeight: "65vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center" }}>
-                        <div style={{ width: 80, height: 80, background: "#f1f5f9", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", color: "#94a3b8", marginBottom: 20 }}>
-                            <Icon.Users />
-                        </div>
-                        {editingJob?.status === "draft" ? (
-                            <>
-                                <h3 style={{ fontSize: 18, fontWeight: 800, color: "#0f172a", marginBottom: 10 }}>Belum Bisa Menerima Pelamar</h3>
-                                <p style={{ fontSize: 14, color: "#64748b", maxWidth: 340, lineHeight: 1.6, textAlign: "center" }}>Silakan <b>Publish</b> lowongan ini terlebih dahulu dengan kembali ke tab Detail, agar calon peserta dapat melihat dan melamar posisi ini.</p>
-                            </>
+                    <div style={{ padding: "24px 28px", overflowY: "auto", maxHeight: "65vh" }}>
+                        {(!editingJob?.submissions || editingJob.submissions.length === 0) ? (
+                            <div style={{ padding: "40px 0", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
+                                <div style={{ width: 80, height: 80, background: "#f1f5f9", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", color: "#94a3b8", marginBottom: 20 }}>
+                                    <Icon.Users />
+                                </div>
+                                {editingJob?.status === "draft" ? (
+                                    <>
+                                        <h3 style={{ fontSize: 18, fontWeight: 800, color: "#0f172a", marginBottom: 10 }}>Belum Bisa Menerima Pelamar</h3>
+                                        <p style={{ fontSize: 14, color: "#64748b", maxWidth: 340, lineHeight: 1.6 }}>Silakan <b>Publish</b> lowongan ini terlebih dahulu agar calon peserta dapat melihat dan melamar.</p>
+                                    </>
+                                ) : (
+                                    <>
+                                        <h3 style={{ fontSize: 18, fontWeight: 800, color: "#0f172a", marginBottom: 10 }}>Belum Ada Pelamar</h3>
+                                        <p style={{ fontSize: 14, color: "#64748b", maxWidth: 340, lineHeight: 1.6 }}>Belum ada kandidat yang mengirimkan lamaran ke posisi manapun di lowongan ini.</p>
+                                    </>
+                                )}
+                            </div>
                         ) : (
-                            <>
-                                <h3 style={{ fontSize: 18, fontWeight: 800, color: "#0f172a", marginBottom: 10 }}>Belum Ada Pelamar</h3>
-                                <p style={{ fontSize: 14, color: "#64748b", maxWidth: 340, lineHeight: 1.6, textAlign: "center" }}>Lowongan ini sudah dipublish, namun saat ini belum ada kandidat yang mengirimkan lamaran ke posisi manapun.</p>
-                            </>
+                            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                                {editingJob.submissions.map((sub, idx) => (
+                                    <ApplicantItem key={sub.id_submission || idx} sub={sub} />
+                                ))}
+                            </div>
                         )}
                     </div>
                 )}
             </div>
+        </div>
+    );
+}
+
+function ApplicantItem({ sub }) {
+    const [expanded, setExpanded] = useState(false);
+    const docBtn = { display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", border: "1px solid #e2e8f0", borderRadius: 8, background: "#fff", fontSize: 12, fontWeight: 600, color: "#475569", cursor: "pointer", transition: "all .15s", textDecoration: "none" };
+
+    return (
+        <div style={{ border: "1px solid #e2e8f0", borderRadius: 12, overflow: "hidden", background: expanded ? "#f8fafc" : "#fff", transition: "all .2s" }}>
+            <div onClick={() => setExpanded(!expanded)} style={{ padding: "14px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#eff6ff", color: "#3b82f6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 800 }}>
+                        {(sub.user?.name || "U").slice(0, 1).toUpperCase()}
+                    </div>
+                    <div style={{ textAlign: "left" }}>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>{sub.user?.name}</div>
+                        <div style={{ fontSize: 12, color: "#64748b" }}>Melamar posisi: <span style={{ color: "#2563c4", fontWeight: 600 }}>{sub.position?.name || "Posisi tidak diketahui"}</span></div>
+                    </div>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 8px", borderRadius: 6, background: sub.status === "accepted" ? "#ecfdf5" : sub.status === "rejected" ? "#fef2f2" : "#fff7ed", color: sub.status === "accepted" ? "#059669" : sub.status === "rejected" ? "#dc2626" : "#c2410c", border: `1px solid ${sub.status === "accepted" ? "#10b98133" : sub.status === "rejected" ? "#ef444433" : "#f9731633"}`, textTransform: "capitalize" }}>
+                        {sub.status || "Pending"}
+                    </span>
+                    <div style={{ transform: expanded ? "rotate(90deg)" : "rotate(0deg)", transition: "0.2s", color: "#64748b" }}><Icon.ChevronRight /></div>
+                </div>
+            </div>
+            {expanded && (
+                <div style={{ padding: "0 20px 20px", marginTop: -4, textAlign: "left" }}>
+                    <div style={{ height: 1.5, background: "#e2e8f0", marginBottom: 16, opacity: 0.5 }} />
+                    <div style={{ fontSize: 12, fontWeight: 700, color: "#64748b", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.5px" }}>Dokumen Lamaran</div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                        {sub.cv_file && (
+                            <a href={`http://127.0.0.1:8000/storage/${sub.cv_file}`} target="_blank" rel="noopener noreferrer" style={docBtn} onMouseEnter={e => { e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.color = "#2563c4"; }} onMouseLeave={e => { e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.color = "#475569"; }}>
+                                <Icon.FileText /> CV / Resume
+                            </a>
+                        )}
+                        {sub.portfolio_file && (
+                            <a href={`http://127.0.0.1:8000/storage/${sub.portfolio_file}`} target="_blank" rel="noopener noreferrer" style={docBtn} onMouseEnter={e => { e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.color = "#2563c4"; }} onMouseLeave={e => { e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.color = "#475569"; }}>
+                                <Icon.FileText /> Portofolio
+                            </a>
+                        )}
+                        {sub.cover_letter_file && (
+                            <a href={`http://127.0.0.1:8000/storage/${sub.cover_letter_file}`} target="_blank" rel="noopener noreferrer" style={docBtn} onMouseEnter={e => { e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.color = "#2563c4"; }} onMouseLeave={e => { e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.color = "#475569"; }}>
+                                <Icon.FileText /> Surat Lamaran
+                            </a>
+                        )}
+                        {sub.institution_letter_file && (
+                            <a href={`http://127.0.0.1:8000/storage/${sub.institution_letter_file}`} target="_blank" rel="noopener noreferrer" style={docBtn} onMouseEnter={e => { e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.color = "#2563c4"; }} onMouseLeave={e => { e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.color = "#475569"; }}>
+                                <Icon.FileText /> Surat Pengantar
+                            </a>
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
@@ -609,13 +702,14 @@ export default function ManajemenLowongan() {
                     kota: locParts[0] || "",
                     provinsi: locParts[1] || "",
                     alamat: locParts[2] || "",
-                    startDate: j.deadline,
-                    endDate: j.deadline,
-                    durasi: j.duration_months + " Bulan",
+                    deadline: formatDateToFrontend(j.deadline),
+                    startDate: formatDateToFrontend(j.start_date || j.deadline),
+                    endDate: formatDateToFrontend(j.end_date || j.deadline),
                     tipe: j.type,
                     payment: j.payment_type,
-                    kuota: j.quota,
-                    posisi: (j.positions || []).map(p => p.name || p)
+                    kuota: j.total_quota || 0,
+                    posisi: (j.positions || []).map(p => p.name || p),
+                    submissions: j.submissions || []
                 };
             });
             setJobs(mappedJobs);
@@ -651,16 +745,18 @@ export default function ManajemenLowongan() {
             formData.append("city", data.kota);
             formData.append("province", data.provinsi);
             formData.append("address", data.alamat);
-            formData.append("duration_months", parseInt(data.durasi));
             formData.append("batch", parseInt(data.batch));
             formData.append("quota", parseInt(data.kuota));
-            formData.append("deadline", data.deadline);
+            formData.append("deadline", formatDateToBackend(data.deadline));
+            formData.append("start_date", formatDateToBackend(data.startDate));
+            formData.append("end_date", formatDateToBackend(data.endDate));
             formData.append("type", data.tipe);
             formData.append("payment_type", data.payment);
             formData.append("status", data.status);
 
             data.posisi.forEach((p, i) => {
-                formData.append(`positions[${i}]`, p);
+                formData.append(`positions[${i}][name]`, p.name);
+                formData.append(`positions[${i}][quota]`, p.quota);
             });
 
             if (data.photoFile) {
@@ -727,9 +823,8 @@ export default function ManajemenLowongan() {
     const TOPBAR_H = 56;
 
     return (
-        <div style={{ display: "flex", minHeight: "100vh", background: "#f8fafc", fontFamily: "'Plus Jakarta Sans','Inter','Segoe UI',sans-serif" }}>
+        <div style={{ display: "flex", minHeight: "100vh", background: "#f8fafc", fontFamily: "'Poppins', sans-serif" }}>
             <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         * { box-sizing: border-box; }
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-track { background: transparent; }
@@ -757,10 +852,10 @@ export default function ManajemenLowongan() {
                 }}
             >
                 {/* Logo */}
-                <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "4px 6px 20px" }}>
-                    <img src="/assets/images/logo.png" alt="EarlyPath" style={{ height: "34px", objectFit: "contain", flexShrink: 0 }} />
+                <Link to="/" style={{ display: "flex", alignItems: "center", gap: "10px", padding: "4px 6px 20px", textDecoration: "none" }}>
+                    <img src="/assets/images/logo.png" alt="EarlyPath" style={{ height: "46px", objectFit: "contain", flexShrink: 0 }} />
                     <span style={{ fontSize: "15px", fontWeight: "800", color: "#fff", letterSpacing: "-0.3px", whiteSpace: "nowrap" }}>EarlyPath</span>
-                </div>
+                </Link>
 
                 {/* Nav */}
                 <p style={{ fontSize: "10px", fontWeight: "700", color: "rgba(255,255,255,0.25)", letterSpacing: "1.2px", padding: "6px 14px 4px", textTransform: "uppercase" }}>

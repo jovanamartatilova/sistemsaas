@@ -8,9 +8,11 @@ return new class extends Migration {
 
     public function up()
     {
-        Schema::table('companies', function (Blueprint $table) {
-            $table->string('slug')->unique()->after('name');
-        });
+        if (!Schema::hasColumn('companies', 'slug')) {
+            Schema::table('companies', function (Blueprint $table) {
+                $table->string('slug')->unique()->after('name');
+            });
+        }
     }
 
     public function down()

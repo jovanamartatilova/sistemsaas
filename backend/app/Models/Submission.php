@@ -10,9 +10,9 @@ class Submission extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'id_submission', 'id_team', 'id_user', 'id_vacancy',
+        'id_submission', 'id_team', 'id_user', 'id_vacancy', 'id_position',
         'cover_letter_file', 'institution_letter_file',
-        'cv_file', 'portfolio_file', 'status', 'submitted_at',
+        'cv_file', 'portfolio_file', 'linkedin_url', 'motivation_message', 'status', 'submitted_at',
     ];
 
     public function vacancy()
@@ -23,5 +23,10 @@ class Submission extends Model
     public function user()
     {
         return $this->belongsTo(User::class, 'id_user', 'id_user');
+    }
+
+    public function position()
+    {
+        return $this->belongsTo(Position::class, 'id_position', 'id_position');
     }
 }

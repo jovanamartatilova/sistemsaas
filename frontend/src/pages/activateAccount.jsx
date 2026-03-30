@@ -204,7 +204,7 @@ export default function ActivateAccount() {
               <p className="text-xs font-medium" style={{ color: "#5dd8d8" }}>✦ Start your internship journey today</p>
             </div>
             <h2 className="text-4xl font-bold text-white mb-4 leading-tight"
-              style={{ fontFamily: "'Georgia', serif", letterSpacing: "-0.5px" }}>
+              style={{ fontFamily: "'Poppins', sans-serif", letterSpacing: "-0.5px" }}>
               One Step Closer
             </h2>
             <p className="text-base leading-relaxed" style={{ color: "rgba(255,255,255,0.65)", maxWidth: "340px" }}>
@@ -235,7 +235,7 @@ export default function ActivateAccount() {
               {company?.logo_path ? (
                 <img src={`http://localhost:8000/storage/${company.logo_path}`} alt={company.name} className="w-16 h-16 object-contain rounded-2xl" />
               ) : (
-                <img src="/assets/images/logo.png" alt="Logo" className="w-23 h-23 object-contain" />
+                <img src="/assets/images/logo.png" alt="Logo" className="w-32 h-32 object-contain" />
               )}
             </div>
             <h1 className="text-2xl font-bold text-white mb-1" style={{ letterSpacing: "-0.3px" }}>

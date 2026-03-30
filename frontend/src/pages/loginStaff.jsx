@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useAuthStore } from "../stores/authStore";
 
 export default function LoginStaff() {
   const { slug } = useParams();
@@ -59,6 +60,13 @@ export default function LoginStaff() {
       localStorage.setItem("auth_token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
       localStorage.setItem("company", JSON.stringify(data.company));
+
+      // Update auth store for reactivity
+      useAuthStore.setState({ 
+          isAuthenticated: true, 
+          token: data.token, 
+          company: data.company 
+      });
 
       setSuccessMsg("✓ Login berhasil!");
       setTimeout(() => navigate(`/c/${slug}/staff/dashboard`), 1500);
@@ -141,7 +149,7 @@ export default function LoginStaff() {
               <p className="text-xs font-medium" style={{ color: "#5dd8d8" }}>✦ Start your internship journey today</p>
             </div>
             <h2 className="text-4xl font-bold text-white mb-4 leading-tight"
-              style={{ fontFamily: "'Georgia', serif", letterSpacing: "-0.5px" }}>
+              style={{ fontFamily: "'Poppins', sans-serif", letterSpacing: "-0.5px" }}>
               One Step Closer
             </h2>
             <p className="text-base leading-relaxed text-left" style={{ color: "rgba(255,255,255,0.65)", maxWidth: "340px" }}>
@@ -175,7 +183,7 @@ export default function LoginStaff() {
               ) : company?.logo_path ? (
                 <img src={`http://localhost:8000/storage/${company.logo_path}`} alt={company.name} className="w-16 h-16 object-contain rounded-2xl" />
               ) : (
-                <img src="/assets/images/logo.png" alt="Logo" className="w-23 h-23 object-contain" />
+                <img src="/assets/images/logo.png" alt="Logo" className="w-32 h-32 object-contain" />
               )}
             </div>
 

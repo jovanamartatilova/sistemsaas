@@ -590,7 +590,7 @@ function ManajemenUserPage() {
                     <span style={{ background: rs.bg, color: rs.color, border: `1px solid ${rs.border}`, borderRadius: "6px", fontSize: "11.5px", fontWeight: "700", padding: "3px 9px" }}>{u.role}</span>
                   </td>
                   <td style={{ padding: "11px 16px", fontSize: "12.5px", color: "#475569" }}>{u.tenant}</td>
-                  <td style={{ padding: "11px 16px", fontSize: "12.5px", color: "#475569", fontFamily: "monospace" }}>{u.phone}</td>
+                  <td style={{ padding: "11px 16px", fontSize: "12.5px", color: "#475569", fontFamily: "'Poppins', sans-serif" }}>{u.phone}</td>
                   <td style={{ padding: "11px 16px", fontSize: "12.5px", color: u.university === "—" ? "#cbd5e1" : "#475569" }}>{u.university}</td>
                   <td style={{ padding: "11px 16px", fontSize: "12px", color: "#64748b" }}>{u.registered}</td>
                 </tr>
@@ -617,9 +617,8 @@ export default function SuperAdminPages() {
   const pt = pageTitle[activePage];
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#f1f5f9", fontFamily: "'Plus Jakarta Sans','Inter',sans-serif" }}>
+    <div style={{ display: "flex", minHeight: "100vh", background: "#f1f5f9", fontFamily: "'Poppins', sans-serif" }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
         * {
   box-sizing: border-box;
   margin: 0;

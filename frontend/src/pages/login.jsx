@@ -119,11 +119,13 @@ export default function LoginPerusahaan() {
 
         {/* Content */}
         <div className="relative z-10 flex flex-col justify-end p-12 pb-16 w-full h-full">
-          {/* Back to Sign Up — top left */}
-          <button
-              onClick={goBack}
-              className="flex items-center justify-center w-9 h-9 rounded-full border border-white/20 hover:border-blue-400/60 hover:bg-blue-400/10 transition-all duration-300 bg-transparent group"
-              style={{ cursor: "pointer" }}
+          {/* Navigation — top left */}
+          <div className="absolute top-8 left-8 flex items-center gap-4">
+            {/* Back to Home */}
+            <Link
+              to="/"
+              className="flex items-center justify-center w-9 h-9 rounded-full border border-white/20 hover:border-blue-400/60 hover:bg-blue-400/10 transition-all duration-300 group"
+              style={{ textDecoration: "none" }}
               title="Back to Landing Page"
             >
               <svg
@@ -133,27 +135,32 @@ export default function LoginPerusahaan() {
                 fill="none"
                 className="group-hover:-translate-x-0.5 transition-transform duration-300"
               >
-                <path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>    
-          </button>
+                <path
+                  d="M10 12L6 8L10 4"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </Link>
 
             {/* Switch to Register */}
-            <button
-              onClick={() => navigate("/register")}
-              className="text-sm font-medium bg-transparent border-none p-0 hover:text-blue-300 transition-colors duration-300 text-left"
-              style={{ color: "rgba(255,255,255,0.6)", cursor: "pointer" }}
+            <Link
+              to="/register"
+              className="text-sm font-medium hover:text-blue-300 transition-colors duration-300"
+              style={{ color: "rgba(255,255,255,0.6)", textDecoration: "none" }}
             >
               Don't have an account?{" "}
-              <span className="text-blue-400 hover:underline">
-                Sign up
-              </span>
-            </button>
+              <span className="text-blue-400 hover:underline">Sign up</span>
+            </Link>
+          </div>
 
           {/* Bottom content */}
           <div>
             <h2
               className="text-4xl font-bold text-white mb-4 leading-tight text-left"
-              style={{ fontFamily: "'Georgia', serif", letterSpacing: "-0.5px" }}
+              style={{ fontFamily: "'Poppins', sans-serif", letterSpacing: "-0.5px" }}
             >
               One Step Closer
             </h2>
@@ -187,26 +194,24 @@ export default function LoginPerusahaan() {
         }}
       >
         {/* Mobile navigation */}
-        <div className="lg:hidden absolute top-6 left-6 flex items-center gap-2">
-          <button
-            onClick={goBack}
-            className="p-1 text-white/50 hover:text-white bg-transparent border-none"
-            style={{ cursor: "pointer" }}
+        <div className="lg:hidden absolute top-6 left-6 flex items-center gap-4">
+          <Link
+            to="/"
+            className="flex items-center justify-center w-9 h-9 rounded-full border border-white/10 hover:border-white/20 transition-all duration-200"
+            style={{ color: "rgba(255,255,255,0.5)", textDecoration: "none" }}
           >
             <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
               <path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-          </button>
-          <button
-            onClick={() => navigate("/register")}
-            className="text-sm bg-transparent border-none p-0"
-            style={{ color: "rgba(255,255,255,0.55)", cursor: "pointer" }}
+          </Link>
+          <Link
+            to="/register"
+            className="text-sm"
+            style={{ color: "rgba(255,255,255,0.55)", textDecoration: "none" }}
           >
             Don't have an account?{" "}
-            <span className="text-blue-400 underline">
-              Sign up
-            </span>
-          </button>
+            <span className="text-blue-400 underline">Sign up</span>
+          </Link>
         </div>
 
         {/* Background glow */}
