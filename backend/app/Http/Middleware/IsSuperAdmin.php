@@ -1,0 +1,16 @@
+<?php
+namespace App\Http\Middleware;
+
+use Closure;
+use Illuminate\Http\Request;
+
+class IsSuperAdmin
+{
+    public function handle(Request $request, Closure $next)
+    {
+        if (!$request->user() || $request->user()->role !== 'super_admin') {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+        return $next($request);
+    }
+}
