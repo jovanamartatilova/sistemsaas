@@ -18,15 +18,22 @@ class Vacancy extends Model
         'description',
         'photo',
         'location',
-        'duration_months',
         'type',
         'deadline',
+        'start_date',
+        'end_date',
         'payment_type',
         'batch',
-        'quota',
         'status',
         'publish_date',
     ];
+
+    protected $appends = ['total_quota'];
+
+    public function getTotalQuotaAttribute()
+    {
+        return $this->positions->sum('quota');
+    }
 
     public function company()
     {
@@ -36,5 +43,10 @@ class Vacancy extends Model
     public function positions()
     {
         return $this->belongsToMany(Position::class, 'vacancy_positions', 'id_vacancy', 'id_position');
+    }
+
+    public function submissions()
+    {
+        return $this->hasMany(Submission::class, 'id_vacancy', 'id_vacancy');
     }
 }

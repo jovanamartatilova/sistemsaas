@@ -149,7 +149,7 @@ export default function LoginStaff() {
               <p className="text-xs font-medium" style={{ color: "#5dd8d8" }}>✦ Start your internship journey today</p>
             </div>
             <h2 className="text-4xl font-bold text-white mb-4 leading-tight"
-              style={{ fontFamily: "'Georgia', serif", letterSpacing: "-0.5px" }}>
+              style={{ fontFamily: "'Poppins', sans-serif", letterSpacing: "-0.5px" }}>
               One Step Closer
             </h2>
             <p className="text-base leading-relaxed text-left" style={{ color: "rgba(255,255,255,0.65)", maxWidth: "340px" }}>

@@ -11,6 +11,7 @@ class Position extends Model
     protected $fillable = [
         'id_position',
         'name',
+        'quota',
     ];
     public function vacancies()
     {
@@ -19,5 +20,9 @@ class Position extends Model
     public function competencies()
     {
         return $this->belongsToMany(Competency::class, 'position_competencies', 'id_position', 'id_competency');
+    }
+    public function submissions()
+    {
+        return $this->hasMany(Submission::class, 'id_position', 'id_position');
     }
 }

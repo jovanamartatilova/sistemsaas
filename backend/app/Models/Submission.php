@@ -24,4 +24,9 @@ class Submission extends Model
     {
         return $this->belongsTo(User::class, 'id_user', 'id_user');
     }
+
+    public function position()
+    {
+        return $this->belongsTo(Position::class, 'id_position', 'id_position');
+    }
 }

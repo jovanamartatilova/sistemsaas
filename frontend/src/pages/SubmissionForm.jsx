@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { useAuthStore } from "../stores/authStore";
 
 export default function SubmissionForm() {
@@ -50,11 +50,11 @@ export default function SubmissionForm() {
         // Fetch profile + company secara paralel
         const [profileResult, cRes] = await Promise.all([
           token
-            ? fetch("http://localhost:8000/api/auth/profile", {
+            ? fetch("http://127.0.0.1:8000/api/auth/profile", {
                 headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
               }).catch(e => { console.error("Could not fetch user profile:", e); return null; })
             : Promise.resolve(null),
-          fetch(`http://localhost:8000/api/c/${slug}`, {
+          fetch(`http://127.0.0.1:8000/api/c/${slug}`, {
             headers: { Accept: "application/json" },
           }),
         ]);
@@ -72,7 +72,7 @@ export default function SubmissionForm() {
         if (isMounted) setCompany(cData.company);
 
         // GET Vacancies
-        const vRes = await fetch(`http://localhost:8000/api/c/${slug}/vacancies`, {
+        const vRes = await fetch(`http://127.0.0.1:8000/api/c/${slug}/vacancies`, {
           headers: { Accept: "application/json" },
         });
         const vData = await vRes.json();
@@ -100,7 +100,7 @@ export default function SubmissionForm() {
     if (!file) return;
 
     if (file.size > MAX_FILE_SIZE) {
-      setFileErrors(prev => ({ ...prev, [e.target.name]: `Ukuran file "${file.name}" melebihi batas maksimal 5MB (ukuran file: ${(file.size / 1024 / 1024).toFixed(2)}MB)` }));
+      setFileErrors(prev => ({ ...prev, [e.target.name]: `Ukuran file "${file.name}" melebihi batas maksimal 2MB (ukuran file: ${(file.size / 1024 / 1024).toFixed(2)}MB)` }));
       e.target.value = ""; // reset input
       return;
     }
@@ -165,7 +165,7 @@ export default function SubmissionForm() {
       formData.append("linkedin_url", form.linkedin_url);
       formData.append("motivation_message", form.motivation_message);
 
-      const response = await fetch(`http://localhost:8000/api/c/${slug}/apply`, {
+      const response = await fetch(`http://127.0.0.1:8000/api/c/${slug}/apply`, {
         method: "POST",
         headers: {
           "Accept": "application/json",
@@ -214,7 +214,7 @@ export default function SubmissionForm() {
   );
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f8fafc", fontFamily: "-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif", textAlign: "left", paddingBottom: "100px" }}>
+    <div style={{ minHeight: "100vh", background: "#f8fafc", fontFamily: "'Poppins', sans-serif", textAlign: "left", paddingBottom: "100px" }}>
 
       {/* Navbar Dark - match exactly like companyPublic */}
       <header style={{

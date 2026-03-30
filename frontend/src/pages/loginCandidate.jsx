@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { useAuthStore } from "../stores/authStore";
 
 export default function LoginCandidate() {
@@ -135,22 +135,42 @@ export default function LoginCandidate() {
                 <div className="absolute top-20 left-20 w-64 h-64 rounded-full blur-3xl opacity-10" style={{ background: "#4a9eff" }} />
                 <div className="absolute bottom-32 right-10 w-48 h-48 rounded-full blur-3xl opacity-10" style={{ background: "#1a6bb5" }} />
 
-                {/* Back button — top left */}
-                <button
-                    onClick={() => navigate(`/c/${slug}/register`)}
-                    className="absolute top-8 left-8 flex items-center gap-2 group z-10"
-                    style={{ ...btnLink, color: "rgba(255,255,255,0.6)" }}
-                >
-                    <span className="flex items-center justify-center w-9 h-9 rounded-full border border-white/20 group-hover:border-blue-400/60 group-hover:bg-blue-400/10 transition-all duration-300">
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="group-hover:-translate-x-0.5 transition-transform duration-300">
-                            <path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                {/* Navigation — top left */}
+                <div className="absolute top-8 left-8 flex items-center gap-4 z-50 pointer-events-auto">
+                    {/* Back to Home */}
+                    <Link
+                        to="/"
+                        className="flex items-center justify-center w-10 h-10 rounded-full border border-white/20 hover:border-blue-400/60 hover:bg-blue-400/10 transition-all duration-300 group bg-transparent cursor-pointer"
+                        style={{ textDecoration: "none", outline: "none" }}
+                        title="Back to Landing Page"
+                    >
+                        <svg
+                            width="16"
+                            height="16"
+                            viewBox="0 0 16 16"
+                            fill="none"
+                            className="group-hover:-translate-x-0.5 transition-transform duration-300"
+                        >
+                            <path
+                                d="M10 12L6 8L10 4"
+                                stroke="currentColor"
+                                strokeWidth="1.5"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            />
                         </svg>
-                    </span>
-                    <span className="text-sm font-medium group-hover:text-blue-300 transition-colors duration-300">
+                    </Link>
+
+                    {/* Switch to Register */}
+                    <Link
+                        to={`/c/${slug}/register`}
+                        className="text-sm font-medium hover:text-blue-300 transition-colors duration-300"
+                        style={{ color: "rgba(255,255,255,0.6)", textDecoration: "none" }}
+                    >
                         Don't have an account?{" "}
-                        <span className="text-blue-400 group-hover:underline">Sign up</span>
-                    </span>
-                </button>
+                        <span className="text-blue-400 hover:underline">Sign up</span>
+                    </Link>
+                </div>
 
                 <div className="relative z-10 flex flex-col justify-end p-12 pb-32">
                     {company && (
@@ -171,7 +191,7 @@ export default function LoginCandidate() {
                             <p className="text-xs font-medium" style={{ color: "#5dd8d8" }}>✦ Start your internship journey today</p>
                         </div>
                         <h2 className="text-4xl font-bold text-white mb-4 leading-tight"
-                            style={{ fontFamily: "'Georgia', serif", letterSpacing: "-0.5px" }}>
+                            style={{ fontFamily: "'Poppins', sans-serif", letterSpacing: "-0.5px" }}>
                             One Step Closer
                         </h2>
                         <p className="text-base leading-relaxed text-left" style={{ color: "rgba(255,255,255,0.65)", maxWidth: "340px" }}>
@@ -193,17 +213,26 @@ export default function LoginCandidate() {
             <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 relative overflow-hidden"
                 style={{ background: "linear-gradient(160deg, #0d1f3c 0%, #0a1628 40%, #071220 100%)" }}>
 
-                {/* Mobile back */}
-                <button
-                    onClick={() => navigate(`/c/${slug}/register`)}
-                    className="lg:hidden absolute top-6 left-6 flex items-center gap-1.5 text-sm z-10"
-                    style={{ ...btnLink, color: "rgba(255,255,255,0.55)" }}
-                >
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                        <path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                    Back
-                </button>
+                {/* Mobile navigation */}
+                <div className="lg:hidden absolute top-6 left-6 flex items-center gap-4 z-50 pointer-events-auto">
+                    <Link
+                        to="/"
+                        className="flex items-center justify-center w-10 h-10 rounded-full border border-white/10 hover:border-white/20 transition-all duration-200 bg-transparent cursor-pointer"
+                        style={{ color: "rgba(255,255,255,0.5)", textDecoration: "none", outline: "none" }}
+                    >
+                        <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
+                            <path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                    </Link>
+                    <Link
+                        to={`/c/${slug}/register`}
+                        className="text-sm"
+                        style={{ color: "rgba(255,255,255,0.55)", textDecoration: "none" }}
+                    >
+                        Don't have an account?{" "}
+                        <span className="text-blue-400 underline">Sign up</span>
+                    </Link>
+                </div>
 
                 <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full blur-3xl opacity-5 pointer-events-none"
                     style={{ background: "#4a9eff" }} />

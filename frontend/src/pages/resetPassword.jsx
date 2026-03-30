@@ -171,7 +171,7 @@ export default function ResetPassword() {
           <div>
             <h2
               className="text-4xl font-bold text-white mb-4 leading-tight text-left"
-              style={{ fontFamily: "'Georgia', serif", letterSpacing: "-0.5px" }}
+              style={{ fontFamily: "'Poppins', sans-serif", letterSpacing: "-0.5px" }}
             >
               One Step Closer
             </h2>
