@@ -442,10 +442,7 @@ function Footer() {
 // ── MAIN EXPORT ──────────────────────────────────────────────────────
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-white overflow-x-hidden" style={{ fontFamily: 'Poppins, sans-serif' }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
-      `}</style>
+    <div className="min-h-screen bg-white overflow-x-hidden">
       <Navbar />
       <Hero />
       <PositionsSection />

@@ -3,6 +3,7 @@ namespace App\Http\Controllers;
 use App\Models\Vacancy;
 use App\Models\Position;
 use App\Models\Competency;
+use App\Models\Submission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
@@ -15,8 +16,8 @@ class ProgramController extends Controller
     public function index(Request $request)
     {
         $id_company = $request->user()->id_company;
-        // Fetch vacancies with their positions for the company
-        $vacancies = Vacancy::with('positions')
+        // Fetch vacancies with their positions and submissions for the company
+        $vacancies = Vacancy::with(['positions.submissions.user'])
             ->where('id_company', $id_company)
             ->get();
         $programs = [];
@@ -27,11 +28,16 @@ class ProgramController extends Controller
                     'vacancy_title' => $vacancy->title,
                     'vacancy_batch' => $vacancy->batch,
                     'vacancy_photo' => $vacancy->photo,
-                    'vacancy_deadline' => $vacancy->deadline, // Using deadline as placeholder for internship dates if not specific
-                    'vacancy_duration_months' => $vacancy->duration_months,
+                    'vacancy_deadline' => $vacancy->deadline,
+                    'vacancy_start_date' => $vacancy->start_date,
+                    'vacancy_end_date' => $vacancy->end_date,
                     'id_position' => $position->id_position,
                     'position_name' => $position->name,
+                    'position_quota' => $position->quota,
+                    'applicant_count' => $position->submissions->count(),
+                    'applicants' => $position->submissions,
                     'vacancy_status' => $vacancy->status,
+                    'vacancy_total_quota' => $vacancy->total_quota,
                 ];
             }
         }

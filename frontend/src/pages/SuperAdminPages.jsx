@@ -610,6 +610,41 @@ function UserManagementPage() {
                   {["USER", "ROLE", "COMPANY", "PHONE", "REGISTERED"].map(h => (
                     <th key={h} style={TH}>{h}</th>
                   ))}
+        <div style={{ padding: "12px 18px", borderBottom: "1px solid #f1f5f9" }}>
+          <span style={{ fontSize: "12px", color: "#64748b" }}>Menampilkan <strong style={{ color: "#1e293b" }}>{filtered.length}</strong> dari <strong style={{ color: "#1e293b" }}>{USERS.length}</strong> user</span>
+        </div>
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead>
+            <tr style={{ background: "#f8fafc" }}>
+              {["USER", "ROLE", "TENANT", "NO. HP", "UNIVERSITAS", "TERDAFTAR"].map(h => (
+                <th key={h} style={{ padding: "10px 16px", textAlign: "left", fontSize: "10.5px", fontWeight: "700", color: "#94a3b8", letterSpacing: "0.5px", borderBottom: "1px solid #f1f5f9" }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map((u, i) => {
+              const rs = roleStyle[u.role] || { bg: "#f8fafc", color: "#475569", border: "#e2e8f0" };
+              const ac = avatarColors[i % avatarColors.length];
+              return (
+                <tr key={u.id} style={{ borderBottom: "1px solid #f8fafc", transition: "background 0.15s", cursor: "pointer" }}
+                  onMouseEnter={e => e.currentTarget.style.background = "#fafbfc"}
+                  onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                  <td style={{ padding: "11px 16px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                      <div style={{ width: "30px", height: "30px", borderRadius: "8px", background: `${ac}18`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10.5px", fontWeight: "800", color: ac, flexShrink: 0 }}>{initials(u.name)}</div>
+                      <div>
+                        <div style={{ fontSize: "13px", fontWeight: "600", color: "#1e293b" }}>{u.name}</div>
+                        <div style={{ fontSize: "11px", color: "#94a3b8" }}>{u.email}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td style={{ padding: "11px 16px" }}>
+                    <span style={{ background: rs.bg, color: rs.color, border: `1px solid ${rs.border}`, borderRadius: "6px", fontSize: "11.5px", fontWeight: "700", padding: "3px 9px" }}>{u.role}</span>
+                  </td>
+                  <td style={{ padding: "11px 16px", fontSize: "12.5px", color: "#475569" }}>{u.tenant}</td>
+                  <td style={{ padding: "11px 16px", fontSize: "12.5px", color: "#475569", fontFamily: "'Poppins', sans-serif" }}>{u.phone}</td>
+                  <td style={{ padding: "11px 16px", fontSize: "12.5px", color: u.university === "—" ? "#cbd5e1" : "#475569" }}>{u.university}</td>
+                  <td style={{ padding: "11px 16px", fontSize: "12px", color: "#64748b" }}>{u.registered}</td>
                 </tr>
               </thead>
               <tbody>
@@ -682,6 +717,15 @@ export default function SuperAdminPages() {
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 99px; }
         @keyframes spin { to { transform: rotate(360deg); } }
+  return (
+    <div style={{ display: "flex", minHeight: "100vh", background: "#f1f5f9", fontFamily: "'Poppins', sans-serif" }}>
+      <style>{`
+        * {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Poppins', sans-serif;
+}
       `}</style>
       <Sidebar onLogout={() => setLogoutModal(true)} />
       <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
@@ -704,6 +748,7 @@ export default function SuperAdminPages() {
     </div>
   );
 
+
   return (
     <Routes>
       <Route path="/login" element={isLoggedIn ? <Navigate to="/superadmin/dashboard" replace /> : <LoginForm onLoginSuccess={() => { setIsLoggedIn(true); navigate("/superadmin/dashboard"); }} />} />
@@ -714,3 +759,6 @@ export default function SuperAdminPages() {
     </Routes>
   );
 }
+
+}
+

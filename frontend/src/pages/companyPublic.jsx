@@ -3,6 +3,15 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../stores/authStore";
 
 // ── helpers ──────────────────────────────────────────────────────
+ const formatDate = (dateStr) => {
+   if (!dateStr) return "-";
+   const MONTHS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+   const parts = String(dateStr).split("-");
+   if (parts.length !== 3) return dateStr;
+   const [y, m, d] = parts;
+   const month = MONTHS[parseInt(m) - 1];
+   return `${parseInt(d)} ${month} ${y}`;
+ };
 const blu = "linear-gradient(135deg,#1a5fc4 0%,#2d7ff3 100%)";
 
 function Badge({ children, color = "#2d7ff3" }) {
@@ -96,20 +105,21 @@ const PositionDetailModal = ({ position, slug, isAuthenticated, onClose }) => {
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
               <span>{vacancy.location || "Jakarta"}</span>
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "14.5px", color: "rgba(255,255,255,0.5)", fontStyle: "italic" }}>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: "10px", fontSize: "14.5px", color: "rgba(255,255,255,0.5)", fontStyle: "italic", textAlign: "left" }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-              <span>{vacancy.deadline} - {vacancy.deadline} ({vacancy.duration_months} Bulan)</span>
+              <span>{formatDate(vacancy.start_date || vacancy.deadline)} - {formatDate(vacancy.end_date || vacancy.deadline)}</span>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "14.5px", color: "#fb7185", fontWeight: "600" }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-              <span>Pendaftaran Terakhir: {vacancy.deadline}</span>
+              <span>Pendaftaran Terakhir: {formatDate(vacancy.deadline)}</span>
             </div>
           </div>
 
           <div style={{ display: "flex", gap: "10px", marginBottom: "40px" }}>
             <span style={{ fontSize: "11px", fontWeight: "700", textTransform: "capitalize", padding: "6px 14px", borderRadius: "8px", background: "rgba(74,158,255,0.1)", color: "#4a9eff" }}>{vacancy.type}</span>
             <span style={{ fontSize: "12px", fontWeight: "700", textTransform: "capitalize", padding: "6px 14px", borderRadius: "8px", background: "rgba(16,185,129,0.1)", color: "#10b981" }}>{vacancy.payment_type}</span>
-            <span style={{ fontSize: "11px", fontWeight: "700", background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.5)", padding: "6px 14px", borderRadius: "8px", marginLeft: "auto" }}>{vacancy.quota} Kuota Total</span>
+            <span style={{ fontSize: "11px", fontWeight: "700", background: "rgba(74,158,255,0.1)", color: "#4a9eff", padding: "6px 14px", borderRadius: "8px" }}>{position.quota || 0} Kuota Posisi</span>
+            <span style={{ fontSize: "11px", fontWeight: "700", background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.5)", padding: "6px 14px", borderRadius: "8px", marginLeft: "auto" }}>{vacancy.total_quota || 0} Total Kuota</span>
           </div>
 
           <button
@@ -170,15 +180,26 @@ function PositionCard({ position, slug, onClick }) {
         {/* Body */}
         <div style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: 8, flex: 1, textAlign: "left" }}>
           <h3 style={{ margin: 0, fontSize: 17, fontWeight: 800, color: "#fff" }}>{position.name}</h3>
-          <p style={{ margin: 0, fontSize: 13, color: "rgba(255,255,255,0.55)", fontWeight: 500 }}>
+          <p style={{ margin: 0, fontSize: 13, color: "rgba(255,255,255,0.4)", fontWeight: 500 }}>
             {vacancy.title} - Batch {vacancy.batch}
           </p>
+          <div style={{ marginTop: 4 }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: "#4a9eff", background: "rgba(74,158,255,0.1)", padding: "2px 8px", borderRadius: 6 }}>
+              {position.quota || 0} Kuota
+            </span>
+          </div>
 
           <div style={{ flex: 1 }} />
 
-          <div style={{ marginTop: 12, display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "rgba(255,255,255,0.4)" }}>
-            <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
-            <span>Tutup: {vacancy.deadline} ({vacancy.duration_months} Bulan)</span>
+          <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 6, fontSize: 12, color: "rgba(255,255,255,0.4)" }}>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 8, textAlign: "left" }}>
+              <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
+              <span>Periode Magang: {formatDate(vacancy.start_date || vacancy.deadline)} - {formatDate(vacancy.end_date || vacancy.deadline)}</span>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#fb7185" }}>
+              <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
+              <span style={{ fontStyle: "italic" }}>Tutup Pendaftaran: {formatDate(vacancy.deadline)}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -281,7 +302,7 @@ export default function CompanyPublicPage() {
   );
 
   return (
-    <div style={{ minHeight: "100vh", background: "linear-gradient(160deg,#060d1a 0%,#08101f 55%,#04080e 100%)", fontFamily: "-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif", textAlign: "left" }}>
+    <div style={{ minHeight: "100vh", background: "linear-gradient(160deg,#060d1a 0%,#08101f 55%,#04080e 100%)", fontFamily: "'Poppins', sans-serif", textAlign: "left" }}>
 
       {/* ambient glow */}
       <div style={{ position: "fixed", top: "-8%", left: "50%", transform: "translateX(-50%)", width: 800, height: 600, borderRadius: "50%", background: "radial-gradient(ellipse,rgba(45,127,243,0.07) 0%,transparent 70%)", pointerEvents: "none" }} />
@@ -467,7 +488,7 @@ export default function CompanyPublicPage() {
           <StatsBar
             vacanciesCount={vacancies.length}
             positionsCount={positions.length}
-            totalQuota={vacancies.reduce((acc, v) => acc + (parseInt(v.quota) || 0), 0)}
+            totalQuota={vacancies.reduce((acc, v) => acc + (parseInt(v.total_quota) || 0), 0)}
           />
         </div>
 

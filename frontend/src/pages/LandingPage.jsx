@@ -198,6 +198,16 @@ const footerLinks = {
   Resources: ["Documentation", "API Reference", "Support", "Status"],
 };
 
+const formatDate = (dateStr) => {
+  if (!dateStr) return "-";
+  const MONTHS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+  const parts = String(dateStr).split("-");
+  if (parts.length !== 3) return dateStr;
+  const [y, m, d] = parts;
+  const month = MONTHS[parseInt(m) - 1];
+  return `${parseInt(d)} ${month} ${y}`;
+};
+
 // ── VacancyDetailModal ────────────────────────────────────────────────────────
 const VacancyDetailModal = ({ vacancy, onClose }) => {
   if (!vacancy) return null;
@@ -222,10 +232,13 @@ const VacancyDetailModal = ({ vacancy, onClose }) => {
 
           <div style={{ marginBottom: "28px" }}>
             <h4 style={{ fontSize: "15px", fontWeight: "700", color: "rgba(255,255,255,0.9)", margin: "0 0 8px" }}>Posisi yang Dibuka:</h4>
-            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
               {(vacancy.positions || []).map((p, idx) => (
-                <div key={idx} style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "15px", color: "rgba(255,255,255,0.6)" }}>
-                  <IconDot /> <span>{p.name || p}</span>
+                <div key={idx} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 12px", background: "rgba(255,255,255,0.03)", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.05)" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "15px", color: "rgba(255,255,255,0.8)" }}>
+                    <IconDot /> <span>{p.name || p}</span>
+                  </div>
+                  <span style={{ fontSize: "12px", fontWeight: "700", color: "#4a9eff", background: "rgba(74,158,255,0.1)", padding: "2px 8px", borderRadius: "6px" }}>{p.quota || 0} Kuota</span>
                 </div>
               ))}
             </div>
@@ -235,18 +248,18 @@ const VacancyDetailModal = ({ vacancy, onClose }) => {
             <div style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "14.5px", color: "rgba(255,255,255,0.7)" }}>
               <IconLocation /> <span>{vacancy.location || "Jakarta"}</span>
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "14.5px", color: "rgba(255,255,255,0.5)", fontStyle: "italic" }}>
-              <IconCal /> <span>{vacancy.deadline} - {vacancy.deadline} ({vacancy.duration_months} Bulan)</span>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: "12px", fontSize: "14.5px", color: "rgba(255,255,255,0.5)", fontStyle: "italic", textAlign: "left" }}>
+              <IconCal /> <span>{formatDate(vacancy.start_date || vacancy.deadline)} - {formatDate(vacancy.end_date || vacancy.deadline)}</span>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "14.5px", color: "#fb7185", fontWeight: "600" }}>
-              <IconDeadline /> <span>Pendaftaran Deadline: {vacancy.deadline}</span>
+              <IconDeadline /> <span>Pendaftaran Deadline: {formatDate(vacancy.deadline)}</span>
             </div>
           </div>
 
           <div style={{ display: "flex", gap: "10px", marginBottom: "40px" }}>
             <span style={{ fontSize: "11px", fontWeight: "700", textTransform: "capitalize", padding: "6px 14px", borderRadius: "8px", background: "rgba(74,158,255,0.1)", color: "#4a9eff" }}>{vacancy.type}</span>
             <span style={{ fontSize: "12px", fontWeight: "700", textTransform: "capitalize", padding: "6px 14px", borderRadius: "8px", background: "rgba(16,185,129,0.1)", color: "#10b981" }}>{vacancy.payment_type}</span>
-            <span style={{ fontSize: "11px", fontWeight: "700", background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.5)", padding: "6px 14px", borderRadius: "8px", marginLeft: "auto" }}>{vacancy.quota} Kuota</span>
+            <span style={{ fontSize: "11px", fontWeight: "700", background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.5)", padding: "6px 14px", borderRadius: "8px", marginLeft: "auto" }}>{vacancy.total_quota || 0} Total Kuota</span>
           </div>
 
           <button
@@ -336,7 +349,7 @@ export default function LandingPage() {
       style={{
         background: "linear-gradient(180deg, #06101e 0%, #081828 100%)",
         minHeight: "100vh",
-        fontFamily: "'Inter', 'Segoe UI', sans-serif",
+        fontFamily: "'Poppins', sans-serif",
         color: "#e8eaf0",
         overflowX: "hidden",
       }}
@@ -870,7 +883,7 @@ export default function LandingPage() {
                         fontSize: "12px",
                         fontWeight: "700",
                         color: activeStep === i ? "#4a9eff" : "rgba(255,255,255,0.25)",
-                        fontFamily: "monospace",
+                        fontFamily: "'Poppins', sans-serif",
                         minWidth: "28px",
                         marginTop: "2px",
                       }}
@@ -1113,21 +1126,21 @@ export default function LandingPage() {
                     </div>
 
                     <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: "8px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "14.5px", color: "rgba(255,255,255,0.4)", fontStyle: "italic" }}>
-                        <IconCal /> <span>{pos.deadline} - {pos.deadline} ({pos.duration_months} Bulan)</span>
+                      <div style={{ display: "flex", alignItems: "flex-start", gap: "8px", fontSize: "14.5px", color: "rgba(255,255,255,0.4)", fontStyle: "italic", textAlign: "left" }}>
+                        <IconCal /> <span>Periode: {formatDate(pos.start_date || pos.deadline)} - {formatDate(pos.end_date || pos.deadline)}</span>
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "14.5px", color: "rgba(255,255,255,0.5)" }}>
                         <IconLocation /> <span>{pos.location?.split(",")[0]}</span>
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "14.5px", color: "#fb7185", fontWeight: "600" }}>
-                        <IconDeadline /> <span style={{ fontStyle: "italic" }}>Deadline: {pos.deadline}</span>
+                        <IconDeadline /> <span style={{ fontStyle: "italic" }}>Deadline: {formatDate(pos.deadline)}</span>
                       </div>
                     </div>
 
                     <div style={{ display: "flex", gap: "8px", marginTop: "18px", paddingTop: "16px", borderTop: "1px solid rgba(255,255,255,0.08)" }}>
                       <span style={{ fontSize: "10px", fontWeight: "700", textTransform: "uppercase", padding: "4px 10px", borderRadius: "6px", background: "rgba(74,158,255,0.1)", color: "#4a9eff" }}>{pos.type}</span>
                       <span style={{ fontSize: "10px", fontWeight: "700", textTransform: "uppercase", padding: "4px 10px", borderRadius: "6px", background: "rgba(16,185,129,0.1)", color: "#10b981" }}>{pos.payment_type}</span>
-                      <span style={{ fontSize: "10px", fontWeight: "700", marginLeft: "auto", color: "rgba(255,255,255,0.4)" }}>Pelamar · {pos.quota} Kuota</span>
+                      <span style={{ fontSize: "10px", fontWeight: "700", marginLeft: "auto", color: "rgba(255,255,255,0.4)" }}>Pelamar · {pos.total_quota || 0} Kuota</span>
                     </div>
                   </div>
                 </div>
@@ -1317,8 +1330,6 @@ export default function LandingPage() {
 
       {/* Responsive CSS */}
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-        
         .hidden-mobile { display: flex !important; }
         .show-mobile { display: none !important; }
 
