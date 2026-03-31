@@ -11,7 +11,6 @@ class TenantService
         $query = Company::withCount([
             'users',
             'vacancies',
-            'submissions as peserta_count',
         ]);
 
         if (!empty($filters['search'])) {
@@ -48,7 +47,7 @@ class TenantService
 
     public function getById(string $id): array
     {
-        $c = Company::withCount(['users', 'vacancies', 'submissions as peserta_count'])
+        $c = Company::withCount(['users', 'vacancies'])
                     ->findOrFail($id);
 
         return [
