@@ -44,7 +44,7 @@ class Company extends Model
 
     public function users()
     {
-        return $this->hasMany(User::class, 'id_company', 'id_company');  // ← tambah ini
+        return $this->hasMany(User::class, 'id_company', 'id_company');  
     }
 
 }
