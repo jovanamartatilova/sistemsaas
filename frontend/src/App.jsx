@@ -52,8 +52,6 @@ export default function App() {
                 <Route path="/c/:slug/forgot-password" element={<ForgotPasswordCandidate />} />
                 <Route path="/c/:slug/reset-password" element={<ResetPasswordCandidate />} />
                 <Route path="/c/:slug/login" element={<LoginCandidate />} />
-                <Route path="/c/:slug/forgot-password" element={<ForgotPassword />} />
-                <Route path="/c/:slug/reset-password" element={<ResetPassword />} />
                 <Route path="/c/:slug/staff/login" element={<LoginStaff />} />
 
 
