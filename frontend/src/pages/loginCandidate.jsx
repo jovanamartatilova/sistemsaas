@@ -74,7 +74,7 @@ export default function LoginCandidate() {
 
             setSuccessMsg("✓ Login berhasil!");
 
-            setTimeout(() => navigate(`/c/${slug}`), 1500);
+            setTimeout(() => navigate(`/c/${slug}/dashboard`), 1500);
         } catch (err) {
             setErrorMsg(err.message);
             setLoading(false);

@@ -8,6 +8,7 @@ use App\Http\Controllers\ProgramController;
 use App\Http\Controllers\SuperAdmin\DashboardController as SuperAdminDashboardController;
 use App\Http\Controllers\SuperAdmin\TenantController;
 use App\Http\Controllers\SuperAdmin\UserController;
+use App\Http\Controllers\CandidateController;
 
 // Public vacancy
 Route::get('/vacancies/public', [VacancyController::class, 'publicIndex']);
@@ -66,6 +67,23 @@ Route::prefix('superadmin')->middleware(['auth:sanctum', 'superadmin'])->group(f
     Route::get('/tenants/{id}', [TenantController::class, 'show']);
     Route::patch('/tenants/{id}/status', [TenantController::class, 'updateStatus']);
     Route::get('/users', [UserController::class, 'index']);
+});
+
+// Candidate — Protected routes untuk candidate yang sudah login
+Route::prefix('candidate')->middleware(['auth:sanctum', 'ensureCandidate'])->group(function () {
+
+    // Dashboard — satu endpoint untuk semua data di halaman dashboard
+    Route::get('/dashboard',            [CandidateController::class, 'dashboard']);
+
+    // Profile
+    Route::get('/profile',              [CandidateController::class, 'getProfile']);
+    Route::put('/profile',              [CandidateController::class, 'updateProfile']);
+    Route::post('/profile/photo',       [CandidateController::class, 'uploadPhoto']);
+
+    // Skills
+    Route::get('/skills',               [CandidateController::class, 'getSkills']);
+    Route::post('/skills',              [CandidateController::class, 'addSkill']);
+    Route::delete('/skills/{id_skill}', [CandidateController::class, 'deleteSkill']);
 });
 
 // Test endpoint
