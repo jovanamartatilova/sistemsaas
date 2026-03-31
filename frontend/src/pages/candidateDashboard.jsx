@@ -1,5 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { LayoutDashboard, BookOpen, User, Award, LogOut, MapPin } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
 
 // --- Radar Chart (SVG) ---
 function RadarChart() {
@@ -135,7 +138,7 @@ function CertificateCard({ subject, date }) {
 }
 
 // --- Sidebar ---
-function Sidebar() {
+function Sidebar({ userName, onLogout }) {
   const navItems = [
     { label: "Dashboard", icon: <LayoutDashboard size={16} />, active: true },
     { label: "Programs", icon: <BookOpen size={16} /> },
@@ -160,9 +163,17 @@ function Sidebar() {
         ))}
       </nav>
       <div className="mt-auto flex items-center gap-3 px-2">
-        <div className="w-8 h-8 rounded-full bg-slate-600 flex items-center justify-center text-xs font-bold">R</div>
-        <span className="text-sm text-slate-300 flex-1">Riku</span>
-        <LogOut size={14} className="text-slate-500 hover:text-white cursor-pointer transition-colors" />
+        <div className="w-8 h-8 rounded-full bg-slate-600 flex items-center justify-center text-xs font-bold">
+          {userName?.charAt(0).toUpperCase() || "R"}
+        </div>
+        <span className="text-sm text-slate-300 flex-1">{userName || "Riku"}</span>
+        <button
+          onClick={onLogout}
+          className="text-slate-500 hover:text-white cursor-pointer transition-colors"
+          title="Logout"
+        >
+          <LogOut size={14} />
+        </button>
       </div>
     </aside>
   );
@@ -170,54 +181,204 @@ function Sidebar() {
 
 // --- Main Dashboard ---
 export default function EarlyPathDashboard() {
+  const navigate = useNavigate();
   const [skillFilter, setSkillFilter] = useState("Active");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [dashboardData, setDashboardData] = useState(null);
 
-  const competencies = [
-    { title: "HTML5 & CSS3 Fundamentals", hours: "40 jam pembelajaran", projects: "2 proyek", score: 92, maxScore: 100, status: "Done" },
-    { title: "JavaScript ES6+", hours: "48 jam pembelajaran", projects: "3 proyek", score: 88, maxScore: 100, status: "Done" },
-    { title: "React.js & Component Design", hours: "32 / 52 jam pembelajaran", projects: "1/3 proyek", progress: 61, status: "Active" },
-    { title: "TypeScript Basics", hours: "18 / 36 jam pembelajaran", projects: "0/2 proyek", progress: 50, status: "Active" },
-  ];
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
 
-  const filtered = skillFilter === "All" ? competencies : competencies.filter((c) => c.status === skillFilter);
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("token") || localStorage.getItem("auth_token");
+      
+      if (!token) {
+        // PrivateRoute akan handle redirect
+        setError("No authentication token found");
+        setLoading(false);
+        return;
+      }
+
+      const response = await fetch(`${API_BASE_URL}/candidate/dashboard`, {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem("auth_token");
+          localStorage.removeItem("token");
+          setError("Session expired. Please login again.");
+          return;
+        }
+        throw new Error("Failed to fetch dashboard data");
+      }
+
+      const data = await response.json();
+      setDashboardData(data.data);
+      setError(null);
+    } catch (err) {
+      setError(err.message);
+      console.error("Error fetching dashboard:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      const token = localStorage.getItem("token") || localStorage.getItem("auth_token");
+      if (token) {
+        await fetch(`${API_BASE_URL}/auth/logout`, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+      }
+    } catch (err) {
+      console.error("Error during logout:", err);
+    } finally {
+      localStorage.removeItem("auth_token");
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      localStorage.removeItem("company");
+      navigate("/");
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-indigo-600 mx-auto mb-4" />
+          <p className="text-slate-600">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !dashboardData) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-slate-600 mb-4">{error || "Failed to load dashboard"}</p>
+          <div className="flex gap-3 justify-center">
+            <button
+              onClick={fetchDashboardData}
+              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+            >
+              Retry
+            </button>
+            <button
+              onClick={() => navigate("/")}
+              className="px-4 py-2 bg-slate-300 text-slate-700 rounded-lg hover:bg-slate-400"
+            >
+              Back Home
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const { profile, apprentice, learning_progress, competencies, skills } = dashboardData;
+
+  // Format competencies for display
+  const competencyList = competencies.map((comp) => ({
+    title: comp.name,
+    hours: `${comp.learning_hours} jam pembelajaran`,
+    projects: "0 proyek",
+    progress: 0,
+    status: "Active",
+  }));
+
+  const filtered =
+    skillFilter === "All"
+      ? competencyList
+      : competencyList.filter((c) => c.status === skillFilter);
+
+  const skillTags = skills.map((s) => ({
+    label: s.skill_name,
+    color: "bg-slate-100 text-slate-600",
+  }));
 
   return (
     <div className="min-h-screen bg-gray-50 flex" style={{ fontFamily: 'Poppins, sans-serif' }}>
-      <Sidebar />
+      <Sidebar userName={profile?.name} onLogout={handleLogout} />
 
       <main className="ml-56 flex-1 px-6 py-6 space-y-5 min-w-0">
         <style>{`@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');`}</style>
+
+        {/* Status Alert - Jika submissi masih pending atau apprentice belum ada */}
+        {!apprentice && (
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 shadow-sm">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 w-5 h-5 rounded-full bg-amber-400 flex items-center justify-center mt-0.5">
+                <span className="text-white font-bold text-sm">!</span>
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-amber-900 mb-1">Aplikasi Sedang Diproses</h3>
+                <p className="text-sm text-amber-800">
+                  Terima kasih telah mendaftar! Aplikasi Anda sedang kami review. Kami akan mengirimkan update status melalui email Anda. Silakan tunggu pemberitahuan selanjutnya.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Profile Header */}
         <div className="bg-white border border-slate-200 rounded-2xl p-5 flex items-center gap-5 shadow-sm">
           <div className="relative flex-shrink-0">
             <div className="w-16 h-16 rounded-full bg-indigo-100 flex items-center justify-center text-xl font-bold text-indigo-600">
-              R
+              {profile?.name?.charAt(0).toUpperCase() || "R"}
             </div>
             <span className="absolute bottom-0.5 right-0.5 w-3 h-3 bg-emerald-400 rounded-full border-2 border-white" />
           </div>
           <div className="flex-1 min-w-0">
-            <h1 className="text-xl font-bold text-slate-800 text-left">Riku</h1>
-            <p className="text-slate-500 text-sm mt-0.5 text-left">Frontend Developer Intern | Batch 5 – PT. Teknologi Maju</p>
+            <h1 className="text-xl font-bold text-slate-800 text-left">{profile?.name || "User"}</h1>
+            <p className="text-slate-500 text-sm mt-0.5 text-left">
+              {apprentice?.position || "Position"} · {apprentice?.batch || "Batch"} – {apprentice?.company || "Company"}
+            </p>
             <div className="flex items-center gap-3 mt-1.5">
               <span className="text-xs text-slate-400 flex items-center gap-1">
-                <MapPin size={11} /> Surabaya, Jawa Timur · 01 Apr 2025 – 30 Jun 2025
+                <MapPin size={11} /> 
+                {apprentice?.start_date && apprentice?.end_date
+                  ? `${new Date(apprentice.start_date).toLocaleDateString()} – ${new Date(apprentice.end_date).toLocaleDateString()}`
+                  : "No date info"
+                }
               </span>
-              <span className="bg-emerald-50 text-emerald-600 text-xs px-2.5 py-0.5 rounded-full font-medium border border-emerald-200">● Active</span>
+              <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium border ${
+                apprentice?.status === 'active'
+                  ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
+                  : 'bg-slate-50 text-slate-600 border-slate-200'
+              }`}>
+                ● {apprentice?.status || "Inactive"}
+              </span>
             </div>
           </div>
           <div className="flex gap-6 flex-shrink-0 divide-x divide-slate-100">
             {[
-              { value: "78%", label: "Progress", bar: true },
-              { value: "12", label: "Competencies", sub: "8 Done", subColor: "text-slate-400" },
-              { value: "240", label: "Learning Hours", sub: "+12 This Week", subColor: "text-emerald-500" },
+              { value: `${profile?.overall_progress || 0}%`, label: "Progress", bar: true },
+              { value: `${competencies?.length || 0}`, label: "Competencies", sub: "0 Done", subColor: "text-slate-400" },
+              { value: `${learning_progress?.total_learning_hours || 0}`, label: "Learning Hours", sub: "+12 This Week", subColor: "text-emerald-500" },
             ].map((stat, i) => (
               <div key={i} className="text-center px-6 first:pl-0 last:pr-0">
                 <p className="text-2xl font-bold text-slate-800">{stat.value}</p>
                 <p className="text-xs text-slate-400 mt-0.5">{stat.label}</p>
                 {stat.bar && (
                   <div className="mt-1.5 w-full h-1.5 bg-slate-100 rounded-full">
-                    <div className="h-1.5 bg-indigo-500 rounded-full" style={{ width: "78%" }} />
+                    <div
+                      className="h-1.5 bg-indigo-500 rounded-full"
+                      style={{ width: `${profile?.overall_progress || 0}%` }}
+                    />
                   </div>
                 )}
                 {stat.sub && <p className={`text-xs mt-0.5 ${stat.subColor}`}>{stat.sub}</p>}
@@ -236,16 +397,22 @@ export default function EarlyPathDashboard() {
               <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Apprentice Info</h2>
               <div className="space-y-3">
                 {[
-                  { label: "ID Apprentice", value: "APR-2025-00042" },
-                  { label: "Program", value: "Frontend Developer Intern" },
-                  { label: "Batch", value: "Batch 5 – 2025" },
-                  { label: "Periode", value: "01 Apr – 30 Jun 2025" },
-                  { label: "Status", value: "Active", badge: true },
+                  { label: "ID Apprentice", value: apprentice?.id_apprentice || "-" },
+                  { label: "Program", value: apprentice?.position || "-" },
+                  { label: "Batch", value: apprentice?.batch || "-" },
+                  { label: "Periode", value: apprentice?.start_date && apprentice?.end_date ? `${new Date(apprentice.start_date).toLocaleDateString()} – ${new Date(apprentice.end_date).toLocaleDateString()}` : "-" },
+                  { label: "Status", value: apprentice?.status || "Inactive", badge: true },
                 ].map((row, i) => (
                   <div key={i} className="flex justify-between items-center text-sm">
                     <span className="text-slate-400">{row.label}</span>
                     {row.badge ? (
-                      <span className="bg-emerald-50 text-emerald-600 text-xs px-2.5 py-0.5 rounded-full font-medium border border-emerald-200">● {row.value}</span>
+                      <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium border ${
+                        row.value === 'active'
+                          ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
+                          : 'bg-slate-50 text-slate-600 border-slate-200'
+                      }`}>
+                        ● {row.value}
+                      </span>
                     ) : (
                       <span className="text-slate-700 font-medium text-right max-w-[55%]">{row.value}</span>
                     )}
@@ -259,10 +426,10 @@ export default function EarlyPathDashboard() {
               <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Learning Progress</h2>
               <div className="space-y-4">
                 {[
-                  { label: "Total Learning Hours", value: "240 / 320 hours", pct: 75, color: "bg-indigo-500" },
-                  { label: "Completed Module", value: "18 / 24 module", pct: 75, color: "bg-emerald-500" },
-                  { label: "Attendance", value: "92%", pct: 92, color: "bg-yellow-400" },
-                  { label: "Assignment Submitted", value: "34 / 40 assignment", pct: 85, color: "bg-slate-400" },
+                  { label: "Total Learning Hours", value: `${learning_progress?.total_learning_hours || 0} / ${learning_progress?.target_learning_hours || 320} hours`, pct: learning_progress ? Math.round((learning_progress.total_learning_hours / learning_progress.target_learning_hours) * 100) : 0, color: "bg-indigo-500" },
+                  { label: "Completed Module", value: `${learning_progress?.completed_modules || 0} / ${learning_progress?.total_modules || 24} module`, pct: learning_progress ? Math.round((learning_progress.completed_modules / learning_progress.total_modules) * 100) : 0, color: "bg-emerald-500" },
+                  { label: "Attendance", value: `${learning_progress?.attendance_percentage || 0}%`, pct: learning_progress?.attendance_percentage || 0, color: "bg-yellow-400" },
+                  { label: "Assignment Submitted", value: `${learning_progress?.submitted_assignments || 0} / ${learning_progress?.total_assignments || 40} assignment`, pct: learning_progress ? Math.round((learning_progress.submitted_assignments / learning_progress.total_assignments) * 100) : 0, color: "bg-slate-400" },
                 ].map((item, i) => (
                   <div key={i} className="space-y-1.5">
                     <div className="flex justify-between text-xs">
@@ -297,15 +464,24 @@ export default function EarlyPathDashboard() {
                 <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400">Competencies & Skills</h2>
                 <div className="flex gap-1 bg-slate-100 rounded-lg p-1">
                   {["All", "Active", "Done"].map((f) => (
-                    <button key={f} onClick={() => setSkillFilter(f)}
-                      className={`text-xs px-3 py-1 rounded-md font-medium transition-colors ${skillFilter === f ? "bg-indigo-600 text-white" : "text-slate-500 hover:text-slate-700 hover:bg-white"}`}>
+                    <button
+                      key={f}
+                      onClick={() => setSkillFilter(f)}
+                      className={`text-xs px-3 py-1 rounded-md font-medium transition-colors ${
+                        skillFilter === f ? "bg-indigo-600 text-white" : "text-slate-500 hover:text-slate-700 hover:bg-white"
+                      }`}
+                    >
                       {f}
                     </button>
                   ))}
                 </div>
               </div>
               <div className="space-y-3">
-                {filtered.map((c, i) => <CompetencyCard key={i} {...c} />)}
+                {filtered.length > 0 ? (
+                  filtered.map((c, i) => <CompetencyCard key={i} {...c} />)
+                ) : (
+                  <p className="text-slate-500 text-sm">No competencies available</p>
+                )}
               </div>
             </div>
 
@@ -314,19 +490,11 @@ export default function EarlyPathDashboard() {
               <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
                 <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">Skill Tags</h2>
                 <div className="flex flex-wrap gap-2">
-                  {[
-                    { label: "HTML5", color: "bg-orange-50 text-orange-600" },
-                    { label: "CSS3", color: "bg-blue-50 text-blue-600" },
-                    { label: "JavaScript", color: "bg-yellow-50 text-yellow-600" },
-                    { label: "React.js", color: "bg-cyan-50 text-cyan-600" },
-                    { label: "TypeScript", color: "bg-blue-50 text-blue-500" },
-                    { label: "Redux", color: "bg-purple-50 text-purple-600" },
-                    { label: "Figma", color: "bg-pink-50 text-pink-600" },
-                    { label: "Git", color: "bg-red-50 text-red-600" },
-                    { label: "Tailwind", color: "bg-teal-50 text-teal-600" },
-                    { label: "REST API", color: "bg-slate-100 text-slate-600" },
-                    { label: "Next.js", color: "bg-slate-100 text-slate-700" },
-                  ].map((tag, i) => <SkillTag key={i} {...tag} />)}
+                  {skillTags.length > 0 ? (
+                    skillTags.map((tag, i) => <SkillTag key={i} {...tag} />)
+                  ) : (
+                    <p className="text-slate-500 text-xs">No skills added yet</p>
+                  )}
                 </div>
               </div>
 
