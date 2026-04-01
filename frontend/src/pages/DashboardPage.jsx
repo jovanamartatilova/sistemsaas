@@ -135,12 +135,6 @@ function StatCard({ icon, iconBg, iconColor, title, value, sub, trend, trendUp, 
                 <div style={{ width: "38px", height: "38px", borderRadius: "10px", background: iconBg, display: "flex", alignItems: "center", justifyContent: "center", color: iconColor, fontSize: "18px" }}>
                     {icon}
                 </div>
-                {trend != null && (
-                    <span style={{ fontSize: "12px", fontWeight: "700", color: trendUp ? "#16a34a" : "#dc2626", display: "flex", alignItems: "center", gap: "3px" }}>
-                        {trendUp ? <IC.TrendUp /> : <IC.TrendDown />}
-                        {trend}
-                    </span>
-                )}
             </div>
             <div style={{ fontSize: "28px", fontWeight: "800", color: "#1e293b", letterSpacing: "-1px", marginTop: "8px" }}>{value}</div>
             <div style={{ fontSize: "13px", color: "#64748b", fontWeight: "500" }}>{title}</div>
@@ -269,7 +263,7 @@ export default function DashboardPage() {
     const [activeNav, setActiveNav] = useState("Dashboard");
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [logoutModalOpen, setLogoutModalOpen] = useState(false);
-    const [liveStats, setLiveStats] = useState({ active_programs: 0, active_vacancies: 0, total_applicants: 0, pending_review: 0 });
+    const [liveStats, setLiveStats] = useState({ active_programs: 0, active_vacancies: 0, total_applicants: 0, pending_review: 0, recent_applicants: [] });
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -313,8 +307,6 @@ export default function DashboardPage() {
             iconColor: "#3b82f6",
             title: "Active Positions",
             value: liveStats.active_programs.toString(),
-            trend: "+0%",
-            trendUp: true,
             sub: "All currently active internship programs",
             barColors: ["#3b82f6", "#60a5fa", "#93c5fd", "#3b82f6", "#60a5fa", "#93c5fd", "#3b82f6"],
         },
@@ -324,8 +316,6 @@ export default function DashboardPage() {
             iconColor: "#16a34a",
             title: "Active Programs",
             value: liveStats.active_vacancies.toString(),
-            trend: "+0%",
-            trendUp: true,
             sub: "Total positions opened",
             barColors: ["#4ade80", "#86efac", "#4ade80", "#86efac", "#4ade80", "#bbf7d0", "#4ade80"],
         },
@@ -334,10 +324,8 @@ export default function DashboardPage() {
             iconBg: "#fffbeb",
             iconColor: "#d97706",
             title: "Total Candidates",
-            value: "0",
-            trend: "+0%",
-            trendUp: true,
-            sub: "0 new candidates this week",
+            value: liveStats.total_applicants.toString(),
+            sub: `${liveStats.total_applicants} total applicants recorded`,
             barColors: ["#fbbf24", "#fde68a", "#f59e0b", "#fbbf24", "#fde68a", "#f59e0b", "#fbbf24"],
         },
         {
@@ -345,10 +333,8 @@ export default function DashboardPage() {
             iconBg: "#fff1f2",
             iconColor: "#e11d48",
             title: "Pending Review",
-            value: "0",
-            trend: "+0%",
-            trendUp: false,
-            sub: "0 candidates waiting more than 3 days",
+            value: liveStats.pending_review.toString(),
+            sub: "Requires immediate attention",
             barColors: ["#fca5a5", "#f87171", "#fca5a5", "#f87171", "#fca5a5", "#f87171", "#fca5a5"],
         },
     ];
@@ -603,21 +589,60 @@ export default function DashboardPage() {
 
                             {/* Table header */}
                             <div style={{ display: "grid", gridTemplateColumns: "2fr 2fr 1fr 1fr", gap: "12px", padding: "8px 12px", borderRadius: "8px", background: "#f8fafc", marginBottom: "4px" }}>
-                                {["NAME", "VACANCY", "STATUS", "TIME"].map((h) => (
+                                {["NAME", "PROGRAM", "STATUS", "SUBMISSION DATE"].map((h) => (
                                     <span key={h} style={{ fontSize: "11px", fontWeight: "700", color: "#94a3b8", letterSpacing: "0.5px" }}>{h}</span>
                                 ))}
                             </div>
 
-                            {/* Empty state */}
-                            <div style={{ padding: "40px 0", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: "10px" }}>
-                                <div style={{ color: "#cbd5e1", width: "32px", height: "32px" }}>
-                                    <IC.Users />
+                            {/* Recent candidates list */}
+                            {liveStats.recent_applicants?.length > 0 ? (
+                                <div style={{ display: "flex", flexDirection: "column" }}>
+                                    {liveStats.recent_applicants.map((app, idx) => (
+                                        <div key={idx} style={{
+                                            display: "grid", gridTemplateColumns: "2fr 2fr 1fr 1fr", gap: "12px",
+                                            padding: "14px 12px", borderBottom: idx === liveStats.recent_applicants.length - 1 ? "none" : "1px solid #f1f5f9",
+                                            alignItems: "center", transition: "background 0.2s"
+                                        }}>
+                                            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                                                <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: "#eff6ff", color: "#3b82f6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: "700" }}>
+                                                    {(app.user?.name || "U").slice(0, 2).toUpperCase()}
+                                                </div>
+                                                <div style={{ display: "flex", flexDirection: "column" }}>
+                                                    <span style={{ fontSize: "13.5px", fontWeight: "600", color: "#1e293b" }}>{app.user?.name}</span>
+                                                    <span style={{ fontSize: "11px", color: "#94a3b8" }}>{app.user?.email}</span>
+                                                </div>
+                                            </div>
+                                            <div style={{ display: "flex", flexDirection: "column" }}>
+                                                <span style={{ fontSize: "13.5px", fontWeight: "600", color: "#1e293b" }}>{app.vacancy?.title || "Unknown Program"}</span>
+                                                <span style={{ fontSize: "11px", color: "#94a3b8" }}>{app.position?.name}</span>
+                                            </div>
+                                            <div>
+                                                <span style={{
+                                                    fontSize: "11px", fontWeight: "700", padding: "3px 8px", borderRadius: "6px",
+                                                    background: app.status === "accepted" ? "#f0fdf4" : app.status === "rejected" ? "#fef2f2" : "#fff7ed",
+                                                    color: app.status === "accepted" ? "#16a34a" : app.status === "rejected" ? "#dc2626" : "#d97706",
+                                                    textTransform: "capitalize", border: `1px solid ${app.status === "accepted" ? "#bbf7d0" : app.status === "rejected" ? "#fecaca" : "#fed7aa"}`
+                                                }}>
+                                                    {app.status || "Pending"}
+                                                </span>
+                                            </div>
+                                            <span style={{ fontSize: "12.5px", color: "#64748b" }}>
+                                                {app.submitted_at ? new Date(app.submitted_at).toLocaleDateString() : "Just now"}
+                                            </span>
+                                        </div>
+                                    ))}
                                 </div>
-                                <div>
-                                    <p style={{ fontSize: "14px", color: "#94a3b8" }}>No new candidates yet</p>
-                                    <p style={{ fontSize: "12px", color: "#cbd5e1", marginTop: "4px" }}>Candidates will appear here after someone applies</p>
+                            ) : (
+                                <div style={{ padding: "40px 0", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: "10px" }}>
+                                    <div style={{ color: "#cbd5e1", width: "32px", height: "32px" }}>
+                                        <IC.Users />
+                                    </div>
+                                    <div>
+                                        <p style={{ fontSize: "14px", color: "#94a3b8" }}>No new candidates yet</p>
+                                        <p style={{ fontSize: "12px", color: "#cbd5e1", marginTop: "4px" }}>Candidates will appear here after someone applies</p>
+                                    </div>
                                 </div>
-                            </div>
+                            )}
                         </div>
 
                         {/* Right column: Popular + Activity */}
