@@ -48,7 +48,7 @@ const Icon = {
 
 const formatDate = (dateStr) => {
     if (!dateStr) return "-";
-    const MONTHS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+    const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     const [y, m, d] = dateStr.split("-");
     const month = MONTHS[parseInt(m) - 1];
     return `${parseInt(d)} ${month} ${y}`;
@@ -94,7 +94,7 @@ function ProgramCard({ program, onEdit, onDelete }) {
                         onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.9)"; e.currentTarget.style.color = "#334155"; }}>
                         <Icon.Edit />
                     </button>
-                    <button onClick={(e) => { e.stopPropagation(); onDelete(program); }} title="Hapus"
+                    <button onClick={(e) => { e.stopPropagation(); onDelete(program); }} title="Delete"
                         style={{ width: 32, height: 32, borderRadius: 8, border: "none", background: "rgba(255,255,255,0.9)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#334155", transition: "0.2s", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}
                         onMouseEnter={e => { e.currentTarget.style.background = "#fff1f2"; e.currentTarget.style.color = "#ef4444"; }}
                         onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.9)"; e.currentTarget.style.color = "#334155"; }}>
@@ -118,10 +118,10 @@ function ProgramCard({ program, onEdit, onDelete }) {
                     </div>
                     <div style={{ display: "flex", gap: 8 }}>
                         <span style={{ fontSize: 11, fontWeight: 700, color: "#2563eb", background: "#eff6ff", padding: "4px 10px", borderRadius: 8, border: "1px solid #dbeafe" }}>
-                            {program.position_quota || 0} Kuota Posisi
+                            {program.position_quota || 0} Position Quota
                         </span>
                         <span style={{ fontSize: 11, fontWeight: 700, color: "#64748b", background: "#f8fafc", padding: "4px 10px", borderRadius: 8, border: "1px solid #e2e8f0" }}>
-                            {program.applicant_count || 0} Pelamar
+                            {program.applicant_count || 0} Candidates
                         </span>
                     </div>
                 </div>
@@ -171,7 +171,7 @@ function ProgramModal({ open, program, onClose, onSubmit }) {
 
     const handleSubmit = (status) => {
         const filled = competencies.filter(c => c.name && c.learning_hours);
-        if (filled.length === 0) return alert("Minimal satu kompetensi harus diisi dengan nama dan jam belajar.");
+        if (filled.length === 0) return alert("At least one competency must be filled with name and learning hours.");
         onSubmit(program.id_position, filled, status);
     };
 
@@ -187,16 +187,16 @@ function ProgramModal({ open, program, onClose, onSubmit }) {
             <div style={{ background: "#fff", borderRadius: 20, width: "100%", maxWidth: 720, display: "flex", flexDirection: "column", boxShadow: "0 20px 60px rgba(0,0,0,.18)", margin: "auto 0" }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "22px 28px 18px", borderBottom: "1px solid #e2e8f0", position: "relative" }}>
                     <div style={{ textAlign: "center" }}>
-                        <div style={{ fontSize: 17, fontWeight: 800, color: "#0f172a" }}>Edit Kompetensi Program</div>
-                        <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>Kelola kompetensi, jam belajar, dan deskripsi untuk posisi {program?.position_name}.</div>
+                        <div style={{ fontSize: 17, fontWeight: 800, color: "#0f172a" }}>Edit Position Competencies</div>
+                        <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>Manage competencies, learning hours, and description for position {program?.position_name}.</div>
                     </div>
                     <button onClick={onClose} style={{ position: "absolute", top: 22, right: 28, width: 34, height: 34, borderRadius: 8, border: "1px solid #e2e8f0", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 16, color: "#64748b" }}>✕</button>
                 </div>
 
                 {program && (
                     <div style={{ display: "flex", borderBottom: "1px solid #e2e8f0", padding: "0 28px", background: "#f8fafc" }}>
-                        <button onClick={() => setActiveTab("detail")} style={{ padding: "12px 16px", background: "none", border: "none", borderBottom: activeTab === "detail" ? "2.5px solid #2563c4" : "2.5px solid transparent", color: activeTab === "detail" ? "#2563c4" : "#64748b", fontWeight: 600, fontSize: 13.5, cursor: "pointer", transition: "0.2s" }}>Manajemen Kompetensi</button>
-                        <button onClick={() => setActiveTab("pelamar")} style={{ padding: "12px 16px", background: "none", border: "none", borderBottom: activeTab === "pelamar" ? "2.5px solid #2563c4" : "2.5px solid transparent", color: activeTab === "pelamar" ? "#2563c4" : "#64748b", fontWeight: 600, fontSize: 13.5, cursor: "pointer", transition: "0.2s" }}>Daftar Pelamar</button>
+                        <button onClick={() => setActiveTab("detail")} style={{ padding: "12px 16px", background: "none", border: "none", borderBottom: activeTab === "detail" ? "2.5px solid #2563c4" : "2.5px solid transparent", color: activeTab === "detail" ? "#2563c4" : "#64748b", fontWeight: 600, fontSize: 13.5, cursor: "pointer", transition: "0.2s" }}>Competency Management</button>
+                        <button onClick={() => setActiveTab("pelamar")} style={{ padding: "12px 16px", background: "none", border: "none", borderBottom: activeTab === "pelamar" ? "2.5px solid #2563c4" : "2.5px solid transparent", color: activeTab === "pelamar" ? "#2563c4" : "#64748b", fontWeight: 600, fontSize: 13.5, cursor: "pointer", transition: "0.2s" }}>Candidate List</button>
                     </div>
                 )}
 
@@ -208,17 +208,17 @@ function ProgramModal({ open, program, onClose, onSubmit }) {
                                     <div key={i} style={{ border: "1px solid #e1e7ef", borderRadius: 12, padding: 20, position: "relative" }}>
                                         <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 12, marginBottom: 12 }}>
                                             <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-                                                <label style={{ fontSize: 12, fontWeight: 600, color: "#334155" }}>Nama Kompetensi *</label>
-                                                <input style={inp} value={c.name} onChange={e => handleChange(i, "name", e.target.value)} placeholder="cth. Dasar-dasar Figma" onFocus={focusInp} onBlur={blurInp} />
+                                                <label style={{ fontSize: 12, fontWeight: 600, color: "#334155" }}>Competency Name *</label>
+                                                <input style={inp} value={c.name} onChange={e => handleChange(i, "name", e.target.value)} placeholder="e.g. Figma Basics" onFocus={focusInp} onBlur={blurInp} />
                                             </div>
                                             <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-                                                <label style={{ fontSize: 12, fontWeight: 600, color: "#334155" }}>Jam Belajar *</label>
-                                                <input style={inp} type="number" value={c.learning_hours} onChange={e => handleChange(i, "learning_hours", e.target.value)} placeholder="cth. 40" onFocus={focusInp} onBlur={blurInp} />
+                                                <label style={{ fontSize: 12, fontWeight: 600, color: "#334155" }}>Learning Hours *</label>
+                                                <input style={inp} type="number" value={c.learning_hours} onChange={e => handleChange(i, "learning_hours", e.target.value)} placeholder="e.g. 40" onFocus={focusInp} onBlur={blurInp} />
                                             </div>
                                         </div>
                                         <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-                                            <label style={{ fontSize: 12, fontWeight: 600, color: "#334155" }}>Deskripsi Kompetensi</label>
-                                            <textarea style={{ ...inp, minHeight: 60, resize: "vertical" }} value={c.description} onChange={e => handleChange(i, "description", e.target.value)} placeholder="Berikan deskripsi singkat tentang kompetensi ini…" onFocus={focusInp} onBlur={blurInp} />
+                                            <label style={{ fontSize: 12, fontWeight: 600, color: "#334155" }}>Competency Description</label>
+                                            <textarea style={{ ...inp, minHeight: 60, resize: "vertical" }} value={c.description} onChange={e => handleChange(i, "description", e.target.value)} placeholder="Provide a brief description of this competency…" onFocus={focusInp} onBlur={blurInp} />
                                         </div>
                                         <button onClick={() => competencies.length > 1 && handleRemove(i)}
                                             style={{ position: "absolute", top: -10, right: -10, width: 28, height: 28, borderRadius: "50%", border: "1px solid #fca5a5", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#ef4444", fontSize: 14 }}>✕</button>
@@ -230,18 +230,18 @@ function ProgramModal({ open, program, onClose, onSubmit }) {
                                 style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "10px 16px", border: "1.5px dashed #e2e8f0", borderRadius: 10, background: "transparent", fontFamily: "inherit", fontSize: 13, color: "#64748b", cursor: "pointer", marginTop: 24, transition: "all .15s", width: "100%", justifyContent: "center" }}
                                 onMouseEnter={e => { e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.color = "#2563c4"; e.currentTarget.style.background = "#eff6ff"; }}
                                 onMouseLeave={e => { e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.color = "#64748b"; e.currentTarget.style.background = "transparent"; }}>
-                                <Icon.Plus /> Tambah Kompetensi
+                                <Icon.Plus /> Add Competency
                             </button>
                         </div>
 
                         <div style={{ padding: "18px 28px", borderTop: "1px solid #e2e8f0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                            <div style={{ fontSize: 12, color: "#64748b" }}>Field bertanda <b style={{ color: "#ef4444" }}>*</b> wajib diisi.</div>
+                            <div style={{ fontSize: 12, color: "#64748b" }}>Fields marked with <b style={{ color: "#ef4444" }}>*</b> are required.</div>
                             <div style={{ display: "flex", gap: 8 }}>
                                 <button onClick={() => handleSubmit("published")}
                                     style={{ display: "flex", alignItems: "center", gap: 5, background: "#2563c4", color: "#fff", border: "none", borderRadius: 8, padding: "8px 14px", fontFamily: "inherit", fontSize: 13, fontWeight: 700, cursor: "pointer", boxShadow: "0 2px 6px rgba(37,99,235,0.25)", transition: "all .15s" }}
                                     onMouseEnter={e => { e.currentTarget.style.background = "#1d4ed8"; }}
                                     onMouseLeave={e => { e.currentTarget.style.background = "#2563c4"; }}>
-                                    <Icon.Save /> Simpan
+                                    <Icon.Save /> Save
                                 </button>
                             </div>
                         </div>
@@ -255,20 +255,20 @@ function ProgramModal({ open, program, onClose, onSubmit }) {
                                 </div>
                                 {program?.vacancy_status === "draft" ? (
                                     <>
-                                        <h3 style={{ fontSize: 18, fontWeight: 800, color: "#0f172a", marginBottom: 10 }}>Belum Bisa Menerima Pelamar</h3>
-                                        <p style={{ fontSize: 14, color: "#64748b", maxWidth: 340, lineHeight: 1.6 }}>Silakan <b>Publish</b> lowongan ini terlebih dahulu agar calon peserta dapat melihat dan melamar posisi ini.</p>
+                                        <h3 style={{ fontSize: 18, fontWeight: 800, color: "#0f172a", marginBottom: 10 }}>Cannot Receive Candidates</h3>
+                                        <p style={{ fontSize: 14, color: "#64748b", maxWidth: 340, lineHeight: 1.6 }}>Please <b>Publish</b> this program first so that candidates can see and apply for this position.</p>
                                     </>
                                 ) : (
                                     <>
-                                        <h3 style={{ fontSize: 18, fontWeight: 800, color: "#0f172a", marginBottom: 10 }}>Belum Ada Pelamar</h3>
-                                        <p style={{ fontSize: 14, color: "#64748b", maxWidth: 340, lineHeight: 1.6 }}>Saat ini belum ada kandidat yang mengirimkan lamaran ke posisi ini.</p>
+                                        <h3 style={{ fontSize: 18, fontWeight: 800, color: "#0f172a", marginBottom: 10 }}>No Candidates Yet</h3>
+                                        <p style={{ fontSize: 14, color: "#64748b", maxWidth: 340, lineHeight: 1.6 }}>Currently there are no candidates who have submitted applications to this position.</p>
                                     </>
                                 )}
                             </div>
                         ) : (
                             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                                 {program.applicants.map((sub, idx) => (
-                                    <ApplicantItem key={sub.id_submission || idx} sub={sub} />
+                                    <CandidateItem key={sub.id_submission || idx} sub={sub} />
                                 ))}
                             </div>
                         )}
@@ -279,7 +279,7 @@ function ProgramModal({ open, program, onClose, onSubmit }) {
     );
 }
 
-function ApplicantItem({ sub }) {
+function CandidateItem({ sub }) {
     const [expanded, setExpanded] = useState(false);
     const docBtn = { display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", border: "1px solid #e2e8f0", borderRadius: 8, background: "#fff", fontSize: 12, fontWeight: 600, color: "#475569", cursor: "pointer", transition: "all .15s", textDecoration: "none" };
 
@@ -305,7 +305,7 @@ function ApplicantItem({ sub }) {
             {expanded && (
                 <div style={{ padding: "0 20px 20px", marginTop: -4, textAlign: "left" }}>
                     <div style={{ height: 1.5, background: "#e2e8f0", marginBottom: 16, opacity: 0.5 }} />
-                    <div style={{ fontSize: 12, fontWeight: 700, color: "#64748b", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.5px" }}>Dokumen Lamaran</div>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: "#64748b", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.5px" }}>Candidate Documents</div>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                         {sub.cv_file && (
                             <a href={`http://127.0.0.1:8000/storage/${sub.cv_file}`} target="_blank" rel="noopener noreferrer" style={docBtn} onMouseEnter={e => { e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.color = "#2563c4"; }} onMouseLeave={e => { e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.color = "#475569"; }}>
@@ -314,17 +314,17 @@ function ApplicantItem({ sub }) {
                         )}
                         {sub.portfolio_file && (
                             <a href={`http://127.0.0.1:8000/storage/${sub.portfolio_file}`} target="_blank" rel="noopener noreferrer" style={docBtn} onMouseEnter={e => { e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.color = "#2563c4"; }} onMouseLeave={e => { e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.color = "#475569"; }}>
-                                <Icon.FileText /> Portofolio
+                                <Icon.FileText /> Portfolio
                             </a>
                         )}
                         {sub.cover_letter_file && (
                             <a href={`http://127.0.0.1:8000/storage/${sub.cover_letter_file}`} target="_blank" rel="noopener noreferrer" style={docBtn} onMouseEnter={e => { e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.color = "#2563c4"; }} onMouseLeave={e => { e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.color = "#475569"; }}>
-                                <Icon.FileText /> Surat Lamaran
+                                <Icon.FileText /> Cover Letter
                             </a>
                         )}
                         {sub.institution_letter_file && (
                             <a href={`http://127.0.0.1:8000/storage/${sub.institution_letter_file}`} target="_blank" rel="noopener noreferrer" style={docBtn} onMouseEnter={e => { e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.color = "#2563c4"; }} onMouseLeave={e => { e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.color = "#475569"; }}>
-                                <Icon.FileText /> Surat Pengantar
+                                <Icon.FileText /> Reference Letter
                             </a>
                         )}
                     </div>
@@ -362,7 +362,7 @@ function SideItem({ icon, label, active, badge, onClick }) {
     );
 }
 
-export default function ManajemenProgram() {
+export default function PositionsManagement() {
     const navigate = useNavigate();
     const { logout, token } = useAuthStore();
     const [programs, setPrograms] = useState([]);
@@ -388,7 +388,7 @@ export default function ManajemenProgram() {
             setPrograms(res.data);
         } catch (err) {
             console.error("Failed to fetch programs:", err);
-            showToast("Gagal mengambil data program.", "error");
+            showToast("Failed to fetch program data.", "error");
         } finally {
             setLoading(false);
         }
@@ -397,7 +397,7 @@ export default function ManajemenProgram() {
     const company = (() => { try { return JSON.parse(localStorage.getItem("company")); } catch { return null; } })();
     const companyName = company?.name || "Admin";
     const initials = companyName.slice(0, 2).toUpperCase();
-    const companyRole = company?.role || "Admin Perusahaan";
+    const companyRole = company?.role || "Admin";
 
     const showToast = (msg, type = "success") => {
         setToast({ msg, type, visible: true });
@@ -415,13 +415,13 @@ export default function ManajemenProgram() {
             await axios.post(`http://127.0.0.1:8000/api/programs/${id_position}/competencies`, { competencies, status }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            showToast(`Kompetensi berhasil disimpan.`);
+            showToast(`Competencies saved successfully.`);
             setModalOpen(false);
             setSelectedProg(null);
             fetchPrograms();
         } catch (err) {
             console.error("Failed to save competencies:", err);
-            showToast("Gagal menyimpan kompetensi.", "error");
+            showToast("Failed to save competencies.", "error");
         }
     };
 
@@ -430,23 +430,23 @@ export default function ManajemenProgram() {
             await axios.delete(`http://127.0.0.1:8000/api/programs/${prog.id_vacancy}/${prog.id_position}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            showToast("Program berhasil dihapus dari lowongan.");
+            showToast("Program successfully removed from vacancy.");
             fetchPrograms();
         } catch (err) {
             console.error("Failed to delete program:", err);
-            showToast("Gagal menghapus program.", "error");
+            showToast("Failed to delete program.", "error");
         }
     };
 
     const navItems = [
         { label: "Dashboard", icon: <Icon.Dashboard />, path: "/dashboard", section: "MAIN MENU" },
-        { label: "Manajemen User", icon: <Icon.Users />, path: "#", badge: 0 },
-        { label: "Manajemen Program", icon: <Icon.Program />, path: "/program" },
-        { label: "Manajemen Lowongan", icon: <Icon.Lowongan />, path: "/lowongan" },
+        { label: "User Management", icon: <Icon.Users />, path: "#", badge: 0 },
+        { label: "Program Management", icon: <Icon.Lowongan />, path: "/programs" },
+        { label: "Positions Management", icon: <Icon.Program />, path: "/positions" },
     ];
     const navItems2 = [
-        { label: "Laporan", icon: <Icon.Laporan />, path: "#", section: "LAINNYA" },
-        { label: "Pengaturan", icon: <Icon.Pengaturan />, path: "#" },
+        { label: "Reports", icon: <Icon.Laporan />, path: "#", section: "OTHERS" },
+        { label: "Settings", icon: <Icon.Pengaturan />, path: "#" },
     ];
 
     const SIDEBAR_W = 250;
@@ -496,7 +496,7 @@ export default function ManajemenProgram() {
                         icon={n.icon}
                         label={n.label}
                         badge={n.badge}
-                        active={n.label === "Manajemen Program"}
+                        active={n.label === "Positions Management"}
                         onClick={() => {
                             if (n.path && n.path !== "#") navigate(n.path);
                         }}
@@ -505,14 +505,14 @@ export default function ManajemenProgram() {
 
                 <div style={{ height: "1px", background: "rgba(255,255,255,0.07)", margin: "12px 8px" }} />
                 <p style={{ fontSize: "10px", fontWeight: "700", color: "rgba(255,255,255,0.25)", letterSpacing: "1.2px", padding: "0px 14px 4px", textTransform: "uppercase" }}>
-                    Lainnya
+                    Others
                 </p>
                 {navItems2.map((n) => (
                     <SideItem
                         key={n.label}
                         icon={n.icon}
                         label={n.label}
-                        active={n.label === "Manajemen Program"}
+                        active={n.label === "Positions Management"}
                         onClick={() => {
                             if (n.path && n.path !== "#") navigate(n.path);
                         }}
@@ -551,25 +551,25 @@ export default function ManajemenProgram() {
             <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
                 <header style={{ height: 56, background: "#fff", borderBottom: "1px solid #e2e8f0", display: "flex", alignItems: "center", padding: "0 24px", gap: 16, position: "sticky", top: 0, zIndex: 50 }}>
                     <div style={{ flex: 1, textAlign: "left" }}>
-                        <span style={{ fontSize: "15px", fontWeight: "700", color: "#1e293b" }}>Manajemen Program</span>
+                        <span style={{ fontSize: "15px", fontWeight: "700", color: "#1e293b" }}>Positions Management</span>
                         <span style={{ fontSize: "13px", color: "#94a3b8", margin: "0 6px" }}>/</span>
-                        <span style={{ fontSize: "13px", color: "#94a3b8" }}>Kompetensi</span>
+                        <span style={{ fontSize: "13px", color: "#94a3b8" }}>Competencies</span>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 10, padding: "7px 14px", width: 220 }}>
                         <Icon.Search />
-                        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Cari program..." style={{ border: "none", background: "transparent", outline: "none", fontSize: 13, width: "100%" }} />
+                        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search programs..." style={{ border: "none", background: "transparent", outline: "none", fontSize: 13, width: "100%" }} />
                     </div>
                 </header>
 
                 <main style={{ padding: 28, flex: 1, textAlign: "left" }}>
                     <div style={{ marginBottom: 24 }}>
-                        <div style={{ fontSize: 20, fontWeight: 800, color: "#0f172a" }}>Manajemen Program</div>
-                        <div style={{ fontSize: 13, color: "#64748b", marginTop: 3 }}>Atur kompetensi dan jam belajar untuk setiap posisi di lowongan aktif.</div>
+                        <div style={{ fontSize: 20, fontWeight: 800, color: "#0f172a" }}>Positions Management</div>
+                        <div style={{ fontSize: 13, color: "#64748b", marginTop: 3 }}>Manage competencies and learning hours for each position in active programs.</div>
                     </div>
 
                     <div style={{ display: "flex", gap: 8, marginBottom: 22 }}>
                         {[
-                            { key: "all", label: "Semua", count: programs.length },
+                            { key: "all", label: "All", count: programs.length },
                             { key: "published", label: "Published", count: programs.filter(p => p.vacancy_status === "published").length },
                             { key: "draft", label: "Draft", count: programs.filter(p => p.vacancy_status === "draft").length },
                             { key: "closed", label: "Closed", count: programs.filter(p => p.vacancy_status === "closed").length }
@@ -585,8 +585,8 @@ export default function ManajemenProgram() {
                     ) : filtered.length === 0 ? (
                         <div style={{ textAlign: "center", padding: "60px 20px" }}>
                             <div style={{ color: "#cbd5e1", marginBottom: 16 }}><Icon.Program /></div>
-                            <h3 style={{ fontSize: 17, fontWeight: 700, color: "#0f172a" }}>Belum ada program</h3>
-                            <p style={{ fontSize: 13, color: "#64748b" }}>Posisi yang kamu tambahkan di Manajemen Lowongan akan otomatis muncul di sini.</p>
+                            <h3 style={{ fontSize: 17, fontWeight: 700, color: "#0f172a" }}>No programs yet</h3>
+                            <p style={{ fontSize: 13, color: "#64748b" }}>Positions you add in Program Management will automatically appear here.</p>
                         </div>
                     ) : (
                         <div style={S.cardGrid}>
@@ -604,11 +604,11 @@ export default function ManajemenProgram() {
                 <div style={{ position: "fixed", inset: 0, background: "rgba(10,22,40,.5)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center" }}>
                     <div style={{ background: "#fff", borderRadius: 16, padding: 28, width: 360, textAlign: "left" }}>
                         <div style={{ color: "#ef4444", marginBottom: 16 }}><Icon.Trash /></div>
-                        <div style={{ fontSize: 16, fontWeight: 800, color: "#0f172a", marginBottom: 6 }}>Hapus Program dari Lowongan?</div>
-                        <div style={{ fontSize: 13, color: "#64748b", lineHeight: 1.6, marginBottom: 20 }}>Tindakan ini akan menghapus posisi ini dari lowongan <b>{deletingProg.vacancy_title}</b>. Kompetensi global untuk posisi ini akan tetap ada.</div>
+                        <div style={{ fontSize: 16, fontWeight: 800, color: "#0f172a", marginBottom: 6 }}>Remove Position from Program?</div>
+                        <div style={{ fontSize: 13, color: "#64748b", lineHeight: 1.6, marginBottom: 20 }}>This action will remove this position from the program <b>{deletingProg.vacancy_title}</b>. Global competencies for this position will remain.</div>
                         <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-                            <button onClick={() => setDeletingProg(null)} style={{ padding: "8px 16px", border: "1px solid #e2e8f0", borderRadius: 8, background: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Batal</button>
-                            <button onClick={() => { handleDelete(deletingProg); setDeletingProg(null); }} style={{ padding: "8px 16px", border: "none", borderRadius: 8, background: "#ef4444", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>Ya, Hapus</button>
+                            <button onClick={() => setDeletingProg(null)} style={{ padding: "8px 16px", border: "1px solid #e2e8f0", borderRadius: 8, background: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Cancel</button>
+                            <button onClick={() => { handleDelete(deletingProg); setDeletingProg(null); }} style={{ padding: "8px 16px", border: "none", borderRadius: 8, background: "#ef4444", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>Yes, Remove</button>
                         </div>
                     </div>
                 </div>
@@ -618,11 +618,11 @@ export default function ManajemenProgram() {
                 <div style={{ position: "fixed", inset: 0, background: "rgba(10,22,40,.5)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center" }}>
                     <div style={{ background: "#fff", borderRadius: 16, padding: 28, width: 360, textAlign: "left" }}>
                         <div style={{ color: "#3b82f6", marginBottom: 16 }}><Icon.Users /></div>
-                        <div style={{ fontSize: 16, fontWeight: 800, color: "#0f172a", marginBottom: 6 }}>Keluar Sistem?</div>
-                        <div style={{ fontSize: 13, color: "#64748b", lineHeight: 1.6, marginBottom: 20 }}>Apakah Anda yakin ingin keluar dari akun perusahaan Anda?</div>
+                        <div style={{ fontSize: 16, fontWeight: 800, color: "#0f172a", marginBottom: 6 }}>Sign Out?</div>
+                        <div style={{ fontSize: 13, color: "#64748b", lineHeight: 1.6, marginBottom: 20 }}>Are you sure you want to sign out from your company account?</div>
                         <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-                            <button onClick={() => setLogoutModalOpen(false)} style={{ padding: "10px 18px", borderRadius: 10, border: "1px solid #e2e8f0", background: "#fff", fontSize: 13, fontWeight: 700, color: "#64748b", cursor: "pointer" }}>Batal</button>
-                            <button onClick={() => { logout(); navigate("/login"); }} style={{ padding: "10px 18px", borderRadius: 10, border: "none", background: "#ef4444", fontSize: 13, fontWeight: 700, color: "#fff", cursor: "pointer" }}>Ya, Keluar</button>
+                            <button onClick={() => setLogoutModalOpen(false)} style={{ padding: "10px 18px", borderRadius: 10, border: "1px solid #e2e8f0", background: "#fff", fontSize: 13, fontWeight: 700, color: "#64748b", cursor: "pointer" }}>Cancel</button>
+                            <button onClick={() => { logout(); navigate("/login"); }} style={{ padding: "10px 18px", borderRadius: 10, border: "none", background: "#ef4444", fontSize: 13, fontWeight: 700, color: "#fff", cursor: "pointer" }}>Yes, Sign Out</button>
                         </div>
                     </div>
                 </div>

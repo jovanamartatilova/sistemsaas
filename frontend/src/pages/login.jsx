@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../stores/authStore";
 
-export default function LoginPerusahaan() {
+export default function Login() {
   const [form, setForm] = useState({ username: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -51,7 +51,7 @@ export default function LoginPerusahaan() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "Login gagal");
+        throw new Error(data.message || "Login failed");
       }
 
       // Save token & company data
@@ -63,7 +63,7 @@ export default function LoginPerusahaan() {
       useAuthStore.setState({ isAuthenticated: true, token: data.token, company: data.company });
 
       // Show success briefly then redirect
-      setSuccessMsg("✓ Login berhasil!");
+      setSuccessMsg("✓ Login successful!");
 
       setTimeout(() => {
         if (data.company.role === "applicant" || data.company.role === "student") {

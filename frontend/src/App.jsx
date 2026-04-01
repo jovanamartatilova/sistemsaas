@@ -19,8 +19,8 @@ import ActivateAccount from './pages/activateAccount';
 import LoginStaff from './pages/loginStaff';
 // Main pages
 import DashboardPage from './pages/DashboardPage';
-import ManajemenLowongan from './pages/ManajemenLowongan';
-import ManajemenProgram from './pages/ManajemenProgram';
+import ProgramManagement from './pages/ProgramManagement';
+import PositionsManagement from './pages/PositionsManagement';
 import LandingPage from './pages/LandingPage';
 import HomePage from './pages/HomePage';
 import ProfilePage from './pages/ProfilePage';
@@ -83,19 +83,19 @@ export default function App() {
                     }
                 />
                 <Route
-                    path="/program"
+                    path="/positions"
                     element={
                         <PrivateRoute>
-                            <ManajemenProgram />
+                            <PositionsManagement />
                         </PrivateRoute>
                     }
                 />
 
                 <Route
-                    path="/lowongan"
+                    path="/programs"
                     element={
                         <PrivateRoute>
-                            <ManajemenLowongan />
+                            <ProgramManagement />
                         </PrivateRoute>
                     }
                 />
