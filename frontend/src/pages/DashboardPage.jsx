@@ -75,14 +75,14 @@ const IC = {
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function getGreeting() {
     const h = new Date().getHours();
-    if (h < 12) return "Selamat pagi";
-    if (h < 17) return "Selamat siang";
-    if (h < 20) return "Selamat sore";
-    return "Selamat malam";
+    if (h < 12) return "Good morning";
+    if (h < 17) return "Good afternoon";
+    if (h < 20) return "Good evening";
+    return "Good night";
 }
 
 function today() {
-    return new Date().toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "short", year: "numeric" });
+    return new Date().toLocaleDateString("en-US", { weekday: "long", day: "numeric", month: "short", year: "numeric" });
 }
 
 // ── Sidebar item ─────────────────────────────────────────────────────────────
@@ -135,12 +135,6 @@ function StatCard({ icon, iconBg, iconColor, title, value, sub, trend, trendUp, 
                 <div style={{ width: "38px", height: "38px", borderRadius: "10px", background: iconBg, display: "flex", alignItems: "center", justifyContent: "center", color: iconColor, fontSize: "18px" }}>
                     {icon}
                 </div>
-                {trend != null && (
-                    <span style={{ fontSize: "12px", fontWeight: "700", color: trendUp ? "#16a34a" : "#dc2626", display: "flex", alignItems: "center", gap: "3px" }}>
-                        {trendUp ? <IC.TrendUp /> : <IC.TrendDown />}
-                        {trend}
-                    </span>
-                )}
             </div>
             <div style={{ fontSize: "28px", fontWeight: "800", color: "#1e293b", letterSpacing: "-1px", marginTop: "8px" }}>{value}</div>
             <div style={{ fontSize: "13px", color: "#64748b", fontWeight: "500" }}>{title}</div>
@@ -269,7 +263,7 @@ export default function DashboardPage() {
     const [activeNav, setActiveNav] = useState("Dashboard");
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [logoutModalOpen, setLogoutModalOpen] = useState(false);
-    const [liveStats, setLiveStats] = useState({ active_programs: 0, active_vacancies: 0, total_applicants: 0, pending_review: 0 });
+    const [liveStats, setLiveStats] = useState({ active_programs: 0, active_vacancies: 0, total_applicants: 0, pending_review: 0, recent_applicants: [] });
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -303,7 +297,7 @@ export default function DashboardPage() {
     };
 
     const companyName = company?.name || "Admin";
-    const companyRole = company?.role || "Admin Perusahaan";
+    const companyRole = company?.role || "Admin";
     const initials = companyName.slice(0, 2).toUpperCase();
 
     const stats = [
@@ -311,67 +305,59 @@ export default function DashboardPage() {
             icon: <IC.Program />,
             iconBg: "#eff6ff",
             iconColor: "#3b82f6",
-            title: "Program Aktif",
+            title: "Active Positions",
             value: liveStats.active_programs.toString(),
-            trend: "+0%",
-            trendUp: true,
-            sub: "Semua program magang yang sedang aktif",
+            sub: "All currently active internship programs",
             barColors: ["#3b82f6", "#60a5fa", "#93c5fd", "#3b82f6", "#60a5fa", "#93c5fd", "#3b82f6"],
         },
         {
             icon: <IC.Lowongan />,
             iconBg: "#f0fdf4",
             iconColor: "#16a34a",
-            title: "Lowongan Aktif",
+            title: "Active Programs",
             value: liveStats.active_vacancies.toString(),
-            trend: "+0%",
-            trendUp: true,
-            sub: "Total posisi yang dibuka",
+            sub: "Total positions opened",
             barColors: ["#4ade80", "#86efac", "#4ade80", "#86efac", "#4ade80", "#bbf7d0", "#4ade80"],
         },
         {
             icon: <IC.Users />,
             iconBg: "#fffbeb",
             iconColor: "#d97706",
-            title: "Total Pelamar",
-            value: "0",
-            trend: "+0%",
-            trendUp: true,
-            sub: "0 pelamar baru minggu ini",
+            title: "Total Candidates",
+            value: liveStats.total_applicants.toString(),
+            sub: `${liveStats.total_applicants} total applicants recorded`,
             barColors: ["#fbbf24", "#fde68a", "#f59e0b", "#fbbf24", "#fde68a", "#f59e0b", "#fbbf24"],
         },
         {
             icon: <IC.Bell />,
             iconBg: "#fff1f2",
             iconColor: "#e11d48",
-            title: "Menunggu Review",
-            value: "0",
-            trend: "+0%",
-            trendUp: false,
-            sub: "0 pelamar menunggu lebih dari 3 hari",
+            title: "Pending Review",
+            value: liveStats.pending_review.toString(),
+            sub: "Requires immediate attention",
             barColors: ["#fca5a5", "#f87171", "#fca5a5", "#f87171", "#fca5a5", "#f87171", "#fca5a5"],
         },
     ];
 
     const navItems = [
         { label: "Dashboard", icon: <IC.Dashboard />, path: "/dashboard", section: "MAIN MENU" },
-        { label: "Manajemen User", icon: <IC.Users />, path: "#", badge: 0 },
-        { label: "Manajemen Program", icon: <IC.Program />, path: "/program" },
-        { label: "Manajemen Lowongan", icon: <IC.Lowongan />, path: "/lowongan" },
+        { label: "User Management", icon: <IC.Users />, path: "/users", badge: 0 },
+        { label: "Program Management", icon: <IC.Lowongan />, path: "/programs" },
+        { label: "Positions Management", icon: <IC.Program />, path: "/positions" },
     ];
     const navItems2 = [
-        { label: "Laporan", icon: <IC.Laporan />, path: "#", section: "LAINNYA" },
-        { label: "Pengaturan", icon: <IC.Pengaturan />, path: "#" },
+        { label: "Reports", icon: <IC.Laporan />, path: "#", section: "OTHERS" },
+        { label: "Settings", icon: <IC.Pengaturan />, path: "#" },
     ];
 
     const distrib = [
-        { label: "Mendaftar", pct: 0, color: "#60a5fa" },
-        { label: "Diterima", pct: 0, color: "#4ade80" },
-        { label: "Ditolak", pct: 0, color: "#f87171" },
-        { label: "Dalam Review", pct: 0, color: "#fbbf24" },
+        { label: "Applied", pct: 0, color: "#60a5fa" },
+        { label: "Accepted", pct: 0, color: "#4ade80" },
+        { label: "Rejected", pct: 0, color: "#f87171" },
+        { label: "Under Review", pct: 0, color: "#fbbf24" },
     ];
 
-    const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul"];
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"];
 
     const SIDEBAR_W = 250;
     const TOPBAR_H = 56;
@@ -432,7 +418,7 @@ export default function DashboardPage() {
 
                 <div style={{ height: "1px", background: "rgba(255,255,255,0.07)", margin: "12px 8px" }} />
                 <p style={{ fontSize: "10px", fontWeight: "700", color: "rgba(255,255,255,0.25)", letterSpacing: "1.2px", padding: "0px 14px 4px", textTransform: "uppercase" }}>
-                    Lainnya
+                    Others
                 </p>
                 {navItems2.map((n) => (
                     <SideItem
@@ -500,7 +486,7 @@ export default function DashboardPage() {
                     <div style={{ display: "flex", alignItems: "center", gap: "8px", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px", padding: "7px 14px", width: "220px" }}>
                         <IC.Search />
                         <input
-                            placeholder="Cari program, lowongan..."
+                            placeholder="Search programs, positions, candidates..."
                             style={{ border: "none", background: "transparent", outline: "none", fontSize: "13px", color: "#64748b", width: "100%" }}
                         />
                     </div>
@@ -524,15 +510,22 @@ export default function DashboardPage() {
                             {getGreeting()}, {companyName}
                         </div>
                         <div style={{ fontSize: 13, color: "#64748b", marginTop: 3 }}>
-                            Berikut ringkasan aktivitas platform hari ini.
+                            Here's a summary of platform activity today.
                         </div>
                     </div>
 
-                    {/* Stat cards */}
-                    <div style={{ display: "flex", gap: "18px", marginBottom: "24px", flexWrap: "wrap" }}>
-                        {stats.map((s, i) => (
-                            <StatCard key={i} {...s} />
-                        ))}
+                    {/* Stat cards aligned with grid below */}
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: "20px", marginBottom: "24px" }}>
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "20px" }}>
+                            {stats.slice(0, 3).map((s, i) => (
+                                <StatCard key={i} {...s} />
+                            ))}
+                        </div>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr" }}>
+                            {stats.slice(3, 4).map((s, i) => (
+                                <StatCard key={i} {...s} />
+                            ))}
+                        </div>
                     </div>
 
                     {/* Middle row */}
@@ -542,17 +535,17 @@ export default function DashboardPage() {
                         <div style={{ background: "#fff", borderRadius: "16px", padding: "22px 24px", boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "4px" }}>
                                 <div>
-                                    <p style={{ fontSize: "15px", fontWeight: "700", color: "#1e293b" }}>Statistik Pendaftar</p>
-                                    <p style={{ fontSize: "12px", color: "#94a3b8" }}>6 bulan terakhir (Jan – Jun 2026)</p>
+                                    <p style={{ fontSize: "15px", fontWeight: "700", color: "#1e293b" }}>Candidate Statistics</p>
+                                    <p style={{ fontSize: "12px", color: "#94a3b8" }}>Last 6 months (Jan – Jun 2026)</p>
                                 </div>
                                 <button style={{ fontSize: "12.5px", color: "#4a9eff", background: "none", border: "none", cursor: "pointer", fontWeight: "600", display: "flex", alignItems: "center", gap: "4px" }}>
-                                    Lihat Semua →
+                                    View All →
                                 </button>
                             </div>
 
                             {/* Legend */}
                             <div style={{ display: "flex", gap: "16px", marginBottom: "16px", marginTop: "8px" }}>
-                                {[{ c: "#60a5fa", l: "Mendaftar" }, { c: "#4ade80", l: "Diterima" }, { c: "#f87171", l: "Ditolak" }].map((x) => (
+                                {[{ c: "#60a5fa", l: "Applied" }, { c: "#4ade80", l: "Accepted" }, { c: "#f87171", l: "Rejected" }].map((x) => (
                                     <div key={x.l} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                                         <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: x.c }} />
                                         <span style={{ fontSize: "12px", color: "#64748b" }}>{x.l}</span>
@@ -563,7 +556,7 @@ export default function DashboardPage() {
                             {/* Empty state notice */}
                             <div style={{ height: "100px", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: "8px", border: "1px dashed #e2e8f0", borderRadius: "12px" }}>
                                 <IC.Laporan />
-                                <p style={{ fontSize: "13px", color: "#94a3b8" }}>Belum ada data statistik</p>
+                                <p style={{ fontSize: "13px", color: "#94a3b8" }}>No statistical data yet</p>
                                 <BarSparkline months={months} />
                             </div>
                         </div>
@@ -572,10 +565,10 @@ export default function DashboardPage() {
                         <div style={{ background: "#fff", borderRadius: "16px", padding: "22px 24px", boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "14px" }}>
                                 <div>
-                                    <p style={{ fontSize: "15px", fontWeight: "700", color: "#1e293b" }}>Distribusi Status Pelamar</p>
-                                    <p style={{ fontSize: "12px", color: "#94a3b8" }}>Dari total 0 pelamar aktif</p>
+                                    <p style={{ fontSize: "15px", fontWeight: "700", color: "#1e293b" }}>Candidate Status Distribution</p>
+                                    <p style={{ fontSize: "12px", color: "#94a3b8" }}>From total 0 active candidates</p>
                                 </div>
-                                <button style={{ fontSize: "12.5px", color: "#4a9eff", background: "none", border: "none", cursor: "pointer", fontWeight: "600" }}>Detail →</button>
+                                <button style={{ fontSize: "12.5px", color: "#4a9eff", background: "none", border: "none", cursor: "pointer", fontWeight: "600" }}>Details →</button>
                             </div>
                             <DonutChart data={distrib} />
                         </div>
@@ -588,29 +581,68 @@ export default function DashboardPage() {
                         <div style={{ background: "#fff", borderRadius: "16px", padding: "22px 24px", boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
                                 <div>
-                                    <p style={{ fontSize: "15px", fontWeight: "700", color: "#1e293b" }}>Pelamar Terbaru</p>
-                                    <p style={{ fontSize: "12px", color: "#94a3b8" }}>Pendaftar dalam 24 jam terakhir</p>
+                                    <p style={{ fontSize: "15px", fontWeight: "700", color: "#1e293b" }}>Recent Candidates</p>
+                                    <p style={{ fontSize: "12px", color: "#94a3b8" }}>Candidates in the last 24 hours</p>
                                 </div>
-                                <button style={{ fontSize: "12.5px", color: "#4a9eff", background: "none", border: "none", cursor: "pointer", fontWeight: "600" }}>Lihat Semua →</button>
+                                <button style={{ fontSize: "12.5px", color: "#4a9eff", background: "none", border: "none", cursor: "pointer", fontWeight: "600" }}>View All →</button>
                             </div>
 
                             {/* Table header */}
                             <div style={{ display: "grid", gridTemplateColumns: "2fr 2fr 1fr 1fr", gap: "12px", padding: "8px 12px", borderRadius: "8px", background: "#f8fafc", marginBottom: "4px" }}>
-                                {["NAMA", "LOWONGAN", "STATUS", "WAKTU"].map((h) => (
+                                {["NAME", "PROGRAM", "STATUS", "SUBMISSION DATE"].map((h) => (
                                     <span key={h} style={{ fontSize: "11px", fontWeight: "700", color: "#94a3b8", letterSpacing: "0.5px" }}>{h}</span>
                                 ))}
                             </div>
 
-                            {/* Empty state */}
-                            <div style={{ padding: "40px 0", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: "10px" }}>
-                                <div style={{ color: "#cbd5e1", width: "32px", height: "32px" }}>
-                                    <IC.Users />
+                            {/* Recent candidates list */}
+                            {liveStats.recent_applicants?.length > 0 ? (
+                                <div style={{ display: "flex", flexDirection: "column" }}>
+                                    {liveStats.recent_applicants.map((app, idx) => (
+                                        <div key={idx} style={{
+                                            display: "grid", gridTemplateColumns: "2fr 2fr 1fr 1fr", gap: "12px",
+                                            padding: "14px 12px", borderBottom: idx === liveStats.recent_applicants.length - 1 ? "none" : "1px solid #f1f5f9",
+                                            alignItems: "center", transition: "background 0.2s"
+                                        }}>
+                                            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                                                <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: "#eff6ff", color: "#3b82f6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: "700" }}>
+                                                    {(app.user?.name || "U").slice(0, 2).toUpperCase()}
+                                                </div>
+                                                <div style={{ display: "flex", flexDirection: "column" }}>
+                                                    <span style={{ fontSize: "13.5px", fontWeight: "600", color: "#1e293b" }}>{app.user?.name}</span>
+                                                    <span style={{ fontSize: "11px", color: "#94a3b8" }}>{app.user?.email}</span>
+                                                </div>
+                                            </div>
+                                            <div style={{ display: "flex", flexDirection: "column" }}>
+                                                <span style={{ fontSize: "13.5px", fontWeight: "600", color: "#1e293b" }}>{app.vacancy?.title || "Unknown Program"}</span>
+                                                <span style={{ fontSize: "11px", color: "#94a3b8" }}>{app.position?.name}</span>
+                                            </div>
+                                            <div>
+                                                <span style={{
+                                                    fontSize: "11px", fontWeight: "700", padding: "3px 8px", borderRadius: "6px",
+                                                    background: app.status === "accepted" ? "#f0fdf4" : app.status === "rejected" ? "#fef2f2" : "#fff7ed",
+                                                    color: app.status === "accepted" ? "#16a34a" : app.status === "rejected" ? "#dc2626" : "#d97706",
+                                                    textTransform: "capitalize", border: `1px solid ${app.status === "accepted" ? "#bbf7d0" : app.status === "rejected" ? "#fecaca" : "#fed7aa"}`
+                                                }}>
+                                                    {app.status || "Pending"}
+                                                </span>
+                                            </div>
+                                            <span style={{ fontSize: "12.5px", color: "#64748b" }}>
+                                                {app.submitted_at ? new Date(app.submitted_at).toLocaleDateString() : "Just now"}
+                                            </span>
+                                        </div>
+                                    ))}
                                 </div>
-                                <div>
-                                    <p style={{ fontSize: "14px", color: "#94a3b8" }}>Belum ada pelamar baru</p>
-                                    <p style={{ fontSize: "12px", color: "#cbd5e1", marginTop: "4px" }}>Pelamar akan muncul di sini setelah ada yang mendaftar</p>
+                            ) : (
+                                <div style={{ padding: "40px 0", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: "10px" }}>
+                                    <div style={{ color: "#cbd5e1", width: "32px", height: "32px" }}>
+                                        <IC.Users />
+                                    </div>
+                                    <div>
+                                        <p style={{ fontSize: "14px", color: "#94a3b8" }}>No new candidates yet</p>
+                                        <p style={{ fontSize: "12px", color: "#cbd5e1", marginTop: "4px" }}>Candidates will appear here after someone applies</p>
+                                    </div>
                                 </div>
-                            </div>
+                            )}
                         </div>
 
                         {/* Right column: Popular + Activity */}
@@ -620,28 +652,28 @@ export default function DashboardPage() {
                             <div style={{ background: "#fff", borderRadius: "16px", padding: "20px 22px", boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
                                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
                                     <div>
-                                        <p style={{ fontSize: "14px", fontWeight: "700", color: "#1e293b" }}>Program Paling Diminati</p>
-                                        <p style={{ fontSize: "11.5px", color: "#94a3b8" }}>Berdasarkan jumlah pelamar</p>
+                                        <p style={{ fontSize: "14px", fontWeight: "700", color: "#1e293b" }}>Most Popular Programs</p>
+                                        <p style={{ fontSize: "11.5px", color: "#94a3b8" }}>Based on number of candidates</p>
                                     </div>
                                 </div>
                                 <div style={{ padding: "28px 0", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" }}>
                                     <div style={{ color: "#cbd5e1", width: "28px", height: "28px" }}>
                                         <IC.Laporan />
                                     </div>
-                                    <p style={{ fontSize: "13px", color: "#94a3b8" }}>Belum ada program</p>
+                                    <p style={{ fontSize: "13px", color: "#94a3b8" }}>No programs yet</p>
                                 </div>
                             </div>
 
-                            {/* Aktivitas Terbaru */}
+                            {/* Recent Activity */}
                             <div style={{ background: "#fff", borderRadius: "16px", padding: "20px 22px", boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
-                                <p style={{ fontSize: "14px", fontWeight: "700", color: "#1e293b", marginBottom: "14px" }}>Aktivitas Terbaru</p>
+                                <p style={{ fontSize: "14px", fontWeight: "700", color: "#1e293b", marginBottom: "14px" }}>Recent Activity</p>
                                 <div style={{ padding: "24px 0", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" }}>
                                     <div style={{ color: "#cbd5e1", width: "28px", height: "28px" }}>
                                         <IC.Bell />
                                     </div>
                                     <div>
-                                        <p style={{ fontSize: "13px", color: "#94a3b8" }}>Belum ada aktivitas</p>
-                                        <p style={{ fontSize: "11.5px", color: "#cbd5e1", marginTop: "2px" }}>Aktivitas sistem akan tampil di sini</p>
+                                        <p style={{ fontSize: "13px", color: "#94a3b8" }}>No activity yet</p>
+                                        <p style={{ fontSize: "11.5px", color: "#cbd5e1", marginTop: "2px" }}>System activity will appear here</p>
                                     </div>
                                 </div>
                             </div>
@@ -657,11 +689,11 @@ export default function DashboardPage() {
                         <div style={{ color: "#3b82f6", marginBottom: 16 }}>
                             <IC.Users />
                         </div>
-                        <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 6, color: "#0f172a" }}>Keluar Sistem?</div>
-                        <div style={{ fontSize: 13, color: "#64748b", lineHeight: 1.6, marginBottom: 20 }}>Apakah Anda yakin ingin keluar dari akun perusahaan Anda?</div>
+                        <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 6, color: "#0f172a" }}>Sign Out?</div>
+                        <div style={{ fontSize: 13, color: "#64748b", lineHeight: 1.6, marginBottom: 20 }}>Are you sure you want to sign out from your company account?</div>
                         <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-                            <button onClick={() => setLogoutModalOpen(false)} style={{ padding: "10px 18px", borderRadius: 10, border: "1px solid #e2e8f0", background: "#fff", fontSize: 13, fontWeight: 700, color: "#64748b", cursor: "pointer" }}>Batal</button>
-                            <button onClick={() => { logout(); navigate("/login"); }} style={{ padding: "10px 18px", borderRadius: 10, border: "none", background: "#ef4444", fontSize: 13, fontWeight: 700, color: "#fff", cursor: "pointer" }}>Ya, Keluar</button>
+                            <button onClick={() => setLogoutModalOpen(false)} style={{ padding: "10px 18px", borderRadius: 10, border: "1px solid #e2e8f0", background: "#fff", fontSize: 13, fontWeight: 700, color: "#64748b", cursor: "pointer" }}>Cancel</button>
+                            <button onClick={() => { logout(); navigate("/login"); }} style={{ padding: "10px 18px", borderRadius: 10, border: "none", background: "#ef4444", fontSize: 13, fontWeight: 700, color: "#fff", cursor: "pointer" }}>Yes, Sign Out</button>
                         </div>
                     </div>
                 </div>

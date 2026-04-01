@@ -52,7 +52,7 @@ export const useAuthStore = create((set) => ({
 
   // Logout
   logout: async () => {
-  
+
     set({
       company: null,
       token: null,
@@ -62,6 +62,7 @@ export const useAuthStore = create((set) => ({
     });
     localStorage.removeItem('auth_token');
     localStorage.removeItem('company');
+    localStorage.removeItem('user');
 
     try {
       await authService.logout();

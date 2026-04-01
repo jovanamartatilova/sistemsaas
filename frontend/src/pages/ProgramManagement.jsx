@@ -5,9 +5,9 @@ import axios from "axios";
 
 // ── Initial data removed - now using backend API ─────────────────────────────
 
-const MONTHS_FULL = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
-const MONTHS_SHORT = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
-const DAYS_SHORT = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
+const MONTHS_FULL = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+const MONTHS_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const DAYS_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 // ── Inline styles (converted from CSS vars) ────────────────────────────────────
 const S = {
@@ -121,7 +121,7 @@ function CalendarPicker({ value, onChange }) {
                 }}
             >
                 <div style={{ flex: 1, padding: "9px 13px", textAlign: "left", fontSize: 13.5, color: value ? "#0f172a" : "#cbd5e1", fontFamily: "inherit" }}>
-                    {value || "Pilih tanggal…"}
+                    {value || "Select date…"}
                 </div>
                 <div style={{ width: 38, display: "flex", alignItems: "center", justifyContent: "center", color: "#64748b" }}>
                     <Icon.Cal />
@@ -251,7 +251,7 @@ function JobCard({ job, onEdit, onDelete }) {
                             onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.9)"; e.currentTarget.style.color = "#334155"; }}>
                             <Icon.Edit />
                         </button>
-                        <button onClick={(e) => { e.stopPropagation(); onDelete(job.id); }} title="Hapus"
+                        <button onClick={(e) => { e.stopPropagation(); onDelete(job.id); }} title="Delete"
                             style={{ width: 32, height: 32, borderRadius: 8, border: "none", background: "rgba(255,255,255,0.9)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#334155", transition: "0.2s", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}
                             onMouseEnter={e => { e.currentTarget.style.background = "#fff1f2"; e.currentTarget.style.color = "#ef4444"; }}
                             onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.9)"; e.currentTarget.style.color = "#334155"; }}>
@@ -309,7 +309,7 @@ function JobCard({ job, onEdit, onDelete }) {
                         {job.payment === "paid" ? "Paid" : "Unpaid"}
                     </span>
                     <span style={{ fontSize: 11, fontWeight: 700, background: "#f8fafc", color: "#64748b", padding: "4px 10px", borderRadius: 6, marginLeft: "auto" }}>
-                        {job.pelamar} Pelamar · {job.kuota} Kuota
+                        {job.pelamar} Candidates · {job.kuota} Quota
                     </span>
                 </div>
             </div>
@@ -364,16 +364,16 @@ function Modal({ open, editingJob, onClose, onSubmit }) {
         const filled = posisi.filter(p => p.name.trim());
 
         // Relaxed validation
-        if (!form.title) return alert("Nama Lowongan wajib diisi.");
-        if (filled.length === 0) return alert("Minimal satu posisi harus diisi.");
+        if (!form.title) return alert("Program Name is required.");
+        if (filled.length === 0) return alert("At least one position must be filled.");
 
         // If publishing, check for other essential fields
         if (status === "published") {
             if (!form.desc || !form.kota || !form.provinsi || !form.batch || !startDate || !endDate || !deadline || !tipe || !payment) {
-                return alert("Harap isi semua field wajib sebelum mem-publish lowongan.");
+                return alert("Please fill in all required fields before publishing the program.");
             }
             if (filled.some(p => !p.quota || p.quota <= 0)) {
-                return alert("Semua posisi wajib memiliki kuota.");
+                return alert("All positions must have a quota.");
             }
         }
 
@@ -393,16 +393,16 @@ function Modal({ open, editingJob, onClose, onSubmit }) {
                 {/* Header */}
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "22px 28px 18px", borderBottom: "1px solid #e2e8f0", position: "relative" }}>
                     <div style={{ textAlign: "center" }}>
-                        <div style={{ fontSize: 17, fontWeight: 800, color: "#0f172a" }}>{editingJob ? "Edit Lowongan" : "Tambah Lowongan Baru"}</div>
-                        <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>Isi semua informasi lowongan magang dengan lengkap.</div>
+                        <div style={{ fontSize: 17, fontWeight: 800, color: "#0f172a" }}>{editingJob ? "Edit Program" : "Add New Program"}</div>
+                        <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>Fill in all internship program information completely.</div>
                     </div>
                     <button onClick={onClose} style={{ position: "absolute", top: 22, right: 28, width: 34, height: 34, borderRadius: 8, border: "1px solid #e2e8f0", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 16, color: "#64748b" }}>✕</button>
                 </div>
 
                 {editingJob && (
                     <div style={{ display: "flex", borderBottom: "1px solid #e2e8f0", padding: "0 28px", background: "#f8fafc" }}>
-                        <button onClick={() => setActiveTab("detail")} style={{ padding: "12px 16px", background: "none", border: "none", borderBottom: activeTab === "detail" ? "2.5px solid #2563c4" : "2.5px solid transparent", color: activeTab === "detail" ? "#2563c4" : "#64748b", fontWeight: 600, fontSize: 13.5, cursor: "pointer", transition: "0.2s" }}>Detail Lowongan</button>
-                        <button onClick={() => setActiveTab("pelamar")} style={{ padding: "12px 16px", background: "none", border: "none", borderBottom: activeTab === "pelamar" ? "2.5px solid #2563c4" : "2.5px solid transparent", color: activeTab === "pelamar" ? "#2563c4" : "#64748b", fontWeight: 600, fontSize: 13.5, cursor: "pointer", transition: "0.2s" }}>Daftar Pelamar</button>
+                        <button onClick={() => setActiveTab("detail")} style={{ padding: "12px 16px", background: "none", border: "none", borderBottom: activeTab === "detail" ? "2.5px solid #2563c4" : "2.5px solid transparent", color: activeTab === "detail" ? "#2563c4" : "#64748b", fontWeight: 600, fontSize: 13.5, cursor: "pointer", transition: "0.2s" }}>Program Detail</button>
+                        <button onClick={() => setActiveTab("pelamar")} style={{ padding: "12px 16px", background: "none", border: "none", borderBottom: activeTab === "pelamar" ? "2.5px solid #2563c4" : "2.5px solid transparent", color: activeTab === "pelamar" ? "#2563c4" : "#64748b", fontWeight: 600, fontSize: 13.5, cursor: "pointer", transition: "0.2s" }}>Candidate List</button>
                     </div>
                 )}
 
@@ -424,65 +424,65 @@ function Modal({ open, editingJob, onClose, onSubmit }) {
                                     {form.image && <div style={{ fontSize: 12, color: "#10b981", fontWeight: 600 }}>Berhasil dipilih!</div>}
                                 </div>
                             </FGroup>
-                            <FGroup label="Nama Lowongan" req style={{ marginTop: 14 }}>
+                            <FGroup label="Program Name" req style={{ marginTop: 14 }}>
                                 <input style={inp} value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} placeholder="cth. Software Engineer Intern Batch 8" onFocus={focusInp} onBlur={blurInp} />
                             </FGroup>
-                            <FGroup label="Deskripsi Lowongan" req style={{ marginTop: 14 }}>
-                                <textarea style={{ ...inp, minHeight: 88, resize: "vertical", lineHeight: 1.6 }} value={form.desc} onChange={e => setForm({ ...form, desc: e.target.value })} placeholder="Deskripsikan program magang ini secara singkat…" onFocus={focusInp} onBlur={blurInp} />
+                            <FGroup label="Program Description" req style={{ marginTop: 14 }}>
+                                <textarea style={{ ...inp, minHeight: 88, resize: "vertical", lineHeight: 1.6 }} value={form.desc} onChange={e => setForm({ ...form, desc: e.target.value })} placeholder="Briefly describe this internship program…" onFocus={focusInp} onBlur={blurInp} />
                             </FGroup>
 
-                            {/* Lokasi */}
-                            <SectionTitle style={{ marginTop: 24 }}>Lokasi Magang</SectionTitle>
+                            {/* Internship Location */}
+                            <SectionTitle style={{ marginTop: 24 }}>Internship Location</SectionTitle>
                             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
-                                <FGroup label="Kota" req>
-                                    <input style={inp} value={form.kota} onChange={e => setForm({ ...form, kota: e.target.value })} placeholder="cth. Jakarta" onFocus={focusInp} onBlur={blurInp} />
+                                <FGroup label="City" req>
+                                    <input style={inp} value={form.kota} onChange={e => setForm({ ...form, kota: e.target.value })} placeholder="e.g. Jakarta" onFocus={focusInp} onBlur={blurInp} />
                                 </FGroup>
-                                <FGroup label="Provinsi" req>
-                                    <input style={inp} value={form.provinsi} onChange={e => setForm({ ...form, provinsi: e.target.value })} placeholder="cth. DKI Jakarta" onFocus={focusInp} onBlur={blurInp} />
+                                <FGroup label="Province" req>
+                                    <input style={inp} value={form.provinsi} onChange={e => setForm({ ...form, provinsi: e.target.value })} placeholder="e.g. DKI Jakarta" onFocus={focusInp} onBlur={blurInp} />
                                 </FGroup>
                             </div>
-                            <FGroup label="Alamat Lengkap">
-                                <input style={inp} value={form.alamat} onChange={e => setForm({ ...form, alamat: e.target.value })} placeholder="cth. Jl. Sudirman No. 1, Gedung Menara 88" onFocus={focusInp} onBlur={blurInp} />
+                            <FGroup label="Full Address">
+                                <input style={inp} value={form.alamat} onChange={e => setForm({ ...form, alamat: e.target.value })} placeholder="e.g. Jl. Sudirman No. 1, Menara 88 Building" onFocus={focusInp} onBlur={blurInp} />
                             </FGroup>
 
-                            {/* Detail */}
-                            <SectionTitle style={{ marginTop: 24 }}>Detail Program</SectionTitle>
+                            {/* Program Detail */}
+                            <SectionTitle style={{ marginTop: 24 }}>Program Detail</SectionTitle>
                             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
-                                <FGroup label="Tanggal Mulai" req>
+                                <FGroup label="Start Date" req>
                                     <CalendarPicker value={startDate} onChange={setStartDate} />
                                 </FGroup>
-                                <FGroup label="Tanggal Selesai" req>
+                                <FGroup label="End Date" req>
                                     <CalendarPicker value={endDate} onChange={setEndDate} />
                                 </FGroup>
                             </div>
                             <div style={{ marginBottom: 14 }}>
                                 <FGroup label="Batch" req>
-                                    <input style={inp} type="number" min="1" value={form.batch} onChange={e => setForm({ ...form, batch: e.target.value })} placeholder="cth. 8" onFocus={focusInp} onBlur={blurInp} />
+                                    <input style={inp} type="number" min="1" value={form.batch} onChange={e => setForm({ ...form, batch: e.target.value })} placeholder="e.g. 8" onFocus={focusInp} onBlur={blurInp} />
                                 </FGroup>
                             </div>
                             <div style={{ marginBottom: 14 }}>
-                                <FGroup label="Deadline Pendaftaran" req>
+                                <FGroup label="Application Deadline" req>
                                     <CalendarPicker value={deadline} onChange={setDeadline} />
                                 </FGroup>
                             </div>
-                            <FGroup label="Tipe Magang" req style={{ marginBottom: 14 }}>
+                            <FGroup label="Internship Type" req style={{ marginBottom: 14 }}>
                                 <PillGroup options={[{ value: "reguler", label: "Reguler" }, { value: "flagship", label: "Flagship" }]} value={tipe} onChange={setTipe} />
                             </FGroup>
                             <FGroup label="Payment Type" req style={{ marginBottom: 14 }}>
                                 <PillGroup options={[{ value: "unpaid", label: "Unpaid" }, { value: "paid", label: "Paid" }]} value={payment} onChange={setPayment} />
                             </FGroup>
 
-                            {/* Posisi */}
-                            <SectionTitle style={{ marginTop: 24 }}>Posisi yang Dibuka</SectionTitle>
+                            {/* Open Positions */}
+                            <SectionTitle style={{ marginTop: 24 }}>Open Positions</SectionTitle>
                             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                                 {posisi.map((p, i) => (
                                     <div key={i} style={{ display: "flex", gap: 10, alignItems: "flex-end" }}>
                                         <div style={{ flex: 1 }}>
-                                            <div style={{ fontSize: 11.5, fontWeight: 700, color: "#64748b", marginBottom: 5 }}>Nama Posisi {i + 1}</div>
-                                            <input style={inp} value={p.name} onChange={e => { const next = [...posisi]; next[i].name = e.target.value; setPosisi(next); }} placeholder="cth. Frontend Developer" onFocus={focusInp} onBlur={blurInp} />
+                                            <div style={{ fontSize: 11.5, fontWeight: 700, color: "#64748b", marginBottom: 5 }}>Position Name {i + 1}</div>
+                                            <input style={inp} value={p.name} onChange={e => { const next = [...posisi]; next[i].name = e.target.value; setPosisi(next); }} placeholder="e.g. Frontend Developer" onFocus={focusInp} onBlur={blurInp} />
                                         </div>
                                         <div style={{ width: 90 }}>
-                                            <div style={{ fontSize: 11.5, fontWeight: 700, color: "#64748b", marginBottom: 5 }}>Kuota</div>
+                                            <div style={{ fontSize: 11.5, fontWeight: 700, color: "#64748b", marginBottom: 5 }}>Quota</div>
                                             <input style={inp} type="number" min="1" value={p.quota} onChange={e => { const next = [...posisi]; next[i].quota = e.target.value; setPosisi(next); }} placeholder="0" onFocus={focusInp} onBlur={blurInp} />
                                         </div>
                                         <button onClick={() => posisi.length > 1 && setPosisi(posisi.filter((_, j) => j !== i))}
@@ -494,13 +494,13 @@ function Modal({ open, editingJob, onClose, onSubmit }) {
                                 style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", border: "1.5px dashed #e2e8f0", borderRadius: 8, background: "transparent", fontFamily: "inherit", fontSize: 13, color: "#64748b", cursor: "pointer", marginTop: 8, transition: "all .15s" }}
                                 onMouseEnter={e => { e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.color = "#2563c4"; e.currentTarget.style.background = "#eff6ff"; }}
                                 onMouseLeave={e => { e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.color = "#64748b"; e.currentTarget.style.background = "transparent"; }}>
-                                <Icon.Plus /> Tambah Posisi
+                                <Icon.Plus /> Add Position
                             </button>
                         </div>
 
                         {/* Footer */}
                         <div style={{ padding: "18px 28px", borderTop: "1px solid #e2e8f0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                            <div style={{ fontSize: 12, color: "#64748b" }}>Field bertanda <b style={{ color: "#ef4444" }}>*</b> wajib diisi.</div>
+                            <div style={{ fontSize: 12, color: "#64748b" }}>Fields marked with <b style={{ color: "#ef4444" }}>*</b> are required.</div>
                             <div style={{ display: "flex", gap: 8 }}>
                                 {/* Simpan sebagai Draft */}
                                 <button onClick={() => handleSubmit("draft")}
@@ -525,7 +525,7 @@ function Modal({ open, editingJob, onClose, onSubmit }) {
                                     style={{ display: "flex", alignItems: "center", gap: 5, background: "#2563c4", color: "#fff", border: "none", borderRadius: 8, padding: "8px 14px", fontFamily: "inherit", fontSize: 13, fontWeight: 700, cursor: "pointer", boxShadow: "0 2px 6px rgba(37,99,235,0.25)", transition: "all .15s" }}
                                     onMouseEnter={e => { e.currentTarget.style.background = "#1d4ed8"; }}
                                     onMouseLeave={e => { e.currentTarget.style.background = "#2563c4"; }}>
-                                    <Icon.Send /> {editingJob?.status === "published" ? "Simpan" : "Publish"}
+                                    <Icon.Send /> {editingJob?.status === "published" ? "Save" : "Publish"}
                                 </button>
                             </div>
                         </div>
@@ -539,20 +539,20 @@ function Modal({ open, editingJob, onClose, onSubmit }) {
                                 </div>
                                 {editingJob?.status === "draft" ? (
                                     <>
-                                        <h3 style={{ fontSize: 18, fontWeight: 800, color: "#0f172a", marginBottom: 10 }}>Belum Bisa Menerima Pelamar</h3>
-                                        <p style={{ fontSize: 14, color: "#64748b", maxWidth: 340, lineHeight: 1.6 }}>Silakan <b>Publish</b> lowongan ini terlebih dahulu agar calon peserta dapat melihat dan melamar.</p>
+                                        <h3 style={{ fontSize: 18, fontWeight: 800, color: "#0f172a", marginBottom: 10 }}>Cannot Receive Candidates</h3>
+                                        <p style={{ fontSize: 14, color: "#64748b", maxWidth: 340, lineHeight: 1.6 }}>Please <b>Publish</b> this program first so that candidates can see and apply.</p>
                                     </>
                                 ) : (
                                     <>
-                                        <h3 style={{ fontSize: 18, fontWeight: 800, color: "#0f172a", marginBottom: 10 }}>Belum Ada Pelamar</h3>
-                                        <p style={{ fontSize: 14, color: "#64748b", maxWidth: 340, lineHeight: 1.6 }}>Belum ada kandidat yang mengirimkan lamaran ke posisi manapun di lowongan ini.</p>
+                                        <h3 style={{ fontSize: 18, fontWeight: 800, color: "#0f172a", marginBottom: 10 }}>No Candidates Yet</h3>
+                                        <p style={{ fontSize: 14, color: "#64748b", maxWidth: 340, lineHeight: 1.6 }}>No candidates have submitted applications to any position in this program.</p>
                                     </>
                                 )}
                             </div>
                         ) : (
                             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                                 {editingJob.submissions.map((sub, idx) => (
-                                    <ApplicantItem key={sub.id_submission || idx} sub={sub} />
+                                    <CandidateItem key={sub.id_submission || idx} sub={sub} />
                                 ))}
                             </div>
                         )}
@@ -563,7 +563,7 @@ function Modal({ open, editingJob, onClose, onSubmit }) {
     );
 }
 
-function ApplicantItem({ sub }) {
+function CandidateItem({ sub }) {
     const [expanded, setExpanded] = useState(false);
     const docBtn = { display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", border: "1px solid #e2e8f0", borderRadius: 8, background: "#fff", fontSize: 12, fontWeight: 600, color: "#475569", cursor: "pointer", transition: "all .15s", textDecoration: "none" };
 
@@ -576,7 +576,7 @@ function ApplicantItem({ sub }) {
                     </div>
                     <div style={{ textAlign: "left" }}>
                         <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>{sub.user?.name}</div>
-                        <div style={{ fontSize: 12, color: "#64748b" }}>Melamar posisi: <span style={{ color: "#2563c4", fontWeight: 600 }}>{sub.position?.name || "Posisi tidak diketahui"}</span></div>
+                        <div style={{ fontSize: 12, color: "#64748b" }}>Applied for position: <span style={{ color: "#2563c4", fontWeight: 600 }}>{sub.position?.name || "Unknown position"}</span></div>
                     </div>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -589,7 +589,7 @@ function ApplicantItem({ sub }) {
             {expanded && (
                 <div style={{ padding: "0 20px 20px", marginTop: -4, textAlign: "left" }}>
                     <div style={{ height: 1.5, background: "#e2e8f0", marginBottom: 16, opacity: 0.5 }} />
-                    <div style={{ fontSize: 12, fontWeight: 700, color: "#64748b", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.5px" }}>Dokumen Lamaran</div>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: "#64748b", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.5px" }}>Candidate Documents</div>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                         {sub.cv_file && (
                             <a href={`http://127.0.0.1:8000/storage/${sub.cv_file}`} target="_blank" rel="noopener noreferrer" style={docBtn} onMouseEnter={e => { e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.color = "#2563c4"; }} onMouseLeave={e => { e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.color = "#475569"; }}>
@@ -603,12 +603,12 @@ function ApplicantItem({ sub }) {
                         )}
                         {sub.cover_letter_file && (
                             <a href={`http://127.0.0.1:8000/storage/${sub.cover_letter_file}`} target="_blank" rel="noopener noreferrer" style={docBtn} onMouseEnter={e => { e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.color = "#2563c4"; }} onMouseLeave={e => { e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.color = "#475569"; }}>
-                                <Icon.FileText /> Surat Lamaran
+                                <Icon.FileText /> Cover Letter
                             </a>
                         )}
                         {sub.institution_letter_file && (
                             <a href={`http://127.0.0.1:8000/storage/${sub.institution_letter_file}`} target="_blank" rel="noopener noreferrer" style={docBtn} onMouseEnter={e => { e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.color = "#2563c4"; }} onMouseLeave={e => { e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.color = "#475569"; }}>
-                                <Icon.FileText /> Surat Pengantar
+                                <Icon.FileText /> Reference Letter
                             </a>
                         )}
                     </div>
@@ -666,7 +666,7 @@ function SideItem({ icon, label, active, badge, onClick }) {
 }
 
 // ── Main page ─────────────────────────────────────────────────────────────────
-export default function ManajemenLowongan() {
+export default function ProgramManagement() {
     const navigate = useNavigate();
     const { logout, token } = useAuthStore();
     const [jobs, setJobs] = useState([]);
@@ -679,7 +679,7 @@ export default function ManajemenLowongan() {
     const [editingJob, setEditingJob] = useState(null);
     const [deletingId, setDeletingId] = useState(null);
     const [toast, setToast] = useState({ msg: "", type: "success", visible: false });
-    const [activeNav, setActiveNav] = useState("Manajemen Lowongan");
+    const [activeNav, setActiveNav] = useState("Program Management");
 
     useEffect(() => {
         fetchJobs();
@@ -715,7 +715,7 @@ export default function ManajemenLowongan() {
             setJobs(mappedJobs);
         } catch (err) {
             console.error("Failed to fetch jobs:", err);
-            showToast("Gagal mengambil data dari server.", "error");
+            showToast("Failed to fetch data from the server.", "error");
         } finally {
             setLoading(false);
         }
@@ -724,7 +724,7 @@ export default function ManajemenLowongan() {
     const company = (() => { try { return JSON.parse(localStorage.getItem("company")); } catch { return null; } })();
     const companyName = company?.name || "Admin";
     const initials = companyName.slice(0, 2).toUpperCase();
-    const companyRole = company?.role || "Admin Perusahaan";
+    const companyRole = company?.role || "Admin";
 
     const showToast = (msg, type = "success") => {
         setToast({ msg, type, visible: true });
@@ -772,7 +772,7 @@ export default function ManajemenLowongan() {
                         "Content-Type": "multipart/form-data"
                     }
                 });
-                showToast(`Lowongan berhasil diperbarui.`);
+                showToast(`Program updated successfully.`);
             } else {
                 await axios.post("http://127.0.0.1:8000/api/vacancies", formData, {
                     headers: {
@@ -780,29 +780,29 @@ export default function ManajemenLowongan() {
                         "Content-Type": "multipart/form-data"
                     }
                 });
-                showToast(`Lowongan berhasil ${data.status === "published" ? "dipublish" : "disimpan sebagai draft"}.`);
+                showToast(`Program successfully ${data.status === "published" ? "published" : "saved as draft"}.`);
             }
             fetchJobs();
             setModalOpen(false);
             setEditingJob(null);
         } catch (err) {
             console.error("Failed to save job:", err);
-            const msg = err.response?.data?.message || (err.response?.data?.errors ? Object.values(err.response.data.errors).flat()[0] : null) || "Gagal menyimpan lowongan.";
+            const msg = err.response?.data?.message || (err.response?.data?.errors ? Object.values(err.response.data.errors).flat()[0] : null) || "Failed to save program.";
             showToast(msg, "error");
         }
     };
 
     const handleDelete = async (id) => {
-        if (!confirm("Yakin ingin menghapus lowongan ini?")) return;
+        if (!confirm("Are you sure you want to delete this program?")) return;
         try {
             await axios.delete(`http://127.0.0.1:8000/api/vacancies/${id}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            showToast("Lowongan berhasil dihapus.");
+            showToast("Program deleted successfully.");
             fetchJobs();
         } catch (err) {
             console.error("Failed to delete job:", err);
-            showToast("Gagal menghapus lowongan.", "error");
+            showToast("Failed to delete program.", "error");
         }
     };
 
@@ -810,13 +810,13 @@ export default function ManajemenLowongan() {
 
     const navItems = [
         { label: "Dashboard", icon: <Icon.Dashboard />, path: "/dashboard", section: "MAIN MENU" },
-        { label: "Manajemen User", icon: <Icon.Users />, path: "#", badge: 0 },
-        { label: "Manajemen Program", icon: <Icon.Program />, path: "/program" },
-        { label: "Manajemen Lowongan", icon: <Icon.Lowongan />, path: "/lowongan" },
+        { label: "User Management", icon: <Icon.Users />, path: "/users", badge: 0 },
+        { label: "Program Management", icon: <Icon.Lowongan />, path: "/programs" },
+        { label: "Positions Management", icon: <Icon.Program />, path: "/positions" },
     ];
     const navItems2 = [
-        { label: "Laporan", icon: <Icon.Laporan />, path: "#", section: "LAINNYA" },
-        { label: "Pengaturan", icon: <Icon.Pengaturan />, path: "#" },
+        { label: "Reports", icon: <Icon.Laporan />, path: "#", section: "OTHERS" },
+        { label: "Settings", icon: <Icon.Pengaturan />, path: "#" },
     ];
 
     const SIDEBAR_W = 250;
@@ -877,7 +877,7 @@ export default function ManajemenLowongan() {
 
                 <div style={{ height: "1px", background: "rgba(255,255,255,0.07)", margin: "12px 8px" }} />
                 <p style={{ fontSize: "10px", fontWeight: "700", color: "rgba(255,255,255,0.25)", letterSpacing: "1.2px", padding: "0px 14px 4px", textTransform: "uppercase" }}>
-                    Lainnya
+                    Others
                 </p>
                 {navItems2.map((n) => (
                     <SideItem
@@ -936,9 +936,9 @@ export default function ManajemenLowongan() {
                 }}>
                     {/* Breadcrumb */}
                     <div style={{ flex: 1, textAlign: "left" }}>
-                        <span style={{ fontSize: "15px", fontWeight: "700", color: "#1e293b" }}>Manajemen Lowongan</span>
+                        <span style={{ fontSize: "15px", fontWeight: "700", color: "#1e293b" }}>Program Management</span>
                         <span style={{ fontSize: "13px", color: "#94a3b8", margin: "0 6px" }}>/</span>
-                        <span style={{ fontSize: "13px", color: "#94a3b8" }}>Manajemen</span>
+                        <span style={{ fontSize: "13px", color: "#94a3b8" }}>Management</span>
                     </div>
 
                     {/* Search */}
@@ -946,7 +946,7 @@ export default function ManajemenLowongan() {
                         <Icon.Search />
                         <input
                             value={search} onChange={e => setSearch(e.target.value)}
-                            placeholder="Cari lowongan..."
+                            placeholder="Search programs..."
                             style={{ border: "none", background: "transparent", outline: "none", fontSize: "13px", color: "#64748b", width: "100%" }}
                         />
                     </div>
@@ -962,13 +962,13 @@ export default function ManajemenLowongan() {
                     {/* Page header */}
                     <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 24, gap: 12, flexWrap: "wrap" }}>
                         <div>
-                            <div style={{ fontSize: 20, fontWeight: 800, color: "#0f172a", lineHeight: 1.2 }}>Manajemen Lowongan</div>
-                            <div style={{ fontSize: 13, color: "#64748b", marginTop: 3 }}>Kelola semua lowongan magang yang tersedia di platform.</div>
+                            <div style={{ fontSize: 20, fontWeight: 800, color: "#0f172a", lineHeight: 1.2 }}>Program Management</div>
+                            <div style={{ fontSize: 13, color: "#64748b", marginTop: 3 }}>Manage all internship programs available on the platform.</div>
                         </div>
                         <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
                             <button onClick={() => { setEditingJob(null); setModalOpen(true); }}
                                 style={{ display: "flex", alignItems: "center", gap: 7, background: "#2563c4", color: "#fff", border: "none", borderRadius: 8, padding: "10px 18px", fontFamily: "inherit", fontSize: 13, fontWeight: 600, cursor: "pointer", boxShadow: "0 2px 8px rgba(37,99,235,.3)" }}>
-                                <Icon.Plus /> Tambah Lowongan
+                                <Icon.Plus /> Add Program
                             </button>
                         </div>
                     </div>
@@ -976,7 +976,7 @@ export default function ManajemenLowongan() {
                     {/* Filter tabs */}
                     <div style={{ display: "flex", gap: 8, marginBottom: 22, flexWrap: "wrap" }}>
                         {[
-                            { key: "all", label: "Semua", count: jobs.length },
+                            { key: "all", label: "All", count: jobs.length },
                             { key: "published", label: "Published", count: jobs.filter(j => j.status === "published").length },
                             { key: "draft", label: "Draft", count: jobs.filter(j => j.status === "draft").length },
                             { key: "closed", label: "Closed", count: jobs.filter(j => j.status === "closed").length }
@@ -1000,11 +1000,11 @@ export default function ManajemenLowongan() {
                             <div style={{ color: "#cbd5e1", width: "48px", height: "48px", marginBottom: 16 }}>
                                 <Icon.Lowongan />
                             </div>
-                            <h3 style={{ fontSize: 17, fontWeight: 700, color: "#0f172a", marginBottom: 6 }}>Belum ada lowongan</h3>
-                            <p style={{ fontSize: 13, color: "#64748b", marginBottom: 20 }}>Tambahkan lowongan pertama kamu dengan menekan tombol <b>"Tambah Lowongan"</b> di atas.</p>
+                            <h3 style={{ fontSize: 17, fontWeight: 700, color: "#0f172a", marginBottom: 6 }}>No programs yet</h3>
+                            <p style={{ fontSize: 13, color: "#64748b", marginBottom: 20 }}>Add your first program by pressing the <b>"Add Program"</b> button above.</p>
                             <button onClick={() => { setEditingJob(null); setModalOpen(true); }}
                                 style={{ display: "flex", alignItems: "center", gap: 7, background: "#2563c4", color: "#fff", border: "none", borderRadius: 8, padding: "10px 20px", fontFamily: "inherit", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
-                                <Icon.Plus /> Tambah Lowongan
+                                <Icon.Plus /> Add Program
                             </button>
                         </div>
                     ) : (
@@ -1029,13 +1029,13 @@ export default function ManajemenLowongan() {
                         <div style={{ color: "#ef4444", marginBottom: 16 }}>
                             <Icon.Trash />
                         </div>
-                        <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 6, color: "#0f172a" }}>Hapus Lowongan?</div>
-                        <div style={{ fontSize: 13, color: "#64748b", lineHeight: 1.6, marginBottom: 20 }}>Tindakan ini tidak dapat dibatalkan. Lowongan beserta semua data pelamarnya akan dihapus secara permanen.</div>
+                        <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 6, color: "#0f172a" }}>Delete Program?</div>
+                        <div style={{ fontSize: 13, color: "#64748b", lineHeight: 1.6, marginBottom: 20 }}>This action cannot be undone. The program and all its candidate data will be permanently deleted.</div>
                         <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
                             <button onClick={() => setDeletingId(null)}
-                                style={{ padding: "8px 16px", border: "1px solid #e2e8f0", borderRadius: 8, background: "#fff", fontFamily: "inherit", fontSize: 13, fontWeight: 600, cursor: "pointer", color: "#334155" }}>Batal</button>
+                                style={{ padding: "8px 16px", border: "1px solid #e2e8f0", borderRadius: 8, background: "#fff", fontFamily: "inherit", fontSize: 13, fontWeight: 600, cursor: "pointer", color: "#334155" }}>Cancel</button>
                             <button onClick={() => { handleDelete(deletingId); setDeletingId(null); }}
-                                style={{ padding: "8px 16px", border: "none", borderRadius: 8, background: "#ef4444", color: "#fff", fontFamily: "inherit", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>Ya, Hapus</button>
+                                style={{ padding: "8px 16px", border: "none", borderRadius: 8, background: "#ef4444", color: "#fff", fontFamily: "inherit", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>Yes, Delete</button>
                         </div>
                     </div>
                 </div>
@@ -1048,11 +1048,11 @@ export default function ManajemenLowongan() {
                         <div style={{ color: "#3b82f6", marginBottom: 16 }}>
                             <Icon.Users />
                         </div>
-                        <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 6, color: "#0f172a" }}>Keluar Sistem?</div>
-                        <div style={{ fontSize: 13, color: "#64748b", lineHeight: 1.6, marginBottom: 20 }}>Apakah Anda yakin ingin keluar dari akun perusahaan Anda?</div>
+                        <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 6, color: "#0f172a" }}>Sign Out?</div>
+                        <div style={{ fontSize: 13, color: "#64748b", lineHeight: 1.6, marginBottom: 20 }}>Are you sure you want to sign out from your company account?</div>
                         <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-                            <button onClick={() => setLogoutModalOpen(false)} style={{ padding: "10px 18px", borderRadius: 10, border: "1px solid #e2e8f0", background: "#fff", fontSize: 13, fontWeight: 700, color: "#64748b", cursor: "pointer" }}>Batal</button>
-                            <button onClick={() => { logout(); navigate("/login"); }} style={{ padding: "10px 18px", borderRadius: 10, border: "none", background: "#ef4444", fontSize: 13, fontWeight: 700, color: "#fff", cursor: "pointer" }}>Ya, Keluar</button>
+                            <button onClick={() => setLogoutModalOpen(false)} style={{ padding: "10px 18px", borderRadius: 10, border: "1px solid #e2e8f0", background: "#fff", fontSize: 13, fontWeight: 700, color: "#64748b", cursor: "pointer" }}>Cancel</button>
+                            <button onClick={() => { logout(); navigate("/login"); }} style={{ padding: "10px 18px", borderRadius: 10, border: "none", background: "#ef4444", fontSize: 13, fontWeight: 700, color: "#fff", cursor: "pointer" }}>Yes, Sign Out</button>
                         </div>
                     </div>
                 </div>

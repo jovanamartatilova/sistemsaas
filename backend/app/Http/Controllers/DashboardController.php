@@ -17,14 +17,19 @@ class DashboardController extends Controller
         $user = $request->user();
         $companyId = $user->id_company;
 
-        $vacanciesQuery = Vacancy::where('status', 'published');
-        
-        // Filter by company (Restored for data isolation)
-        if ($companyId) {
-            $vacanciesQuery->where('id_company', $companyId);
+        if (!$companyId) {
+            return response()->json([
+                'active_programs' => 0,
+                'active_vacancies' => 0,
+                'total_applicants' => 0,
+                'pending_review' => 0,
+                'recent_applicants' => [],
+            ]);
         }
 
-        // Program Aktif = Total POSISI yang dibuka (as requested by user)
+        $vacanciesQuery = Vacancy::where('status', 'published')->where('id_company', $companyId);
+        
+        // Program Aktif = Total POSISI yang dibuka
         $positionsCount = $vacanciesQuery->clone()
             ->withCount('positions')
             ->get()
@@ -33,11 +38,26 @@ class DashboardController extends Controller
         // Lowongan Aktif = Total VACANCIES yang dipublish
         $vacanciesCount = $vacanciesQuery->clone()->count();
 
+        // Submissions Query
+        $submissionsQuery = \App\Models\Submission::whereHas('vacancy', function ($q) use ($companyId) {
+            $q->where('id_company', $companyId);
+        });
+
+        $totalApplicants = $submissionsQuery->clone()->count();
+        $pendingReview = $submissionsQuery->clone()->where('status', 'pending')->count();
+        
+        $recentApplicants = $submissionsQuery->clone()
+            ->with(['user', 'position', 'vacancy'])
+            ->orderBy('submitted_at', 'desc')
+            ->limit(5)
+            ->get();
+
         return response()->json([
-            'active_programs' => $positionsCount, // Positions
-            'active_vacancies' => $vacanciesCount, // Vacancies
-            'total_applicants' => 0,
-            'pending_review' => 0,
+            'active_programs' => $positionsCount, 
+            'active_vacancies' => $vacanciesCount,
+            'total_applicants' => $totalApplicants,
+            'pending_review' => $pendingReview,
+            'recent_applicants' => $recentApplicants,
         ]);
     }
 }

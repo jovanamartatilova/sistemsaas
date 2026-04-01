@@ -8,6 +8,7 @@ use App\Http\Controllers\ProgramController;
 use App\Http\Controllers\SuperAdmin\DashboardController as SuperAdminDashboardController;
 use App\Http\Controllers\SuperAdmin\TenantController;
 use App\Http\Controllers\SuperAdmin\UserController;
+use App\Http\Controllers\CompanyUserController;
 use App\Http\Controllers\CandidateController;
 
 // Public vacancy
@@ -59,6 +60,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/programs/{id_position}/competencies', [ProgramController::class, 'getCompetencies']);
     Route::post('/programs/{id_position}/competencies', [ProgramController::class, 'updateCompetencies']);
     Route::delete('/programs/{id_vacancy}/{id_position}', [ProgramController::class, 'destroy']);
+
+    // User Management (Company Level)
+    Route::get('/company-users', [CompanyUserController::class, 'index']);
+    Route::post('/company-users', [CompanyUserController::class, 'store']);
+    Route::put('/company-users/{id}', [CompanyUserController::class, 'update']);
+    Route::delete('/company-users/{id}', [CompanyUserController::class, 'destroy']);
 });
 // Super Admin
 Route::prefix('superadmin')->middleware(['auth:sanctum', 'superadmin'])->group(function () {

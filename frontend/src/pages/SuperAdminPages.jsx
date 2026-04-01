@@ -60,8 +60,8 @@ function LoginForm({ onLoginSuccess }) {
               <button type="button" onClick={() => setShowPassword(!showPassword)}
                 style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", padding: "0", color: showPassword ? "#3b82f6" : "#94a3b8", display: "flex", alignItems: "center" }}>
                 {showPassword
-                  ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-                  : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>}
+                  ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" /><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" /><line x1="1" y1="1" x2="23" y2="23" /></svg>
+                  : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>}
               </button>
             </div>
           </div>
@@ -169,9 +169,9 @@ function TenantDetailModal({ tenant, onClose }) {
           </button>
         </div>
         <div style={{ padding: "4px 24px 8px" }}>
-          <Row icon={<IC.Mail />}   label="EMAIL"   value={tenant.email} />
+          <Row icon={<IC.Mail />} label="EMAIL" value={tenant.email} />
           <Row icon={<IC.MapPin />} label="ADDRESS" value={tenant.address} />
-          <Row icon={<IC.Phone />}  label="PHONE"   value={tenant.phone} />
+          <Row icon={<IC.Phone />} label="PHONE" value={tenant.phone} />
           <div style={{ padding: "10px 0", borderBottom: "1px solid #f8fafc" }}>
             <div style={{ fontSize: "10.5px", fontWeight: "600", color: "#94a3b8", letterSpacing: "0.4px", marginBottom: "4px" }}>DESCRIPTION</div>
             <div style={{ fontSize: "13px", color: "#475569", lineHeight: "1.6" }}>{tenant.description || "No description provided."}</div>
@@ -179,9 +179,9 @@ function TenantDetailModal({ tenant, onClose }) {
         </div>
         <div style={{ padding: "14px 24px", background: "#f8fafc", display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px" }}>
           {[
-            { label: "Total Users",     value: tenant.users_count ?? 0,    color: "#3b82f6" },
+            { label: "Total Users", value: tenant.users_count ?? 0, color: "#3b82f6" },
             { label: "Total Vacancies", value: tenant.vacancies_count ?? 0, color: "#10b981" },
-            { label: "Registered",      value: tenant.created_at ?? "—",    color: "#f59e0b", small: true },
+            { label: "Registered", value: tenant.created_at ?? "—", color: "#f59e0b", small: true },
           ].map(s => (
             <div key={s.label} style={{ background: "#fff", borderRadius: "10px", padding: "10px 12px", border: "1px solid #f1f5f9", textAlign: "center" }}>
               <div style={{ fontSize: s.small ? "11px" : "20px", fontWeight: "800", color: s.color }}>{s.value}</div>
@@ -214,9 +214,9 @@ function Sidebar({ onLogout }) {
   const navigate = useNavigate();
   const location = useLocation();
   const nav = [
-    { label: "Dashboard",         icon: <IC.Dashboard />, key: "dashboard", path: "/superadmin/dashboard" },
-    { label: "Tenant Management", icon: <IC.Tenant />,    key: "tenant",    path: "/superadmin/tenants" },
-    { label: "User Management",   icon: <IC.Users />,     key: "users",     path: "/superadmin/users" },
+    { label: "Dashboard", icon: <IC.Dashboard />, key: "dashboard", path: "/superadmin/dashboard" },
+    { label: "Tenant Management", icon: <IC.Tenant />, key: "tenant", path: "/superadmin/tenants" },
+    { label: "User Management", icon: <IC.Users />, key: "users", path: "/superadmin/users" },
   ];
   const isActive = (path) => location.pathname.includes(path.split("/").pop());
 
@@ -529,9 +529,9 @@ function TenantManagementPage() {
 // PAGE 3 — USER MANAGEMENT
 // ═══════════════════════════════════════════════════════════════════════════════
 const roleStyle = {
-  admin:   { bg: "#eff6ff", color: "#1d4ed8", border: "#bfdbfe", label: "Admin" },
-  hr:      { bg: "#f0fdf4", color: "#15803d", border: "#bbf7d0", label: "HR" },
-  mentor:  { bg: "#fff7ed", color: "#c2410c", border: "#fed7aa", label: "Mentor" },
+  admin: { bg: "#eff6ff", color: "#1d4ed8", border: "#bfdbfe", label: "Admin" },
+  hr: { bg: "#f0fdf4", color: "#15803d", border: "#bbf7d0", label: "HR" },
+  mentor: { bg: "#fff7ed", color: "#c2410c", border: "#fed7aa", label: "Mentor" },
   peserta: { bg: "#fdf4ff", color: "#7e22ce", border: "#e9d5ff", label: "Participant" },
 };
 
@@ -651,15 +651,17 @@ export default function SuperAdminPages() {
 
   const handleLogout = () => {
     localStorage.removeItem("auth_token");
+    localStorage.removeItem("company");
+    localStorage.removeItem("user");
     setIsLoggedIn(false);
     setLogoutModal(false);
     navigate("/superadmin/login");
   };
 
   const pageConfig = {
-    dashboard: { title: "Dashboard",         sub: "Overview" },
-    tenant:    { title: "Tenant Management",  sub: "Tenant List" },
-    users:     { title: "User Management",    sub: "User List" },
+    dashboard: { title: "Dashboard", sub: "Overview" },
+    tenant: { title: "Tenant Management", sub: "Tenant List" },
+    users: { title: "User Management", sub: "User List" },
   };
 
   const DashboardLayout = ({ children, pageTitle }) => (
@@ -694,11 +696,11 @@ export default function SuperAdminPages() {
 
   return (
     <Routes>
-      <Route path="/login"     element={isLoggedIn ? <Navigate to="/superadmin/dashboard" replace /> : <LoginForm onLoginSuccess={() => { setIsLoggedIn(true); navigate("/superadmin/dashboard"); }} />} />
-      <Route path="/"          element={isLoggedIn ? <DashboardLayout pageTitle={pageConfig.dashboard}><DashboardPage /></DashboardLayout>       : <Navigate to="/superadmin/login" replace />} />
-      <Route path="/dashboard" element={isLoggedIn ? <DashboardLayout pageTitle={pageConfig.dashboard}><DashboardPage /></DashboardLayout>       : <Navigate to="/superadmin/login" replace />} />
-      <Route path="/tenants"   element={isLoggedIn ? <DashboardLayout pageTitle={pageConfig.tenant}><TenantManagementPage /></DashboardLayout>   : <Navigate to="/superadmin/login" replace />} />
-      <Route path="/users"     element={isLoggedIn ? <DashboardLayout pageTitle={pageConfig.users}><UserManagementPage /></DashboardLayout>      : <Navigate to="/superadmin/login" replace />} />
+      <Route path="/login" element={isLoggedIn ? <Navigate to="/superadmin/dashboard" replace /> : <LoginForm onLoginSuccess={() => { setIsLoggedIn(true); navigate("/superadmin/dashboard"); }} />} />
+      <Route path="/" element={isLoggedIn ? <DashboardLayout pageTitle={pageConfig.dashboard}><DashboardPage /></DashboardLayout> : <Navigate to="/superadmin/login" replace />} />
+      <Route path="/dashboard" element={isLoggedIn ? <DashboardLayout pageTitle={pageConfig.dashboard}><DashboardPage /></DashboardLayout> : <Navigate to="/superadmin/login" replace />} />
+      <Route path="/tenants" element={isLoggedIn ? <DashboardLayout pageTitle={pageConfig.tenant}><TenantManagementPage /></DashboardLayout> : <Navigate to="/superadmin/login" replace />} />
+      <Route path="/users" element={isLoggedIn ? <DashboardLayout pageTitle={pageConfig.users}><UserManagementPage /></DashboardLayout> : <Navigate to="/superadmin/login" replace />} />
     </Routes>
   );
 }

@@ -104,20 +104,20 @@ const IconDot = () => (
 );
 
 const IconUser = () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
-    </svg>
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
+  </svg>
 );
 const IconLayout = () => (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" />
-        <rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" />
-    </svg>
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" />
+    <rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" />
+  </svg>
 );
 const IconLogOut = ({ size = 18 }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" />
-    </svg>
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" />
+  </svg>
 );
 
 // ── Data ─────────────────────────────────────────────────────────────────────
@@ -293,7 +293,7 @@ export default function LandingPage() {
   const [loading, setLoading] = useState(true);
   const [selectedVacancy, setSelectedVacancy] = useState(null);
 
-  const { isAuthenticated, logout } = useAuthStore();
+  const { isAuthenticated, logout, company: authCompany } = useAuthStore();
   const [showDropdown, setShowDropdown] = useState(false);
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -301,11 +301,19 @@ export default function LandingPage() {
   // Dashboard link logic
   const getDashboardPath = () => {
     const user = JSON.parse(localStorage.getItem("user"));
-    const company = JSON.parse(localStorage.getItem("company"));
+    const company = authCompany || JSON.parse(localStorage.getItem("company"));
 
-    if (user && user.role === 'candidate' && company) {
+    // If logged in as an admin or staff (no 'user' object or explicit admin role)
+    // We prioritize the company role if it exists and is NOT a candidate role
+    if (company && company.role && company.role !== "applicant" && company.role !== "student") {
+      return "/dashboard";
+    }
+
+    // Default candidate dashboard path (requires both candidate user and company context)
+    if (user && user.role === 'candidate' && company?.slug) {
       return `/c/${company.slug}/dashboard`;
     }
+
     return "/dashboard";
   };
 
@@ -603,8 +611,8 @@ export default function LandingPage() {
               </>
             ) : (
               <>
-                <button 
-                  onClick={() => navigate(getDashboardPath())} 
+                <button
+                  onClick={() => navigate(getDashboardPath())}
                   style={{ display: "flex", alignItems: "center", gap: "8px", background: "transparent", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", padding: "10px", borderRadius: "8px", fontSize: "14px", cursor: "pointer" }}
                 >
                   <IconLayout /> Dashboard
@@ -1348,16 +1356,16 @@ export default function LandingPage() {
             <h3 style={{ fontSize: 20, fontWeight: 800, marginBottom: 8, color: "#fff" }}>Yakin Keluar?</h3>
             <p style={{ fontSize: 14, color: "rgba(255,255,255,0.5)", lineHeight: 1.6, marginBottom: 28 }}>Anda harus login kembali untuk mengakses dashboard Anda.</p>
             <div style={{ display: "flex", gap: 12 }}>
-              <button 
-                onClick={() => setLogoutModalOpen(false)} 
+              <button
+                onClick={() => setLogoutModalOpen(false)}
                 style={{ flex: 1, padding: "12px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.1)", background: "transparent", fontSize: 14, fontWeight: 700, color: "rgba(255,255,255,0.7)", cursor: "pointer", transition: "0.2s" }}
                 onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.05)"}
                 onMouseLeave={e => e.currentTarget.style.background = "transparent"}
               >
                 Batal
               </button>
-              <button 
-                onClick={() => { logout(); setLogoutModalOpen(false); navigate("/"); }} 
+              <button
+                onClick={() => { logout(); setLogoutModalOpen(false); navigate("/"); }}
                 style={{ flex: 1, padding: "12px", borderRadius: 12, border: "none", background: "#fb7185", fontSize: 14, fontWeight: 700, color: "#fff", cursor: "pointer", transition: "0.2s", boxShadow: "0 8px 20px rgba(251,113,133,0.3)" }}
                 onMouseEnter={e => e.currentTarget.style.transform = "translateY(-1px)"}
                 onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}

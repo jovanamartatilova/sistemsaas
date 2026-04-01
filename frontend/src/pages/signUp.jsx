@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../stores/authStore";
 
-export default function SignUpPerusahaan() {
+export default function SignUp() {
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -306,7 +306,7 @@ const response = await fetch("http://localhost:8000/api/auth/register", {
                 name="email"
                 value={form.email}
                 onChange={handleChange}
-                placeholder="email@perusahaan.com"
+                placeholder="email@company.com"
                 required
                 className="w-full px-4 py-3 rounded-xl text-white placeholder-gray-500 outline-none transition-all duration-200"
                 style={{
@@ -385,7 +385,7 @@ const response = await fetch("http://localhost:8000/api/auth/register", {
       <input id="logo-upload" type="file" accept="image/jpg,image/jpeg,image/png,image/webp" onChange={handleLogo} className="hidden" />
     </label>
   </div>
-  <p className="text-xs mt-1.5" style={{ color: "rgba(255,255,255,0.25)" }}>JPG, PNG, atau WEBP. Maks 2MB.</p>
+  <p className="text-xs mt-1.5" style={{ color: "rgba(255,255,255,0.25)" }}>JPG, PNG, or WEBP. Max 2MB.</p>
 </div>
 
             {/* Password */}
