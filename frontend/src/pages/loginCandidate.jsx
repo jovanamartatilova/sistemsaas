@@ -5,9 +5,21 @@ import { useAuthStore } from "../stores/authStore";
 export default function LoginCandidate() {
     const { slug } = useParams();
     const navigate = useNavigate();
+    const { isAuthenticated, user, company: authCompany, loading: authLoading } = useAuthStore();
 
     const [company, setCompany] = useState(null);
     const [companyLoading, setCompanyLoading] = useState(true);
+
+    useEffect(() => {
+        if (isAuthenticated && !authLoading) {
+            if (user?.role === "candidate" && slug) {
+                navigate(`/c/${slug}`);
+            } else {
+                navigate("/dashboard");
+            }
+        }
+    }, [isAuthenticated, authLoading, slug, navigate, user]);
+
     const [companyError, setCompanyError] = useState("");
 
     const [form, setForm] = useState({ email: "", password: "" });
@@ -74,7 +86,7 @@ export default function LoginCandidate() {
 
             setSuccessMsg("✓ Login berhasil!");
 
-            setTimeout(() => navigate(`/c/${slug}/dashboard`), 1500);
+            setTimeout(() => navigate(`/c/${slug}`), 1500);
         } catch (err) {
             setErrorMsg(err.message);
             setLoading(false);

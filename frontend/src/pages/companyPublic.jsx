@@ -325,9 +325,9 @@ export default function CompanyPublicPage() {
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           {isAuthenticated ? (
             <>
-              {/* Nama akun perusahaan */}
+              {/* Profile Name/Badge */}
               <span style={{ padding: "4px 10px", background: "rgba(255,255,255,0.06)", borderRadius: 6, fontSize: 13, fontWeight: 700, color: "#fff", border: "1px solid rgba(255,255,255,0.1)" }}>
-                {company?.name}
+                {user?.role === "candidate" ? user.name : company?.name}
               </span>
 
               {/* Profile Icon Dropdown */}
@@ -357,7 +357,14 @@ export default function CompanyPublicPage() {
                     padding: "6px", zIndex: 200,
                   }}>
                     <button
-                      onClick={() => { setProfileOpen(false); navigate(`/c/${slug}/dashboard`); }}
+                      onClick={() => { 
+                        setProfileOpen(false); 
+                        if (user?.role === "candidate") {
+                          navigate(`/c/${slug}/dashboard`);
+                        } else {
+                          navigate("/dashboard");
+                        }
+                      }}
                       style={{
                         width: "100%", padding: "10px 14px", background: "none", border: "none",
                         borderRadius: 8, color: "rgba(255,255,255,0.8)", fontSize: 13, fontWeight: 600,
@@ -375,7 +382,11 @@ export default function CompanyPublicPage() {
                     </button>
                     <div style={{ height: 1, background: "rgba(255,255,255,0.07)", margin: "4px 0" }} />
                     <button
-                      onClick={() => { setProfileOpen(false); logout(); navigate("/login"); }}
+                      onClick={() => { 
+                        setProfileOpen(false); 
+                        logout(); 
+                        navigate("/"); 
+                      }}
                       style={{
                         width: "100%", padding: "10px 14px", background: "none", border: "none",
                         borderRadius: 8, color: "#fb7185", fontSize: 13, fontWeight: 600,

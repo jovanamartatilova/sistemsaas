@@ -1,23 +1,61 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../stores/authStore";
 
 export default function Login() {
+  const [activeTab, setActiveTab] = useState("company"); // "company" or "candidate"
+  
+  // Company Form State
   const [form, setForm] = useState({ username: "", password: "" });
+  
+  // Candidate Form State
+  const [candidateForm, setCandidateForm] = useState({ email: "", password: "", slug: "" });
+  const [companies, setCompanies] = useState([]);
+  
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
 
   const navigate = useNavigate();
-  const { loading: authLoading } = useAuthStore();
-  const setAuth = useAuthStore((s) => s);
+  const { isAuthenticated, user, company, loading: authLoading } = useAuthStore();
 
   const companyName = "EarlyPath";
 
+  useEffect(() => {
+    if (isAuthenticated && !authLoading) {
+      if (user?.role === "candidate" && company?.slug) {
+        navigate(`/c/${company.slug}`);
+      } else if (company?.role === "applicant" || company?.role === "student") {
+        navigate("/applicant/portal");
+      } else {
+        navigate("/dashboard");
+      }
+    }
+  }, [isAuthenticated, authLoading, user, company, navigate]);
+
+  useEffect(() => {
+    fetch("http://localhost:8000/api/vacancies/public")
+      .then((res) => res.json())
+      .then((data) => {
+        // Extract unique companies
+        const uniqueCompanies = Array.from(
+          new Map(data.map((v) => [v.company.slug, v.company])).values()
+        );
+        setCompanies(uniqueCompanies);
+      })
+      .catch((err) => console.error("Failed to fetch companies:", err));
+  }, []);
+
   const goToRegister = (e) => {
     e.preventDefault();
-    navigate("/register");
+    if (activeTab === "candidate" && candidateForm.slug) {
+      navigate(`/c/${candidateForm.slug}/register`);
+    } else if (activeTab === "candidate") {
+      setErrorMsg("Please select a company first to sign up.");
+    } else {
+      navigate("/register");
+    }
   };
   
   const goBack = (e) => {
@@ -27,6 +65,10 @@ export default function Login() {
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleCandidateChange = (e) => {
+    setCandidateForm({ ...candidateForm, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
@@ -58,7 +100,6 @@ export default function Login() {
       localStorage.setItem("auth_token", data.token);
       localStorage.setItem("company", JSON.stringify(data.company));
 
-   
       // Update auth store so PrivateRoute sees isAuthenticated = true
       useAuthStore.setState({ isAuthenticated: true, token: data.token, company: data.company });
 
@@ -71,6 +112,59 @@ export default function Login() {
         } else {
           navigate("/dashboard");
         }
+      }, 800);
+
+    } catch (err) {
+      setErrorMsg(err.message);
+      setLoading(false);
+    }
+  };
+
+  const handleCandidateSubmit = async (e) => {
+    e.preventDefault();
+    if (!candidateForm.slug) {
+      setErrorMsg("Please select a company.");
+      return;
+    }
+    setLoading(true);
+    setErrorMsg("");
+    setSuccessMsg("");
+
+    try {
+      const response = await fetch("http://localhost:8000/api/auth/login-candidate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
+        body: JSON.stringify({
+          email: candidateForm.email,
+          password: candidateForm.password,
+          slug: candidateForm.slug,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Login failed");
+      }
+
+      localStorage.setItem("auth_token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+      localStorage.setItem("company", JSON.stringify(data.company));
+
+      useAuthStore.setState({ 
+        isAuthenticated: true, 
+        token: data.token, 
+        company: data.company 
+      });
+
+      setSuccessMsg("✓ Login successful!");
+
+      setTimeout(() => {
+        console.log("Redirecting candidate to company public page ->", `/c/${candidateForm.slug}`);
+        navigate(`/c/${candidateForm.slug}`);
       }, 800);
 
     } catch (err) {
@@ -242,8 +336,34 @@ export default function Login() {
               {companyName}
             </h1>
             <p className="text-sm" style={{ color: "rgba(255,255,255,0.4)" }}>
-              Sign in to your company account and continue your journey with us.
+              {activeTab === "company" 
+                ? "Sign in to your company account and continue your journey."
+                : "Sign in to apply to your matching internships."}
             </p>
+          </div>
+
+          {/* Tab Selector */}
+          <div className="flex p-1 mb-6 rounded-xl" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}>
+            <button
+              onClick={() => { setActiveTab("company"); setErrorMsg(""); setSuccessMsg(""); }}
+              className="flex-1 py-2 text-sm font-medium rounded-lg transition-all duration-200"
+              style={{
+                background: activeTab === "company" ? "rgba(74,158,255,0.15)" : "transparent",
+                color: activeTab === "company" ? "#4a9eff" : "rgba(255,255,255,0.5)",
+              }}
+            >
+              Company Staff
+            </button>
+            <button
+              onClick={() => { setActiveTab("candidate"); setErrorMsg(""); setSuccessMsg(""); }}
+              className="flex-1 py-2 text-sm font-medium rounded-lg transition-all duration-200"
+              style={{
+                background: activeTab === "candidate" ? "rgba(74,158,255,0.15)" : "transparent",
+                color: activeTab === "candidate" ? "#4a9eff" : "rgba(255,255,255,0.5)",
+              }}
+            >
+              Candidate
+            </button>
           </div>
 
           {/* Success Notification */}
@@ -278,25 +398,84 @@ export default function Login() {
           )}
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Nama Perusahaan */}
-            <div>
-              <label className="block text-sm font-medium mb-1.5 text-left" style={{ color: "rgba(255,255,255,0.8)" }}>
-                Company Name
-              </label>
-              <input
-                type="text"
-                name="username"
-                value={form.username}
-                onChange={handleChange}
-                placeholder="Your company name"
-                required
-                className="w-full px-4 py-3 rounded-xl text-white placeholder-gray-500 outline-none transition-all duration-200"
-                style={inputBase}
-                onFocus={(e) => Object.assign(e.target.style, inputFocus)}
-                onBlur={(e) => Object.assign(e.target.style, inputBase)}
-              />
-            </div>
+          <form onSubmit={activeTab === "company" ? handleSubmit : handleCandidateSubmit} className="space-y-4">
+            
+            {activeTab === "company" && (
+              <>
+                {/* Nama Perusahaan */}
+                <div>
+                  <label className="block text-sm font-medium mb-1.5 text-left" style={{ color: "rgba(255,255,255,0.8)" }}>
+                    Company Name
+                  </label>
+                  <input
+                    type="text"
+                    name="username"
+                    value={form.username}
+                    onChange={handleChange}
+                    placeholder="Your company name"
+                    required
+                    className="w-full px-4 py-3 rounded-xl text-white placeholder-gray-500 outline-none transition-all duration-200"
+                    style={inputBase}
+                    onFocus={(e) => Object.assign(e.target.style, inputFocus)}
+                    onBlur={(e) => Object.assign(e.target.style, inputBase)}
+                  />
+                </div>
+              </>
+            )}
+
+            {activeTab === "candidate" && (
+              <>
+                {/* Company Dropdown */}
+                <div>
+                  <label className="block text-sm font-medium mb-1.5 text-left" style={{ color: "rgba(255,255,255,0.8)" }}>
+                    Select Company
+                  </label>
+                  <div className="relative">
+                    <select
+                      name="slug"
+                      value={candidateForm.slug}
+                      onChange={handleCandidateChange}
+                      required
+                      className="w-full px-4 py-3 rounded-xl text-white placeholder-gray-500 outline-none transition-all duration-200 appearance-none bg-transparent"
+                      style={{ ...inputBase, cursor: "pointer" }}
+                      onFocus={(e) => Object.assign(e.target.style, inputFocus)}
+                      onBlur={(e) => Object.assign(e.target.style, inputBase)}
+                    >
+                      <option value="" disabled style={{ color: "#000" }}>-- Choose a company --</option>
+                      {companies.map((c) => (
+                        <option key={c.slug} value={c.slug} style={{ color: "#000" }}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "rgba(255,255,255,0.5)" }}>
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Email */}
+                <div>
+                  <label className="block text-sm font-medium mb-1.5 text-left" style={{ color: "rgba(255,255,255,0.8)" }}>
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={candidateForm.email}
+                    onChange={handleCandidateChange}
+                    placeholder="john@email.com"
+                    required
+                    className="w-full px-4 py-3 rounded-xl text-white placeholder-gray-500 outline-none transition-all duration-200"
+                    style={inputBase}
+                    onFocus={(e) => Object.assign(e.target.style, inputFocus)}
+                    onBlur={(e) => Object.assign(e.target.style, inputBase)}
+                  />
+                </div>
+              </>
+            )}
 
             {/* Password */}
             <div>
@@ -305,7 +484,13 @@ export default function Login() {
                   Password
                 </label>
                 <Link
-                  to="/forgot-password"
+                  to={activeTab === "company" ? "/forgot-password" : (candidateForm.slug ? `/c/${candidateForm.slug}/forgot-password` : "#")}
+                  onClick={(e) => {
+                     if (activeTab === "candidate" && !candidateForm.slug) {
+                       e.preventDefault();
+                       setErrorMsg("Select a company first to reset password.");
+                     }
+                  }}
                   className="text-xs transition-colors duration-200"
                   style={{ color: "#4a9eff", textDecoration: "none" }}
                   onMouseEnter={(e) => (e.currentTarget.style.color = "#7bb8ff")}
@@ -318,8 +503,8 @@ export default function Login() {
                 <input
                   type={showPassword ? "text" : "password"}
                   name="password"
-                  value={form.password}
-                  onChange={handleChange}
+                  value={activeTab === "company" ? form.password : candidateForm.password}
+                  onChange={activeTab === "company" ? handleChange : handleCandidateChange}
                   placeholder="Enter your password"
                   required
                   className="w-full px-4 py-3 pr-12 rounded-xl text-white placeholder-gray-500 outline-none transition-all duration-200"
@@ -458,3 +643,4 @@ export default function Login() {
     </div>
   );
 }
+
