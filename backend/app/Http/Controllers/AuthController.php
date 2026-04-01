@@ -102,45 +102,45 @@ class AuthController extends Controller
         ], 201);
     }
 
-/**
- * Register a new candidate
- */
-public function registerCandidate(Request $request, $slug)
-{
-    // Cari company berdasarkan slug
-    $company = Company::where('slug', $slug)->firstOrFail();
+    /**
+     * Register a new candidate
+     */
+    public function registerCandidate(Request $request, $slug)
+    {
+        // Cari company berdasarkan slug
+        $company = Company::where('slug', $slug)->firstOrFail();
 
-    $validated = $request->validate([
-        'first_name' => 'required|string|max:50',
-        'last_name'  => 'required|string|max:50',
-        'email'      => 'required|email|max:50|unique:users',
-        'phone'      => 'required|string|max:13',
-        'password'   => 'required|string|min:8|confirmed',
-    ]);
+        $validated = $request->validate([
+            'first_name' => 'required|string|max:50',
+            'last_name' => 'required|string|max:50',
+            'email' => 'required|email|max:50|unique:users',
+            'phone' => 'required|string|max:13',
+            'password' => 'required|string|min:8|confirmed',
+        ]);
 
-    do {
-        $id = 'USR' . strtoupper(substr(uniqid(), -7));
-    } while (User::where('id_user', $id)->exists());
+        do {
+            $id = 'USR' . strtoupper(substr(uniqid(), -7));
+        } while (User::where('id_user', $id)->exists());
 
-    $user = User::create([
-        'id_user'    => $id,
-        'id_company' => $company->id_company, // ← link ke perusahaan
-        'name'       => $validated['first_name'] . ' ' . $validated['last_name'],
-        'email'      => $validated['email'],
-        'phone'      => $validated['phone'],
-        'password'   => Hash::make($validated['password']),
-        'role'       => 'candidate',
-    ]);
+        $user = User::create([
+            'id_user' => $id,
+            'id_company' => $company->id_company, // ← link ke perusahaan
+            'name' => $validated['first_name'] . ' ' . $validated['last_name'],
+            'email' => $validated['email'],
+            'phone' => $validated['phone'],
+            'password' => Hash::make($validated['password']),
+            'role' => 'candidate',
+        ]);
 
-    $token = $user->createToken('candidate_token')->plainTextToken;
+        $token = $user->createToken('candidate_token')->plainTextToken;
 
-    return response()->json([
-        'message' => 'Account successfully created',
-        'user'    => $user,
-        'company' => $company,
-        'token'   => $token,
-    ], 201);
-}
+        return response()->json([
+            'message' => 'Account successfully created',
+            'user' => $user,
+            'company' => $company,
+            'token' => $token,
+        ], 201);
+    }
 
     /**
      * Login company and get token
@@ -262,8 +262,8 @@ public function registerCandidate(Request $request, $slug)
             ]);
 
             $user = User::where('email', $validated['email'])
-    ->where('role', 'super_admin')
-    ->first();
+                ->where('role', 'super_admin')
+                ->first();
 
             if (!$user || !Hash::check($validated['password'], $user->password)) {
                 return response()->json(['message' => 'Email or password is incorrect'], 401);
@@ -613,12 +613,12 @@ public function registerCandidate(Request $request, $slug)
             $token = $user->createToken('staff_token')->plainTextToken;
 
 
-        return response()->json([
-            'message' => 'Account successfully activated',
-            'user'    => $user,
-            'company' => $company,
-            'token'   => $token,
-        ], 200);
+            return response()->json([
+                'message' => 'Account successfully activated',
+                'user' => $user,
+                'company' => $company,
+                'token' => $token,
+            ], 200);
 
         } catch (ValidationException $e) {
             return response()->json(['message' => 'Validation failed', 'errors' => $e->errors()], 422);

@@ -341,7 +341,7 @@ export default function DashboardPage() {
 
     const navItems = [
         { label: "Dashboard", icon: <IC.Dashboard />, path: "/dashboard", section: "MAIN MENU" },
-        { label: "User Management", icon: <IC.Users />, path: "#", badge: 0 },
+        { label: "User Management", icon: <IC.Users />, path: "/users", badge: 0 },
         { label: "Program Management", icon: <IC.Lowongan />, path: "/programs" },
         { label: "Positions Management", icon: <IC.Program />, path: "/positions" },
     ];

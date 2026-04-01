@@ -24,6 +24,7 @@ import PositionsManagement from './pages/PositionsManagement';
 import LandingPage from './pages/LandingPage';
 import HomePage from './pages/HomePage';
 import ProfilePage from './pages/ProfilePage';
+import UserManagement from './pages/UserManagement';
 // Super Admin
 import SuperAdminPages from "./pages/SuperAdminPages";
 
@@ -96,6 +97,15 @@ export default function App() {
                     element={
                         <PrivateRoute>
                             <ProgramManagement />
+                        </PrivateRoute>
+                    }
+                />
+
+                <Route
+                    path="/users"
+                    element={
+                        <PrivateRoute>
+                            <UserManagement />
                         </PrivateRoute>
                     }
                 />

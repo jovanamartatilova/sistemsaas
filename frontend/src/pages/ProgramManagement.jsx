@@ -810,7 +810,7 @@ export default function ProgramManagement() {
 
     const navItems = [
         { label: "Dashboard", icon: <Icon.Dashboard />, path: "/dashboard", section: "MAIN MENU" },
-        { label: "User Management", icon: <Icon.Users />, path: "#", badge: 0 },
+        { label: "User Management", icon: <Icon.Users />, path: "/users", badge: 0 },
         { label: "Program Management", icon: <Icon.Lowongan />, path: "/programs" },
         { label: "Positions Management", icon: <Icon.Program />, path: "/positions" },
     ];
