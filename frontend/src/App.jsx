@@ -3,20 +3,23 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './stores/authStore';
 import PrivateRoute from './components/PrivateRoute';
 // Auth pages
-import LoginPage from './pages/login';
-import RegisterPage from './pages/signUp';
-import ForgotPassword from './pages/forgotPassword';
-import ResetPassword from './pages/resetPassword';
+import LoginPage from './pages/Login';
+import RegisterPage from './pages/SignUp';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 // Candidate (company public)
 import CompanyPublicPage from './pages/companyPublic';
-import SignUpCandidate from './pages/signUpCandidate';
-import LoginCandidate from './pages/loginCandidate';
+import SignUpCandidate from './pages/SignUpCandidate';
+import LoginCandidate from './pages/LoginCandidate';
 import CandidateDashboard from './pages/candidateDashboard';
 import SubmissionForm from './pages/SubmissionForm';
+import ProfileSettings from './pages/ProfileSettings';
+import CertificateCandidate from './pages/CertificateCandidate';
+import ProgramsPage from './pages/ProgramsCandidate';
 
 // Staff
 import ActivateAccount from './pages/activateAccount';
-import LoginStaff from './pages/loginStaff';
+import LoginStaff from './pages/LoginStaff';
 // Main pages
 import DashboardPage from './pages/DashboardPage';
 import ProgramManagement from './pages/ProgramManagement';
@@ -115,6 +118,33 @@ export default function App() {
                     element={
                         <PrivateRoute>
                             <ProfilePage />
+                        </PrivateRoute>
+                    }
+                />
+
+                <Route
+                    path="/c/:slug/profile"
+                    element={
+                        <PrivateRoute>
+                            <ProfileSettings />
+                        </PrivateRoute>
+                    }
+                />
+
+                <Route
+                    path="/c/:slug/certificates"
+                    element={
+                        <PrivateRoute>
+                            <CertificateCandidate />
+                        </PrivateRoute>
+                    }
+                />
+
+                <Route
+                    path="/c/:slug/programs"
+                    element={
+                        <PrivateRoute>
+                            <ProgramsPage />
                         </PrivateRoute>
                     }
                 />

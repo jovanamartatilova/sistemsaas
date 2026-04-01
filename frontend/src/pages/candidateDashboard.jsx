@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { LayoutDashboard, BookOpen, User, Award, LogOut, MapPin } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
 
@@ -139,11 +139,12 @@ function CertificateCard({ subject, date }) {
 
 // --- Sidebar ---
 function Sidebar({ userName, onLogout }) {
+  const { slug } = useParams();
   const navItems = [
     { label: "Dashboard", icon: <LayoutDashboard size={16} />, active: true },
-    { label: "Programs", icon: <BookOpen size={16} /> },
-    { label: "My Profile", icon: <User size={16} /> },
-    { label: "Certificates", icon: <Award size={16} /> },
+    { label: "Programs", icon: <BookOpen size={16} />, to: `/c/${slug}/programs` },
+    { label: "My Profile", icon: <User size={16} />, to: `/c/${slug}/profile` },
+    { label: "Certificates", icon: <Award size={16} />, to: `/c/${slug}/certificates` },
   ];
 
   return (
@@ -154,7 +155,7 @@ function Sidebar({ userName, onLogout }) {
   </div>
       <nav className="flex flex-col gap-1">
         {navItems.map((item) => (
-          <a key={item.label} href="#"
+          <a key={item.label} href={item.to}
             className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
               ${item.active ? "bg-indigo-600 text-white" : "text-slate-400 hover:bg-[#1a2f54] hover:text-white"}`}>
             {item.icon}
