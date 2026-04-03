@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { LayoutDashboard, BookOpen, User, Award, LogOut, MapPin } from "lucide-react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, Link, useLocation } from "react-router-dom";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
 
@@ -140,8 +140,9 @@ function CertificateCard({ subject, date }) {
 // --- Sidebar ---
 function Sidebar({ userName, onLogout }) {
   const { slug } = useParams();
+  const location = useLocation();
   const navItems = [
-    { label: "Dashboard", icon: <LayoutDashboard size={16} />, active: true },
+    { label: "Dashboard", icon: <LayoutDashboard size={16} />, to: `/c/${slug}/dashboard` },
     { label: "Programs", icon: <BookOpen size={16} />, to: `/c/${slug}/programs` },
     { label: "My Profile", icon: <User size={16} />, to: `/c/${slug}/profile` },
     { label: "Certificates", icon: <Award size={16} />, to: `/c/${slug}/certificates` },
@@ -154,14 +155,17 @@ function Sidebar({ userName, onLogout }) {
   <span className="font-bold text-lg tracking-tight">EarlyPath</span>
   </div>
       <nav className="flex flex-col gap-1">
-        {navItems.map((item) => (
-          <a key={item.label} href={item.to}
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
-              ${item.active ? "bg-indigo-600 text-white" : "text-slate-400 hover:bg-[#1a2f54] hover:text-white"}`}>
-            {item.icon}
-            {item.label}
-          </a>
-        ))}
+        {navItems.map((item) => {
+          const isActive = location.pathname === item.to;
+          return (
+            <Link key={item.label} to={item.to}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+                ${isActive ? "bg-indigo-600 text-white" : "text-slate-400 hover:bg-[#1a2f54] hover:text-white"}`}>
+              {item.icon}
+              {item.label}
+            </Link>
+          );
+        })}
       </nav>
       <div className="mt-auto flex items-center gap-3 px-2">
         <div className="w-8 h-8 rounded-full bg-slate-600 flex items-center justify-center text-xs font-bold">
@@ -326,9 +330,9 @@ export default function EarlyPathDashboard() {
                 <span className="text-white font-bold text-sm">!</span>
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold text-amber-900 mb-1">Aplikasi Sedang Diproses</h3>
+                <h3 className="font-semibold text-amber-900 mb-1">Application Under Review</h3>
                 <p className="text-sm text-amber-800">
-                  Terima kasih telah mendaftar! Aplikasi Anda sedang kami review. Kami akan mengirimkan update status melalui email Anda. Silakan tunggu pemberitahuan selanjutnya.
+                  Thank you for applying! Your application is currently being reviewed by our HR team. We will send you an update via email. Please wait for further notification.
                 </p>
               </div>
             </div>
@@ -346,14 +350,14 @@ export default function EarlyPathDashboard() {
           <div className="flex-1 min-w-0">
             <h1 className="text-xl font-bold text-slate-800 text-left">{profile?.name || "User"}</h1>
             <p className="text-slate-500 text-sm mt-0.5 text-left">
-              {apprentice?.position || "Position"} · {apprentice?.batch || "Batch"} – {apprentice?.company || "Company"}
+              {apprentice?.position || "Position"} • {apprentice?.batch || "Batch"} – {apprentice?.company || "Company"}
             </p>
             <div className="flex items-center gap-3 mt-1.5">
               <span className="text-xs text-slate-400 flex items-center gap-1">
                 <MapPin size={11} /> 
                 {apprentice?.start_date && apprentice?.end_date
-                  ? `${new Date(apprentice.start_date).toLocaleDateString()} – ${new Date(apprentice.end_date).toLocaleDateString()}`
-                  : "No date info"
+                  ? `${new Date(apprentice.start_date).toLocaleDateString('en-US')} – ${new Date(apprentice.end_date).toLocaleDateString('en-US')}`
+                  : "Period not set"
                 }
               </span>
               <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium border ${
@@ -368,7 +372,7 @@ export default function EarlyPathDashboard() {
           <div className="flex gap-6 flex-shrink-0 divide-x divide-slate-100">
             {[
               { value: `${profile?.overall_progress || 0}%`, label: "Progress", bar: true },
-              { value: `${competencies?.length || 0}`, label: "Competencies", sub: "0 Done", subColor: "text-slate-400" },
+              { value: `${competencies?.length || 0}`, label: "Competencies", sub: "0 Completed", subColor: "text-slate-400" },
               { value: `${learning_progress?.total_learning_hours || 0}`, label: "Learning Hours", sub: "+12 This Week", subColor: "text-emerald-500" },
             ].map((stat, i) => (
               <div key={i} className="text-center px-6 first:pl-0 last:pr-0">
@@ -395,31 +399,38 @@ export default function EarlyPathDashboard() {
           <div className="flex flex-col gap-5">
             {/* Apprentice Info */}
             <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-              <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Apprentice Info</h2>
-              <div className="space-y-3">
-                {[
-                  { label: "ID Apprentice", value: apprentice?.id_apprentice || "-" },
-                  { label: "Program", value: apprentice?.position || "-" },
-                  { label: "Batch", value: apprentice?.batch || "-" },
-                  { label: "Periode", value: apprentice?.start_date && apprentice?.end_date ? `${new Date(apprentice.start_date).toLocaleDateString()} – ${new Date(apprentice.end_date).toLocaleDateString()}` : "-" },
-                  { label: "Status", value: apprentice?.status || "Inactive", badge: true },
-                ].map((row, i) => (
-                  <div key={i} className="flex justify-between items-center text-sm">
-                    <span className="text-slate-400">{row.label}</span>
-                    {row.badge ? (
-                      <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium border ${
-                        row.value === 'active'
-                          ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
-                          : 'bg-slate-50 text-slate-600 border-slate-200'
-                      }`}>
-                        ● {row.value}
-                      </span>
-                    ) : (
-                      <span className="text-slate-700 font-medium text-right max-w-[55%]">{row.value}</span>
-                    )}
-                  </div>
-                ))}
-              </div>
+              <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Internship Info</h2>
+              {apprentice ? (
+                <div className="space-y-3">
+                  {[
+                    { label: "ID Apprentice", value: apprentice?.id_apprentice || "-" },
+                    { label: "Program", value: apprentice?.position || "-" },
+                    { label: "Batch", value: apprentice?.batch || "-" },
+                    { label: "Period", value: apprentice?.start_date && apprentice?.end_date ? `${new Date(apprentice.start_date).toLocaleDateString('en-US')} – ${new Date(apprentice.end_date).toLocaleDateString('en-US')}` : "-" },
+                    { label: "Status", value: apprentice?.status || "Inactive", badge: true },
+                  ].map((row, i) => (
+                    <div key={i} className="flex justify-between items-center text-sm">
+                      <span className="text-slate-400">{row.label}</span>
+                      {row.badge ? (
+                        <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium border ${
+                          row.value === 'active'
+                            ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
+                            : 'bg-slate-50 text-slate-600 border-slate-200'
+                        }`}>
+                          ● {row.value}
+                        </span>
+                      ) : (
+                        <span className="text-slate-700 font-medium text-right max-w-[55%]">{row.value}</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-3 text-center py-4">
+                  <p className="text-sm text-slate-500">Waiting for HR selection...</p>
+                  <p className="text-xs text-slate-400">Internship data will appear after HR selection is complete</p>
+                </div>
+              )}
             </div>
 
             {/* Learning Progress */}
@@ -428,9 +439,9 @@ export default function EarlyPathDashboard() {
               <div className="space-y-4">
                 {[
                   { label: "Total Learning Hours", value: `${learning_progress?.total_learning_hours || 0} / ${learning_progress?.target_learning_hours || 320} hours`, pct: learning_progress ? Math.round((learning_progress.total_learning_hours / learning_progress.target_learning_hours) * 100) : 0, color: "bg-indigo-500" },
-                  { label: "Completed Module", value: `${learning_progress?.completed_modules || 0} / ${learning_progress?.total_modules || 24} module`, pct: learning_progress ? Math.round((learning_progress.completed_modules / learning_progress.total_modules) * 100) : 0, color: "bg-emerald-500" },
+                  { label: "Completed Modules", value: `${learning_progress?.completed_modules || 0} / ${learning_progress?.total_modules || 24} modules`, pct: learning_progress ? Math.round((learning_progress.completed_modules / learning_progress.total_modules) * 100) : 0, color: "bg-emerald-500" },
                   { label: "Attendance", value: `${learning_progress?.attendance_percentage || 0}%`, pct: learning_progress?.attendance_percentage || 0, color: "bg-yellow-400" },
-                  { label: "Assignment Submitted", value: `${learning_progress?.submitted_assignments || 0} / ${learning_progress?.total_assignments || 40} assignment`, pct: learning_progress ? Math.round((learning_progress.submitted_assignments / learning_progress.total_assignments) * 100) : 0, color: "bg-slate-400" },
+                  { label: "Assignments Submitted", value: `${learning_progress?.submitted_assignments || 0} / ${learning_progress?.total_assignments || 40} assignments`, pct: learning_progress ? Math.round((learning_progress.submitted_assignments / learning_progress.total_assignments) * 100) : 0, color: "bg-slate-400" },
                 ].map((item, i) => (
                   <div key={i} className="space-y-1.5">
                     <div className="flex justify-between text-xs">
@@ -449,10 +460,10 @@ export default function EarlyPathDashboard() {
             <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex-1 text-left">
               <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4 text-center">Recent Activities</h2>
               <div className="space-y-4">
-                <ActivityItem color="bg-indigo-400" title="Completing Competencies: React Hooks" subtitle="24 Apr 2025 · 10 hours" />
-                <ActivityItem color="bg-emerald-400" title="Upload Assignment: Project Portfolio" subtitle="20 Apr 2025 · Score: 87/100" />
-                <ActivityItem color="bg-yellow-400" title="Mentoring Session: UI/UX Principles" subtitle="18 Apr 2025 · 2 hours" />
-                <ActivityItem color="bg-purple-400" title="Joined Batch 5 Program" subtitle="01 Apr 2025 · Kick-off day" />
+                <ActivityItem color="bg-indigo-400" title="Completing Competencies: React Hooks" subtitle="Apr 24, 2025 · 10 hours" />
+                <ActivityItem color="bg-emerald-400" title="Submitted Assignment: Project Portfolio" subtitle="Apr 20, 2025 · Score: 87/100" />
+                <ActivityItem color="bg-yellow-400" title="Mentoring Session: UI/UX Principles" subtitle="Apr 18, 2025 · 2 hours" />
+                <ActivityItem color="bg-purple-400" title="Joined Batch 5 Program" subtitle="Apr 01, 2025 · Kick-off day" />
               </div>
             </div>
           </div>
@@ -464,12 +475,12 @@ export default function EarlyPathDashboard() {
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400">Competencies & Skills</h2>
                 <div className="flex gap-1 bg-slate-100 rounded-lg p-1">
-                  {["All", "Active", "Done"].map((f) => (
+                  {["All", "Active", "Completed"].map((f) => (
                     <button
                       key={f}
-                      onClick={() => setSkillFilter(f)}
+                      onClick={() => setSkillFilter(f === "Completed" ? "Done" : f)}
                       className={`text-xs px-3 py-1 rounded-md font-medium transition-colors ${
-                        skillFilter === f ? "bg-indigo-600 text-white" : "text-slate-500 hover:text-slate-700 hover:bg-white"
+                        skillFilter === (f === "Completed" ? "Done" : f) ? "bg-indigo-600 text-white" : "text-slate-500 hover:text-slate-700 hover:bg-white"
                       }`}
                     >
                       {f}
@@ -494,7 +505,7 @@ export default function EarlyPathDashboard() {
                   {skillTags.length > 0 ? (
                     skillTags.map((tag, i) => <SkillTag key={i} {...tag} />)
                   ) : (
-                    <p className="text-slate-500 text-xs">No skills added yet</p>
+                    <p className="text-slate-500 text-xs">No skills yet</p>
                   )}
                 </div>
               </div>
@@ -510,7 +521,7 @@ export default function EarlyPathDashboard() {
                     <div className="mt-2 space-y-1 text-xs">
                       <div className="flex items-center gap-1.5">
                         <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                        <span className="text-slate-500">Done (8)</span>
+                        <span className="text-slate-500">Completed (8)</span>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <span className="w-2 h-2 rounded-full bg-indigo-400" />
@@ -524,17 +535,7 @@ export default function EarlyPathDashboard() {
           </div>
         </div>
 
-        {/* Certificates */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400">Certificates & Documents</h2>
-            <button className="text-xs text-indigo-600 hover:text-indigo-700 font-medium transition-colors">See More →</button>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            <CertificateCard subject="HTML5 & CSS3 Fundamentals" date="18 Apr 2025" />
-            <CertificateCard subject="JavaScript ES6+" date="22 Apr 2025" />
-          </div>
-        </div>
+
 
         <p className="text-center text-xs text-slate-400 py-2">
           © 2025 EarlyPath · Platform Magang Modern · All rights reserved

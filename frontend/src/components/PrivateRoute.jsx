@@ -11,16 +11,8 @@ export default function PrivateRoute({ children }) {
 
   if (!isAuthenticated) {
     // Jika route adalah candidate route (/c/:slug/...), redirect ke candidate login
-    if (location.pathname.startsWith('/c/') && location.pathname.includes('/dashboard')) {
-      // Extract slug dari path: /c/:slug/dashboard
-      const slugMatch = location.pathname.match(/^\/c\/([^/]+)/);
-      if (slugMatch) {
-        const slug = slugMatch[1];
-        return <Navigate to={`/c/${slug}/login`} replace />;
-      }
-    }
-    // Jika route adalah untuk apply (/c/:slug/apply/...), redirect ke candidate login
-    if (location.pathname.startsWith('/c/') && location.pathname.includes('/apply')) {
+    if (location.pathname.startsWith('/c/')) {
+      // Extract slug dari path: /c/:slug/...
       const slugMatch = location.pathname.match(/^\/c\/([^/]+)/);
       if (slugMatch) {
         const slug = slugMatch[1];

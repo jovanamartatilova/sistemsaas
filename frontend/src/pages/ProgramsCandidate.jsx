@@ -1,18 +1,19 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   LayoutDashboard, BookOpen, User, Award, LogOut,
   Search, ChevronDown, ChevronUp, CheckCircle, Clock,
   Users, BookMarked, Target,
 } from "lucide-react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, Link, useLocation } from "react-router-dom";
 
 // --- Sidebar ---
 function Sidebar({ userName, onLogout }) {
   const { slug } = useParams();
+  const location = useLocation();
 
   const navItems = [
     { label: "Dashboard",    icon: <LayoutDashboard size={16} />, to: `/c/${slug}/dashboard` },
-    { label: "Programs",     icon: <BookOpen size={16} />,        to: "#", active: true },
+    { label: "Programs",     icon: <BookOpen size={16} />,        to: `/c/${slug}/programs` },
     { label: "My Profile",   icon: <User size={16} />,            to: `/c/${slug}/profile` },
     { label: "Certificates", icon: <Award size={16} />,           to: `/c/${slug}/certificates` },
   ];
@@ -24,19 +25,22 @@ function Sidebar({ userName, onLogout }) {
         <span className="font-bold text-lg tracking-tight">EarlyPath</span>
       </div>
       <nav className="flex flex-col gap-1">
-        {navItems.map((item) => (
-          <a
-            key={item.label}
-            href={item.to}
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
-              ${item.active
-                ? "bg-indigo-600 text-white"
-                : "text-slate-400 hover:bg-[#1a2f54] hover:text-white"}`}
-          >
-            {item.icon}
-            {item.label}
-          </a>
-        ))}
+        {navItems.map((item) => {
+          const isActive = location.pathname === item.to;
+          return (
+            <Link
+              key={item.label}
+              to={item.to}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+                ${isActive
+                  ? "bg-indigo-600 text-white"
+                  : "text-slate-400 hover:bg-[#1a2f54] hover:text-white"}`}
+            >
+              {item.icon}
+              {item.label}
+            </Link>
+          );
+        })}
       </nav>
       <div className="mt-auto flex items-center gap-3 px-2">
         <div className="w-8 h-8 rounded-full bg-slate-600 flex items-center justify-center text-xs font-bold">
@@ -157,19 +161,81 @@ function ProgramCard({ program }) {
 // --- Main Page ---
 export default function ProgramsPage() {
   const navigate = useNavigate();
+  const { slug } = useParams();
+  const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
   const [filter, setFilter] = useState("All");
   const [search, setSearch] = useState("");
+  const [userData, setUserData] = useState(null);
+  const [programs, setPrograms] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const handleLogout = () => {
-    localStorage.removeItem("auth_token");
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    localStorage.removeItem("company");
-    navigate("/");
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const token = localStorage.getItem("auth_token");
+        if (!token) {
+          navigate(`/c/${slug}/dashboard`);
+          return;
+        }
+
+        const userResp = await fetch(`${API_BASE_URL}/users/me`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
+        });
+        if (userResp.ok) {
+          const data = await userResp.json();
+          setUserData(data.data || data);
+        }
+
+        const progResp = await fetch(`${API_BASE_URL}/positions`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
+        });
+        if (progResp.ok) {
+          const progData = await progResp.json();
+          const progs = progData.data || progData || [];
+          setPrograms(progs);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        setError(error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [slug, navigate]);
+
+  const handleLogout = async () => {
+    try {
+      const token = localStorage.getItem("auth_token");
+      await fetch(`${API_BASE_URL}/logout`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        },
+      });
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      localStorage.removeItem("auth_token");
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      localStorage.removeItem("company");
+      navigate("/");
+    }
   };
 
-  // Data dummy — sesuai schema positions + position_competencies + submissions
-  const programs = [
+  // Fallback dummy data jika API belum tersedia
+  const defaultPrograms = programs && programs.length > 0 ? programs : [
     {
       id_position: "POS-0001",
       name: "Frontend Developer",
@@ -178,121 +244,115 @@ export default function ProgramsPage() {
       batch: "Batch 5",
       company: "PT. Teknologi Maju",
       learning_hours: "active",
+      completed_hours: 45,
       competencies: [
         { name: "HTML5 & CSS3 Fundamentals",   description: "Dasar-dasar markup dan styling web.", learning_hours: "30" },
         { name: "JavaScript ES6+",             description: "Sintaks modern dan konsep JS terkini.", learning_hours: "30" },
-        { name: "React.js & Component Design", description: "Membangun UI berbasis komponen.", learning_hours: "25" },
-        { name: "TypeScript Basics",           description: "Typing statis untuk JavaScript.", learning_hours: "25" },
-        { name: "State Management (Redux)",    description: "Manajemen state skala besar.", learning_hours: "25" },
-        { name: "UI/UX & Figma Prototyping",   description: "Desain antarmuka dan prototipe interaktif.", learning_hours: "25" },
-      ],
-    },
-    {
-      id_position: "POS-0002",
-      name: "UI/UX Designer",
-      description: "Merancang pengalaman pengguna yang intuitif dan estetis.",
-      quota: 5,
-      batch: "Batch 4",
-      company: "CV. Digital Studio",
-      learning_hours: "inactive",
-      competencies: [
-        { name: "Design Thinking",    description: "Metodologi problem-solving berbasis empati.", learning_hours: "30" },
-        { name: "Figma Advanced",     description: "Komponen, varian, dan auto-layout.", learning_hours: "30" },
-        { name: "Usability Testing",  description: "Pengujian produk dengan pengguna nyata.", learning_hours: "30" },
-        { name: "Motion Design",      description: "Animasi UI dan micro-interaction.", learning_hours: "25" },
       ],
     },
   ];
 
   const filtered = filter === "Active"
-    ? programs.filter((p) => p.learning_hours === "active")
+    ? defaultPrograms.filter((p) => p.learning_hours === "active")
     : filter === "Inactive"
-    ? programs.filter((p) => p.learning_hours === "inactive")
-    : programs;
+    ? defaultPrograms.filter((p) => p.learning_hours === "inactive")
+    : defaultPrograms;
 
   const searched = filtered.filter((p) =>
     p.name.toLowerCase().includes(search.toLowerCase()) ||
     p.id_position.toLowerCase().includes(search.toLowerCase()) ||
-    p.company.toLowerCase().includes(search.toLowerCase())
+    (p.company && p.company.toLowerCase().includes(search.toLowerCase()))
   );
 
-  const activeCount   = programs.filter((p) => p.learning_hours === "active").length;
-  const inactiveCount = programs.filter((p) => p.learning_hours === "inactive").length;
+  const activeCount = defaultPrograms.filter((p) => p.learning_hours === "active").length;
+  const inactiveCount = defaultPrograms.filter((p) => p.learning_hours === "inactive").length;
 
   return (
     <div className="min-h-screen bg-gray-50 flex" style={{ fontFamily: "Poppins, sans-serif" }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');`}</style>
-      <Sidebar userName="Rizky" onLogout={handleLogout} />
+      <Sidebar userName={userData?.full_name} onLogout={handleLogout} />
 
       <div className="ml-56 flex-1 flex flex-col">
         <main className="p-6 space-y-5">
-
-          {/* Page Header */}
-          <div className="text-center mb-6">
-            <h1 className="text-2xl font-bold text-gray-900">Programs</h1>
-            <p className="text-sm text-gray-400 mt-0.5">The internship programs You are currently undertaking and have previously completed</p>
-          </div>
-
-          {/* Filter + Search toolbar */}
-          <div className="flex items-center justify-between bg-white border border-slate-200 rounded-2xl px-4 py-3 shadow-sm">
-            <div className="flex items-center gap-2">
-              {["All", "Active", "Inactive"].map((f) => (
-                <button
-                  key={f}
-                  onClick={() => setFilter(f)}
-                  className={`text-sm px-4 py-2 rounded-lg font-medium transition-colors
-                    ${filter === f
-                      ? "bg-indigo-600 text-white"
-                      : "bg-white border border-slate-200 text-slate-500 hover:text-slate-800 hover:border-slate-300"
-                    }`}
-                >
-                  {f}
-                  {f === "Active" && (
-                    <span className="ml-1.5 bg-indigo-100 text-indigo-600 text-xs px-1.5 py-0.5 rounded-full font-semibold">
-                      {activeCount}
-                    </span>
-                  )}
-                  {f === "Inactive" && (
-                    <span className="ml-1.5 bg-slate-100 text-slate-500 text-xs px-1.5 py-0.5 rounded-full font-semibold">
-                      {inactiveCount}
-                    </span>
-                  )}
-                </button>
-              ))}
-            </div>
-            <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 w-80">
-              <Search size={14} className="text-slate-400 flex-shrink-0" />
-              <input
-                className="bg-transparent text-sm text-slate-600 placeholder-slate-400 outline-none w-full"
-                placeholder="Search programs or companies..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
-          </div>
-
-          {/* Program list */}
-          {searched.length > 0 ? (
-            <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm space-y-4">
-              <p className="text-xs font-semibold text-gray-400 tracking-widest">
-                PROGRAMS ({searched.length})
-              </p>
-              <div className="space-y-4">
-                {searched.map((program) => (
-                  <ProgramCard key={program.id_position} program={program} />
-                ))}
+          {loading ? (
+            <div className="flex items-center justify-center min-h-screen">
+              <div className="text-center">
+                <div className="animate-spin h-12 w-12 border-4 border-indigo-500 border-t-transparent rounded-full mx-auto mb-4" />
+                <p className="text-slate-600">Loading programs...</p>
               </div>
             </div>
-          ) : (
-            <div className="text-center py-16 text-slate-400 text-sm">
-              No programs found.
+          ) : error ? (
+            <div className="bg-red-50 text-red-700 border border-red-200 rounded-lg p-4 mb-4">
+              Error: {error}
             </div>
+          ) : (
+            <>
+              {/* Page Header */}
+              <div className="text-center mb-6">
+                <h1 className="text-2xl font-bold text-gray-900">Programs</h1>
+                <p className="text-sm text-gray-400 mt-0.5">The internship programs You are currently undertaking and have previously completed</p>
+              </div>
+
+              {/* Filter + Search toolbar */}
+              <div className="flex items-center justify-between bg-white border border-slate-200 rounded-2xl px-4 py-3 shadow-sm">
+                <div className="flex items-center gap-2">
+                  {["All", "Active", "Inactive"].map((f) => (
+                    <button
+                      key={f}
+                      onClick={() => setFilter(f)}
+                      className={`text-sm px-4 py-2 rounded-lg font-medium transition-colors ${
+                        filter === f
+                          ? "bg-indigo-600 text-white"
+                          : "bg-white border border-slate-200 text-slate-500 hover:text-slate-800 hover:border-slate-300"
+                      }`}
+                    >
+                      {f}
+                      {f === "Active" && (
+                        <span className="ml-1.5 bg-indigo-100 text-indigo-600 text-xs px-1.5 py-0.5 rounded-full font-semibold">
+                          {activeCount}
+                        </span>
+                      )}
+                      {f === "Inactive" && (
+                        <span className="ml-1.5 bg-slate-100 text-slate-500 text-xs px-1.5 py-0.5 rounded-full font-semibold">
+                          {inactiveCount}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 w-80">
+                  <Search size={14} className="text-slate-400 flex-shrink-0" />
+                  <input
+                    className="bg-transparent text-sm text-slate-600 placeholder-slate-400 outline-none w-full"
+                    placeholder="Search programs or companies..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {/* Program list */}
+              {searched.length > 0 ? (
+                <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm space-y-4">
+                  <p className="text-xs font-semibold text-gray-400 tracking-widest">
+                    PROGRAMS ({searched.length})
+                  </p>
+                  <div className="space-y-4">
+                    {searched.map((program) => (
+                      <ProgramCard key={program.id_position} program={program} />
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-16 text-slate-400 text-sm">
+                  No programs found.
+                </div>
+              )}
+              <p className="text-center text-xs text-slate-400 py-2">
+                © 2025 EarlyPath · Platform Magang Modern · All rights reserved
+              </p>
+            </>
           )}
-
-          <p className="text-center text-xs text-slate-400 py-2">
-            © 2025 EarlyPath · Platform Magang Modern · All rights reserved
-          </p>
-
         </main>
       </div>
     </div>
