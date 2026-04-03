@@ -303,17 +303,23 @@ export default function LandingPage() {
     const user = JSON.parse(localStorage.getItem("user"));
     const company = authCompany || JSON.parse(localStorage.getItem("company"));
 
-    // If logged in as an admin or staff (no 'user' object or explicit admin role)
-    // We prioritize the company role if it exists and is NOT a candidate role
-    if (company && company.role && company.role !== "applicant" && company.role !== "student") {
-      return "/dashboard";
+    if (user) {
+      if (user.role === "candidate" && company?.slug) {
+        return `/c/${company.slug}/dashboard`;
+      }
+      if ((user.role === "hr" || user.role === "mentor") && company?.slug) {
+        return `/c/${company.slug}/staff/dashboard`;
+      }
+      if (user.role === "super_admin") {
+        return "/superadmin/dashboard";
+      }
     }
 
-    // Default candidate dashboard path (requires both candidate user and company context)
-    if (user && user.role === 'candidate' && company?.slug) {
-      return `/c/${company.slug}/dashboard`;
+    if (company && (company.role === "applicant" || company.role === "student")) {
+      return "/applicant/portal";
     }
 
+    // Default to main dashboard (for companies)
     return "/dashboard";
   };
 

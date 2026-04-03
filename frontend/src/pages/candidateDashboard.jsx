@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { LayoutDashboard, BookOpen, User, Award, LogOut, MapPin } from "lucide-react";
 import { useNavigate, useParams, Link, useLocation } from "react-router-dom";
+import { useAuthStore } from "../stores/authStore";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
 
@@ -191,6 +192,7 @@ export default function EarlyPathDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [dashboardData, setDashboardData] = useState(null);
+  const { logout: globalLogout } = useAuthStore();
 
   useEffect(() => {
     fetchDashboardData();
@@ -202,7 +204,6 @@ export default function EarlyPathDashboard() {
       const token = localStorage.getItem("token") || localStorage.getItem("auth_token");
       
       if (!token) {
-        // PrivateRoute akan handle redirect
         setError("No authentication token found");
         setLoading(false);
         return;
@@ -251,10 +252,7 @@ export default function EarlyPathDashboard() {
     } catch (err) {
       console.error("Error during logout:", err);
     } finally {
-      localStorage.removeItem("auth_token");
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      localStorage.removeItem("company");
+      globalLogout();
       navigate("/");
     }
   };
