@@ -44,6 +44,16 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/auth/profile', [AuthController::class, 'profile']);
     Route::post('/auth/logout', [AuthController::class, 'logout']);
 
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // API Routes for React Frontend (Candidate Dashboard)
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    Route::get('/users/me', [CandidateController::class, 'getMe']);
+    Route::put('/users/{id_user}', [CandidateController::class, 'updateUser']);
+    Route::post('/users/{id_user}/upload-avatar', [CandidateController::class, 'uploadAvatar']);
+    Route::get('/positions', [CandidateController::class, 'getPositions']);
+    Route::get('/certificates', [CandidateController::class, 'getCertificates']);
+    Route::post('/logout', [CandidateController::class, 'logout']);
+
     // Candidate
     Route::get('/c/{slug}/my-submission', [CompanyPublicController::class, 'mySubmission']);
     Route::post('/c/{slug}/apply', [SubmissionController::class, 'apply']);

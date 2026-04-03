@@ -43,6 +43,8 @@ class User extends Authenticatable
     protected $fillable = [
     'id_user',
     'id_company',
+    'id_university',
+    'id_major',
     'name',
     'email',
     'phone',
@@ -50,6 +52,7 @@ class User extends Authenticatable
     'role',
     'is_active',
     'activation_token',
+    'photo_path',
     ];
 
     /**
@@ -78,5 +81,15 @@ class User extends Authenticatable
     public function company()
     {
         return $this->belongsTo(Company::class, 'id_company', 'id_company');
+    }
+
+    public function university()
+    {
+        return $this->belongsTo(University::class, 'id_university', 'id_university');
+    }
+
+    public function major()
+    {
+        return $this->belongsTo(Major::class, 'id_major', 'id_major');
     }
 }

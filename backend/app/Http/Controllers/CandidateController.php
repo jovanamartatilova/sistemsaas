@@ -8,6 +8,7 @@ use App\Models\Submission;
 use App\Models\University;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
 
 class CandidateController extends Controller
 {
@@ -20,20 +21,17 @@ class CandidateController extends Controller
         try {
             $user = $request->user();
 
-            // Null check - must happen FIRST before any method calls
             if (!$user) {
                 \Log::warning('Dashboard: No authenticated user found');
                 return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
             }
 
-            // Safe load relationships - only load what exists
             try {
                 $user->load(['company']);
             } catch (\Exception $e) {
                 \Log::warning('Could not load relationships: ' . $e->getMessage());
             }
 
-            // Ambil submission aktif milik user ini (status 'pending' atau 'accepted')
             $submission = null;
             if (isset($user->id_user)) {
                 $submission = Submission::where('id_user', $user->id_user)
@@ -43,18 +41,13 @@ class CandidateController extends Controller
                     ->first();
             }
 
-            // Ambil apprentice dari submission tersebut
             $apprentice = null;
             if ($submission && isset($submission->id_submission)) {
                 $apprentice = Apprentice::where('id_submission', $submission->id_submission)->first();
             }
 
-            // Skills kandidat - dengan error handling
             $skills = [];
-            // Note: CandidateSkill model doesn't exist yet, so return empty array
-            // TODO: Implement CandidateSkill model when needed
 
-            // Fetch competencies untuk position yang sesuai
             $competencies = [];
             if ($submission && $submission->position && method_exists($submission->position, 'competencies')) {
                 try {
@@ -70,14 +63,11 @@ class CandidateController extends Controller
                 }
             }
 
-            // Hitung overall progress (dummy untuk sementara)
             $overallProgress = 0;
 
             return response()->json([
                 'success' => true,
                 'data' => [
-
-                    // ── Profile Header ──────────────────────────
                     'profile' => [
                         'id_user'          => $user->id_user ?? null,
                         'name'             => $user->name ?? 'User',
@@ -90,8 +80,6 @@ class CandidateController extends Controller
                         'major'            => '-',
                         'overall_progress' => $overallProgress,
                     ],
-
-                    // ── Apprentice Info ──────────────────────────
                     'apprentice' => $apprentice ? [
                         'id_apprentice' => $apprentice->id_apprentice ?? null,
                         'position'      => $submission?->position?->name ?? '-',
@@ -101,8 +89,6 @@ class CandidateController extends Controller
                         'batch'         => $submission?->vacancy?->batch ?? '-',
                         'status'        => $apprentice->status ?? 'inactive',
                     ] : null,
-
-                    // ── Learning Progress ────────────────────────
                     'learning_progress' => [
                         'total_learning_hours'  => 240,
                         'target_learning_hours' => 320,
@@ -112,11 +98,7 @@ class CandidateController extends Controller
                         'total_assignments'     => 40,
                         'attendance_percentage' => 92,
                     ],
-
-                    // ── Competencies ────────────────────────────────
                     'competencies' => $competencies,
-
-                    // ── Skill Tags ───────────────────────────────
                     'skills' => is_array($skills) ? $skills : (is_object($skills) ? $skills->toArray() : []),
                 ],
             ]);
@@ -287,5 +269,202 @@ class CandidateController extends Controller
         $skill->delete();
 
         return response()->json(['success' => true, 'message' => 'Skill berhasil dihapus']);
+    }
+
+    // ═══════════════════════════════════════════════════
+    // NEW ENDPOINTS FOR API
+    // ═══════════════════════════════════════════════════
+
+    /** GET /api/users/me */
+    public function getMe(Request $request)
+    {
+        // ← load relasi university dan major
+        $user = $request->user()->load(['university', 'major']);
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'id_user'         => $user->id_user,
+                'full_name'       => $user->name,
+                'name'            => $user->name,
+                'email'           => $user->email,
+                'phone_number'    => $user->phone,
+                'university'      => $user->university?->name ?? '',   // ← nama universitas
+                'university_id'   => $user->id_university ?? '',
+                'major'           => $user->major?->name ?? '',        // ← nama jurusan
+                'major_id'        => $user->id_major ?? '',
+                'profile_picture' => $user->photo_path ? asset('storage/' . $user->photo_path) : null,
+                'role'            => $user->role ?? 'Apprentice',
+            ]
+        ]);
+    }
+
+    /** PUT /api/users/{id_user} */
+    public function updateUser(Request $request, string $id_user)
+    {
+        $user = $request->user();
+
+        if ($user->id_user !== $id_user) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $validated = $request->validate([
+            'full_name'       => 'sometimes|string|max:100',
+            'email'           => 'sometimes|email|unique:users,email,' . $id_user . ',id_user',
+            'phone_number'    => 'sometimes|string|max:20',
+            'university_name' => 'sometimes|string|max:100',  // ← ganti dari city
+            'major_name'      => 'sometimes|string|max:100',  // ← ganti dari education_level
+        ]);
+
+        // Update field sederhana
+        $updateData = [];
+        if (isset($validated['full_name']))    $updateData['name']  = $validated['full_name'];
+        if (isset($validated['email']))        $updateData['email'] = $validated['email'];
+        if (isset($validated['phone_number'])) $updateData['phone'] = $validated['phone_number'];
+
+        // Update universitas — cari atau buat baru di tabel universities
+        if (!empty($validated['university_name'])) {
+            $university = University::firstOrCreate(
+                ['name' => $validated['university_name']],
+                ['id_university' => 'U' . strtoupper(Str::random(9))]
+            );
+            $updateData['id_university'] = $university->id_university;
+        }
+
+        // Update jurusan — cari atau buat baru di tabel majors
+        if (!empty($validated['major_name'])) {
+            $major = Major::firstOrCreate(
+                ['name' => $validated['major_name']],
+                ['id_major' => 'M' . strtoupper(Str::random(9))]
+            );
+            $updateData['id_major'] = $major->id_major;
+        }
+
+        if (!empty($updateData)) {
+            $user->update($updateData);
+            $user->refresh();
+            $user->load(['university', 'major']); // ← load relasi setelah update
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Profile updated successfully',
+            'data' => [
+                'id_user'         => $user->id_user,
+                'full_name'       => $user->name,
+                'email'           => $user->email,
+                'phone_number'    => $user->phone,
+                'university'      => $user->university?->name ?? '',
+                'university_id'   => $user->id_university ?? '',
+                'major'           => $user->major?->name ?? '',
+                'major_id'        => $user->id_major ?? '',
+                'profile_picture' => $user->photo_path ? asset('storage/' . $user->photo_path) : null,
+                'role'            => $user->role ?? 'Apprentice',
+            ]
+        ]);
+    }
+
+    /** POST /api/users/{id_user}/upload-avatar */
+    public function uploadAvatar(Request $request, string $id_user)
+    {
+        $user = $request->user();
+
+        if ($user->id_user !== $id_user) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $request->validate(['avatar' => 'required|image|mimes:jpeg,png,jpg|max:2048']);
+
+        if ($user->photo_path) {
+            \Storage::disk('public')->delete($user->photo_path);
+        }
+
+        $path = $request->file('avatar')->store('candidates/avatars', 'public');
+        $user->update(['photo_path' => $path]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Avatar uploaded successfully',
+            'profile_picture' => $user->photo_path ? asset('storage/' . $user->photo_path) : null,
+        ]);
+    }
+
+    /** GET /api/positions OR /api/candidate/programs */
+    public function getPositions(Request $request)
+    {
+        $user = $request->user();
+
+        $submission = Submission::where('id_user', $user->id_user)
+            ->whereIn('status', ['pending', 'accepted'])
+            ->with(['position.competencies', 'vacancy'])
+            ->latest('submitted_at')
+            ->first();
+
+        if (!$submission) {
+            return response()->json([
+                'success' => true,
+                'message' => 'No active submission found',
+                'data' => []
+            ]);
+        }
+
+        $position = $submission->position;
+        if (!$position) {
+            return response()->json(['success' => true, 'data' => []]);
+        }
+
+        $competencies = $position->competencies->map(fn($c) => [
+            'id_competency'  => $c->id_competency,
+            'name'           => $c->name,
+            'description'    => $c->description,
+            'learning_hours' => $c->learning_hours,
+        ])->toArray();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                [
+                    'id_position'    => $position->id_position,
+                    'name'           => $position->name,
+                    'description'    => $submission->vacancy?->description ?? $position->name,
+                    'company'        => $submission->vacancy?->company_name ?? '-',
+                    'batch'          => $submission->vacancy?->batch ?? 'Batch 1',
+                    'quota'          => $position->quota ?? 5,
+                    'learning_hours' => 'active',
+                    'competencies'   => $competencies,
+                ]
+            ]
+        ]);
+    }
+
+    /** GET /api/certificates */
+    public function getCertificates(Request $request)
+    {
+        $user = $request->user();
+
+        $submission = Submission::where('id_user', $user->id_user)
+            ->with(['apprentice'])
+            ->latest('submitted_at')
+            ->first();
+
+        if (!$submission || !$submission->apprentice) {
+            return response()->json([
+                'success' => true,
+                'data' => []
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => []
+        ]);
+    }
+
+    /** POST /api/logout */
+    public function logout(Request $request)
+    {
+        $request->user()->tokens()->delete();
+
+        return response()->json(['success' => true, 'message' => 'Logged out successfully']);
     }
 }
