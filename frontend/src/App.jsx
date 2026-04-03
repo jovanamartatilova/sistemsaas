@@ -64,6 +64,30 @@ export default function App() {
                     }
                 />
                 <Route
+                    path="/c/:slug/programs"
+                    element={
+                        <PrivateRoute>
+                            <ProgramsPage />
+                        </PrivateRoute>
+                    }
+                />
+                <Route
+                    path="/c/:slug/certificates"
+                    element={
+                        <PrivateRoute>
+                            <CertificateCandidate />
+                        </PrivateRoute>
+                    }
+                />
+                <Route
+                    path="/c/:slug/profile"
+                    element={
+                        <PrivateRoute>
+                            <ProfileSettings />
+                        </PrivateRoute>
+                    }
+                />
+                <Route
                     path="/c/:slug/apply/:vacancyId/:positionId"
                     element={
                         <PrivateRoute>
