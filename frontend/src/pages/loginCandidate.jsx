@@ -12,13 +12,24 @@ export default function LoginCandidate() {
 
     useEffect(() => {
         if (isAuthenticated && !authLoading) {
-            if (user?.role === "candidate" && slug) {
-                navigate(`/c/${slug}`);
+            if (user?.role === "candidate") {
+                // For candidates: check if they have a company
+                // Priority: company.slug (from response/localStorage) > user.id_company (from DB)
+                if (authCompany?.slug) {
+                    navigate(`/c/${authCompany.slug}`);
+                } else if (user?.id_company) {
+                    // User has company but need to fetch slug
+                    // For now, redirect to dashboard - company will load from profile endpoint
+                    navigate("/candidate/dashboard");
+                } else {
+                    // New candidate without company - go to candidate dashboard
+                    navigate("/candidate/dashboard");
+                }
             } else {
                 navigate("/dashboard");
             }
         }
-    }, [isAuthenticated, authLoading, slug, navigate, user]);
+    }, [isAuthenticated, authLoading, user, authCompany, navigate]);
 
     const [companyError, setCompanyError] = useState("");
 
@@ -66,27 +77,53 @@ export default function LoginCandidate() {
                 body: JSON.stringify({
                     email: form.email,
                     password: form.password,
-                    slug: slug,
+                    slug: slug || undefined,
                 }),
             });
 
             const data = await response.json();
             if (!response.ok) throw new Error(data.message || "Login gagal");
 
+            // Store companies_applied if user has any
+            if (data.companies_applied && data.companies_applied.length > 0) {
+                // If no company in response but user has companies_applied, use the first one
+                if (!data.company && data.companies_applied.length > 0) {
+                    data.company = data.companies_applied[0];
+                }
+            }
+
             localStorage.setItem("auth_token", data.token);
             localStorage.setItem("user", JSON.stringify(data.user));
-            localStorage.setItem("company", JSON.stringify(data.company));
+            
+            // Only store company if it was returned or selected from companies_applied
+            if (data.company) {
+                localStorage.setItem("company", JSON.stringify(data.company));
+            } else {
+                localStorage.removeItem("company");
+            }
 
             // Update auth store for reactivity
             useAuthStore.setState({ 
                 isAuthenticated: true, 
                 token: data.token, 
-                company: data.company 
+                user: data.user,
+                company: data.company || null
             });
 
             setSuccessMsg("✓ Login berhasil!");
 
-            setTimeout(() => navigate(`/c/${slug}`), 1500);
+            setTimeout(() => {
+                // Redirect based on whether candidate has company in response
+                if (data.company && data.company.slug) {
+                    // Candidate has company registration - go to company page
+                    console.log("Redirecting candidate to company public page ->", `/c/${data.company.slug}`);
+                    navigate(`/c/${data.company.slug}`);
+                } else {
+                    // Candidate without company - go to candidate dashboard
+                    console.log("Redirecting candidate to dashboard");
+                    navigate(`/candidate/dashboard`);
+                }
+            }, 1500);
         } catch (err) {
             setErrorMsg(err.message);
             setLoading(false);

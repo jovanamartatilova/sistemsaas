@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -56,6 +57,7 @@ class CompanyUserController extends Controller
             $id = 'USR' . strtoupper(substr(uniqid(), -7));
         } while (User::where('id_user', $id)->exists());
 
+        $activationToken = Str::random(32);
         $user = User::create([
             'id_user' => $id,
             'id_company' => $companyId,
@@ -63,13 +65,38 @@ class CompanyUserController extends Controller
             'email' => $validated['email'],
             'role' => $validated['role'],
             'is_active' => false,
-            'activation_token' => Str::random(32),
+            'activation_token' => $activationToken,
             'password' => Hash::make(Str::random(16)), // Dummy password until activation
         ]);
 
+        // Build activation link
+        $activationUrl = env('FRONTEND_URL', 'http://localhost:5173') 
+            . '/activate?token=' . $activationToken;
+
+        // Send activation email
+        try {
+            Mail::raw(
+                "Hello {$validated['name']},\n\n" .
+                "You have been invited to join " . ($currentUser->name ?? ($currentUser->id_company ?? 'the team')) . " as a {$validated['role']}.\n\n" .
+                "Click the link below to activate your account and set your password:\n\n" .
+                "{$activationUrl}\n\n" .
+                "This link will expire in 24 hours.\n\n" .
+                "If you did not expect this invitation, please ignore this email.\n\n" .
+                "Best regards,\nEarlyPath Team",
+                function ($message) use ($validated) {
+                    $message->to($validated['email'])
+                        ->subject('Account Activation Invitation - EarlyPath');
+                }
+            );
+        } catch (\Exception $e) {
+            \Log::warning('Invitation email send failed: ' . $e->getMessage());
+            // Continue anyway - user is created but email send failed
+        }
+
         return response()->json([
-            'message' => 'User successfully invited',
-            'user' => $user
+            'message' => 'User successfully invited and activation email sent',
+            'user' => $user,
+            'email_sent' => true
         ], 201);
     }
 

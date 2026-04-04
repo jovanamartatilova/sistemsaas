@@ -77,7 +77,7 @@ export default function ResetPasswordCandidate() {
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:8000/api/auth/reset-password", {
+      const response = await fetch("http://localhost:8000/api/auth/reset-password-candidate", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -94,6 +94,11 @@ export default function ResetPasswordCandidate() {
       const data = await response.json();
 
       if (!response.ok) {
+        // Show validation errors if available
+        if (data.errors) {
+          const errorDetails = Object.values(data.errors).flat().join(", ");
+          throw new Error(`${data.message}: ${errorDetails}`);
+        }
         throw new Error(data.message || "Gagal reset password");
       }
 

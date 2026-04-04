@@ -99,7 +99,7 @@ export default function ActivateAccount() {
 
       setDone(true);
       setTimeout(() => {
-        navigate(`/c/${data.company?.slug}/staff/dashboard`);
+        navigate(`//dashboard`);
       }, 2000);
     } catch (err) {
       setErrorMsg(err.message);
