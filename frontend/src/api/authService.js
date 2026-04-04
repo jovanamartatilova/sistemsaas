@@ -54,10 +54,14 @@ export const authService = {
       localStorage.removeItem('auth_token');
       localStorage.removeItem('company');
       localStorage.removeItem('user');
+      // ✅ Bersihkan cache candidate user saat logout
+      localStorage.removeItem('candidate_user');
     } catch (error) {
       localStorage.removeItem('auth_token');
       localStorage.removeItem('company');
       localStorage.removeItem('user');
+      // ✅ Tetap bersihkan cache meski logout gagal
+      localStorage.removeItem('candidate_user');
 
       throw error.response?.data || error.message;
     }

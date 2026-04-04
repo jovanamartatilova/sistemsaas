@@ -1,19 +1,20 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   LayoutDashboard, BookOpen, User, Award, LogOut,
   Download, Lock, CheckCircle, Clock, Search,
 } from "lucide-react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, Link, useLocation } from "react-router-dom";
 
 // --- Sidebar ---
 function Sidebar({ userName, onLogout }) {
   const { slug } = useParams();
+  const location = useLocation();
 
   const navItems = [
     { label: "Dashboard",    icon: <LayoutDashboard size={16} />, to: `/c/${slug}/dashboard` },
     { label: "Programs",     icon: <BookOpen size={16} />,        to: `/c/${slug}/programs` },
     { label: "My Profile",   icon: <User size={16} />,            to: `/c/${slug}/profile` },
-    { label: "Certificates", icon: <Award size={16} />,           to: "#", active: true },
+    { label: "Certificates", icon: <Award size={16} />,           to: `/c/${slug}/certificates` },
   ];
 
   return (
@@ -23,19 +24,22 @@ function Sidebar({ userName, onLogout }) {
         <span className="font-bold text-lg tracking-tight">EarlyPath</span>
       </div>
       <nav className="flex flex-col gap-1">
-        {navItems.map((item) => (
-          <a
-            key={item.label}
-            href={item.to}
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
-              ${item.active
-                ? "bg-indigo-600 text-white"
-                : "text-slate-400 hover:bg-[#1a2f54] hover:text-white"}`}
-          >
-            {item.icon}
-            {item.label}
-          </a>
-        ))}
+        {navItems.map((item) => {
+          const isActive = location.pathname === item.to;
+          return (
+            <Link
+              key={item.label}
+              to={item.to}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+                ${isActive
+                  ? "bg-indigo-600 text-white"
+                  : "text-slate-400 hover:bg-[#1a2f54] hover:text-white"}`}
+            >
+              {item.icon}
+              {item.label}
+            </Link>
+          );
+        })}
       </nav>
       <div className="mt-auto flex items-center gap-3 px-2">
         <div className="w-8 h-8 rounded-full bg-slate-600 flex items-center justify-center text-xs font-bold">
@@ -167,39 +171,82 @@ function LockedCertificateCard({ batch, company, progress }) {
 // --- Main Page ---
 export default function CertificatesPage() {
   const navigate = useNavigate();
+  const { slug } = useParams();
+  const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
   const [filter, setFilter] = useState("All");
   const [search, setSearch] = useState("");
+  const [userData, setUserData] = useState(null);
+  const [issued, setIssued] = useState([]);
+  const [locked, setLocked] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const handleLogout = () => {
-    localStorage.removeItem("auth_token");
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    localStorage.removeItem("company");
-    navigate("/");
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const token = localStorage.getItem("auth_token");
+        if (!token) {
+          navigate(`/c/${slug}/dashboard`);
+          return;
+        }
+
+        const userResp = await fetch(`${API_BASE_URL}/users/me`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
+        });
+        if (userResp.ok) {
+          const data = await userResp.json();
+          setUserData(data.data || data);
+        }
+
+        const certResp = await fetch(`${API_BASE_URL}/certificates`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
+        });
+        if (certResp.ok) {
+          const certData = await certResp.json();
+          const certs = certData.data || certData || [];
+          const issuedCerts = certs.filter(c => c.status === "issued" || c.issued_date);
+          const lockedCerts = certs.filter(c => c.status === "on_going" || !c.issued_date);
+          setIssued(issuedCerts);
+          setLocked(lockedCerts);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        setError(error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [slug, navigate]);
+
+  const handleLogout = async () => {
+    try {
+      const token = localStorage.getItem("auth_token");
+      await fetch(`${API_BASE_URL}/logout`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        },
+      });
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      localStorage.removeItem("auth_token");
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      localStorage.removeItem("company");
+      navigate("/");
+    }
   };
-
-  const issued = [
-    {
-      id_certificate:     "IC-A0001",
-      certificate_number: "CERT-2025-0041",
-      file_path:          "/storage/certificates/CERT-2025-0041.pdf",
-      final_score:        92.5,
-      issued_date:        "15 Apr 2025",
-    },
-    {
-      id_certificate:     "IC-A0002",
-      certificate_number: "CERT-2025-0038",
-      file_path:          "/storage/certificates/CERT-2025-0038.pdf",
-      final_score:        88.0,
-      issued_date:        "22 Apr 2025",
-    },
-  ];
-
-  const locked = [
-    { batch: "Batch 5", company: "PT. Teknologi Maju",    progress: 61 },
-    { batch: "Batch 4", company: "CV. Digital Studio",    progress: 50 },
-    { batch: "Batch 6", company: "PT. Kreatif Nusantara", progress: 12 },
-  ];
 
   const filteredIssued = filter === "Locked" ? [] : issued;
   const filteredLocked  = filter === "Issued" ? [] : locked;
@@ -212,13 +259,27 @@ export default function CertificatesPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex" style={{ fontFamily: "Poppins, sans-serif" }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');`}</style>
-      <Sidebar userName="Rizky" onLogout={handleLogout} />
+      <Sidebar userName={userData?.full_name} onLogout={handleLogout} />
 
       <main className="ml-56 flex-1 px-6 py-6 space-y-5 min-w-0">
-
-        {/* Page Header */}
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Certificates</h1>
+        {loading && (
+          <div className="flex items-center justify-center min-h-screen">
+            <div className="text-center">
+              <div className="animate-spin h-12 w-12 border-4 border-indigo-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+              <p className="text-slate-600">Loading certificates...</p>
+            </div>
+          </div>
+        )}
+        {error && (
+          <div className="bg-red-50 text-red-700 border border-red-200 rounded-lg p-4 mb-4">
+            Error: {error}
+          </div>
+        )}
+        {!loading && (
+          <>
+            {/* Page Header */}
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Certificates</h1>
           <p className="text-sm text-slate-400 mt-0.5">Internship certificates that have been issued for you</p>
         </div>
 
@@ -284,16 +345,18 @@ export default function CertificatesPage() {
         </div>
         )}
 
-        {/* Empty State */}
-        {searchedIssued.length === 0 && filteredLocked.length === 0 && (
-          <div className="text-center py-16 text-slate-400 text-sm">
-            No certificates found.
-          </div>
-        )}
+              {/* Empty State */}
+              {searchedIssued.length === 0 && filteredLocked.length === 0 && (
+                <div className="text-center py-16 text-slate-400 text-sm">
+                  No certificates found.
+                </div>
+              )}
 
-        <p className="text-center text-xs text-slate-400 py-2">
-          © 2025 EarlyPath · Platform Magang Modern · All rights reserved
-        </p>
+              <p className="text-center text-xs text-slate-400 py-2">
+                © 2025 EarlyPath · Platform Magang Modern · All rights reserved
+              </p>
+            </>
+          )}
       </main>
     </div>
   );
