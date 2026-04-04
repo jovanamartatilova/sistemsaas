@@ -4,9 +4,12 @@ import { useAuthStore } from './stores/authStore';
 import PrivateRoute from './components/PrivateRoute';
 // Auth pages
 import LoginPage from './pages/Login';
-import RegisterPage from './pages/SignUp';
+import RegisterPage from './pages/signUp';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
+import ForgotPasswordCandidate from './pages/ForgotPasswordCandidate';
+import ResetPasswordCandidate from './pages/resetPasswordCandidate';
+
 // Candidate (company public)
 import CompanyPublicPage from './pages/companyPublic';
 import SignUpCandidate from './pages/SignUpCandidate';
@@ -18,7 +21,7 @@ import CertificateCandidate from './pages/CertificateCandidate';
 import ProgramsPage from './pages/ProgramsCandidate';
 
 // Staff
-import ActivateAccount from './pages/activateAccount';
+import ActivateAccount from './pages/ActivateAccount';
 import LoginStaff from './pages/LoginStaff';
 // Main pages
 import DashboardPage from './pages/DashboardPage';
@@ -63,6 +66,14 @@ export default function App() {
 
                 {/* Candidate Dashboard & Apply */}
                 <Route
+                    path="/candidate/dashboard"
+                    element={
+                        <PrivateRoute>
+                            <CandidateDashboard />
+                        </PrivateRoute>
+                    }
+                />
+                <Route
                     path="/c/:slug/dashboard"
                     element={
                         <PrivateRoute>
@@ -102,6 +113,9 @@ export default function App() {
                         </PrivateRoute>
                     }
                 />
+                <Route path="/forgot-password-candidate" element={<ForgotPasswordCandidate />} />
+                <Route path="/c/:slug/forgot-password" element={<ForgotPasswordCandidate />} />
+                <Route path="/c/:slug/reset-password" element={<ResetPasswordCandidate />} />
 
                 {/* Activation */}
                 <Route path="/activate" element={<ActivateAccount />} />

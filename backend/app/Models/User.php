@@ -92,4 +92,14 @@ class User extends Authenticatable
     {
         return $this->belongsTo(Major::class, 'id_major', 'id_major');
     }
+
+    public function team()
+    {
+        return $this->belongsTo(Team::class, 'id_team', 'id_team');
+    }
+
+    public function submissions()
+    {
+        return $this->hasMany(Submission::class, 'id_user', 'id_user');
+    }
 }

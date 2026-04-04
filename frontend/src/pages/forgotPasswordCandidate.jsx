@@ -2,10 +2,11 @@ import { useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 
 export default function ForgotPasswordCandidate() {
-  const { slug } = useParams();
+  const { slug: slugFromUrl } = useParams();
+  const [slug, setSlug] = useState(slugFromUrl || "");
 
   const [company, setCompany] = useState(null);
-  const [companyLoading, setCompanyLoading] = useState(true);
+  const [companyLoading, setCompanyLoading] = useState(!!slugFromUrl);
   const [companyError, setCompanyError] = useState("");
 
   const [email, setEmail] = useState("");
@@ -13,23 +14,24 @@ export default function ForgotPasswordCandidate() {
   const [errorMsg, setErrorMsg] = useState("");
   const [sent, setSent] = useState(false);
 
-  useEffect(() => {
-    const fetchCompany = async () => {
-      try {
-        const response = await fetch(`http://localhost:8000/api/c/${slug}`, {
-          headers: { "Accept": "application/json" },
-        });
-        if (!response.ok) throw new Error("Perusahaan tidak ditemukan");
-        const data = await response.json();
-        setCompany(data.company);
-      } catch (err) {
-        setCompanyError(err.message);
-      } finally {
-        setCompanyLoading(false);
-      }
-    };
-    if (slug) fetchCompany();
-  }, [slug]);
+useEffect(() => {
+  if (!slugFromUrl) return; // kalau tidak ada slug di URL, skip
+  const fetchCompany = async () => {
+    try {
+      const response = await fetch(`http://localhost:8000/api/c/${slugFromUrl}`, {
+        headers: { "Accept": "application/json" },
+      });
+      if (!response.ok) throw new Error("Perusahaan tidak ditemukan");
+      const data = await response.json();
+      setCompany(data.company);
+    } catch (err) {
+      setCompanyError(err.message);
+    } finally {
+      setCompanyLoading(false);
+    }
+  };
+  fetchCompany();
+}, [slugFromUrl]); // ← slugFromUrl, bukan slug
 
   const inputBase = {
     background: "rgba(255,255,255,0.07)",
@@ -58,7 +60,14 @@ export default function ForgotPasswordCandidate() {
 
       const data = await response.json();
 
-      if (!response.ok) throw new Error(data.message || "Gagal mengirim email");
+      if (!response.ok) {
+        // Show validation errors if available
+        if (data.errors) {
+          const errorDetails = Object.values(data.errors).flat().join(", ");
+          throw new Error(`${data.message}: ${errorDetails}`);
+        }
+        throw new Error(data.message || "Gagal mengirim email");
+      }
 
       setSent(true);
     } catch (err) {
@@ -209,8 +218,12 @@ export default function ForgotPasswordCandidate() {
             <h1 className="text-2xl font-bold text-white mb-1" style={{ letterSpacing: "-0.3px" }}>Forgot Password?</h1>
             <p className="text-sm" style={{ color: "rgba(255,255,255,0.4)", maxWidth: "320px", margin: "0 auto" }}>
               Enter email that is registered in{" "}
-              {companyLoading ? "..." : <span style={{ color: "#4a9eff" }}>{company?.name}</span>}{" "}
-              and we will send a password reset link.
+{companyLoading 
+  ? "..." 
+  : company 
+    ? <span style={{ color: "#4a9eff" }}>{company.name}</span>
+    : <span style={{ color: "rgba(255,255,255,0.6)" }}>your company</span>
+}
             </p>
           </div>
 
@@ -243,6 +256,28 @@ export default function ForgotPasswordCandidate() {
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Tambah ini sebelum input email */}
+{!slugFromUrl && (
+  <div>
+    <label className="block text-sm font-medium mb-1.5" style={{ color: "rgba(255,255,255,0.8)" }}>
+      Company Slug
+    </label>
+    <input
+      type="text"
+      value={slug}
+      onChange={(e) => setSlug(e.target.value)}
+      placeholder="contoh: pt-maju-jaya"
+      required
+      className="w-full px-4 py-3 rounded-xl text-white placeholder-gray-500 outline-none transition-all duration-200"
+      style={inputBase}
+      onFocus={(e) => Object.assign(e.target.style, inputFocus)}
+      onBlur={(e) => Object.assign(e.target.style, inputBase)}
+    />
+    <p className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.3)" }}>
+      Tanyakan slug perusahaan ke HR kamu
+    </p>
+  </div>
+)}
               {errorMsg && (
                 <div className="px-4 py-3 rounded-lg text-sm border"
                   style={{ background: "rgba(255,59,48,0.1)", borderColor: "rgba(255,59,48,0.3)", color: "#ff6b6b" }}>

@@ -446,8 +446,13 @@ export default function CompanyPublicPage() {
               display: "flex", alignItems: "center", justifyContent: "center",
               background: "rgba(45,127,243,0.15)", border: "1px solid rgba(45,127,243,0.3)",
               boxShadow: "0 8px 32px rgba(45,127,243,0.2)",
+              overflow: "hidden",
             }}>
-              <span style={{ fontSize: 30, fontWeight: 900, color: "#2d7ff3" }}>{company.name.charAt(0)}</span>
+              {company.logo_path ? (
+                <img src={`http://localhost:8000/storage/${company.logo_path}`} alt={company.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              ) : (
+                <span style={{ fontSize: 30, fontWeight: 900, color: "#2d7ff3" }}>{company.name.charAt(0)}</span>
+              )}
             </div>
 
             {/* Nama company */}
@@ -551,8 +556,13 @@ export default function CompanyPublicPage() {
             {/* Brand */}
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
-                <div style={{ width: 28, height: 28, borderRadius: 7, background: "rgba(45,127,243,0.15)", border: "1px solid rgba(45,127,243,0.25)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <span style={{ fontSize: 12, fontWeight: 800, color: "#2d7ff3" }}>{company.name.charAt(0)}</span>
+                <div style={{ width: 28, height: 28, borderRadius: 7, background: "rgba(45,127,243,0.15)", border: "1px solid rgba(45,127,243,0.25)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+                  {company.logo_path ? (
+                    <img src={`http://localhost:8000/storage/${company.logo_path}`} alt={company.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  ) : (
+                    <span style={{ fontSize: 12, fontWeight: 800, color: "#2d7ff3" }}>{company.name.charAt(0)}</span>
+                  )}
+                
                 </div>
                 <span style={{ fontSize: 14, fontWeight: 700, color: "#fff" }}>{company.name}</span>
               </div>

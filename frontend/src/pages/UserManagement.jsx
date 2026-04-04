@@ -139,6 +139,9 @@ export default function UserManagement() {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [logoutModalOpen, setLogoutModalOpen] = useState(false);
     const [formData, setFormData] = useState({ name: "", email: "", role: "staff" });
+    const [inviteLoading, setInviteLoading] = useState(false);
+    const [inviteError, setInviteError] = useState("");
+    const [inviteSuccess, setInviteSuccess] = useState(false);
 
     useEffect(() => {
         const stored = localStorage.getItem("company");
@@ -166,15 +169,29 @@ export default function UserManagement() {
 
     const handleInvite = async (e) => {
         e.preventDefault();
+        setInviteError("");
+        setInviteSuccess(false);
+        
         try {
-            await axios.post("http://localhost:8000/api/company-users", formData, {
+            setInviteLoading(true);
+            const res = await axios.post("http://localhost:8000/api/company-users", formData, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            setIsAddModalOpen(false);
+            
+            setInviteSuccess(true);
             setFormData({ name: "", email: "", role: "staff" });
+            
+            // Auto close after 3 seconds
+            setTimeout(() => {
+                setIsAddModalOpen(false);
+                setInviteSuccess(false);
+            }, 2500);
+            
             fetchUsers();
         } catch (err) {
-            alert(err.response?.data?.message || "Failed to invite user");
+            setInviteError(err.response?.data?.message || "Failed to invite user");
+        } finally {
+            setInviteLoading(false);
         }
     };
 
@@ -354,33 +371,102 @@ export default function UserManagement() {
             {isAddModalOpen && (
                 <div style={{ position: "fixed", inset: 0, background: "rgba(10,22,40,.5)", backdropFilter: "blur(4px)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
                     <form onSubmit={handleInvite} className="fade-in" style={{ background: "#fff", borderRadius: "16px", width: "100%", maxWidth: "420px", padding: "28px", boxShadow: "0 20px 60px rgba(0,0,0,.18)", textAlign: "left" }}>
-                        <div style={{ fontSize: "18px", fontWeight: "800", color: "#0f172a", marginBottom: "4px" }}>Invite Team Member</div>
-                        <p style={{ fontSize: "13px", color: "#64748b", marginBottom: "24px" }}>Send an invitation to join your company team.</p>
+                        {inviteSuccess ? (
+                            <div style={{ textAlign: "center", padding: "20px 0" }}>
+                                <div style={{ fontSize: "16px", fontWeight: "800", color: "#0f172a", marginBottom: "12px" }}>✓ Invitation Sent!</div>
+                                <p style={{ fontSize: "13px", color: "#64748b", marginBottom: "16px" }}>
+                                    Activation email has been sent to <strong>{formData.email}</strong>
+                                </p>
+                                <p style={{ fontSize: "12px", color: "#94a3b8", marginBottom: "16px" }}>
+                                    Staff will receive an email with an activation link to set their password and activate their account.
+                                </p>
+                                <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "8px", padding: "12px", fontSize: "12px", color: "#15803d" }}>
+                                    <strong>Role:</strong> {formData.role} | <strong>Email:</strong> {formData.email}
+                                </div>
+                            </div>
+                        ) : (
+                            <>
+                                <div style={{ fontSize: "18px", fontWeight: "800", color: "#0f172a", marginBottom: "4px" }}>Invite Team Member</div>
+                                <p style={{ fontSize: "13px", color: "#64748b", marginBottom: "24px" }}>
+                                    Activation email with token link will be sent to the staff member.
+                                </p>
 
-                        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                            <div>
-                                <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#475569", marginBottom: "6px" }}>Full Name</label>
-                                <input required type="text" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} placeholder="Enter name" style={{ width: "100%", padding: "10px 14px", borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "14px", outline: "none" }} />
-                            </div>
-                            <div>
-                                <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#475569", marginBottom: "6px" }}>Email Address</label>
-                                <input required type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} placeholder="Enter email" style={{ width: "100%", padding: "10px 14px", borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "14px", outline: "none" }} />
-                            </div>
-                            <div>
-                                <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#475569", marginBottom: "6px" }}>Assign Role</label>
-                                <select value={formData.role} onChange={e => setFormData({ ...formData, role: e.target.value })} style={{ width: "100%", padding: "10px 14px", borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "14px", outline: "none" }}>
-                                    <option value="staff">Staff</option>
-                                    <option value="hr">HR Specialist</option>
-                                    <option value="mentor">Mentor</option>
-                                    <option value="admin">Administrator</option>
-                                </select>
-                            </div>
-                        </div>
+                                {inviteError && (
+                                    <div style={{ background: "#fef2f2", border: "1px solid #fecaca", borderRadius: "8px", padding: "12px", marginBottom: "16px", fontSize: "12px", color: "#991b1b" }}>
+                                        {inviteError}
+                                    </div>
+                                )}
 
-                        <div style={{ display: "flex", gap: "12px", marginTop: "32px" }}>
-                            <button type="button" onClick={() => setIsAddModalOpen(false)} style={{ flex: 1, padding: "11px", borderRadius: "10px", border: "1px solid #e2e8f0", background: "#fff", color: "#64748b", fontWeight: "700", cursor: "pointer" }}>Cancel</button>
-                            <button type="submit" style={{ flex: 1, padding: "11px", borderRadius: "10px", border: "none", background: "#2563c4", color: "#fff", fontWeight: "700", cursor: "pointer" }}>Send Invitation</button>
-                        </div>
+                                <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                                    <div>
+                                        <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#475569", marginBottom: "6px" }}>Full Name</label>
+                                        <input 
+                                            required 
+                                            type="text" 
+                                            value={formData.name} 
+                                            onChange={e => setFormData({ ...formData, name: e.target.value })} 
+                                            placeholder="Enter name" 
+                                            disabled={inviteLoading}
+                                            style={{ width: "100%", padding: "10px 14px", borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "14px", outline: "none", opacity: inviteLoading ? 0.6 : 1, cursor: inviteLoading ? "not-allowed" : "text" }} 
+                                        />
+                                    </div>
+                                    <div>
+                                        <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#475569", marginBottom: "6px" }}>Email Address</label>
+                                        <input 
+                                            required 
+                                            type="email" 
+                                            value={formData.email} 
+                                            onChange={e => setFormData({ ...formData, email: e.target.value })} 
+                                            placeholder="Enter email" 
+                                            disabled={inviteLoading}
+                                            style={{ width: "100%", padding: "10px 14px", borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "14px", outline: "none", opacity: inviteLoading ? 0.6 : 1, cursor: inviteLoading ? "not-allowed" : "text" }} 
+                                        />
+                                    </div>
+                                    <div>
+                                        <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#475569", marginBottom: "6px" }}>Assign Role</label>
+                                        <select 
+                                            value={formData.role} 
+                                            onChange={e => setFormData({ ...formData, role: e.target.value })} 
+                                            disabled={inviteLoading}
+                                            style={{ width: "100%", padding: "10px 14px", borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "14px", outline: "none", opacity: inviteLoading ? 0.6 : 1, cursor: inviteLoading ? "not-allowed" : "pointer" }}
+                                        >
+                                            <option value="staff">Staff</option>
+                                            <option value="hr">HR Specialist</option>
+                                            <option value="mentor">Mentor</option>
+                                            <option value="admin">Administrator</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div style={{ display: "flex", gap: "12px", marginTop: "32px" }}>
+                                    <button 
+                                        type="button" 
+                                        onClick={() => {
+                                            setIsAddModalOpen(false);
+                                            setInviteError("");
+                                        }} 
+                                        disabled={inviteLoading}
+                                        style={{ flex: 1, padding: "11px", borderRadius: "10px", border: "1px solid #e2e8f0", background: "#fff", color: "#64748b", fontWeight: "700", cursor: inviteLoading ? "not-allowed" : "pointer", opacity: inviteLoading ? 0.6 : 1 }}
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button 
+                                        type="submit" 
+                                        disabled={inviteLoading}
+                                        style={{ flex: 1, padding: "11px", borderRadius: "10px", border: "none", background: inviteLoading ? "#94a3b8" : "#2563c4", color: "#fff", fontWeight: "700", cursor: inviteLoading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}
+                                    >
+                                        {inviteLoading ? (
+                                            <>
+                                                <span style={{ display: "inline-block", width: "14px", height: "14px", border: "2px solid #fff", borderRadius: "50%", borderTopColor: "transparent", animation: "spin 0.6s linear infinite" }} />
+                                                Sending...
+                                            </>
+                                        ) : (
+                                            "Send Invitation"
+                                        )}
+                                    </button>
+                                </div>
+                            </>
+                        )}
                     </form>
                 </div>
             )}

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Apprentice;
+use App\Models\Company;
 use App\Models\Major;
 use App\Models\Submission;
 use App\Models\University;
@@ -121,6 +122,15 @@ class CandidateController extends Controller
     {
         $user = $request->user()->load(['university', 'major', 'team', 'submissions.vacancy']);
 
+        // Check if user has any submissions
+        $hasSubmissions = $user->submissions->count() > 0;
+        $company = null;
+        
+        // Only include company if user has submissions
+        if ($hasSubmissions && $user->id_company) {
+            $company = Company::find($user->id_company);
+        }
+
         return response()->json([
             'success' => true,
             'data' => [
@@ -134,6 +144,12 @@ class CandidateController extends Controller
                 'university' => $user->university?->name,
                 'major'      => $user->major?->name,
                 'team'       => $user->team?->name,
+                'company'    => $company ? [
+                    'id_company' => $company->id_company,
+                    'name'       => $company->name,
+                    'slug'       => $company->slug,
+                ] : null,
+                'has_submissions' => $hasSubmissions,
                 'submissions' => $user->submissions->map(fn($s) => [
                     'id_submission' => $s->id_submission,
                     'vacancy'       => $s->vacancy?->description,

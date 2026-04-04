@@ -10,7 +10,7 @@ export default function Login() {
   
   // Candidate Form State
   const [candidateForm, setCandidateForm] = useState({ email: "", password: "", slug: "" });
-  const [companies, setCompanies] = useState([]);
+  const [companiesApplied, setCompaniesApplied] = useState([]);
   
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -24,8 +24,19 @@ export default function Login() {
 
   useEffect(() => {
     if (isAuthenticated && !authLoading) {
-      if (user?.role === "candidate" && company?.slug) {
-        navigate(`/c/${company.slug}`);
+      if (user?.role === "candidate") {
+        // For candidates: check if they have a company
+        // Priority: company.slug (from response/localStorage) > user.id_company (from DB)
+        if (company?.slug) {
+          navigate(`/c/${company.slug}`);
+        } else if (user?.id_company) {
+          // User has company but need to fetch slug
+          // For now, redirect to dashboard - company will load from profile endpoint
+          navigate("/candidate/dashboard");
+        } else {
+          // New candidate without company - go to candidate dashboard
+          navigate("/candidate/dashboard");
+        }
       } else if (company?.role === "applicant" || company?.role === "student") {
         navigate("/applicant/portal");
       } else {
@@ -34,29 +45,10 @@ export default function Login() {
     }
   }, [isAuthenticated, authLoading, user, company, navigate]);
 
-  useEffect(() => {
-    fetch("http://localhost:8000/api/vacancies/public")
-      .then((res) => res.json())
-      .then((data) => {
-        // Extract unique companies
-        const uniqueCompanies = Array.from(
-          new Map(data.map((v) => [v.company.slug, v.company])).values()
-        );
-        setCompanies(uniqueCompanies);
-      })
-      .catch((err) => console.error("Failed to fetch companies:", err));
-  }, []);
-
   const goToRegister = (e) => {
-    e.preventDefault();
-    if (activeTab === "candidate" && candidateForm.slug) {
-      navigate(`/c/${candidateForm.slug}/register`);
-    } else if (activeTab === "candidate") {
-      setErrorMsg("Please select a company first to sign up.");
-    } else {
-      navigate("/register");
-    }
-  };
+  e.preventDefault();
+  navigate("/register");
+};
   
   const goBack = (e) => {
     e.preventDefault();
@@ -122,10 +114,6 @@ export default function Login() {
 
   const handleCandidateSubmit = async (e) => {
     e.preventDefault();
-    if (!candidateForm.slug) {
-      setErrorMsg("Please select a company.");
-      return;
-    }
     setLoading(true);
     setErrorMsg("");
     setSuccessMsg("");
@@ -140,7 +128,7 @@ export default function Login() {
         body: JSON.stringify({
           email: candidateForm.email,
           password: candidateForm.password,
-          slug: candidateForm.slug,
+          slug: candidateForm.slug || undefined,
         }),
       });
 
@@ -150,21 +138,46 @@ export default function Login() {
         throw new Error(data.message || "Login failed");
       }
 
+      // Store companies_applied if user has any
+      if (data.companies_applied && data.companies_applied.length > 0) {
+        setCompaniesApplied(data.companies_applied);
+        
+        // If no company in response but user has companies_applied, use the first one
+        if (!data.company && data.companies_applied.length > 0) {
+          data.company = data.companies_applied[0];
+        }
+      }
+
       localStorage.setItem("auth_token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
-      localStorage.setItem("company", JSON.stringify(data.company));
+      
+      // Only store company if it was returned or selected from companies_applied
+      if (data.company) {
+        localStorage.setItem("company", JSON.stringify(data.company));
+      } else {
+        localStorage.removeItem("company");
+      }
 
       useAuthStore.setState({ 
         isAuthenticated: true, 
         token: data.token, 
-        company: data.company 
+        user: data.user,
+        company: data.company || null
       });
 
       setSuccessMsg("✓ Login successful!");
 
       setTimeout(() => {
-        console.log("Redirecting candidate to company public page ->", `/c/${candidateForm.slug}`);
-        navigate(`/c/${candidateForm.slug}`);
+        // Redirect based on whether candidate has company selections or registrations
+        if (data.company && data.company.slug) {
+          // Candidate selected a company or has registrations - go to company page
+          console.log("Redirecting candidate to company public page ->", `/c/${data.company.slug}`);
+          navigate(`/c/${data.company.slug}`);
+        } else {
+          // New candidate without registrations - go to main candidate dashboard
+          console.log("Redirecting new candidate to dashboard");
+          navigate(`/candidate/dashboard`);
+        }
       }, 800);
 
     } catch (err) {
@@ -425,36 +438,40 @@ export default function Login() {
 
             {activeTab === "candidate" && (
               <>
-                {/* Company Dropdown */}
-                <div>
-                  <label className="block text-sm font-medium mb-1.5 text-left" style={{ color: "rgba(255,255,255,0.8)" }}>
-                    Select Company
-                  </label>
-                  <div className="relative">
-                    <select
-                      name="slug"
-                      value={candidateForm.slug}
-                      onChange={handleCandidateChange}
-                      required
-                      className="w-full px-4 py-3 rounded-xl text-white placeholder-gray-500 outline-none transition-all duration-200 appearance-none bg-transparent"
-                      style={{ ...inputBase, cursor: "pointer" }}
-                      onFocus={(e) => Object.assign(e.target.style, inputFocus)}
-                      onBlur={(e) => Object.assign(e.target.style, inputBase)}
-                    >
-                      <option value="" disabled style={{ color: "#000" }}>-- Choose a company --</option>
-                      {companies.map((c) => (
-                        <option key={c.slug} value={c.slug} style={{ color: "#000" }}>
-                          {c.name}
-                        </option>
-                      ))}
-                    </select>
-                    <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "rgba(255,255,255,0.5)" }}>
-                        <polyline points="6 9 12 15 18 9"></polyline>
-                      </svg>
+                {/* Company Dropdown - Show only if user has companies applied */}
+                {companiesApplied && companiesApplied.length > 0 && (
+                  <div>
+                    <label className="block text-sm font-medium mb-1.5 text-left" style={{ color: "rgba(255,255,255,0.8)" }}>
+                      Your Companies
+                    </label>
+                    <div className="relative">
+                      <select
+                        name="slug"
+                        value={candidateForm.slug}
+                        onChange={handleCandidateChange}
+                        className="w-full px-4 py-3 rounded-xl text-white placeholder-gray-500 outline-none transition-all duration-200 appearance-none bg-transparent"
+                        style={{ ...inputBase, cursor: "pointer" }}
+                        onFocus={(e) => Object.assign(e.target.style, inputFocus)}
+                        onBlur={(e) => Object.assign(e.target.style, inputBase)}
+                      >
+                        <option value="" style={{ color: "#000" }}>-- Select a company --</option>
+                        {companiesApplied.map((c) => (
+                          <option key={c.id_company} value={c.slug} style={{ color: "#000" }}>
+                            {c.name}
+                          </option>
+                        ))}
+                      </select>
+                      <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "rgba(255,255,255,0.5)" }}>
+                          <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                      </div>
                     </div>
+                    <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)", marginTop: "4px" }}>
+                      Companies where you have active applications.
+                    </p>
                   </div>
-                </div>
+                )}
 
                 {/* Email */}
                 <div>
@@ -484,13 +501,7 @@ export default function Login() {
                   Password
                 </label>
                 <Link
-                  to={activeTab === "company" ? "/forgot-password" : (candidateForm.slug ? `/c/${candidateForm.slug}/forgot-password` : "#")}
-                  onClick={(e) => {
-                     if (activeTab === "candidate" && !candidateForm.slug) {
-                       e.preventDefault();
-                       setErrorMsg("Select a company first to reset password.");
-                     }
-                  }}
+                  to={activeTab === "company" ? "/forgot-password" : "/forgot-password-candidate"}
                   className="text-xs transition-colors duration-200"
                   style={{ color: "#4a9eff", textDecoration: "none" }}
                   onMouseEnter={(e) => (e.currentTarget.style.color = "#7bb8ff")}

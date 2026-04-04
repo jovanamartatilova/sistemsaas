@@ -1,10 +1,15 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useAuthStore } from "../stores/authStore";
 
 export default function SignUpCandidate() {
     const { slug } = useParams();
+    const [searchParams] = useSearchParams();
     const navigate = useNavigate();
+
+    // Get vacancy_id and position_id from query params if available
+    const vacancyId = searchParams.get("vacancy_id");
+    const positionId = searchParams.get("position_id");
 
     const [company, setCompany] = useState(null);
     const [companyLoading, setCompanyLoading] = useState(true);
@@ -93,10 +98,29 @@ export default function SignUpCandidate() {
             useAuthStore.setState({ 
                 isAuthenticated: true, 
                 token: data.token, 
+                user: data.user,
                 company: data.company 
             });
 
-            navigate(`/c/${slug}`);
+            // Show appropriate message based on whether it's new account or existing
+            const successMessage = data.is_existing_user 
+                ? "✓ Login successful!" 
+                : "✓ Account successfully created!";
+
+            // Show success message briefly then navigate
+            // You could add a success toast/notification here if needed
+            console.log(successMessage);
+
+            // Navigate to submission form if we have vacancy_id and position_id
+            // Otherwise navigate to dashboard
+            setTimeout(() => {
+                if (vacancyId && positionId) {
+                    navigate(`/c/${slug}/apply/${vacancyId}/${positionId}`);
+                } else {
+                    navigate(`/c/${slug}/dashboard`);
+                }
+            }, 500);
+
         } catch (err) {
             console.error("Registration error:", err);
             setErrorMsg(err.message);

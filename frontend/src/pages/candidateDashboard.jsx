@@ -141,6 +141,8 @@ function CertificateCard({ subject, date }) {
 // --- Sidebar ---
 function Sidebar({ userName, onLogout }) {
   const { slug } = useParams();
+  const company = JSON.parse(localStorage.getItem("company"));
+  const resolvedSlug = slug || company?.slug;
   const location = useLocation();
   const navItems = [
     { label: "Dashboard", icon: <LayoutDashboard size={16} />, to: `/c/${slug}/dashboard` },

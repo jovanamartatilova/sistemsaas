@@ -28,6 +28,7 @@ Route::get('/c/{slug}/vacancies', [CompanyPublicController::class, 'vacancies'])
 
 // Candidate auth
 Route::post('/auth/register-candidate/{slug}', [AuthController::class, 'registerCandidate']);
+Route::post('/auth/register-candidate', [AuthController::class, 'registerCandidateGeneric']);
 Route::post('/auth/login-candidate', [AuthController::class, 'loginCandidate']);
 Route::post('/auth/forgot-password-candidate', [AuthController::class, 'forgotPasswordCandidate']);
 Route::post('/auth/reset-password-candidate', [AuthController::class, 'resetPasswordCandidate']);

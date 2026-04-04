@@ -3,6 +3,7 @@ import { authService } from '../api/authService';
 
 export const useAuthStore = create((set) => ({
   company: JSON.parse(localStorage.getItem('company')) || null,
+  user: JSON.parse(localStorage.getItem('user')) || null,
   token: localStorage.getItem('auth_token') || null,
   isAuthenticated: !!localStorage.getItem('auth_token'),
   loading: false,
@@ -55,6 +56,7 @@ export const useAuthStore = create((set) => ({
 
     set({
       company: null,
+      user: null,
       token: null,
       isAuthenticated: false,
       loading: false,
