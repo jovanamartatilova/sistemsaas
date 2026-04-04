@@ -30,6 +30,13 @@ import ProfilePage from './pages/ProfilePage';
 import UserManagement from './pages/UserManagement';
 // Super Admin
 import SuperAdminPages from "./pages/SuperAdminPages";
+// HR
+import DashboardHR from "./pages/HR/DashboardHR";
+import KandidateHR from "./pages/HR/KandidateHR";
+import ScreeningHR from "./pages/HR/ScreeningHR";
+import WawancaraHR from "./pages/HR/WawancaraHR";
+import GenerateLOA from "./pages/HR/GenerateLOA";
+import PayrollHR from './pages/HR/PayrollHR';
 
 export default function App() {
     const { token, isAuthenticated, company } = useAuthStore();
@@ -174,6 +181,14 @@ export default function App() {
                 />
 
                 <Route path="/superadmin/*" element={<SuperAdminPages />} />
+
+                {/* HR ROUTES */} (Versi frontend)
+                <Route path="/hr/dashboard" element={<DashboardHR />} />
+                <Route path="/hr/kandidate" element={<KandidateHR />} />
+                <Route path="/hr/screening" element={<ScreeningHR />} />
+                <Route path="/hr/wawancara" element={<WawancaraHR />} />
+                <Route path="/hr/generate-loa" element={<GenerateLOA />} />
+                <Route path="/hr/payroll" element={<PayrollHR />} />
 
 
             </Routes>
