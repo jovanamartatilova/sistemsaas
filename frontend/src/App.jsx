@@ -31,6 +31,7 @@ import LandingPage from './pages/LandingPage';
 import HomePage from './pages/HomePage';
 import ProfilePage from './pages/ProfilePage';
 import UserManagement from './pages/UserManagement';
+import SettingsAdmin from './pages/SettingsAdmin';
 // Super Admin
 import SuperAdminPages from "./pages/SuperAdminPages";
 // HR
@@ -154,6 +155,15 @@ export default function App() {
                     element={
                         <PrivateRoute>
                             <UserManagement />
+                        </PrivateRoute>
+                    }
+                />
+
+                <Route
+                    path="/settings"
+                    element={
+                        <PrivateRoute>
+                            <SettingsAdmin />
                         </PrivateRoute>
                     }
                 />

@@ -230,8 +230,7 @@ export default function UserManagement() {
         { label: "Positions Management", icon: <IC.Program />, path: "/positions" },
     ];
     const navItems2 = [
-        { label: "Reports", icon: <IC.Laporan />, path: "#", section: "OTHERS" },
-        { label: "Settings", icon: <IC.Pengaturan />, path: "#" },
+        { label: "Settings", icon: <IC.Pengaturan />, path: "/settings" },
     ];
 
     return (
@@ -261,12 +260,20 @@ export default function UserManagement() {
                     Others
                 </p>
                 {navItems2.map((n) => (
-                    <SideItem key={n.label} icon={n.icon} label={n.label} active={activeNav === n.label} onClick={() => setActiveNav(n.label)} />
+                    <SideItem key={n.label} icon={n.icon} label={n.label} active={activeNav === n.label} onClick={() => navigate(n.path)} />
                 ))}
 
                 <div style={{ flex: 1 }} />
                 <div style={{ borderTop: "1px solid rgba(255,255,255,0.07)", paddingTop: "14px", display: "flex", alignItems: "center", gap: "10px" }}>
-                    <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: "linear-gradient(135deg, #2d7dd2, #4a9eff)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "13px", fontWeight: "800", color: "#fff" }}>{initials}</div>
+                    {company?.logo_path ? (
+                        <img 
+                            src={`http://127.0.0.1:8000/storage/${company.logo_path}`} 
+                            alt="Logo" 
+                            style={{ width: "36px", height: "36px", borderRadius: "10px", objectFit: "cover" }} 
+                        />
+                    ) : (
+                        <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: "linear-gradient(135deg, #2d7dd2, #4a9eff)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "13px", fontWeight: "800", color: "#fff" }}>{initials}</div>
+                    )}
                     <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: "12.5px", fontWeight: "700", color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{companyName}</div>
                         <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", textTransform: "capitalize" }}>{company?.role || "Admin"}</div>

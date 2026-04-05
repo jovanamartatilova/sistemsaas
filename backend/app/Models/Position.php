@@ -10,12 +10,13 @@ class Position extends Model
     public $timestamps = false;
     protected $fillable = [
         'id_position',
+        'id_company',
         'name',
         'quota',
     ];
     public function vacancies()
     {
-        return $this->belongsToMany(Vacancy::class, 'vacancy_positions', 'id_position', 'id_vacancy');
+        return $this->belongsToMany(Vacancy::class, 'vacancy_positions', 'id_position', 'id_vacancy')->withPivot('quota');
     }
     public function competencies()
     {

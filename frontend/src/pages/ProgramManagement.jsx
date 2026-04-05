@@ -39,12 +39,39 @@ const S = {
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
 const Icon = {
-    Dashboard: () => <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" /></svg>,
-    Users: () => <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>,
-    Program: () => <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" /><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" /></svg>,
-    Lowongan: () => <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" /><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" /><line x1="12" y1="12" x2="12" y2="16" /><line x1="10" y1="14" x2="14" y2="14" /></svg>,
-    Laporan: () => <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" /><line x1="2" y1="20" x2="22" y2="20" /></svg>,
-    Pengaturan: () => <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>,
+    Dashboard: () => (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" />
+            <rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" />
+        </svg>
+    ),
+    Users: () => (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" />
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
+        </svg>
+    ),
+    Lowongan: () => (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="2" y="7" width="20" height="14" rx="2" /><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
+        </svg>
+    ),
+    Program: () => (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" /><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+        </svg>
+    ),
+    Pengaturan: () => (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="3" />
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+        </svg>
+    ),
+    Logout: () => (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" />
+        </svg>
+    ),
     Bell: () => <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg>,
     Search: () => <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>,
     Plus: () => <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>,
@@ -52,7 +79,6 @@ const Icon = {
     Save: () => <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" /><polyline points="17 21 17 13 7 13 7 21" /><polyline points="7 3 7 8 15 8" /></svg>,
     Send: () => <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><polyline points="22 2 11 13" /><polygon points="22 2 15 22 11 13 2 9 22 2" /></svg>,
     Cal: () => <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>,
-    Logout: () => <svg width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>,
     Location: () => <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>,
     Deadline: () => <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>,
     Dot: () => <svg width="10" height="10" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5" /></svg>,
@@ -318,7 +344,7 @@ function JobCard({ job, onEdit, onDelete }) {
 }
 
 // ── Modal ─────────────────────────────────────────────────────────────────────
-function Modal({ open, editingJob, onClose, onSubmit }) {
+function Modal({ open, editingJob, onClose, onSubmit, catalog }) {
     const [activeTab, setActiveTab] = useState("detail");
     const [form, setForm] = useState({ title: "", desc: "", kota: "", provinsi: "", alamat: "", batch: "", image: "", photoFile: null });
     const fileInpRef = useRef(null);
@@ -327,7 +353,7 @@ function Modal({ open, editingJob, onClose, onSubmit }) {
     const [deadline, setDeadline] = useState("");
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
-    const [posisi, setPosisi] = useState([{ name: "", quota: "" }]);
+    const [posisi, setPosisi] = useState([{ id_position: "", name: "", quota: "" }]);
 
     useEffect(() => {
         if (open) {
@@ -341,13 +367,14 @@ function Modal({ open, editingJob, onClose, onSubmit }) {
                 setEndDate(editingJob.endDate || "");
                 
                 const mappedPosArr = (editingJob.positions || []).map(p => ({
+                    id_position: p.id_position || "",
                     name: p.name || "",
                     quota: p.quota || p.pivot?.quota || 0
                 }));
-                setPosisi(mappedPosArr.length > 0 ? mappedPosArr : [{ name: "", quota: "" }]);
+                setPosisi(mappedPosArr.length > 0 ? mappedPosArr : [{ id_position: "", name: "", quota: "" }]);
             } else {
                 setForm({ title: "", desc: "", kota: "", provinsi: "", alamat: "", batch: "", image: "", photoFile: null });
-                setTipe(""); setPayment(""); setDeadline(""); setStartDate(""); setEndDate(""); setPosisi([{ name: "", quota: "" }]);
+                setTipe(""); setPayment(""); setDeadline(""); setStartDate(""); setEndDate(""); setPosisi([{ id_position: "", name: "", quota: "" }]);
             }
         }
     }, [open, editingJob]);
@@ -379,6 +406,48 @@ function Modal({ open, editingJob, onClose, onSubmit }) {
 
         onSubmit({ ...form, batch: +form.batch, startDate, endDate, deadline, tipe, payment, posisi: filled, status });
     };
+
+    // ── Position Searchable Dropdown ──────────────────────────
+    function PositionDropdown({ value, idValue, onChange, catalog }) {
+        const [open, setOpen] = useState(false);
+        const [search, setSearch] = useState("");
+        const ref = useRef(null);
+
+        useEffect(() => {
+            const fn = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+            document.addEventListener("mousedown", fn);
+            return () => document.removeEventListener("mousedown", fn);
+        }, []);
+
+        const filtered = catalog.filter(c => c.name.toLowerCase().includes(search.toLowerCase()));
+
+        return (
+            <div ref={ref} style={{ position: "relative" }}>
+                <div onClick={() => setOpen(!open)} style={{ ...inp, display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", borderColor: open ? "#3b82f6" : "#e2e8f0" }}>
+                    <span style={{ color: value ? "#0f172a" : "#cbd5e1" }}>{value || "Select position..."}</span>
+                    <Icon.ChevronRight style={{ transform: "rotate(90deg)", opacity: 0.5 }} />
+                </div>
+                {open && (
+                    <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, background: "#fff", border: "1px solid #e2e8f0", borderRadius: 10, boxShadow: "0 10px 25px rgba(0,0,0,0.1)", zIndex: 300, overflow: "hidden" }}>
+                        <div style={{ padding: 8, borderBottom: "1px solid #f1f5f9", background: "#fff" }}>
+                            <input autoFocus placeholder="Search..." value={search} onChange={e => setSearch(e.target.value)} style={{ width: "100%", padding: "6px 10px", border: "1px solid #e2e8f0", borderRadius: 6, fontSize: 13, outline: "none", background: "#fff", color: "#475569" }} />
+                        </div>
+                        <div style={{ maxHeight: 200, overflowY: "auto" }}>
+                            {filtered.length === 0 && <div style={{ padding: "12px", fontSize: 12, color: "#94a3b8", textAlign: "center" }}>No positions found. Create one in Positions Management first.</div>}
+                            {filtered.map(c => (
+                                <div key={c.id_position} onClick={() => { onChange(c); setOpen(false); }} 
+                                     style={{ padding: "10px 14px", fontSize: 13.5, cursor: "pointer", transition: "0.1s", background: idValue === c.id_position ? "#eff6ff" : "transparent", textAlign: "left", color: "#475569" }}
+                                     onMouseEnter={e => { e.currentTarget.style.background = "#f8fafc"; }}
+                                     onMouseLeave={e => { if (idValue !== c.id_position) e.currentTarget.style.background = "transparent"; }}>
+                                    {c.name}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
+    }
 
     const inp = { textAlign: "left", border: "1.5px solid #e2e8f0", borderRadius: 8, padding: "9px 13px", fontFamily: "inherit", fontSize: 13.5, color: "#0f172a", background: "#fff", outline: "none", width: "100%", transition: "border-color .15s, box-shadow .15s" };
     const focusInp = (e) => { e.target.style.borderColor = "#3b82f6"; e.target.style.boxShadow = "0 0 0 3px rgba(59,130,246,.12)"; };
@@ -478,11 +547,21 @@ function Modal({ open, editingJob, onClose, onSubmit }) {
                                 {posisi.map((p, i) => (
                                     <div key={i} style={{ display: "flex", gap: 10, alignItems: "flex-end" }}>
                                         <div style={{ flex: 1 }}>
-                                            <div style={{ fontSize: 11.5, fontWeight: 700, color: "#64748b", marginBottom: 5 }}>Position Name {i + 1}</div>
-                                            <input style={inp} value={p.name} onChange={e => { const next = [...posisi]; next[i].name = e.target.value; setPosisi(next); }} placeholder="e.g. Frontend Developer" onFocus={focusInp} onBlur={blurInp} />
+                                            <div style={{ fontSize: 11.5, fontWeight: 700, color: "#64748b", marginBottom: 5, textAlign: "left" }}>Position {i + 1}</div>
+                                            <PositionDropdown 
+                                                value={p.name} 
+                                                idValue={p.id_position} 
+                                                catalog={catalog} 
+                                                onChange={(c) => {
+                                                    const next = [...posisi];
+                                                    next[i].id_position = c.id_position;
+                                                    next[i].name = c.name;
+                                                    setPosisi(next);
+                                                }} 
+                                            />
                                         </div>
                                         <div style={{ width: 90 }}>
-                                            <div style={{ fontSize: 11.5, fontWeight: 700, color: "#64748b", marginBottom: 5 }}>Quota</div>
+                                            <div style={{ fontSize: 11.5, fontWeight: 700, color: "#64748b", marginBottom: 5, textAlign: "left" }}>Quota</div>
                                             <input style={inp} type="number" min="1" value={p.quota} onChange={e => { const next = [...posisi]; next[i].quota = e.target.value; setPosisi(next); }} placeholder="0" onFocus={focusInp} onBlur={blurInp} />
                                         </div>
                                         <button onClick={() => posisi.length > 1 && setPosisi(posisi.filter((_, j) => j !== i))}
@@ -490,7 +569,7 @@ function Modal({ open, editingJob, onClose, onSubmit }) {
                                     </div>
                                 ))}
                             </div>
-                            <button onClick={() => setPosisi([...posisi, { name: "", quota: "" }])}
+                            <button onClick={() => setPosisi([...posisi, { id_position: "", name: "", quota: "" }])}
                                 style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", border: "1.5px dashed #e2e8f0", borderRadius: 8, background: "transparent", fontFamily: "inherit", fontSize: 13, color: "#64748b", cursor: "pointer", marginTop: 8, transition: "all .15s" }}
                                 onMouseEnter={e => { e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.color = "#2563c4"; e.currentTarget.style.background = "#eff6ff"; }}
                                 onMouseLeave={e => { e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.color = "#64748b"; e.currentTarget.style.background = "transparent"; }}>
@@ -678,12 +757,25 @@ export default function ProgramManagement() {
     const [logoutModalOpen, setLogoutModalOpen] = useState(false);
     const [editingJob, setEditingJob] = useState(null);
     const [deletingId, setDeletingId] = useState(null);
-    const [toast, setToast] = useState({ msg: "", type: "success", visible: false });
     const [activeNav, setActiveNav] = useState("Program Management");
+    const [catalog, setCatalog] = useState([]);
+    const [toast, setToast] = useState({ msg: "", type: "success", visible: false });
 
     useEffect(() => {
         fetchJobs();
+        fetchCatalog();
     }, []);
+
+    const fetchCatalog = async () => {
+        try {
+            const res = await axios.get("http://127.0.0.1:8000/api/positions/catalog", {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setCatalog(res.data);
+        } catch (err) {
+            console.error("Failed to fetch catalog:", err);
+        }
+    };
 
     const fetchJobs = async () => {
         try {
@@ -721,10 +813,10 @@ export default function ProgramManagement() {
         }
     };
 
-    const company = (() => { try { return JSON.parse(localStorage.getItem("company")); } catch { return null; } })();
-    const companyName = company?.name || "Admin";
+    const comp = (() => { try { return JSON.parse(localStorage.getItem("company")); } catch { return null; } })();
+    const companyName = comp?.name || "Admin";
     const initials = companyName.slice(0, 2).toUpperCase();
-    const companyRole = company?.role || "Admin";
+    const companyRole = comp?.role || "Admin";
 
     const showToast = (msg, type = "success") => {
         setToast({ msg, type, visible: true });
@@ -738,6 +830,17 @@ export default function ProgramManagement() {
     });
 
     const handleModalSubmit = async (data) => {
+        // Validation: Cannot publish with a past deadline
+        if (data.status === "published" && data.deadline) {
+            const dDate = new Date(data.deadline);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            if (dDate < today) {
+                showToast("Application deadline must be in the future to publish.", "error");
+                return;
+            }
+        }
+
         try {
             const formData = new FormData();
             formData.append("title", data.title);
@@ -755,6 +858,7 @@ export default function ProgramManagement() {
             formData.append("status", data.status);
 
             data.posisi.forEach((p, i) => {
+                if (p.id_position) formData.append(`positions[${i}][id_position]`, p.id_position);
                 formData.append(`positions[${i}][name]`, p.name);
                 formData.append(`positions[${i}][quota]`, p.quota);
             });
@@ -815,8 +919,7 @@ export default function ProgramManagement() {
         { label: "Positions Management", icon: <Icon.Program />, path: "/positions" },
     ];
     const navItems2 = [
-        { label: "Reports", icon: <Icon.Laporan />, path: "#", section: "OTHERS" },
-        { label: "Settings", icon: <Icon.Pengaturan />, path: "#" },
+        { label: "Settings", icon: <Icon.Pengaturan />, path: "/settings" },
     ];
 
     const SIDEBAR_W = 250;
@@ -832,6 +935,9 @@ export default function ProgramManagement() {
         /* Hide number input spinners */
         input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         input[type=number] { -moz-appearance: textfield; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in { animation: fadeIn 0.35s ease both; }
       `}</style>
 
             {/* ── SIDEBAR ──────────────────────────────────────────────────────── */}
@@ -885,7 +991,10 @@ export default function ProgramManagement() {
                         icon={n.icon}
                         label={n.label}
                         active={activeNav === n.label}
-                        onClick={() => setActiveNav(n.label)}
+                        onClick={() => {
+                            if (n.path) navigate(n.path);
+                            setActiveNav(n.label);
+                        }}
                     />
                 ))}
 
@@ -894,14 +1003,22 @@ export default function ProgramManagement() {
 
                 {/* Profile at bottom */}
                 <div style={{ borderTop: "1px solid rgba(255,255,255,0.07)", paddingTop: "14px", display: "flex", alignItems: "center", gap: "10px" }}>
-                    <div style={{
-                        width: "36px", height: "36px", borderRadius: "10px", flexShrink: 0,
-                        background: "linear-gradient(135deg, #2d7dd2, #4a9eff)",
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        fontSize: "13px", fontWeight: "800", color: "#fff",
-                    }}>
-                        {initials}
-                    </div>
+                    {comp.logo_path ? (
+                        <img 
+                            src={`http://127.0.0.1:8000/storage/${comp.logo_path}`} 
+                            alt="Logo" 
+                            style={{ width: "36px", height: "36px", borderRadius: "10px", objectFit: "cover" }} 
+                        />
+                    ) : (
+                        <div style={{
+                            width: "36px", height: "36px", borderRadius: "10px", flexShrink: 0,
+                            background: "linear-gradient(135deg, #2d7dd2, #4a9eff)",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            fontSize: "13px", fontWeight: "800", color: "#fff",
+                        }}>
+                            {initials}
+                        </div>
+                    )}
                     <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: "12.5px", fontWeight: "700", color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{companyName}</div>
                         <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", textTransform: "capitalize" }}>{companyRole}</div>
@@ -958,7 +1075,7 @@ export default function ProgramManagement() {
                 </header>
 
                 {/* PAGE BODY */}
-                <main style={{ padding: 28, flex: 1, textAlign: "left" }}>
+                <main style={{ padding: 28, flex: 1, textAlign: "left" }} className="fade-in">
                     {/* Page header */}
                     <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 24, gap: 12, flexWrap: "wrap" }}>
                         <div>
@@ -1020,7 +1137,7 @@ export default function ProgramManagement() {
             </div>
 
             {/* MODAL */}
-            <Modal open={modalOpen} editingJob={editingJob} onClose={() => { setModalOpen(false); setEditingJob(null); }} onSubmit={handleModalSubmit} />
+            <Modal open={modalOpen} editingJob={editingJob} onClose={() => { setModalOpen(false); setEditingJob(null); }} onSubmit={handleModalSubmit} catalog={catalog} />
 
             {/* Delete confirm */}
             {deletingId && (
