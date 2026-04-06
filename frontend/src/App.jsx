@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './stores/authStore';
 import PrivateRoute from './components/PrivateRoute';
@@ -9,7 +9,6 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import ForgotPasswordCandidate from './pages/ForgotPasswordCandidate';
 import ResetPasswordCandidate from './pages/resetPasswordCandidate';
-
 // Candidate (company public)
 import CompanyPublicPage from './pages/companyPublic';
 import SignUpCandidate from './pages/SignUpCandidate';
@@ -19,7 +18,6 @@ import SubmissionForm from './pages/SubmissionForm';
 import ProfileSettings from './pages/ProfileSettings';
 import CertificateCandidate from './pages/CertificateCandidate';
 import ProgramsPage from './pages/ProgramsCandidate';
-
 // Staff
 import ActivateAccount from './pages/ActivateAccount';
 import LoginStaff from './pages/LoginStaff';
@@ -41,10 +39,30 @@ import ScreeningHR from "./pages/HR/ScreeningHR";
 import WawancaraHR from "./pages/HR/WawancaraHR";
 import GenerateLOA from "./pages/HR/GenerateLOA";
 import PayrollHR from './pages/HR/PayrollHR';
+// Mentor
+import CertificateMentor from './pages/Mentor/CertificateMentor';
+import EvaluationMentor from './pages/Mentor/EvaluationMentor';
+import CompetenciesMentor from './pages/Mentor/CompetenciesMentor';
+import DashboardMentor from './pages/Mentor/DashboardMentor';
+import InputScoreMentor from './pages/Mentor/InputScoreMentor';
+import InternsMentor from './pages/Mentor/InternsMentor';
+import ScoreRecapMentor from './pages/Mentor/ScoreRecapMentor';
 
 export default function App() {
     const { token, isAuthenticated, company } = useAuthStore();
     const isApplicant = company?.role === "applicant";
+
+    // Component untuk handle dashboard routing berdasarkan role
+    const DashboardRouter = () => {
+        const { company } = useAuthStore();
+        
+        // Jika user adalah mentor, redirect ke mentor dashboard
+        if (company?.role === 'mentor') {
+            return <Navigate to="/mentor/dashboard" replace />;
+        }
+        
+        return <DashboardPage />;
+    };
 
     return (
         <BrowserRouter>
@@ -128,7 +146,7 @@ export default function App() {
                     path="/dashboard"
                     element={
                         <PrivateRoute>
-                            <DashboardPage />
+                            <DashboardRouter />
                         </PrivateRoute>
                     }
                 />
@@ -207,13 +225,21 @@ export default function App() {
                 <Route path="/superadmin/*" element={<SuperAdminPages />} />
 
                 {/* HR ROUTES */} (Versi frontend)
-                <Route path="/hr/dashboard" element={<DashboardHR />} />
-                <Route path="/hr/kandidate" element={<KandidateHR />} />
-                <Route path="/hr/screening" element={<ScreeningHR />} />
-                <Route path="/hr/wawancara" element={<WawancaraHR />} />
-                <Route path="/hr/generate-loa" element={<GenerateLOA />} />
-                <Route path="/hr/payroll" element={<PayrollHR />} />
+                <Route path="/hr/dashboard" element={<PrivateRoute><DashboardHR /></PrivateRoute>} />
+                <Route path="/hr/kandidate" element={<PrivateRoute><KandidateHR /></PrivateRoute>} />
+                <Route path="/hr/screening" element={<PrivateRoute><ScreeningHR /></PrivateRoute>} />
+                <Route path="/hr/wawancara" element={<PrivateRoute><WawancaraHR /></PrivateRoute>} />
+                <Route path="/hr/generate-loa" element={<PrivateRoute><GenerateLOA /></PrivateRoute>} />
+                <Route path="/hr/payroll" element={<PrivateRoute><PayrollHR /></PrivateRoute>} />
 
+                {/* MENTOR ROUTES*/} (Versi frontend)
+                <Route path="/mentor/dashboard" element={<PrivateRoute><DashboardMentor /></PrivateRoute>} />
+                <Route path="/mentor/interns" element={<PrivateRoute><InternsMentor /></PrivateRoute>} />
+                <Route path="/mentor/input-score" element={<PrivateRoute><InputScoreMentor /></PrivateRoute>} />
+                <Route path="/mentor/score-recap" element={<PrivateRoute><ScoreRecapMentor /></PrivateRoute>} />
+                <Route path="/mentor/competencies" element={<PrivateRoute><CompetenciesMentor /></PrivateRoute>} />
+                <Route path="/mentor/evaluation" element={<PrivateRoute><EvaluationMentor /></PrivateRoute>} />
+                <Route path="/mentor/certificates" element={<PrivateRoute><CertificateMentor /></PrivateRoute>} />
 
             </Routes>
         </BrowserRouter>

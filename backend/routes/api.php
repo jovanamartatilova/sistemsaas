@@ -11,6 +11,7 @@ use App\Http\Controllers\SuperAdmin\UserController;
 use App\Http\Controllers\CompanyUserController;
 use App\Http\Controllers\CandidateController;
 use App\Http\Controllers\CompanyController;
+use App\Http\Controllers\MentorController;
 
 // Public vacancy
 Route::get('/vacancies/public', [VacancyController::class, 'publicIndex']);
@@ -114,6 +115,30 @@ Route::prefix('candidate')->middleware(['auth:sanctum', 'ensureCandidate'])->gro
     Route::get('/skills',               [CandidateController::class, 'getSkills']);
     Route::post('/skills',              [CandidateController::class, 'addSkill']);
     Route::delete('/skills/{id_skill}', [CandidateController::class, 'deleteSkill']);
+});
+
+// Mentor — Protected routes untuk mentor yang sudah login
+Route::prefix('mentor')->middleware(['auth:sanctum', 'mentorRole'])->group(function () {
+    // Dashboard
+    Route::get('/dashboard', [MentorController::class, 'getDashboard']);
+
+    // Interns Management
+    Route::get('/interns', [MentorController::class, 'getInterns']);
+
+    // Competencies
+    Route::get('/interns/{id_submission}/competencies', [MentorController::class, 'getCompetencies']);
+
+    // Scores
+    Route::post('/interns/{id_submission}/scores', [MentorController::class, 'inputScores']);
+    Route::get('/score-recap', [MentorController::class, 'getScoreRecap']);
+
+    // Evaluation
+    Route::get('/interns/{id_submission}/evaluation', [MentorController::class, 'getEvaluation']);
+    Route::post('/interns/{id_submission}/evaluation', [MentorController::class, 'saveEvaluation']);
+
+    // Certificates
+    Route::get('/certificates', [MentorController::class, 'getCertificates']);
+    Route::post('/interns/{id_submission}/generate-certificate', [MentorController::class, 'generateCertificate']);
 });
 
 // Test endpoint
