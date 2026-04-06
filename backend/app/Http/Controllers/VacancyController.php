@@ -18,6 +18,9 @@ class VacancyController extends Controller
      */
     public function publicIndex()
     {
+        // Auto-close vacancies past deadline
+        Vacancy::closeExpired();
+
         $vacancies = Vacancy::with(['company', 'positions'])
             ->where('status', 'published')
             ->get();
@@ -30,8 +33,13 @@ class VacancyController extends Controller
      */
     public function index(Request $request)
     {
+        $id_company = $request->user()->id_company;
+
+        // Auto-close vacancies past deadline for this company
+        Vacancy::closeExpired($id_company);
+
         $vacancies = Vacancy::with(['positions', 'submissions.user', 'submissions.position'])
-            ->where('id_company', $request->user()->id_company)
+            ->where('id_company', $id_company)
             ->get();
 
         return response()->json($vacancies);
@@ -81,33 +89,35 @@ class VacancyController extends Controller
         $formattedStartDate = null;
         $formattedEndDate = null;
 
-        // Handle Positions (create each as a row in positions table with its own quota)
-        $positionIds = [];
+        // Handle Positions (Use existing or create if new)
+        $positionPivotData = [];
         foreach ($validated['positions'] as $posData) {
-            $posName = is_array($posData) ? ($posData['name'] ?? '') : $posData;
-            $posQuota = is_array($posData) ? (int)($posData['quota'] ?? 0) : 0;
+            $posId = $posData['id_position'] ?? null;
+            $posName = $posData['name'] ?? '';
+            $posQuota = (int)($posData['quota'] ?? 0);
             
-            $position = Position::create([
-                'id_position' => 'POS' . strtoupper(Str::random(7)),
-                'name' => $posName,
-                'quota' => $posQuota,
-            ]);
-            $positionIds[] = $position->id_position;
+            if ($posId) {
+                $position = Position::where('id_position', $posId)->first();
+            } else if ($posName) {
+                // Support legacy or new on-the-fly creation
+                $position = Position::firstOrCreate(
+                    ['name' => $posName, 'id_company' => $request->user()->id_company],
+                    ['id_position' => 'POS' . strtoupper(Str::random(7)), 'quota' => 0]
+                );
+            }
+
+            if (isset($position)) {
+                $positionPivotData[$position->id_position] = ['quota' => $posQuota];
+            }
         }
 
-        // Handle Photo Upload
         // Handle Photo Upload
         $photoPath = null;
         if ($request->hasFile('photo')) {
             try {
                 $photoPath = $request->file('photo')->store('vacancies', 'public');
-                if (!$photoPath) {
-                    Log::error('Photo store returned null');
-                    return response()->json(['message' => 'The photo failed to upload to storage.'], 422);
-                }
             } catch (\Exception $e) {
                 Log::error('Photo upload exception: ' . $e->getMessage());
-                return response()->json(['message' => 'The photo failed to upload: ' . $e->getMessage()], 500);
             }
         }
 
@@ -116,16 +126,16 @@ class VacancyController extends Controller
             $formattedDeadline = Carbon::parse($validated['deadline'])->format('Y-m-d');
             $formattedStartDate = Carbon::parse($validated['start_date'])->format('Y-m-d');
             $formattedEndDate = Carbon::parse($validated['end_date'])->format('Y-m-d');
+
+            // Validation: Cannot publish with a past deadline
+            if ($validated['status'] === 'published' && Carbon::parse($formattedDeadline)->isPast() && !Carbon::parse($formattedDeadline)->isToday()) {
+                return response()->json(['errors' => ['deadline' => ['Deadline cannot be in the past when publishing.']]], 422);
+            }
         } catch (\Exception $e) {
-            Log::error('Date parsing failed:', ['deadline' => $validated['deadline'], 'start' => $validated['start_date'], 'end' => $validated['end_date']]);
-            return response()->json([
-                'errors' => [
-                    'dates' => ['Format tanggal tidak valid. Silakan gunakan format yang benar.']
-                ]
-            ], 422);
+            return response()->json(['errors' => ['dates' => ['Format tanggal tidak valid.']]], 422);
         }
 
-        // Combine Location: (kota, provinsi, sama alamat lengkap) -> kolom lokasi
+        // Combine Location
         $location = $validated['city'] . ', ' . $validated['province'] . ', ' . $validated['address'];
 
         $vacancy = Vacancy::create([
@@ -145,16 +155,14 @@ class VacancyController extends Controller
             'publish_date' => $validated['status'] === 'published' ? now() : null,
         ]);
 
-        // Attach multiple positions to pivot table
-        $vacancy->positions()->attach($positionIds);
+        // Attach positions with pivot quota
+        $vacancy->positions()->attach($positionPivotData);
 
         return response()->json($vacancy->load('positions'), 201);
     } catch (\Illuminate\Validation\ValidationException $e) {
-        Log::error('Validation failed for vacancy store:', $e->errors());
         return response()->json(['errors' => $e->errors()], 422);
     } catch (\Exception $e) {
-        Log::error('Error storing vacancy:', ['message' => $e->getMessage()]);
-        return response()->json(['error' => 'An error occurred'], 500);
+        return response()->json(['error' => $e->getMessage()], 500);
     }
 }
 
@@ -169,8 +177,9 @@ class VacancyController extends Controller
 
         $validated = $request->validate([
             'positions' => 'sometimes|array',
-            'positions.*.name' => 'required_with:positions|string|max:100',
-            'positions.*.quota' => 'required_with:positions|integer|min:0',
+            'positions.*.id_position' => 'nullable|string',
+            'positions.*.name' => 'sometimes|string|max:100',
+            'positions.*.quota' => 'sometimes|integer|min:0',
             'title' => 'sometimes|string|max:100',
             'description' => 'sometimes|string',
             'city' => 'sometimes|string|max:50',
@@ -196,21 +205,18 @@ class VacancyController extends Controller
 
         // Handle Dates
         try {
-            if (isset($validated['deadline'])) {
-                $validated['deadline'] = Carbon::parse($validated['deadline'])->format('Y-m-d');
-            }
-            if (isset($validated['start_date'])) {
-                $validated['start_date'] = Carbon::parse($validated['start_date'])->format('Y-m-d');
-            }
-            if (isset($validated['end_date'])) {
-                $validated['end_date'] = Carbon::parse($validated['end_date'])->format('Y-m-d');
+            if (isset($validated['deadline'])) $validated['deadline'] = Carbon::parse($validated['deadline'])->format('Y-m-d');
+            if (isset($validated['start_date'])) $validated['start_date'] = Carbon::parse($validated['start_date'])->format('Y-m-d');
+            if (isset($validated['end_date'])) $validated['end_date'] = Carbon::parse($validated['end_date'])->format('Y-m-d');
+
+            // Validation: Cannot publish with a past deadline
+            $targetStatus = $validated['status'] ?? $vacancy->status;
+            $targetDeadline = $validated['deadline'] ?? $vacancy->deadline;
+            if ($targetStatus === 'published' && Carbon::parse($targetDeadline)->isPast() && !Carbon::parse($targetDeadline)->isToday()) {
+                return response()->json(['errors' => ['deadline' => ['Deadline cannot be in the past when publishing.']]], 422);
             }
         } catch (\Exception $e) {
-            return response()->json([
-                'errors' => [
-                    'dates' => ['Format tanggal tidak valid. Silakan gunakan format yang benar.']
-                ]
-            ], 422);
+            return response()->json(['errors' => ['dates' => ['Format tanggal tidak valid.']]], 422);
         }
 
         // Handle Location
@@ -221,37 +227,28 @@ class VacancyController extends Controller
             $validated['location'] = $city . ', ' . $province . ', ' . $address;
         }
 
-        // Handle Position change
+        // Handle Position sync with pivot quota
         if (isset($validated['positions'])) {
-            // Get old positions to cleanup
-            $oldPositionIds = $vacancy->positions()->pluck('positions.id_position')->toArray();
-            
-            // Detach pivot
-            $vacancy->positions()->detach();
+            $positionPivotData = [];
+            foreach ($validated['positions'] as $posData) {
+                $posId = $posData['id_position'] ?? null;
+                $posName = $posData['name'] ?? '';
+                $posQuota = (int)($posData['quota'] ?? 0);
 
-            // Delete old position records if they aren't linked to other vacancies
-            // (In our new logic they should only belong to this one)
-            foreach ($oldPositionIds as $idPos) {
-                $count = DB::table('vacancy_positions')->where('id_position', $idPos)->count();
-                if ($count === 0) {
-                    Position::where('id_position', $idPos)->delete();
+                if ($posId) {
+                    $position = Position::where('id_position', $posId)->first();
+                } else if ($posName) {
+                    $position = Position::firstOrCreate(
+                        ['name' => $posName, 'id_company' => $request->user()->id_company],
+                        ['id_position' => 'POS' . strtoupper(Str::random(7)), 'quota' => 0]
+                    );
+                }
+
+                if (isset($position)) {
+                    $positionPivotData[$position->id_position] = ['quota' => $posQuota];
                 }
             }
-
-            // Create new positions
-            $newPositionIds = [];
-            foreach ($validated['positions'] as $posData) {
-                $posName = is_array($posData) ? ($posData['name'] ?? '') : $posData;
-                $posQuota = is_array($posData) ? (int)($posData['quota'] ?? 0) : 0;
-
-                $newPos = Position::create([
-                    'id_position' => 'POS' . strtoupper(Str::random(7)),
-                    'name' => $posName,
-                    'quota' => $posQuota,
-                ]);
-                $newPositionIds[] = $newPos->id_position;
-            }
-            $vacancy->positions()->attach($newPositionIds);
+            $vacancy->positions()->sync($positionPivotData);
         }
 
         if (isset($validated['status']) && $validated['status'] === 'published' && !$vacancy->publish_date) {

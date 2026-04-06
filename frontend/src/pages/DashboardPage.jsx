@@ -340,14 +340,13 @@ export default function DashboardPage() {
     ];
 
     const navItems = [
-        { label: "Dashboard", icon: <IC.Dashboard />, path: "/dashboard", section: "MAIN MENU" },
-        { label: "User Management", icon: <IC.Users />, path: "/users", badge: 0 },
+        { label: "Dashboard", icon: <IC.Dashboard />, path: "/dashboard" },
+        { label: "User Management", icon: <IC.Users />, path: "/users" },
         { label: "Program Management", icon: <IC.Lowongan />, path: "/programs" },
         { label: "Positions Management", icon: <IC.Program />, path: "/positions" },
     ];
     const navItems2 = [
-        { label: "Reports", icon: <IC.Laporan />, path: "#", section: "OTHERS" },
-        { label: "Settings", icon: <IC.Pengaturan />, path: "#" },
+        { label: "Settings", icon: <IC.Pengaturan />, path: "/settings" },
     ];
 
     const distrib = [
@@ -362,6 +361,33 @@ export default function DashboardPage() {
     const SIDEBAR_W = 250;
     const TOPBAR_H = 56;
 
+    const exportToCSV = () => {
+        if (!liveStats.recent_applicants || liveStats.recent_applicants.length === 0) {
+            alert("No data available to export.");
+            return;
+        }
+        
+        const headers = ["Name", "Email", "Position", "Program", "Status", "Applied At"];
+        const rows = liveStats.recent_applicants.map(a => [
+            (a.user?.name || "").replace(/,/g, ""),
+            (a.user?.email || "").replace(/,/g, ""),
+            (a.position?.name || "").replace(/,/g, ""),
+            (a.vacancy?.title || "").replace(/,/g, ""),
+            a.status,
+            new Date(a.submitted_at).toLocaleDateString()
+        ]);
+        
+        const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `applicants_report_${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
 
     return (
         <div style={{ display: "flex", minHeight: "100vh", background: "#f8fafc", fontFamily: "'Poppins', 'Segoe UI', sans-serif" }}>
@@ -426,7 +452,10 @@ export default function DashboardPage() {
                         icon={n.icon}
                         label={n.label}
                         active={activeNav === n.label}
-                        onClick={() => setActiveNav(n.label)}
+                        onClick={() => {
+                            if (n.path) navigate(n.path);
+                            setActiveNav(n.label);
+                        }}
                     />
                 ))}
 
@@ -435,14 +464,22 @@ export default function DashboardPage() {
 
                 {/* Profile at bottom */}
                 <div style={{ borderTop: "1px solid rgba(255,255,255,0.07)", paddingTop: "14px", display: "flex", alignItems: "center", gap: "10px" }}>
-                    <div style={{
-                        width: "36px", height: "36px", borderRadius: "10px", flexShrink: 0,
-                        background: "linear-gradient(135deg, #2d7dd2, #4a9eff)",
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        fontSize: "13px", fontWeight: "800", color: "#fff",
-                    }}>
-                        {initials}
-                    </div>
+                    {company?.logo_path ? (
+                        <img 
+                            src={`http://127.0.0.1:8000/storage/${company.logo_path}`} 
+                            alt="Logo" 
+                            style={{ width: "36px", height: "36px", borderRadius: "10px", objectFit: "cover" }} 
+                        />
+                    ) : (
+                        <div style={{
+                            width: "36px", height: "36px", borderRadius: "10px", flexShrink: 0,
+                            background: "linear-gradient(135deg, #2d7dd2, #4a9eff)",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            fontSize: "13px", fontWeight: "800", color: "#fff",
+                        }}>
+                            {initials}
+                        </div>
+                    )}
                     <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: "12.5px", fontWeight: "700", color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{companyName}</div>
                         <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", textTransform: "capitalize" }}>{companyRole}</div>
@@ -490,6 +527,22 @@ export default function DashboardPage() {
                             style={{ border: "none", background: "transparent", outline: "none", fontSize: "13px", color: "#64748b", width: "100%" }}
                         />
                     </div>
+
+                    {/* Export */}
+                    <button 
+                        onClick={exportToCSV}
+                        style={{
+                            display: "flex", alignItems: "center", gap: "8px", 
+                            background: "#fff", border: "1px solid #e2e8f0", borderRadius: "10px", 
+                            padding: "8px 16px", cursor: "pointer", fontSize: "13px", fontWeight: "600",
+                            color: "#1e293b", transition: "all 0.2s"
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = "#f8fafc"; e.currentTarget.style.borderColor = "#cbd5e1"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = "#fff"; e.currentTarget.style.borderColor = "#e2e8f0"; }}
+                    >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="12" x2="12" y2="3"/></svg>
+                        Export CSV
+                    </button>
 
                     {/* Bell */}
                     <button style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px", width: "38px", height: "38px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#64748b", position: "relative" }}>

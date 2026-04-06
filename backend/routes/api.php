@@ -10,6 +10,7 @@ use App\Http\Controllers\SuperAdmin\TenantController;
 use App\Http\Controllers\SuperAdmin\UserController;
 use App\Http\Controllers\CompanyUserController;
 use App\Http\Controllers\CandidateController;
+use App\Http\Controllers\CompanyController;
 
 // Public vacancy
 Route::get('/vacancies/public', [VacancyController::class, 'publicIndex']);
@@ -72,11 +73,22 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/programs/{id_position}/competencies', [ProgramController::class, 'updateCompetencies']);
     Route::delete('/programs/{id_vacancy}/{id_position}', [ProgramController::class, 'destroy']);
 
+    // Position Catalog
+    Route::get('/positions/catalog', [ProgramController::class, 'getCatalog']);
+    Route::post('/positions/catalog', [ProgramController::class, 'storeCatalog']);
+    Route::put('/positions/catalog/{id}', [ProgramController::class, 'updateCatalog']);
+    Route::delete('/positions/catalog/{id}', [ProgramController::class, 'destroyCatalog']);
+
     // User Management (Company Level)
     Route::get('/company-users', [CompanyUserController::class, 'index']);
     Route::post('/company-users', [CompanyUserController::class, 'store']);
     Route::put('/company-users/{id}', [CompanyUserController::class, 'update']);
     Route::delete('/company-users/{id}', [CompanyUserController::class, 'destroy']);
+
+    // Company Management
+    Route::put('/company/profile', [CompanyController::class, 'updateProfile']);
+    Route::post('/company/logo', [CompanyController::class, 'uploadLogo']);
+    Route::delete('/company/logo', [CompanyController::class, 'removeLogo']);
 });
 // Super Admin
 Route::prefix('superadmin')->middleware(['auth:sanctum', 'superadmin'])->group(function () {

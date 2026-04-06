@@ -171,10 +171,18 @@ function Sidebar({ userName, onLogout }) {
         })}
       </nav>
       <div className="mt-auto flex items-center gap-3 px-2">
-        <div className="w-8 h-8 rounded-full bg-slate-600 flex items-center justify-center text-xs font-bold">
-          {userName?.charAt(0).toUpperCase() || "R"}
-        </div>
-        <span className="text-sm text-slate-300 flex-1">{userName || "Riku"}</span>
+        {company?.logo_path ? (
+          <img 
+            src={`http://localhost:8000/storage/${company.logo_path}`} 
+            alt="Logo" 
+            className="w-8 h-8 rounded-lg object-cover bg-white shadow-sm" 
+          />
+        ) : (
+          <div className="w-8 h-8 rounded-full bg-slate-600 flex items-center justify-center text-xs font-bold">
+            {userName?.charAt(0).toUpperCase() || "R"}
+          </div>
+        )}
+        <span className="text-sm text-slate-300 flex-1 truncate">{userName || "Riku"}</span>
         <button
           onClick={onLogout}
           className="text-slate-500 hover:text-white cursor-pointer transition-colors"
