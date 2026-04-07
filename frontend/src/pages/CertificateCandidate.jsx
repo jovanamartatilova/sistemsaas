@@ -19,10 +19,10 @@ function Sidebar({ userName, onLogout }) {
 
   return (
     <aside className="w-56 min-h-screen bg-[#0f1e3a] text-white flex flex-col px-4 py-6 fixed top-0 left-0 z-10">
-      <div className="flex items-center gap-2 mb-8">
+      <Link to="/" className="flex items-center gap-2 mb-8 hover:opacity-80 transition-opacity cursor-pointer">
         <img src="/assets/images/logo.png" alt="EarlyPath" className="h-16 w-auto" />
         <span className="font-bold text-lg tracking-tight">EarlyPath</span>
-      </div>
+      </Link>
       <nav className="flex flex-col gap-1">
         {navItems.map((item) => {
           const isActive = location.pathname === item.to;

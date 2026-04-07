@@ -16,6 +16,10 @@ class CompanyPublicController extends Controller
 public function vacancies($slug)
 {
     $company = Company::where('slug', $slug)->firstOrFail();
+    
+    // Auto-close vacancies past deadline
+    \App\Models\Vacancy::closeExpired($company->id_company);
+
     $vacancies = \App\Models\Vacancy::where('id_company', $company->id_company)
         ->where('status', 'published')
         ->with('positions')

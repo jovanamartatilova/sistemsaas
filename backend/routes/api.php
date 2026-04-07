@@ -20,6 +20,8 @@ use App\Http\Controllers\HR\HRScreeningController;
 use App\Http\Controllers\HR\HRInterviewController;
 use App\Http\Controllers\HR\HRLoaController;
 use App\Http\Controllers\HR\HRPayrollController;
+use App\Http\Controllers\CompanyController;
+use App\Http\Controllers\MentorController;
 
 // Public vacancy
 Route::get('/vacancies/public', [VacancyController::class, 'publicIndex']);
@@ -82,11 +84,22 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/programs/{id_position}/competencies', [ProgramController::class, 'updateCompetencies']);
     Route::delete('/programs/{id_vacancy}/{id_position}', [ProgramController::class, 'destroy']);
 
+    // Position Catalog
+    Route::get('/positions/catalog', [ProgramController::class, 'getCatalog']);
+    Route::post('/positions/catalog', [ProgramController::class, 'storeCatalog']);
+    Route::put('/positions/catalog/{id}', [ProgramController::class, 'updateCatalog']);
+    Route::delete('/positions/catalog/{id}', [ProgramController::class, 'destroyCatalog']);
+
     // User Management (Company Level)
     Route::get('/company-users', [CompanyUserController::class, 'index']);
     Route::post('/company-users', [CompanyUserController::class, 'store']);
     Route::put('/company-users/{id}', [CompanyUserController::class, 'update']);
     Route::delete('/company-users/{id}', [CompanyUserController::class, 'destroy']);
+
+    // Company Management
+    Route::put('/company/profile', [CompanyController::class, 'updateProfile']);
+    Route::post('/company/logo', [CompanyController::class, 'uploadLogo']);
+    Route::delete('/company/logo', [CompanyController::class, 'removeLogo']);
 });
 // Super Admin
 Route::prefix('superadmin')->middleware(['auth:sanctum', 'superadmin'])->group(function () {
@@ -112,6 +125,30 @@ Route::prefix('candidate')->middleware(['auth:sanctum', 'ensureCandidate'])->gro
     Route::get('/skills',               [CandidateController::class, 'getSkills']);
     Route::post('/skills',              [CandidateController::class, 'addSkill']);
     Route::delete('/skills/{id_skill}', [CandidateController::class, 'deleteSkill']);
+});
+
+// Mentor — Protected routes untuk mentor yang sudah login
+Route::prefix('mentor')->middleware(['auth:sanctum', 'mentorRole'])->group(function () {
+    // Dashboard
+    Route::get('/dashboard', [MentorController::class, 'getDashboard']);
+
+    // Interns Management
+    Route::get('/interns', [MentorController::class, 'getInterns']);
+
+    // Competencies
+    Route::get('/interns/{id_submission}/competencies', [MentorController::class, 'getCompetencies']);
+
+    // Scores
+    Route::post('/interns/{id_submission}/scores', [MentorController::class, 'inputScores']);
+    Route::get('/score-recap', [MentorController::class, 'getScoreRecap']);
+
+    // Evaluation
+    Route::get('/interns/{id_submission}/evaluation', [MentorController::class, 'getEvaluation']);
+    Route::post('/interns/{id_submission}/evaluation', [MentorController::class, 'saveEvaluation']);
+
+    // Certificates
+    Route::get('/certificates', [MentorController::class, 'getCertificates']);
+    Route::post('/interns/{id_submission}/generate-certificate', [MentorController::class, 'generateCertificate']);
 });
 
 // Test endpoint
