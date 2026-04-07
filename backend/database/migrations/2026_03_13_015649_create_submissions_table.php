@@ -13,7 +13,7 @@ return new class extends Migration
     {
        Schema::create('submissions', function (Blueprint $table) {
     $table->char('id_submission',10)->primary();
-    $table->char('id_team',10);
+    $table->char('id_team',10)->nullable();
     $table->char('id_user',10);
     $table->char('id_vacancy',10);
 

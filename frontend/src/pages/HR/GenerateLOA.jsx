@@ -1,45 +1,45 @@
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { api } from "../../api";
 
 // ============ STYLES ============
 const s = {
   app: { display: "flex", minHeight: "100vh", background: "#f1f5f9", fontFamily: "'Poppins', 'Segoe UI', sans-serif", fontSize: "14px", color: "#1e293b" },
   sidebar: { position: "fixed", left: 0, top: 0, bottom: 0, width: "172px", background: "#0f172a", display: "flex", flexDirection: "column", zIndex: 100 },
- 
- 
-  logoBadge: { width: "28px", height: "28px", borderRadius: "7px", background: "linear-gradient(135deg,#3b82f6,#06b6d4)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", fontWeight: 700, color: "#fff", flexShrink: 0 },sidebarLogo: {
-  display: "flex",
-  alignItems: "center",
-  gap: "3px",
-  padding: "14px 16px",
-  borderBottom: "1px solid rgba(255,255,255,0.08)"
-},
-
-logoImage: {
-  height: "50px",
-  width: "auto",        // 🔥 jangan fixed width dulu
-  minWidth: "50px",     // 🔥 biar ga jadi titik
-  objectFit: "contain",
-  display: "block"
-},
-logoText: {
-  fontSize: "14px",
-  fontWeight: 700,
-  color: "#fff",
-  lineHeight: "1"
-},
+  logoBadge: { width: "28px", height: "28px", borderRadius: "7px", background: "linear-gradient(135deg,#3b82f6,#06b6d4)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", fontWeight: 700, color: "#fff", flexShrink: 0 },
+  sidebarLogo: {
+    display: "flex",
+    alignItems: "center",
+    gap: "3px",
+    padding: "14px 16px",
+    borderBottom: "1px solid rgba(255,255,255,0.08)"
+  },
+  logoImage: {
+    height: "50px",
+    width: "auto",
+    minWidth: "50px",
+    objectFit: "contain",
+    display: "block"
+  },
+  logoText: {
+    fontSize: "14px",
+    fontWeight: 700,
+    color: "#fff",
+    lineHeight: "1"
+  },
   sidebarNav: { flex: 1, padding: "10px 8px", overflowY: "auto" },
   navSection: { marginBottom: "14px" },
-navLabel: {
-  display: "block",
-  fontSize: "9px",
-  fontWeight: 700,
-  letterSpacing: "0.1em",
-  color: "#475569",
-  padding: "0 8px",
-  marginBottom: "4px",
-  textTransform: "uppercase",
-  textAlign: "left" // 🔥 ini yang bikin rata kiri
-},
+  navLabel: {
+    display: "block",
+    fontSize: "9px",
+    fontWeight: 700,
+    letterSpacing: "0.1em",
+    color: "#475569",
+    padding: "0 8px",
+    marginBottom: "4px",
+    textTransform: "uppercase",
+    textAlign: "left"
+  },
   navItem: (active) => ({ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", padding: "7px 8px", border: "none", background: active ? "rgba(59,130,246,0.18)" : "transparent", color: active ? "#60a5fa" : "#94a3b8", fontSize: "12.5px", borderRadius: "6px", cursor: "pointer", textDecoration: "none", fontFamily: "inherit", textAlign: "left" }),
   navBadge: { background: "#3b82f6", color: "#fff", fontSize: "10px", fontWeight: 700, padding: "1px 6px", borderRadius: "10px" },
   sidebarUser: { display: "flex", alignItems: "center", gap: "8px", padding: "12px 14px", borderTop: "1px solid rgba(255,255,255,0.08)" },
@@ -70,37 +70,35 @@ navLabel: {
   table: { width: "100%", borderCollapse: "collapse", tableLayout: "fixed" },
   thead: { background: "#f8fafc", borderBottom: "1px solid #e2e8f0" },
   th: {
-  padding: "12px 14px",
-  textAlign: "left",
-  fontSize: "11px",
-  fontWeight: 700,
-  color: "#94a3b8",
-  letterSpacing: "0.06em",
-  textTransform: "uppercase",
-},
-
-td: {
-  padding: "12px 14px",
-  fontSize: "13px",
-  color: "#334155",
-  borderBottom: "1px solid #f1f5f9",
-   display: "table-cell",
-},
+    padding: "12px 14px",
+    textAlign: "left",
+    fontSize: "11px",
+    fontWeight: 700,
+    color: "#94a3b8",
+    letterSpacing: "0.06em",
+    textTransform: "uppercase",
+  },
+  td: {
+    padding: "12px 14px",
+    fontSize: "13px",
+    color: "#334155",
+    borderBottom: "1px solid #f1f5f9",
+    display: "table-cell",
+  },
   candidateName: {
-  fontWeight: 600,
-  color: "#0f172a",
-  fontSize: "13px",
-  display: "block",
-  lineHeight: "1.2"
-},
-
-candidateEmail: {
-  fontSize: "11px",
-  color: "#94a3b8",
-  display: "block",
-  lineHeight: "1.2",
-  marginTop: "2px"
-},
+    fontWeight: 600,
+    color: "#0f172a",
+    fontSize: "13px",
+    display: "block",
+    lineHeight: "1.2"
+  },
+  candidateEmail: {
+    fontSize: "11px",
+    color: "#94a3b8",
+    display: "block",
+    lineHeight: "1.2",
+    marginTop: "2px"
+  },
   miniBadge: (bg, color) => ({ display: "inline-flex", alignItems: "center", padding: "3px 9px", borderRadius: "6px", fontSize: "12px", fontWeight: 500, background: bg, color }),
   actions: { display: "flex", gap: "6px", alignItems: "center" },
   btnAction: { padding: "4px 10px", borderRadius: "6px", fontSize: "12px", fontWeight: 500, cursor: "pointer", border: "1px solid #e2e8f0", background: "#fff", color: "#334155", whiteSpace: "nowrap", fontFamily: "inherit" },
@@ -160,23 +158,77 @@ function SidebarHR() {
   );
 }
 
-// ============ DATA ============
-const statCards = [
-  { value: 31, label: "Accepted Candidates", sub: "Eligible for LoA", barColor: "#3b82f6", barWidth: "65%" },
-  { value: 18, label: "LoA Generated", sub: "Already created", barColor: "#22c55e", barWidth: "40%" },
-  { value: 13, label: "Pending Generation", sub: "Needs to be created", barColor: "#f59e0b", barWidth: "30%" },
-];
-
-const candidates = [
-  { name: "Budi Santoso", email: "budi@gmail.com", position: "Backend Dev", program: "Regular Batch 3", type: "Team", loaStatus: "Done", loaBg: "#dcfce7", loaColor: "#166534", showPreview: true, showDownload: true },
-  { name: "Dian Purnama", email: "dian@email.com", position: "Backend Dev", program: "Regular Batch 3", type: "Team", loaStatus: "Pending", loaBg: "#fef9c3", loaColor: "#92400e", showGenerate: true },
-  { name: "Citra Ayu", email: "citra@gmail.com", position: "UI Designer", program: "Flagship Batch 2", type: "Individual", loaStatus: "Pending", loaBg: "#fef9c3", loaColor: "#92400e", showGenerate: true },
-  { name: "Nisa Rahmah", email: "nisa@email.com", position: "UI Designer", program: "Flagship Batch 2", type: "Individual", loaStatus: "Done", loaBg: "#dcfce7", loaColor: "#166534", showPreview: true, showDownload: true },
-  { name: "Rizki Hakim", email: "rizki@email.com", position: "Data Analyst", program: "Independent", type: "Individual", loaStatus: "In Queue", loaBg: "#dbeafe", loaColor: "#1e40af", showPreview: true },
-];
-
 // ============ PAGE ============
 export default function GenerateLoAHR() {
+const [data, setData] = useState({ stats: {}, candidates: [] });
+const [loading, setLoading] = useState(false);
+const [bulkLoading, setBulkLoading] = useState(false);
+const [error, setError] = useState('');
+
+// Clear old token on first load to force fresh auth
+useEffect(() => {
+  const stored = localStorage.getItem('hr_token');
+  if (stored && stored.length < 20) { // Likely old format
+    localStorage.removeItem('hr_token');
+  }
+}, []);
+
+const fetchLoa = async () => {
+  try {
+    setError('');
+    const res = await api('/hr/loa');
+    setData(res.data);
+  } catch (err) {
+    console.error('Fetch error details:', {
+      message: err.message,
+      status: err.status,
+      fullError: err,
+    });
+    setError(`Error: ${err.message || 'Unknown error'}`);
+  }
+};
+
+useEffect(() => { fetchLoa(); }, []);
+
+const handleGenerate = async (id) => {
+  try {
+    setLoading(id);
+    setError('');
+    await api(`/hr/loa/${id}/generate`, { method: 'POST' });
+    await fetchLoa();
+  } catch (err) {
+    setError(err.message || 'Failed to generate LoA');
+    console.error(err);
+  } finally {
+    setLoading(null);
+  }
+};
+
+const handleBulkGenerate = async () => {
+  try {
+    setBulkLoading(true);
+    setError('');
+    await api('/hr/loa/bulk-generate', { method: 'POST' });
+    await fetchLoa();
+  } catch (err) {
+    setError(err.message || 'Failed to generate bulk LoA');
+    console.error(err);
+  } finally {
+    setBulkLoading(false);
+  }
+};
+
+const handleDownload = (id) => {
+  const token = localStorage.getItem('hr_token');
+  window.open(`${import.meta.env.VITE_API_URL}/hr/loa/${id}/download?token=${token}`);
+};
+
+const statCards = [
+    { value: data.stats.accepted,  label: "Accepted Candidates", sub: "Eligible for LoA",      barColor: "#3b82f6", barWidth: "65%" },
+    { value: data.stats.generated, label: "LoA Generated",       sub: "Already created",        barColor: "#22c55e", barWidth: "40%" },
+    { value: data.stats.pending,   label: "Pending Generation",  sub: "Needs to be created",    barColor: "#f59e0b", barWidth: "30%" },
+  ];
+
   return (
     <div style={s.app}>
       <style>{`* { box-sizing: border-box; margin: 0; padding: 0; } ::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 99px; }`}</style>
@@ -191,6 +243,20 @@ export default function GenerateLoAHR() {
         <div style={s.content}>
           <h1 style={s.h1}>Generate LoA</h1>
           <p style={s.subtitle}>Create Letter of Acceptance for accepted candidates.</p>
+
+          {error && (
+            <div style={{
+              background: '#fee2e2',
+              border: '1px solid #fecaca',
+              color: '#991b1b',
+              padding: '12px 16px',
+              borderRadius: '8px',
+              marginBottom: '20px',
+              fontSize: '13px'
+            }}>
+              {error}
+            </div>
+          )}
 
           <div style={s.statGrid}>
             {statCards.map((card, i) => (
@@ -210,9 +276,21 @@ export default function GenerateLoAHR() {
                   <div style={s.cardTitle}>Accepted Candidates</div>
                   <div style={s.cardSubtitle}>Select candidate to generate LoA</div>
                 </div>
-                <button style={s.btnPrimary}>Bulk Generate</button>
+                <button 
+                  style={{...s.btnPrimary, opacity: bulkLoading ? 0.6 : 1, cursor: bulkLoading ? 'not-allowed' : 'pointer'}} 
+                  onClick={handleBulkGenerate}
+                  disabled={bulkLoading}
+                >
+                  {bulkLoading ? 'Generating...' : 'Bulk Generate'}
+                </button>
               </div>
               <div style={s.tableWrap}>
+                {data.candidates && data.candidates.length === 0 ? (
+                  <div style={{ padding: '40px 20px', textAlign: 'center', color: '#94a3b8' }}>
+                    <p style={{ fontSize: '14px', marginBottom: '8px' }}>No accepted candidates yet</p>
+                    <p style={{ fontSize: '12px' }}>Candidates must have submissions with "accepted" status to generate LoA</p>
+                  </div>
+                ) : (
                 <table style={s.table}>
                   <colgroup>
                     <col style={{ width: "22%" }} />
@@ -233,24 +311,43 @@ export default function GenerateLoAHR() {
                     </tr>
                   </thead>
                   <tbody>
-                    {candidates.map((c, i) => (
-                      <tr key={i}>
-                        <td style={s.td}><span style={s.candidateName}>{c.name}</span><span style={s.candidateEmail}>{c.email}</span></td>
-                        <td style={s.td}>{c.position}</td>
-                        <td style={s.td}>{c.program}</td>
-                        <td style={s.td}>{c.type}</td>
-                        <td style={s.td}><span style={s.miniBadge(c.loaBg, c.loaColor)}>{c.loaStatus}</span></td>
-                        <td style={s.td}>
-                          <div style={s.actions}>
-                            {c.showPreview && <button style={s.btnAction}>Preview</button>}
-                            {c.showDownload && <button style={s.btnDownload}>Download</button>}
-                            {c.showGenerate && <button style={s.btnGenerate}>Generate</button>}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                    {data.candidates.map((c, i) => (
+  <tr key={c.id_submission}>
+    <td style={s.td}>
+      <span style={s.candidateName}>{c.name}</span>
+      <span style={s.candidateEmail}>{c.email}</span>
+    </td>
+    <td style={s.td}>{c.position}</td>
+    <td style={s.td}>{c.program}</td>
+    <td style={s.td}>{c.type}</td>
+    <td style={s.td}>
+      <span style={s.miniBadge(
+        c.loa_status === 'generated' ? "#dcfce7" : "#fef9c3",
+        c.loa_status === 'generated' ? "#166534" : "#92400e"
+      )}>
+        {c.loa_status === 'generated' ? 'Done' : 'Pending'}
+      </span>
+    </td>
+    <td style={s.td}>
+      <div style={s.actions}>
+        {c.has_file && <button style={s.btnAction} onClick={() => handleDownload(c.id_submission)}>Preview</button>}
+        {c.has_file && <button style={s.btnDownload} onClick={() => handleDownload(c.id_submission)}>Download</button>}
+        {c.loa_status === 'pending' && (
+          <button 
+            style={{...s.btnGenerate, opacity: loading === c.id_submission ? 0.6 : 1, cursor: loading === c.id_submission ? 'not-allowed' : 'pointer'}} 
+            onClick={() => handleGenerate(c.id_submission)}
+            disabled={loading === c.id_submission}
+          >
+            {loading === c.id_submission ? 'Generating...' : 'Generate'}
+          </button>
+        )}
+      </div>
+    </td>
+  </tr>
+))}
                   </tbody>
                 </table>
+                )}
               </div>
             </div>
 

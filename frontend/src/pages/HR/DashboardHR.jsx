@@ -1,4 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { api } from "../../api";
 
 // ============ STYLES ============
 const s = {
@@ -102,6 +104,22 @@ const navItems = {
   ],
 };
 
+const statusStyle = {
+  pending:   { bg: "#dbeafe", color: "#1e40af" },
+  screening: { bg: "#fef9c3", color: "#92400e" },
+  interview: { bg: "#f3e8ff", color: "#6b21a8" },
+  accepted:  { bg: "#dcfce7", color: "#166534" },
+  rejected:  { bg: "#fee2e2", color: "#991b1b" },
+};
+
+const pipelineColor = {
+  pending:   "#3b82f6",
+  screening: "#f59e0b",
+  interview: "#a855f7",
+  accepted:  "#22c55e",
+  rejected:  "#ef4444",
+};
+
 function SidebarHR() {
   const location = useLocation();
   return (
@@ -136,31 +154,33 @@ function SidebarHR() {
   );
 }
 
-// ============ DATA ============
-const statCards = [
-  { value: 84, label: "Total Candidates", badge: "+14", badgeBg: "#dbeafe", badgeColor: "#1e40af", sub: "12 new this week", barColor: "#3b82f6", barWidth: "60%" },
-  { value: 31, label: "Accepted", badge: "+5", badgeBg: "#dcfce7", badgeColor: "#166534", sub: "Acceptance rate 36.9%", barColor: "#22c55e", barWidth: "37%" },
-  { value: 18, label: "Interview Scheduled", badge: "+2", badgeBg: "#fef9c3", badgeColor: "#92400e", sub: "5 interviews today", barColor: "#f59e0b", barWidth: "50%" },
-  { value: 23, label: "Pending Review", badge: "-3", badgeBg: "#fee2e2", badgeColor: "#991b1b", sub: "Needs follow-up", barColor: "#ef4444", barWidth: "70%" },
-];
-
-const recentCandidates = [
-  { name: "Andi Pratama", email: "andi@gmail.com", position: "Frontend Dev", status: "Screening", statusBg: "#fef9c3", statusColor: "#92400e", dot: "#f59e0b", showActions: true },
-  { name: "Sari Dewi", email: "sari@yahoo.com", position: "UI Designer", status: "Interview", statusBg: "#f3e8ff", statusColor: "#6b21a8", dot: "#a855f7", showActions: true },
-  { name: "Budi Santoso", email: "budi@gmail.com", position: "Backend Dev", status: "Accepted", statusBg: "#dcfce7", statusColor: "#166534", dot: "#22c55e", showLoa: true },
-  { name: "Rizki Hakim", email: "rizki@email.com", position: "Data Analyst", status: "Applied", statusBg: "#dbeafe", statusColor: "#1e40af", dot: "#3b82f6", showActions: true },
-];
-
-const pipeline = [
-  { label: "Applied", count: 28, pct: "33%", color: "#3b82f6" },
-  { label: "Screening", count: 15, pct: "18%", color: "#f59e0b" },
-  { label: "Interview", count: 12, pct: "14%", color: "#a855f7" },
-  { label: "Accepted", count: 31, pct: "37%", color: "#22c55e" },
-  { label: "Rejected", count: 18, pct: "21%", color: "#ef4444" },
-];
-
 // ============ PAGE ============
 export default function DashboardHR() {
+  const [data, setData] = useState({
+    stats: {
+      total_candidates: 0,
+      accepted: 0,
+      interview_scheduled: 0,
+      pending_review: 0,
+    },
+    recent_candidates: [],
+    pipeline: [],
+  });
+
+  useEffect(() => {
+    api('/hr/dashboard').then(res => setData(res.data));
+  }, []);
+
+  const handleAccept = async (id) => {
+    await api(`/hr/candidates/${id}/accept`, { method: 'PATCH' });
+    api('/hr/dashboard').then(res => setData(res.data));
+  };
+
+  const handleReject = async (id) => {
+    await api(`/hr/candidates/${id}/reject`, { method: 'PATCH' });
+    api('/hr/dashboard').then(res => setData(res.data));
+  };
+
   return (
     <div style={s.app}>
       <style>{`* { box-sizing: border-box; margin: 0; padding: 0; } ::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 99px; }`}</style>
@@ -175,21 +195,25 @@ export default function DashboardHR() {
         <div style={s.content}>
           <h1 style={s.h1}>Good morning, HR!</h1>
           <p style={s.subtitle}>Summary of today's recruitment activity.</p>
-
           <div style={s.statGrid}>
-            {statCards.map((card, i) => (
-              <div key={i} style={s.statCard}>
-                <div style={s.statTop}>
-                  <span style={s.statLabel}>{card.label}</span>
-                  <span style={s.statBadge(card.badgeBg, card.badgeColor)}>{card.badge}</span>
-                </div>
-                <div style={s.statValue}>{card.value}</div>
-                <div style={s.statBarTrack}><div style={s.statBarFill(card.barWidth, card.barColor)} /></div>
-                <div style={s.statSub}>{card.sub}</div>
-              </div>
-            ))}
-          </div>
-
+  {[
+    { value: data.stats.total_candidates,    label: "Total Candidates",      badgeBg: "#dbeafe", badgeColor: "#1e40af", barColor: "#3b82f6", barWidth: "60%" },
+    { value: data.stats.accepted,            label: "Accepted",              badgeBg: "#dcfce7", badgeColor: "#166534", barColor: "#22c55e", barWidth: "37%" },
+    { value: data.stats.interview_scheduled, label: "Interview Scheduled",   badgeBg: "#fef9c3", badgeColor: "#92400e", barColor: "#f59e0b", barWidth: "50%" },
+    { value: data.stats.pending_review,      label: "Pending Review",        badgeBg: "#fee2e2", badgeColor: "#991b1b", barColor: "#ef4444", barWidth: "70%" },
+  ].map((card, i) => (
+    <div key={i} style={s.statCard}>
+      <div style={s.statTop}>
+        <span style={s.statLabel}>{card.label}</span>
+        <span style={s.statBadge(card.badgeBg, card.badgeColor)}>{card.value ?? "—"}</span>
+      </div>
+      <div style={s.statValue}>{card.value ?? 0}</div>
+      <div style={s.statBarTrack}>
+        <div style={s.statBarFill(card.barWidth, card.barColor)} />
+      </div>
+    </div>
+  ))}
+</div>
           <div style={s.bottomGrid}>
             <div style={s.card}>
               <div style={s.cardHeader}>
@@ -215,23 +239,34 @@ export default function DashboardHR() {
                     </tr>
                   </thead>
                   <tbody>
-                    {recentCandidates.map((c, i) => (
-                      <tr key={i}>
-                        <td style={s.td}><span style={s.candidateName}>{c.name}</span><span style={s.candidateEmail}>{c.email}</span></td>
-                        <td style={s.td}>{c.position}</td>
-                        <td style={s.td}>
-                          <span style={s.statusBadge(c.statusBg, c.statusColor)}>
-                            <span style={s.statusDot(c.dot)} />{c.status}
-                          </span>
-                        </td>
-                        <td style={s.td}>
-                          <div style={s.actions}>
-                            {c.showActions && <><button style={s.btnAccept}>Accept</button><button style={s.btnReject}>Reject</button></>}
-                            {c.showLoa && <button style={s.btnLoa}>Create LoA</button>}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+
+{data.recent_candidates.map((c, i) => (
+  <tr key={i}>
+    <td style={s.td}>
+      <span style={s.candidateName}>{c.name}</span>
+      <span style={s.candidateEmail}>{c.email}</span>
+    </td>
+    <td style={s.td}>{c.position}</td>
+    <td style={s.td}>
+      <span style={s.statusBadge(statusStyle[c.status]?.bg, statusStyle[c.status]?.color)}>
+        {c.status}
+      </span>
+    </td>
+    <td style={s.td}>
+      <div style={s.actions}>
+        {['pending','screening'].includes(c.status) && (
+          <>
+            <button style={s.btnAccept} onClick={() => handleAccept(c.id_submission)}>Accept</button>
+            <button style={s.btnReject} onClick={() => handleReject(c.id_submission)}>Reject</button>
+          </>
+        )}
+        {c.status === 'accepted' && (
+          <button style={s.btnLoa}>Create LoA</button>
+        )}
+      </div>
+    </td>
+  </tr>
+))}
                   </tbody>
                 </table>
               </div>
@@ -239,15 +274,15 @@ export default function DashboardHR() {
 
             <div style={s.pipelineCard}>
               <div style={{ ...s.cardTitle, marginBottom: "2px" }}>Selection Pipeline</div>
-              <div style={{ ...s.cardSubtitle, marginBottom: "16px" }}>From 84 total candidates</div>
-              {pipeline.map((p, i) => (
-                <div key={i} style={{ ...s.pipelineItem, marginBottom: i === pipeline.length - 1 ? 0 : "12px" }}>
-                  <span style={s.pipelineDot(p.color)} />
-                  <span style={s.pipelineLabel}>{p.label}</span>
-                  <span style={s.pipelineCount}>{p.count}</span>
-                  <span style={s.pipelinePct}>{p.pct}</span>
-                </div>
-              ))}
+              <div style={{ ...s.cardSubtitle, marginBottom: "16px" }}>From {data.stats.total_candidates} total candidates</div>
+              {data.pipeline.map((p, i) => (
+  <div key={i} style={s.pipelineItem}>
+    <span style={s.pipelineDot(pipelineColor[p.status])} />
+    <span style={s.pipelineLabel}>{p.status}</span>
+    <span style={s.pipelineCount}>{p.count}</span>
+    <span style={s.pipelinePct}>{p.pct}</span>
+  </div>
+))}
             </div>
           </div>
         </div>

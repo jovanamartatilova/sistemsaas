@@ -13,6 +13,7 @@ class Submission extends Model
         'id_submission', 'id_team', 'id_user', 'id_vacancy', 'id_position',
         'cover_letter_file', 'institution_letter_file',
         'cv_file', 'portfolio_file', 'linkedin_url', 'motivation_message', 'status', 'submitted_at',
+        'hr_notes', 'screening_status',
     ];
 
     public function vacancy()
@@ -29,4 +30,14 @@ class Submission extends Model
     {
         return $this->belongsTo(Position::class, 'id_position', 'id_position');
     }
+
+    public function loa()
+{
+    return $this->hasOne(Loa::class, 'id_submission', 'id_submission');
+}
+
+public function payroll()
+{
+    return $this->hasOne(Payroll::class, 'id_submission', 'id_submission');
+}
 }
