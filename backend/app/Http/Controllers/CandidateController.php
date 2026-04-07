@@ -37,7 +37,7 @@ class CandidateController extends Controller
             if (isset($user->id_user)) {
                 $submission = Submission::where('id_user', $user->id_user)
                     ->whereIn('status', ['pending', 'accepted'])
-                    ->with(['vacancy', 'position.competencies'])
+                    ->with(['vacancy', 'position.competencies', 'mentor'])
                     ->latest('submitted_at')
                     ->first();
             }
@@ -81,7 +81,7 @@ class CandidateController extends Controller
                         'major'            => '-',
                         'overall_progress' => $overallProgress,
                     ],
-                    'apprentice' => $apprentice ? [
+                    'apprentice' => ($apprentice || $submission) ? [
                         'id_apprentice' => $apprentice->id_apprentice ?? null,
                         'position'      => $submission?->position?->name ?? '-',
                         'company'       => $submission?->vacancy?->company_name ?? '-',
@@ -89,6 +89,7 @@ class CandidateController extends Controller
                         'end_date'      => $apprentice->end_date ?? null,
                         'batch'         => $submission?->vacancy?->batch ?? '-',
                         'status'        => $apprentice->status ?? 'inactive',
+                        'mentor_name'   => $submission?->mentor?->name ?? null,
                     ] : null,
                     'learning_progress' => [
                         'total_learning_hours'  => 240,
