@@ -112,6 +112,7 @@ logoText: {
   btnClose: { padding: "8px 20px", background: "#f1f5f9", color: "#334155", border: "none", borderRadius: "8px", fontSize: "13px", fontWeight: 500, cursor: "pointer", fontFamily: "inherit" },
 };
 
+// ─── SIDEBAR ─────────────────────────────────────────────────────────────────
 const navItems = {
   menu: [{ key: "/hr/dashboard", label: "Dashboard" }],
   selection: [
@@ -120,6 +121,7 @@ const navItems = {
     { key: "/hr/wawancara", label: "Interview" },
   ],
   administration: [
+    { key: "/hr/assign-mentor", label: "Assign Mentor" },
     { key: "/hr/generate-loa", label: "Generate LoA" },
     { key: "/hr/payroll", label: "Payroll" },
   ],

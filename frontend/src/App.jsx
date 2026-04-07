@@ -39,6 +39,7 @@ import ScreeningHR from "./pages/HR/ScreeningHR";
 import WawancaraHR from "./pages/HR/WawancaraHR";
 import GenerateLOA from "./pages/HR/GenerateLOA";
 import PayrollHR from './pages/HR/PayrollHR';
+import AssignMentor from './pages/HR/AssignMentor';
 // Mentor
 import CertificateMentor from './pages/Mentor/CertificateMentor';
 import EvaluationMentor from './pages/Mentor/EvaluationMentor';
@@ -224,15 +225,16 @@ export default function App() {
 
                 <Route path="/superadmin/*" element={<SuperAdminPages />} />
 
-                {/* HR ROUTES */} (Versi frontend)
+                {/* HR ROUTES */}
                 <Route path="/hr/dashboard" element={<PrivateRoute><DashboardHR /></PrivateRoute>} />
                 <Route path="/hr/kandidate" element={<PrivateRoute><KandidateHR /></PrivateRoute>} />
                 <Route path="/hr/screening" element={<PrivateRoute><ScreeningHR /></PrivateRoute>} />
                 <Route path="/hr/wawancara" element={<PrivateRoute><WawancaraHR /></PrivateRoute>} />
                 <Route path="/hr/generate-loa" element={<PrivateRoute><GenerateLOA /></PrivateRoute>} />
                 <Route path="/hr/payroll" element={<PrivateRoute><PayrollHR /></PrivateRoute>} />
+                <Route path="/hr/assign-mentor" element={<PrivateRoute><AssignMentor /></PrivateRoute>} />
 
-                {/* MENTOR ROUTES*/} (Versi frontend)
+                {/* MENTOR ROUTES*/}
                 <Route path="/mentor/dashboard" element={<PrivateRoute><DashboardMentor /></PrivateRoute>} />
                 <Route path="/mentor/interns" element={<PrivateRoute><InternsMentor /></PrivateRoute>} />
                 <Route path="/mentor/input-score" element={<PrivateRoute><InputScoreMentor /></PrivateRoute>} />

@@ -89,6 +89,7 @@ navLabel: {
   pipelinePct: { fontSize: "12px", color: "#94a3b8", minWidth: "34px", textAlign: "right" },
 };
 
+// ─── SIDEBAR ─────────────────────────────────────────────────────────────────
 const navItems = {
   menu: [{ key: "/hr/dashboard", label: "Dashboard" }],
   selection: [
@@ -97,6 +98,7 @@ const navItems = {
     { key: "/hr/wawancara", label: "Interview" },
   ],
   administration: [
+    { key: "/hr/assign-mentor", label: "Assign Mentor" },
     { key: "/hr/generate-loa", label: "Generate LoA" },
     { key: "/hr/payroll", label: "Payroll" },
   ],
