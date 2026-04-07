@@ -100,8 +100,15 @@ export default function ActivateAccount() {
 
       setDone(true);
       setTimeout(() => {
-        navigate(`/hr/dashboard`);
-      }, 2000);
+    const role = data.user.role;
+    if (role === 'mentor') {
+        navigate('/mentor/dashboard');
+    } else if (role === 'hr') {
+        navigate('/hr/dashboard');
+    } else {
+        navigate('/dashboard');
+    }
+}, 2000);
     } catch (err) {
       setErrorMsg(err.message);
     } finally {

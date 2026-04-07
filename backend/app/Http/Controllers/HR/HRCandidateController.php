@@ -79,6 +79,14 @@ class HRCandidateController extends Controller
 
         $submission->update(['status' => 'accepted']);
 
+        \App\Models\Apprentice::firstOrCreate(
+    ['id_submission' => $submission->id_submission],
+    [
+        'id_apprentice' => 'APP' . strtoupper(\Illuminate\Support\Str::random(7)),
+        'status'        => 'active',
+    ]
+);
+
         return response()->json([
             'success' => true,
             'message' => 'Candidate accepted',

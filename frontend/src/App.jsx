@@ -19,7 +19,7 @@ import ProfileSettings from './pages/ProfileSettings';
 import CertificateCandidate from './pages/CertificateCandidate';
 import ProgramsPage from './pages/ProgramsCandidate';
 // Staff
-import ActivateAccount from './pages/ActivateAccount';
+import ActivateAccount from './pages/activateAccount';
 // Main pages
 import DashboardPage from './pages/DashboardPage';
 import ProgramManagement from './pages/ProgramManagement';

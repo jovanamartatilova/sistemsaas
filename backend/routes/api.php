@@ -20,6 +20,7 @@ use App\Http\Controllers\HR\HRScreeningController;
 use App\Http\Controllers\HR\HRInterviewController;
 use App\Http\Controllers\HR\HRLoaController;
 use App\Http\Controllers\HR\HRPayrollController;
+use App\Http\Controllers\HR\HRMentorAssignmentController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\MentorController;
 
@@ -251,4 +252,10 @@ Route::middleware(['auth:sanctum'])->prefix('hr')->group(function () {
     Route::post('/payroll',           [HRPayrollController::class, 'store']);
     Route::patch('/payroll/{id}/pay', [HRPayrollController::class, 'pay']);
     Route::get('/payroll/export',     [HRPayrollController::class, 'exportCsv']);
+
+    // Mentor Assignment
+    Route::get('/assign-mentor',         [HRMentorAssignmentController::class, 'index']);
+    Route::post('/assign-mentor',        [HRMentorAssignmentController::class, 'assign']);
+    Route::post('/assign-mentor/auto',   [HRMentorAssignmentController::class, 'autoAssign']);
+    Route::delete('/assign-mentor/{id}', [HRMentorAssignmentController::class, 'unassign']);
 });

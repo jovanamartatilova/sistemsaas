@@ -15,6 +15,7 @@ class Submission extends Model
         'cv_file', 'portfolio_file', 'linkedin_url', 'motivation_message',
         'status', 'submitted_at',
         'hr_notes', 'screening_status',
+        'id_user_mentor',
     ];
 
     protected $casts = [
@@ -51,5 +52,10 @@ class Submission extends Model
 public function payroll()
 {
     return $this->hasOne(Payroll::class, 'id_submission', 'id_submission');
+}
+
+public function mentor()
+{
+    return $this->belongsTo(User::class, 'id_user_mentor', 'id_user');
 }
 }

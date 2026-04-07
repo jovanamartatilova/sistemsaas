@@ -360,6 +360,12 @@ export default function EarlyPathDashboard() {
             <p className="text-slate-500 text-sm mt-0.5 text-left">
               {apprentice?.position || "Position"} • {apprentice?.batch || "Batch"} – {apprentice?.company || "Company"}
             </p>
+            {apprentice?.mentor_name && (
+  <p className="text-xs text-slate-400 mt-0.5 text-left flex items-center gap-1">
+    <User size={11} />
+    Mentor: <span className="font-medium text-slate-600 ml-1">{apprentice.mentor_name}</span>
+  </p>
+)}
             <div className="flex items-center gap-3 mt-1.5">
               <span className="text-xs text-slate-400 flex items-center gap-1">
                 <MapPin size={11} /> 
