@@ -24,9 +24,44 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        $exceptions->render(function (\Illuminate\Auth\AuthenticationException $e, Request $request) {
-            if ($request->is('api/*')) {
-                return response()->json(['message' => 'Unauthenticated'], 401);
+        // Render custom responses for API routes
+        $exceptions->render(function (Throwable $e, Request $request) {
+            // All API requests should return JSON
+            if ($request->is('api/*') || $request->wantsJson()) {
+                // Handle authentication exceptions (this includes token-less requests on auth routes)
+                if ($e instanceof \Illuminate\Auth\AuthenticationException) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Unauthenticated',
+                    ], 401);
+                }
+                
+                // Handle authorization exceptions  
+                if ($e instanceof \Illuminate\Auth\Access\AuthorizationException) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Unauthorized',
+                    ], 403);
+                }
+                
+                // Don't try to redirect on API routes
+                if ($e instanceof \Symfony\Component\Routing\Exception\RouteNotFoundException) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Route not found'
+                    ], 404);
+                }
+                
+                // Return error details for API requests
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->getMessage() ?: 'Internal Server Error',
+                    'error' => env('APP_DEBUG') ? [
+                        'message' => $e->getMessage(),
+                        'file' => $e->getFile(),
+                        'line' => $e->getLine(),
+                    ] : null,
+                ], 500);
             }
         });
     })

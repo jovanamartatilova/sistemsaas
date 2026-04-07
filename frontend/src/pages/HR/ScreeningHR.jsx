@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { api } from "../../api.js";
 
 // ============ STYLES ============
 const s = {
@@ -159,34 +160,70 @@ function SidebarHR() {
   );
 }
 
-// ============ DATA ============
-const statCards = [
-  { value: 15, label: "Needs Review", badge: "Pending", badgeBg: "#fef9c3", badgeColor: "#92400e", sub: "Awaiting screening", barColor: "#f59e0b", barWidth: "55%" },
-  { value: 8, label: "Passed to Interview", badge: null, sub: "Cleared screening", barColor: "#22c55e", barWidth: "35%" },
-  { value: 5, label: "Rejected at Screening", badge: null, sub: "Did not qualify", barColor: "#ef4444", barWidth: "20%" },
-];
-
-const allPositions = ["All Positions", "Frontend Dev", "UI Designer", "Backend Dev"];
-
-const screeningList = [
-  { id: 1, name: "Andi Pratama", email: "andi@gmail.com", position: "Frontend Dev", cv: true, coverLetter: true, recommendation: false, portfolio: true, notes: "" },
-  { id: 2, name: "Fajar Nugroho", email: "fajar@email.com", position: "Frontend Dev", cv: true, coverLetter: false, recommendation: false, portfolio: false, notes: "" },
-  { id: 3, name: "Nisa Rahmah", email: "nisa@email.com", position: "UI Designer", cv: true, coverLetter: true, recommendation: true, portfolio: true, notes: "Good portfolio" },
-  { id: 4, name: "Hendra Wijaya", email: "hendra@email.com", position: "Backend Dev", cv: false, coverLetter: false, recommendation: false, portfolio: false, notes: "" },
-  { id: 5, name: "Putri Ayu", email: "putri@email.com", position: "UI Designer", cv: true, coverLetter: true, recommendation: false, portfolio: true, notes: "" },
-];
-
-const aiResults = {
-  1: { summary: "2 years of ReactJS & TailwindCSS experience. Relevant portfolio with 3 completed projects. Strong communication skills noted.", recommend: true },
-  2: { summary: "Decent JavaScript skills but limited framework experience. Portfolio is incomplete. Missing cover letter may indicate lower motivation.", recommend: false },
-  3: { summary: "Strong design portfolio with Figma and Framer proficiency. Recommendation letter from faculty confirms academic excellence.", recommend: true },
-  4: { summary: "CV not yet uploaded. Cannot perform AI analysis until documents are submitted.", recommend: false },
-  5: { summary: "Clean UI work in portfolio. Cover letter shows clear motivation. Recommendation letter pending but overall profile is solid.", recommend: true },
-};
-
 // ============ PAGE ============
 export default function ScreeningHR() {
-  const [selectedCandidate, setSelectedCandidate] = useState("Andi Pratama — Frontend Dev");
+const [data, setData] = useState({ stats: {}, candidates: [] });
+const [selectedId, setSelectedId] = useState(null);
+const [saving, setSaving] = useState(false);
+
+const fetchScreening = () => {
+  api('/hr/screening').then(res => setData(res.data));
+};
+
+useEffect(() => { fetchScreening(); }, []);
+
+const handlePass = async (id) => {
+  await api(`/hr/screening/${id}/pass`, { method: 'PATCH' });
+  fetchScreening();
+};
+
+const handleReject = async (id) => {
+  await api(`/hr/screening/${id}/reject`, { method: 'PATCH' });
+  fetchScreening();
+};
+
+const handleSaveNotes = async () => {
+  if (!selectedId) return;
+  setSaving(true);
+  await api(`/hr/screening/${selectedId}/notes`, {
+    method: 'POST',
+    body: JSON.stringify({ notes }),
+  });
+  setSaving(false);
+  fetchScreening();
+};
+
+const handleAiCheck = async (candidate) => {
+  setAiModal({ ...candidate, loading: true, result: null, error: null });
+
+  try {
+    const res = await api(`/hr/screening/${candidate.id_submission}/ai-check`, {
+      method: 'POST'
+    });
+
+    if (res.success) {
+      setAiModal(prev => ({ 
+        ...prev, 
+        loading: false, 
+        result: res.result 
+      }));
+    } else {
+      setAiModal(prev => ({ 
+        ...prev, 
+        loading: false, 
+        error: res.message || 'AI check failed'
+      }));
+    }
+  } catch (err) {
+    setAiModal(prev => ({ 
+      ...prev, 
+      loading: false, 
+      error: err.message || 'Error analyzing candidate'
+    }));
+    console.error('AI Check Error:', err);
+  }
+};
+
   const [notes, setNotes] = useState("");
   const [filterPosition, setFilterPosition] = useState("All Positions");
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
@@ -198,13 +235,30 @@ export default function ScreeningHR() {
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
-
-  const filtered = filterPosition === "All Positions" ? screeningList : screeningList.filter((k) => k.position === filterPosition);
-
+  
   // Doc cell: show "See" button if doc exists, dash if not
-  const DocCell = ({ has }) => has
-    ? <button style={s.btnSee}>See</button>
-    : <span style={s.notAvail}>—</span>;
+  const DocCell = ({ has, submissionId, type }) => has
+  ? (
+    <button style={s.btnSee} onClick={() => {
+      api(`/hr/screening/${submissionId}/document/${type}`)
+        .then(res => window.open(res.url, '_blank'));
+    }}>
+      See
+    </button>
+  )
+  : <span style={s.notAvail}>—</span>;
+
+  const statCards = [
+  { value: data.stats.needs_review, label: "Needs Review",          badge: "Pending", badgeBg: "#fef9c3", badgeColor: "#92400e", sub: "Awaiting screening",  barColor: "#f59e0b", barWidth: "55%" },
+  { value: data.stats.passed,       label: "Passed to Interview",   badge: null,      sub: "Cleared screening",                  barColor: "#22c55e",        barWidth: "35%" },
+  { value: data.stats.rejected,     label: "Rejected at Screening", badge: null,      sub: "Did not qualify",                    barColor: "#ef4444",        barWidth: "20%" },
+];
+
+const allPositions = ["All Positions", ...new Set(data.candidates.map(c => c.position))];
+
+const filtered = filterPosition === "All Positions"
+  ? data.candidates
+  : data.candidates.filter(k => k.position === filterPosition);
 
   return (
     <div style={s.app}>
@@ -290,34 +344,36 @@ export default function ScreeningHR() {
                   </thead>
                   <tbody>
                     {filtered.map((k) => (
-                      <tr key={k.id}>
+                      <tr key={k.id_submission}>
                         <td style={s.td}>
                           <span style={s.candidateName}>{k.name}</span>
                           <span style={s.candidateEmail}>{k.email}</span>
                         </td>
                         <td style={s.td}>{k.position}</td>
-                        <td style={s.td}><DocCell has={k.cv} /></td>
-                        <td style={s.td}><DocCell has={k.coverLetter} /></td>
-                        <td style={s.td}><DocCell has={k.recommendation} /></td>
-                        <td style={s.td}><DocCell has={k.portfolio} /></td>
+                        <td style={s.td}><DocCell has={k.has_cv} submissionId={k.id_submission} type="cv" /></td>
+<td style={s.td}><DocCell has={k.has_cover_letter} submissionId={k.id_submission} type="cover_letter" /></td>
+<td style={s.td}><DocCell has={k.has_institution_letter} submissionId={k.id_submission} type="institution_letter" /></td>
+<td style={s.td}><DocCell has={k.has_portfolio} submissionId={k.id_submission} type="portfolio" /></td>
                         <td style={s.td}>
                           <button
-                            style={{ ...s.btnAiCheck, opacity: !k.cv ? 0.4 : 1, cursor: !k.cv ? "not-allowed" : "pointer" }}
-                            onClick={() => k.cv && setAiModal(k.id)}
+                            style={{ ...s.btnAiCheck, opacity: !k.has_cv ? 0.4 : 1, cursor: !k.has_cv ? "not-allowed" : "pointer" }}
+                            onClick={() => k.has_cv && handleAiCheck(k)}
                           >
                             Check
                           </button>
                         </td>
                         <td style={s.td}>
-                          {k.cv
-                            ? <span style={s.miniBadge("#fef9c3", "#92400e")}>Pending</span>
-                            : <span style={s.miniBadge("#fee2e2", "#991b1b")}>Incomplete</span>
-                          }
+                          {k.screening_status === 'passed'
+  ? <span style={s.miniBadge("#dcfce7", "#166534")}>Passed</span>
+  : k.has_cv
+    ? <span style={s.miniBadge("#fef9c3", "#92400e")}>Pending</span>
+    : <span style={s.miniBadge("#fee2e2", "#991b1b")}>Incomplete</span>
+}
                         </td>
                         <td style={s.td}>
                           <div style={s.actions}>
-                            {k.cv && <button style={s.btnPass}>Pass</button>}
-                            <button style={s.btnReject}>Reject</button>
+                            {k.has_cv && <button style={s.btnPass} onClick={() => handlePass(k.id_submission)}>Pass</button>}
+<button style={s.btnReject} onClick={() => handleReject(k.id_submission)}>Reject</button>
                           </div>
                         </td>
                       </tr>
@@ -333,15 +389,21 @@ export default function ScreeningHR() {
                 <div style={s.aiPanelTitle}>Add HR Notes</div>
                 <div style={s.field}>
                   <label style={s.fieldLabel}>Candidate</label>
-                  <select style={s.fieldSelect} value={selectedCandidate} onChange={(e) => setSelectedCandidate(e.target.value)}>
-                    {screeningList.map((k) => <option key={k.id}>{k.name} — {k.position}</option>)}
+                  <select style={s.fieldSelect} value={selectedId || ""} onChange={(e) => setSelectedId(e.target.value)}>
+                    {data.candidates.map((k) => (
+  <option key={k.id_submission} value={k.id_submission}>
+    {k.name} — {k.position}
+  </option>
+))}
                   </select>
                 </div>
                 <div style={s.field}>
                   <label style={s.fieldLabel}>Notes</label>
                   <textarea style={s.fieldTextarea} placeholder="Write screening notes..." value={notes} onChange={(e) => setNotes(e.target.value)} />
                 </div>
-                <button style={s.btnSave}>Save Notes</button>
+                <button style={s.btnSave} onClick={handleSaveNotes} disabled={saving}>
+  {saving ? 'Saving...' : 'Save Notes'}
+</button>
               </div>
             </div>
           </div>
@@ -349,29 +411,38 @@ export default function ScreeningHR() {
       </main>
 
       {/* AI Check Modal */}
-      {aiModal && (() => {
-        const candidate = screeningList.find((k) => k.id === aiModal);
-        const result = aiResults[aiModal];
-        return (
-          <div style={s.modalOverlay} onClick={() => setAiModal(null)}>
-            <div style={s.modal} onClick={(e) => e.stopPropagation()}>
-              <div style={s.modalTitle}>AI Screening Result</div>
-              <div style={s.modalSubtitle}>{candidate?.name} — {candidate?.position}</div>
-              <div style={s.aiResultBox}>
-                <div style={s.aiResultLabel}>AI Analysis</div>
-                <div style={s.aiResultText}>{result?.summary}</div>
-                <div style={s.aiRecBadge(result?.recommend)}>
-                  {result?.recommend ? "Recommended to proceed" : "Not recommended"}
+      {aiModal && (
+  <div style={s.modalOverlay} onClick={() => setAiModal(null)}>
+    <div style={s.modal} onClick={e => e.stopPropagation()}>
+      <div style={s.modalTitle}>AI Screening Result</div>
+      <div style={s.modalSubtitle}>{aiModal.name} — {aiModal.position}</div>
+      
+      {aiModal.error ? (
+        <div style={{ ...s.aiResultBox, background: '#fee2e2', borderColor: '#fca5a5' }}>
+          <div style={{ ...s.aiResultLabel, color: '#dc2626' }}>Error</div>
+          <div style={{ ...s.aiResultText, color: '#991b1b' }}>{aiModal.error}</div>
+        </div>
+      ) : (
+        <div style={s.aiResultBox}>
+          <div style={s.aiResultLabel}>AI Analysis</div>
+          {aiModal.loading
+            ? <div style={s.aiResultText}>🔄 Analyzing candidate...</div>
+            : <>
+                <div style={s.aiResultText}>{aiModal.result?.summary || 'No summary available'}</div>
+                <div style={s.aiRecBadge(aiModal.result?.recommend)}>
+                  {aiModal.result?.recommend ? "✓ Recommended to proceed" : "✗ Not recommended"}
                 </div>
-              </div>
-              <div style={{ fontSize: "12px", color: "#94a3b8" }}>AI analysis is advisory only. Final decision rests with HR.</div>
-              <div style={s.modalFooter}>
-                <button style={s.btnClose} onClick={() => setAiModal(null)}>Close</button>
-              </div>
-            </div>
-          </div>
-        );
-      })()}
+              </>
+          }
+        </div>
+      )}
+      <div style={{ fontSize: "12px", color: "#94a3b8" }}>AI analysis is advisory only.</div>
+      <div style={s.modalFooter}>
+        <button style={s.btnClose} onClick={() => setAiModal(null)}>Close</button>
+      </div>
+    </div>
+  </div>
+)}
     </div>
   );
 }
