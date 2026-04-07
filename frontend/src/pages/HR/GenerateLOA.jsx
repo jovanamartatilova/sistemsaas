@@ -111,6 +111,7 @@ const s = {
   loaNo: { fontSize: "11px", color: "#94a3b8", textAlign: "center", display: "block", marginBottom: "14px" },
 };
 
+// ─── SIDEBAR ─────────────────────────────────────────────────────────────────
 const navItems = {
   menu: [{ key: "/hr/dashboard", label: "Dashboard" }],
   selection: [
@@ -119,6 +120,7 @@ const navItems = {
     { key: "/hr/wawancara", label: "Interview" },
   ],
   administration: [
+    { key: "/hr/assign-mentor", label: "Assign Mentor" },
     { key: "/hr/generate-loa", label: "Generate LoA" },
     { key: "/hr/payroll", label: "Payroll" },
   ],

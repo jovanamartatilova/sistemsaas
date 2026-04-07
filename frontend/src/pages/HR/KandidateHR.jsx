@@ -66,6 +66,7 @@ const statusStyle = {
   rejected:  { bg: "#fee2e2", color: "#991b1b", dot: "#ef4444" },
 };
 
+// ─── SIDEBAR ─────────────────────────────────────────────────────────────────
 const navItems = {
   menu: [{ key: "/hr/dashboard", label: "Dashboard" }],
   selection: [
@@ -74,6 +75,7 @@ const navItems = {
     { key: "/hr/wawancara", label: "Interview" },
   ],
   administration: [
+    { key: "/hr/assign-mentor", label: "Assign Mentor" },
     { key: "/hr/generate-loa", label: "Generate LoA" },
     { key: "/hr/payroll", label: "Payroll" },
   ],

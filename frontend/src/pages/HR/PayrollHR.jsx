@@ -72,6 +72,7 @@ const s = {
   errorMsg: { padding: "8px 12px", background: "#fff1f2", border: "1px solid #fca5a5", borderRadius: "8px", color: "#dc2626", fontSize: "12px", marginBottom: "12px" },
 };
 
+// ─── SIDEBAR ─────────────────────────────────────────────────────────────────
 const navItems = {
   menu: [{ key: "/hr/dashboard", label: "Dashboard" }],
   selection: [
@@ -80,6 +81,7 @@ const navItems = {
     { key: "/hr/wawancara", label: "Interview" },
   ],
   administration: [
+    { key: "/hr/assign-mentor", label: "Assign Mentor" },
     { key: "/hr/generate-loa", label: "Generate LoA" },
     { key: "/hr/payroll", label: "Payroll" },
   ],
