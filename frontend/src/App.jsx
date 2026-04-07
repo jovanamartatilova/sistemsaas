@@ -20,7 +20,6 @@ import CertificateCandidate from './pages/CertificateCandidate';
 import ProgramsPage from './pages/ProgramsCandidate';
 // Staff
 import ActivateAccount from './pages/ActivateAccount';
-import LoginStaff from './pages/LoginStaff';
 // Main pages
 import DashboardPage from './pages/DashboardPage';
 import ProgramManagement from './pages/ProgramManagement';
@@ -81,7 +80,7 @@ export default function App() {
                 <Route path="/c/:slug" element={<CompanyPublicPage />} />
                 <Route path="/c/:slug/register" element={<SignUpCandidate />} />
                 <Route path="/c/:slug/login" element={<LoginCandidate />} />
-                <Route path="/c/:slug/staff/login" element={<LoginStaff />} />
+                <Route path="/c/:slug/staff/login" element={<Navigate to="/login" replace />} />
 
 
                 {/* Candidate Dashboard & Apply */}

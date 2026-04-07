@@ -1,5 +1,9 @@
 <?php
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
+use Illuminate\Http\Request;
+use App\Models\User;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CompanyPublicController;
 use App\Http\Controllers\VacancyController;
@@ -10,6 +14,12 @@ use App\Http\Controllers\SuperAdmin\TenantController;
 use App\Http\Controllers\SuperAdmin\UserController;
 use App\Http\Controllers\CompanyUserController;
 use App\Http\Controllers\CandidateController;
+use App\Http\Controllers\HR\HRDashboardController;
+use App\Http\Controllers\HR\HRCandidateController;
+use App\Http\Controllers\HR\HRScreeningController;
+use App\Http\Controllers\HR\HRInterviewController;
+use App\Http\Controllers\HR\HRLoaController;
+use App\Http\Controllers\HR\HRPayrollController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\MentorController;
 
@@ -148,5 +158,97 @@ Route::get('/test', function () {
     ]);
 });
 
+// Development: Get test token (only in development)
+if (env('APP_DEBUG', false)) {
+    Route::post('/dev/test-token', function (Request $request) {
+        try {
+            $user = User::where('role', 'hr')->first();
+            if (!$user) {
+                // Get or create a test company first
+                $company = \App\Models\Company::first();
+                if (!$company) {
+                    $company = \App\Models\Company::create([
+                        'id_company' => 'CMP' . strtoupper(Str::random(7)),
+                        'name' => 'Test Company',
+                        'slug' => 'test-company',
+                        'is_active' => true,
+                    ]);
+                }
+                
+                // Create a test HR user with valid company
+                $user = User::create([
+                    'id_user' => 'USR' . strtoupper(Str::random(7)),
+                    'id_company' => $company->id_company,
+                    'name' => 'Test HR',
+                    'email' => 'test-hr@example.com',
+                    'password' => Hash::make('password'),
+                    'role' => 'hr',
+                    'is_active' => true,
+                ]);
+            }
+            $token = $user->createToken('test_token')->plainTextToken;
+            return response()->json([
+                'token' => $token,
+                'user' => $user,
+                'message' => 'Test token generated',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    });
+}
 
+// Test endpoint for HR (no auth required for testing)
+Route::get('/hr/interviews-test', function () {
+    return response()->json([
+        'success' => true,
+        'data' => [
+            'stats' => [
+                'today' => 0,
+                'pending' => 0,
+                'completed' => 0,
+            ],
+            'interviews' => [],
+        ]
+    ]);
+});
 
+// HR
+Route::middleware(['auth:sanctum'])->prefix('hr')->group(function () {
+
+    // Dashboard
+    Route::get('/dashboard', [HRDashboardController::class, 'index']);
+
+    // Candidates
+    Route::get('/candidates',                          [HRCandidateController::class, 'index']);
+    Route::get('/candidates/export',                   [HRCandidateController::class, 'exportCsv']);
+    Route::patch('/candidates/{id}/accept',            [HRCandidateController::class, 'accept']);
+    Route::patch('/candidates/{id}/reject',            [HRCandidateController::class, 'reject']);
+    Route::get('/candidates/{id}/documents/{type}',    [HRCandidateController::class, 'viewDocument']);
+
+    // Screening
+    Route::get('/screening',                           [HRScreeningController::class, 'index']);
+    Route::patch('/screening/{id}/pass',               [HRScreeningController::class, 'pass']);
+    Route::patch('/screening/{id}/reject',             [HRScreeningController::class, 'reject']);
+    Route::post('/screening/{id}/notes',               [HRScreeningController::class, 'saveNotes']);
+    Route::post('/screening/{id}/ai-check',            [HRScreeningController::class, 'aiCheck']);
+    Route::get('/screening/{id}/document/{type}',      [HRScreeningController::class, 'viewDocument']);
+
+    // Interview
+    Route::get('/interviews',                          [HRInterviewController::class, 'index']);
+    Route::post('/interviews',                         [HRInterviewController::class, 'store']);
+    Route::patch('/interviews/{id}',                   [HRInterviewController::class, 'update']);
+    Route::patch('/interviews/{id}/result',            [HRInterviewController::class, 'updateResult']);
+
+    // LoA
+    Route::get('/loa',                                 [HRLoaController::class, 'index']);
+    Route::post('/loa/bulk-generate',                  [HRLoaController::class, 'bulkGenerate']);
+    Route::post('/loa/{id}/generate',                  [HRLoaController::class, 'generate']);
+    Route::get('/loa/{id}/download',                   [HRLoaController::class, 'download']);
+
+    // Payroll
+    Route::get('/payroll',            [HRPayrollController::class, 'index']);
+    Route::post('/payroll',           [HRPayrollController::class, 'store']);
+    Route::patch('/payroll/{id}/pay', [HRPayrollController::class, 'pay']);
+    Route::get('/payroll/export',     [HRPayrollController::class, 'exportCsv']);
+});

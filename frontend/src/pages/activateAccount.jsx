@@ -94,12 +94,13 @@ export default function ActivateAccount() {
       if (!response.ok) throw new Error(data.message || "Aktivasi gagal");
 
       localStorage.setItem("auth_token", data.token);
+      localStorage.setItem("hr_token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
       localStorage.setItem("company", JSON.stringify(data.company));
 
       setDone(true);
       setTimeout(() => {
-        navigate(`//dashboard`);
+        navigate(`/hr/dashboard`);
       }, 2000);
     } catch (err) {
       setErrorMsg(err.message);
