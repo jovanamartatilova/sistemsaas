@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { api } from "../../api";
+import { useAuthStore } from "../../stores/authStore";
 
 // ============ STYLES ============
 const s = {
@@ -66,6 +67,29 @@ const statusStyle = {
   rejected:  { bg: "#fee2e2", color: "#991b1b", dot: "#ef4444" },
 };
 
+const modalOverlay = { position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 999, display: "flex", alignItems: "center", justifyContent: "center" };
+const modalBox = { background: "#fff", borderRadius: "14px", padding: "28px", width: "320px", boxShadow: "0 8px 32px rgba(0,0,0,0.18)" };
+const modalTitle = { fontSize: "16px", fontWeight: 700, color: "#0f172a", marginBottom: "8px" };
+const modalDesc = { fontSize: "13px", color: "#64748b", marginBottom: "24px" };
+const modalActions = { display: "flex", gap: "10px", justifyContent: "flex-end" };
+const btnCancel = { padding: "7px 16px", borderRadius: "8px", border: "1px solid #e2e8f0", background: "#fff", color: "#334155", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" };
+const btnConfirmLogout = { padding: "7px 16px", borderRadius: "8px", border: "none", background: "#ef4444", color: "#fff", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" };
+
+function LogoutModal({ onConfirm, onCancel }) {
+  return (
+    <div style={modalOverlay}>
+      <div style={modalBox}>
+        <div style={modalTitle}>Konfirmasi Logout</div>
+        <div style={modalDesc}>Yakin ingin keluar dari sesi ini?</div>
+        <div style={modalActions}>
+          <button style={btnCancel} onClick={onCancel}>Batal</button>
+          <button style={btnConfirmLogout} onClick={onConfirm}>Ya, Logout</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── SIDEBAR ─────────────────────────────────────────────────────────────────
 const navItems = {
   menu: [{ key: "/hr/dashboard", label: "Dashboard" }],
@@ -81,7 +105,11 @@ const navItems = {
   ],
 };
 
-function SidebarHR() {
+const sidebarBottom = { borderTop: "1px solid rgba(255,255,255,0.08)", padding: "12px 14px", display: "flex", flexDirection: "column", gap: "10px" };
+const userRow = { display: "flex", alignItems: "center", gap: "8px" };
+const btnLogout = { width: "100%", padding: "6px", borderRadius: "6px", border: "1px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.08)", color: "#f87171", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" };
+
+function SidebarHR({ user, onLogout }) {
   const location = useLocation();
   return (
     <aside style={s.sidebar}>
@@ -104,12 +132,22 @@ function SidebarHR() {
           </div>
         ))}
       </nav>
-      <div style={s.sidebarUser}>
-        <div style={s.userAvatar}>HR</div>
-        <div>
-          <span style={{ fontSize: "11.5px", fontWeight: 600, color: "#e2e8f0", display: "block" }}>Admin HR</span>
-          <span style={{ fontSize: "10px", color: "#64748b", display: "block" }}>earlypath.id</span>
+      <div style={sidebarBottom}>
+        <div style={userRow}>
+          <div style={s.userAvatar}>HR</div>
+          <div>
+            <span style={{ fontSize: "11.5px", fontWeight: 600, color: "#e2e8f0", display: "block" }}>
+              {user?.name || "Admin HR"}
+            </span>
+          </div>
         </div>
+        <button style={btnLogout} onClick={onLogout} title="Logout">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <polyline points="16 17 21 12 16 7" />
+            <line x1="21" y1="12" x2="9" y2="12" />
+          </svg>
+        </button>
       </div>
     </aside>
   );
@@ -117,7 +155,10 @@ function SidebarHR() {
 
 // ============ PAGE ============
 export default function CandidatesHR() {
-  const [data, setData] = useState({ stats: {}, candidates: [] });
+  const navigate = useNavigate();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const user = useAuthStore((state) => state.user);
+  const [data, setData] = useState({ stats: {}, candidates: [], user: {} });
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
 
@@ -146,6 +187,12 @@ export default function CandidatesHR() {
     window.open(`${import.meta.env.VITE_API_URL}/hr/candidates/export?token=${token}`);
   };
 
+  const handleLogout = () => {
+    localStorage.clear();
+    useAuthStore.setState({ isAuthenticated: false, token: null, user: null, company: null });
+    navigate("/login");
+  };
+
   const statCards = [
     { value: data.stats.total,       label: "Total Applicants", badgeBg: "#dbeafe", badgeColor: "#1e40af", sub: "All registered candidates", barColor: "#3b82f6", barWidth: "60%" },
     { value: data.stats.unprocessed, label: "Unprocessed",      badgeBg: null,      badgeColor: null,      sub: "Needs follow-up",           barColor: "#f59e0b", barWidth: "34%" },
@@ -157,8 +204,9 @@ export default function CandidatesHR() {
 
   return (
     <div style={s.app}>
+      {showLogoutModal && <LogoutModal onConfirm={handleLogout} onCancel={() => setShowLogoutModal(false)} />}
       <style>{`* { box-sizing: border-box; margin: 0; padding: 0; } ::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 99px; }`}</style>
-      <SidebarHR />
+      <SidebarHR user={user} onLogout={() => setShowLogoutModal(true)} />
       <main style={s.main}>
         <div style={s.topbar}>
           <div style={s.breadcrumb}>

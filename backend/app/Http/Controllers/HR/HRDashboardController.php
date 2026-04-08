@@ -74,6 +74,11 @@ class HRDashboardController extends Controller
         return response()->json([
             'success' => true,
             'data'    => [
+            'user' => [                        
+            'name'  => $request->user()->name,
+            'email' => $request->user()->email,
+            'photo' => $request->user()->photo_path,
+        ],
                 'stats' => [
                     'total_candidates'    => $totalCandidates,
                     'accepted'            => $accepted,
