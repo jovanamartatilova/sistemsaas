@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { SidebarMentor } from "./DashboardMentor";
 import { mentorApi } from "../../api/mentorApi";
+import { useAuthStore } from "../../stores/authStore";
 
 const s = {
   app: { display: "flex", minHeight: "100vh", background: "#f1f5f9", fontFamily: "'Poppins', 'Segoe UI', sans-serif", fontSize: "14px", color: "#1e293b" },
@@ -49,23 +51,29 @@ const statCards = [
 // Removed hardcoded certList - now loaded from API in component
 
 export default function CertificateMentor() {
+  const navigate = useNavigate();
+  const [mentor, setMentor] = useState(null);
   const [statCards, setStatCards] = useState([]);
   const [certList, setCertList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState({});
 
   useEffect(() => {
-    fetchCertificates();
+    fetchData();
   }, []);
 
-  const fetchCertificates = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true);
-      const res = await mentorApi.getCertificates();
-      setStatCards(res.data.stats || []);
-      setCertList(res.data.certificates || []);
+      const [profileRes, certRes] = await Promise.all([
+        mentorApi.getProfile(),
+        mentorApi.getCertificates(),
+      ]);
+      setMentor(profileRes.data);
+      setStatCards(certRes.data.stats || []);
+      setCertList(certRes.data.certificates || []);
     } catch (error) {
-      console.error('Error fetching certificates:', error);
+      console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
     }
@@ -76,7 +84,7 @@ export default function CertificateMentor() {
       setGenerating(prev => ({ ...prev, [idSubmission]: true }));
       await mentorApi.generateCertificate(idSubmission);
       alert('Certificate generated successfully!');
-      fetchCertificates();
+      fetchData();
     } catch (error) {
       console.error('Error generating certificate:', error);
       alert('Failed to generate certificate');
@@ -85,10 +93,16 @@ export default function CertificateMentor() {
     }
   };
 
+  const handleLogout = () => {
+    localStorage.clear();
+    useAuthStore.setState({ isAuthenticated: false, token: null, user: null, company: null });
+    navigate("/login");
+  };
+
   if (loading) {
     return (
       <div style={s.app}>
-        <SidebarMentor />
+        <SidebarMentor mentor={mentor} onLogout={handleLogout} />
         <main style={s.main}>
           <div style={s.topbar}>
             <div style={s.bc}>
@@ -105,7 +119,7 @@ export default function CertificateMentor() {
   return (
     <div style={s.app}>
       <style>{`* { box-sizing: border-box; margin: 0; padding: 0; } ::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 99px; } tr:last-child td { border-bottom: none; }`}</style>
-      <SidebarMentor />
+      <SidebarMentor mentor={mentor} onLogout={handleLogout} />
       <main style={s.main}>
         <div style={s.topbar}>
           <div style={s.bc}>

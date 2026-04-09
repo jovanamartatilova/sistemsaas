@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { SidebarMentor } from "./DashboardMentor";
 import { mentorApi } from "../../api/mentorApi";
+import { useAuthStore } from "../../stores/authStore";
 
 const s = {
   app: { display: "flex", minHeight: "100vh", background: "#f1f5f9", fontFamily: "'Poppins', 'Segoe UI', sans-serif", fontSize: "14px", color: "#1e293b" },
@@ -40,31 +42,52 @@ const s = {
 // Removed hardcoded statCards and recapData - now loaded from API in component
 
 export default function ScoreRecapMentor() {
+  const navigate = useNavigate();
+  const [mentor, setMentor] = useState(null);
   const [statCards, setStatCards] = useState([]);
   const [recapData, setRecapData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetchScoreRecap();
+    fetchData();
   }, []);
 
-  const fetchScoreRecap = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true);
-      const res = await mentorApi.getScoreRecap();
-      setStatCards(res.data.stats || []);
-      setRecapData(res.data.recap || []);
+      setError(null);
+      const [profileRes, recapRes] = await Promise.all([
+        mentorApi.getProfile(),
+        mentorApi.getScoreRecap(),
+      ]);
+      
+      setMentor(profileRes.data);
+      console.log('Score recap data:', recapRes.data);
+      console.log('Stats:', recapRes.data.stats);
+      console.log('Recap:', recapRes.data.recap);
+      setStatCards(recapRes.data.stats || []);
+      setRecapData(recapRes.data.recap || []);
     } catch (error) {
       console.error('Error fetching score recap:', error);
+      console.error('Error response:', error.response?.data);
+      console.error('Error status:', error.response?.status);
+      setError('Failed to load score recap: ' + (error.response?.data?.message || error.message));
     } finally {
       setLoading(false);
     }
   };
 
+  const handleLogout = () => {
+    localStorage.clear();
+    useAuthStore.setState({ isAuthenticated: false, token: null, user: null, company: null });
+    navigate("/login");
+  };
+
   if (loading) {
     return (
       <div style={s.app}>
-        <SidebarMentor />
+        <SidebarMentor mentor={mentor} onLogout={handleLogout} />
         <main style={s.main}>
           <div style={s.topbar}>
             <div style={s.bc}>
@@ -81,7 +104,7 @@ export default function ScoreRecapMentor() {
   return (
     <div style={s.app}>
       <style>{`* { box-sizing: border-box; margin: 0; padding: 0; } ::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 99px; } tr:last-child td { border-bottom: none; }`}</style>
-      <SidebarMentor />
+      <SidebarMentor mentor={mentor} onLogout={handleLogout} />
       <main style={s.main}>
         <div style={s.topbar}>
           <div style={s.bc}>
@@ -94,6 +117,18 @@ export default function ScoreRecapMentor() {
         <div style={s.content}>
           <h1 style={s.h1}>Score Recap</h1>
           <p style={s.subtitle}>Average score is auto-calculated from individual competency scores. Each intern's score is recorded independently regardless of team enrollment.</p>
+
+          {error && (
+            <div style={{ background: '#fee2e2', border: '1px solid #fecaca', color: '#991b1b', padding: '12px 16px', borderRadius: '8px', marginBottom: '16px', fontSize: '13px' }}>
+              ❌ {error}
+            </div>
+          )}
+
+          {recapData.length === 0 && !error && (
+            <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#166534', padding: '12px 16px', borderRadius: '8px', marginBottom: '16px', fontSize: '13px' }}>
+              ℹ️ No scores recorded yet. Go to Input Score to add scores for interns.
+            </div>
+          )}
 
           <div style={s.grid3}>
             {statCards.map((c, i) => (

@@ -45,14 +45,19 @@ class Submission extends Model
     }
 
     public function loa()
-{
-    return $this->hasOne(Loa::class, 'id_submission', 'id_submission');
-}
+    {
+        return $this->hasOne(Loa::class, 'id_submission', 'id_submission');
+    }
 
-public function payroll()
-{
-    return $this->hasOne(Payroll::class, 'id_submission', 'id_submission');
-}
+    public function interview()
+    {
+        return $this->hasOne(Interview::class, 'id_submission', 'id_submission');
+    }
+
+    public function payroll()
+    {
+        return $this->hasOne(Payroll::class, 'id_submission', 'id_submission');
+    }
 
 public function mentor()
 {

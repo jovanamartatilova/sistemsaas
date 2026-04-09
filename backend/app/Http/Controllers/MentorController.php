@@ -3,12 +3,30 @@
 namespace App\Http\Controllers;
 
 use App\Models\Submission;
+use App\Models\Assessment;
 use App\Models\Certificate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 class MentorController extends Controller
 {
+    /**
+     * Get mentor profile information
+     */
+    public function getProfile(Request $request)
+    {
+        $mentor = $request->user();
+
+        return response()->json([
+            'id_user' => $mentor->id_user,
+            'name' => $mentor->name,
+            'email' => $mentor->email,
+            'phone' => $mentor->phone ?? null,
+            'role' => $mentor->role,
+            'company_id' => $mentor->id_company,
+        ]);
+    }
+
     /**
      * Get dashboard statistics for mentor
      */
@@ -64,11 +82,13 @@ class MentorController extends Controller
         $mentorId = $request->user()->id_user;
 
         $submissions = Submission::where('id_user_mentor', $mentorId)
-            ->with(['user', 'position'])
+            ->with(['user', 'position', 'vacancy'])
             ->get();
 
         $interns = $submissions->map(function ($sub) {
-            $scoresData = $sub->scores_data ?? [];
+            // Get scores from Assessment (not Submission)
+            $assessment = Assessment::where('id_submission', $sub->id_submission)->first();
+            $scoresData = $assessment->scores_data ?? [];
             $completedComps = 0;
             $totalComps = count($scoresData);
 
@@ -86,16 +106,55 @@ class MentorController extends Controller
                 $avgScore = count($scores) > 0 ? round(array_sum(array_column($scores, 'score')) / count($scores), 1) : null;
             }
 
+            // Determine status
+            $status = 'Just Started';
+            $statusBg = '#f1f5f9';
+            $statusColor = '#64748b';
+            $dot = '#94a3b8';
+
+            if ($avgScore !== null) {
+                if ($avgScore >= 75 && $completedComps === $totalComps) {
+                    $status = 'Passed';
+                    $statusBg = '#dcfce7';
+                    $statusColor = '#166534';
+                    $dot = '#22c55e';
+                } else {
+                    $status = 'In Progress';
+                    $statusBg = '#fef9c3';
+                    $statusColor = '#92400e';
+                    $dot = '#f59e0b';
+                }
+            }
+
+            // Get program and period from vacancy
+            $program = $sub->vacancy ? ($sub->vacancy->title ?? 'Regular Batch') : 'Regular Batch';
+            $period = 'Jan - Apr 2026'; // Default, can be updated from vacancy if date fields exist
+            if ($sub->vacancy) {
+                if ($sub->vacancy->start_date && $sub->vacancy->end_date) {
+                    $start = \Carbon\Carbon::parse($sub->vacancy->start_date)->format('M');
+                    $end = \Carbon\Carbon::parse($sub->vacancy->end_date)->format('M Y');
+                    $period = "$start - $end";
+                }
+            }
+
             return [
                 'id_submission' => $sub->id_submission,
                 'name' => $sub->user->name,
                 'email' => $sub->user->email,
                 'position' => $sub->position->name ?? 'Backend Dev',
+                'program' => $program,
+                'period' => $period,
                 'type' => !empty($sub->id_team) ? 'Team' : 'Individual',
                 'progress' => $progress,
+                'progColor' => $progress >= 75 ? '#22c55e' : ($progress >= 50 ? '#f59e0b' : '#94a3b8'),
                 'avg_score' => $avgScore,
+                'status' => $status,
+                'statusBg' => $statusBg,
+                'statusColor' => $statusColor,
+                'dot' => $dot,
                 'total_competencies' => $totalComps,
                 'completed_competencies' => $completedComps,
+                'hasScore' => $avgScore !== null,
             ];
         });
 
@@ -116,8 +175,9 @@ class MentorController extends Controller
             ->select('competencies.*')
             ->get();
 
-        // Get scores for this submission
-        $scoresData = $submission->scores_data ?? [];
+        // Get scores from Assessment (not Submission)
+        $assessment = Assessment::where('id_submission', $idSubmission)->first();
+        $scoresData = $assessment->scores_data ?? [];
         $scoresKeyById = [];
         foreach ($scoresData as $score) {
             $scoresKeyById[$score['id_competency']] = $score;
@@ -145,39 +205,84 @@ class MentorController extends Controller
      */
     public function inputScores(Request $request, $idSubmission)
     {
-        $request->validate([
-            'scores' => 'required|array',
-            'scores.*.id_competency' => 'required|string',
-            'scores.*.score' => 'nullable|integer|min:0|max:100',
-            'scores.*.hours_completed' => 'nullable|integer|min:0',
-            'scores.*.status' => 'nullable|in:pending,passed,failed,in_progress',
-            'scores.*.notes' => 'nullable|string',
-        ]);
+        try {
+            $validated = $request->validate([
+                'scores' => 'required|array',
+                'scores.*.id_competency' => 'required|string',
+                'scores.*.score' => 'nullable|integer|min:0|max:100',
+                'scores.*.hours_completed' => 'nullable|integer|min:0',
+                'scores.*.status' => 'nullable|in:pending,passed,failed,in_progress',
+                'scores.*.notes' => 'nullable|string',
+            ]);
 
-        $mentorId = $request->user()->id_user;
+            $mentorId = $request->user()->id_user;
 
-        // Verify submission belongs to this mentor
-        $submission = Submission::where('id_submission', $idSubmission)
-            ->where('id_user_mentor', $mentorId)
-            ->firstOrFail();
+            // Verify submission belongs to this mentor
+            $submission = Submission::where('id_submission', $idSubmission)
+                ->where('id_user_mentor', $mentorId)
+                ->firstOrFail();
 
-        // Prepare scores data
-        $scoresData = [];
-        foreach ($request->scores as $scoreData) {
-            $scoresData[] = [
-                'id_competency' => $scoreData['id_competency'],
-                'score' => $scoreData['score'] ?? null,
-                'hours_completed' => $scoreData['hours_completed'] ?? 0,
-                'status' => $scoreData['status'] ?? 'pending',
-                'notes' => $scoreData['notes'] ?? null,
-            ];
+            // Prepare scores data
+            $scoresData = [];
+            foreach ($validated['scores'] as $scoreData) {
+                $scoresData[] = [
+                    'id_competency' => $scoreData['id_competency'],
+                    'score' => $scoreData['score'] ?? null,
+                    'hours_completed' => $scoreData['hours_completed'] ?? 0,
+                    'status' => $scoreData['status'] ?? 'pending',
+                    'notes' => $scoreData['notes'] ?? null,
+                ];
+            }
+
+            \Log::info('Updating scores for submission', [
+                'submission_id' => $idSubmission,
+                'mentor_id' => $mentorId,
+                'scores_count' => count($scoresData),
+                'scores_data' => $scoresData,
+            ]);
+
+            // Create or update Assessment (not Submission)
+            $assessment = Assessment::firstOrCreate(
+                ['id_submission' => $idSubmission],
+                [
+                    'id_assessment' => \Illuminate\Support\Str::random(10),
+                    'id_user' => $submission->id_user,
+                    'id_user_mentor' => $mentorId,
+                ]
+            );
+
+            $assessment->update([
+                'scores_data' => $scoresData,
+            ]);
+
+            \Log::info('Scores updated successfully in Assessment', [
+                'submission_id' => $idSubmission,
+                'assessment_id' => $assessment->id_assessment,
+                'scores_data' => $assessment->fresh()->scores_data,
+            ]);
+
+            return response()->json([
+                'message' => 'Scores saved successfully',
+                'submission_id' => $idSubmission,
+                'scores_count' => count($scoresData),
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error('Validation error in inputScores', [
+                'errors' => $e->errors(),
+                'submission_id' => $idSubmission,
+            ]);
+            throw $e;
+        } catch (\Exception $e) {
+            \Log::error('Error in inputScores', [
+                'message' => $e->getMessage(),
+                'submission_id' => $idSubmission,
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json([
+                'error' => $e->getMessage(),
+                'submission_id' => $idSubmission,
+            ], 500);
         }
-
-        $submission->update([
-            'scores_data' => $scoresData,
-        ]);
-
-        return response()->json(['message' => 'Scores saved successfully']);
     }
 
     /**
@@ -197,7 +302,9 @@ class MentorController extends Controller
         $incompleteCount = 0;
 
         foreach ($submissions as $sub) {
-            $scoresData = $sub->scores_data ?? [];
+            // Get scores from Assessment (not Submission)
+            $assessment = Assessment::where('id_submission', $sub->id_submission)->first();
+            $scoresData = $assessment->scores_data ?? [];
 
             foreach ($scoresData as $score) {
                 if ($score['score'] !== null) {
@@ -223,7 +330,9 @@ class MentorController extends Controller
 
         // Create recap data
         $recap = $submissions->map(function ($sub) {
-            $scoresData = $sub->scores_data ?? [];
+            // Get scores from Assessment (not Submission)
+            $assessment = Assessment::where('id_submission', $sub->id_submission)->first();
+            $scoresData = $assessment->scores_data ?? [];
             $completedScores = array_filter($scoresData, fn($s) => $s['score'] !== null);
             $avgScore = count($completedScores) > 0 ? round(array_sum(array_column($completedScores, 'score')) / count($completedScores), 1) : null;
             $scoredCount = count($completedScores);

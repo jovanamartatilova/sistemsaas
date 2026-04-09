@@ -1,7 +1,8 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { SidebarMentor } from "./DashboardMentor";
 import { mentorApi } from "../../api/mentorApi";
+import { useAuthStore } from "../../stores/authStore";
 
 const s = {
   app: { display: "flex", minHeight: "100vh", background: "#f1f5f9", fontFamily: "'Poppins', 'Segoe UI', sans-serif", fontSize: "14px", color: "#1e293b" },
@@ -45,7 +46,9 @@ const s = {
 };
 
 export default function InternsMentor() {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [mentor, setMentor] = useState(null);
   const [interns, setInterns] = useState([]);
   const [stats, setStats] = useState(null);
 
@@ -56,8 +59,12 @@ export default function InternsMentor() {
   const fetchInterns = async () => {
     try {
       setLoading(true);
-      const res = await mentorApi.getInterns();
-      const internsList = res.data;
+      const [profileRes, internsRes] = await Promise.all([
+        mentorApi.getProfile(),
+        mentorApi.getInterns(),
+      ]);
+      setMentor(profileRes.data);
+      const internsList = internsRes.data;
       setInterns(internsList);
 
       // Calculate stats
@@ -77,10 +84,16 @@ export default function InternsMentor() {
     }
   };
 
+  const handleLogout = () => {
+    localStorage.clear();
+    useAuthStore.setState({ isAuthenticated: false, token: null, user: null, company: null });
+    navigate("/login");
+  };
+
   if (loading) {
     return (
       <div style={s.app}>
-        <SidebarMentor />
+        <SidebarMentor mentor={mentor} onLogout={handleLogout} />
         <main style={s.main}>
           <div style={s.topbar}>
             <div style={s.bc}>
@@ -100,7 +113,7 @@ export default function InternsMentor() {
   return (
     <div style={s.app}>
       <style>{`* { box-sizing: border-box; margin: 0; padding: 0; } ::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 99px; } tr:last-child td { border-bottom: none; }`}</style>
-      <SidebarMentor />
+      <SidebarMentor mentor={mentor} onLogout={handleLogout} />
       <main style={s.main}>
         <div style={s.topbar}>
           <div style={s.bc}>
@@ -148,11 +161,11 @@ export default function InternsMentor() {
                   <tr key={i}>
                     <td style={s.td}><span style={s.cname}>{intern.name}</span><span style={s.cemail}>{intern.email}</span></td>
                     <td style={s.td}>{intern.position}</td>
-                    <td style={s.td}>{intern.program}</td>
+                    <td style={s.td}>{intern.program || 'Regular Batch'}</td>
                     <td style={s.td}><span style={s.typeBadge(intern.type === "Team")}>{intern.type}</span></td>
-                    <td style={s.td}>{intern.period}</td>
+                    <td style={s.td}>{intern.period || 'Jan - Apr 2026'}</td>
                     <td style={s.td}>
-                      <div style={s.progWrap}><div style={s.progFill(intern.progress, intern.progColor)} /></div>
+                      <div style={s.progWrap}><div style={s.progFill(intern.progress + '%', intern.progColor)} /></div>
                     </td>
                     <td style={s.td}>
                       <span style={s.statusBadge(intern.statusBg, intern.statusColor)}>
