@@ -19,10 +19,43 @@ const navItems = {
 
 const sb = {
   sidebar: { position: "fixed", left: 0, top: 0, bottom: 0, width: "172px", background: "#0f172a", display: "flex", flexDirection: "column", zIndex: 100 },
-  logo: { display: "flex", alignItems: "center", gap: "8px", padding: "18px 16px 16px", borderBottom: "1px solid rgba(255,255,255,0.08)" },
-  logoBadge: { width: "28px", height: "28px", borderRadius: "7px", background: "linear-gradient(135deg,#3b82f6,#06b6d4)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", fontWeight: 700, color: "#fff", flexShrink: 0 },
-  logoText: { fontSize: "13px", fontWeight: 700, color: "#fff" },
-  nav: { flex: 1, padding: "10px 8px", overflowY: "auto" },
+  logoBadge: { width: "28px", height: "28px", borderRadius: "7px", background: "linear-gradient(135deg,#3b82f6,#06b6d4)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", fontWeight: 700, color: "#fff", flexShrink: 0 },sidebarLogo: {
+  display: "flex",
+  alignItems: "center",
+  gap: "3px",
+  padding: "14px 16px",
+  borderBottom: "1px solid rgba(255,255,255,0.08)"
+},
+
+logoImage: {
+  height: "50px",
+  width: "auto",        // 🔥 jangan fixed width dulu
+  minWidth: "50px",     // 🔥 biar ga jadi titik
+  objectFit: "contain",
+  display: "block"
+},
+logoText: {
+  fontSize: "14px",
+  fontWeight: 700,
+  color: "#fff",
+  lineHeight: "1"
+},
+  sidebarNav: { flex: 1, padding: "10px 8px", overflowY: "auto" },
+  navSection: { marginBottom: "14px" },
+navLabel: {
+  display: "block",
+  fontSize: "9px",
+  fontWeight: 700,
+  letterSpacing: "0.1em",
+  color: "#475569",
+  padding: "0 8px",
+  marginBottom: "4px",
+  textTransform: "uppercase",
+  textAlign: "left" // 🔥 ini yang bikin rata kiri
+},
+navItem: (active) => ({ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", padding: "7px 8px", border: "none", background: active ? "rgba(59,130,246,0.18)" : "transparent", color: active ? "#60a5fa" : "#94a3b8", fontSize: "12.5px", borderRadius: "6px", cursor: "pointer", textDecoration: "none", fontFamily: "inherit", textAlign: "left" }),
+sidebarUser: { display: "flex", alignItems: "center", gap: "8px", padding: "12px 14px", borderTop: "1px solid rgba(255,255,255,0.08)" },
+nav: { flex: 1, padding: "10px 8px", overflowY: "auto" },
   section: { marginBottom: "14px" },
   sectionLabel: { display: "block", fontSize: "9px", fontWeight: 700, letterSpacing: "0.1em", color: "#475569", padding: "0 8px", marginBottom: "4px", textTransform: "uppercase", textAlign: "left" },
   item: (active) => ({ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", padding: "7px 8px", border: "none", background: active ? "rgba(59,130,246,0.18)" : "transparent", color: active ? "#60a5fa" : "#94a3b8", fontSize: "12.5px", borderRadius: "6px", cursor: "pointer", textDecoration: "none", fontFamily: "inherit", textAlign: "left" }),
@@ -35,10 +68,12 @@ function SidebarHR() {
   const location = useLocation();
   return (
     <aside style={sb.sidebar}>
-      <div style={sb.logo}>
-        <div style={sb.logoBadge}>EP</div>
-        <span style={sb.logoText}>EarlyPath</span>
-      </div>
+<div style={sb.sidebarLogo}>
+  <div style={{ display: "flex", alignItems: "center" }}>
+    <img src="/assets/images/logo.png" style={sb.logoImage} />
+  </div>
+  <span style={sb.logoText}>EarlyPath</span>
+</div>
       <nav style={sb.nav}>
         {[["MENU", navItems.menu], ["SELECTION", navItems.selection], ["ADMINISTRATION", navItems.administration]].map(([label, items]) => (
           <div key={label} style={sb.section}>
