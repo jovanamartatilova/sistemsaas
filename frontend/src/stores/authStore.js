@@ -38,8 +38,10 @@ export const useAuthStore = create((set) => ({
     set({ loading: true, error: null });
     try {
       const response = await authService.login(name, password);
+      console.log('LOGIN RESPONSE:', response);
       set({
         company: response.company,
+        user: response.user,
         token: response.token,
         isAuthenticated: true,
         loading: false,
