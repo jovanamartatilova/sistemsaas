@@ -170,18 +170,12 @@ export default function CertificateMentor() {
                     <td style={s.td}><span style={s.badge(cert.statusBg, cert.statusColor)}>{cert.status}</span></td>
                     <td style={s.td}>
                       <div style={s.acts}>
-                        {cert.status === "Generated" && (
-                          <>
-                            <button style={s.btnView}>Preview</button>
-                            <button style={s.btnDownload}>Download</button>
-                          </>
-                        )}
-                        {cert.status === "In Queue" && (
+                        {cert.status === "Passed" && (
                           <button style={s.btnGenerate} onClick={() => handleGenerateCertificate(cert.id_submission)} disabled={generating[cert.id_submission]}>
                             {generating[cert.id_submission] ? 'Generating...' : 'Generate'}
                           </button>
                         )}
-                        {cert.status !== "Generated" && cert.status !== "In Queue" && <span style={{ color: "#cbd5e1", fontSize: "12px" }}>—</span>}
+                        {cert.status === "Not Passed" && <span style={{ color: "#cbd5e1", fontSize: "12px" }}>—</span>}
                       </div>
                     </td>
                   </tr>
