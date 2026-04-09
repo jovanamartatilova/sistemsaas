@@ -431,34 +431,40 @@ class MentorController extends Controller
             ->get();
 
         // Create stat cards
-        $readyToGenerate = 0;
-        $generated = 0;
-        $inQueue = 0;
+        $passed = 0;
+        $notPassed = 0;
 
         foreach ($submissions as $sub) {
-            $scoresData = $sub->scores_data ?? [];
-            if (empty($scoresData)) {
-                $inQueue++;
-            } elseif (count(array_filter($scoresData, fn($s) => $s['score'] >= 75)) === count($scoresData)) {
-                $generated++;
+            // Get scores from Assessment (not Submission)
+            $assessment = Assessment::where('id_submission', $sub->id_submission)->first();
+            $scoresData = $assessment->scores_data ?? [];
+            $scores = array_filter($scoresData, fn($s) => $s['score'] !== null);
+            $avgScore = count($scores) > 0 ? round(array_sum(array_column($scores, 'score')) / count($scores), 1) : null;
+
+            if ($avgScore !== null && $avgScore >= 75) {
+                $passed++;
             } else {
-                $readyToGenerate++;
+                $notPassed++;
             }
         }
 
         $stats = [
-            ['value' => $readyToGenerate, 'label' => 'Ready to Generate', 'barColor' => '#22c55e', 'barWidth' => '62%'],
-            ['value' => $generated, 'label' => 'Generated', 'barColor' => '#14b8a6', 'barWidth' => '37%'],
-            ['value' => $inQueue, 'label' => 'In Queue', 'barColor' => '#8b5cf6', 'barWidth' => '25%'],
+            ['value' => $passed, 'label' => 'Passed', 'barColor' => '#22c55e', 'barWidth' => min(100, $passed * 20) . '%'],
+            ['value' => $notPassed, 'label' => 'Not Passed', 'barColor' => '#ef4444', 'barWidth' => min(100, $notPassed * 20) . '%'],
         ];
 
         // Create certificates list
         $certificates = $submissions->map(function ($sub) {
-            $scoresData = $sub->scores_data ?? [];
+            // Get scores from Assessment (not Submission)
+            $assessment = Assessment::where('id_submission', $sub->id_submission)->first();
+            $scoresData = $assessment->scores_data ?? [];
             $scores = array_filter($scoresData, fn($s) => $s['score'] !== null);
             $avgScore = count($scores) > 0 ? round(array_sum(array_column($scores, 'score')) / count($scores), 1) : null;
 
-            $status = $avgScore === null ? 'Not Passed' : ($avgScore >= 75 ? 'Generated' : 'In Queue');
+            // Status: hanya "Passed" (>= 75) atau "Not Passed" (< 75 atau null)
+            $status = ($avgScore !== null && $avgScore >= 75) ? 'Passed' : 'Not Passed';
+            $statusBg = $status === 'Passed' ? '#dcfce7' : '#fecaca';
+            $statusColor = $status === 'Passed' ? '#166534' : '#991b1b';
 
             return [
                 'id_submission' => $sub->id_submission,
@@ -467,8 +473,8 @@ class MentorController extends Controller
                 'program' => 'Regular Batch 3',
                 'score' => $avgScore,
                 'status' => $status,
-                'statusBg' => $status === 'Generated' ? '#eff6ff' : ($status === 'In Queue' ? '#f5f3ff' : '#f1f5f9'),
-                'statusColor' => $status === 'Generated' ? '#1e40af' : ($status === 'In Queue' ? '#7c3aed' : '#64748b'),
+                'statusBg' => $statusBg,
+                'statusColor' => $statusColor,
             ];
         });
 
@@ -490,8 +496,9 @@ class MentorController extends Controller
             ->where('id_user_mentor', $mentorId)
             ->firstOrFail();
 
-        // Calculate average score
-        $scoresData = $submission->scores_data ?? [];
+        // Calculate average score from Assessment (not Submission)
+        $assessment = Assessment::where('id_submission', $idSubmission)->first();
+        $scoresData = $assessment->scores_data ?? [];
         $scores = array_filter($scoresData, fn($s) => $s['score'] !== null);
         $avgScore = count($scores) > 0 ? round(array_sum(array_column($scores, 'score')) / count($scores), 2) : 0;
 
