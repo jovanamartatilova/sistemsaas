@@ -11,14 +11,30 @@ const api = axios.create({
 
 // Add token to requests
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('authToken');
+  const token = localStorage.getItem('auth_token');  // Changed from 'authToken' to 'auth_token'
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  console.log(`[API] ${config.method?.toUpperCase()} ${config.url}`, config);
   return config;
 });
 
+// Log responses
+api.interceptors.response.use(
+  (response) => {
+    console.log(`[API] Response ${response.status} from ${response.config.url}:`, response.data);
+    return response;
+  },
+  (error) => {
+    console.error(`[API] Error from ${error.config?.url}:`, error.response?.status, error.response?.data, error.message);
+    return Promise.reject(error);
+  }
+);
+
 export const mentorApi = {
+  // Profile
+  getProfile: () => api.get('/mentor/profile'),
+
   // Dashboard
   getDashboard: () => api.get('/mentor/dashboard'),
 

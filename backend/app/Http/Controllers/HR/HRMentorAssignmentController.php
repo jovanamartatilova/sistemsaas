@@ -16,7 +16,7 @@ class HRMentorAssignmentController extends Controller
     {
         $companyId = $request->user()->id_company;
 
-        $submissions = Submission::where('status', 'accepted')
+        $submissions = Submission::whereIn('status', ['interview', 'accepted'])
             ->whereHas('vacancy', fn($q) => $q->where('id_company', $companyId))
             ->with(['user', 'position', 'vacancy', 'mentor'])
             ->get()

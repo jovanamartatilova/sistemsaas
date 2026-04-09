@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import { SidebarMentor } from "./DashboardMentor";
 import { mentorApi } from "../../api/mentorApi";
+import { useAuthStore } from "../../stores/authStore";
 
 const s = {
   app: { display: "flex", minHeight: "100vh", background: "#f1f5f9", fontFamily: "'Poppins', 'Segoe UI', sans-serif", fontSize: "14px", color: "#1e293b" },
@@ -47,6 +49,8 @@ const s = {
 };
 
 export default function InputScoreMentor() {
+  const navigate = useNavigate();
+  const [mentor, setMentor] = useState(null);
   const [interns, setInterns] = useState([]);
   const [selectedSubmissionId, setSelectedSubmissionId] = useState(null);
   const [selectedInternName, setSelectedInternName] = useState("");
@@ -54,23 +58,33 @@ export default function InputScoreMentor() {
   const [scores, setScores] = useState({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetchInterns();
+    fetchData();
   }, []);
 
-  const fetchInterns = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true);
-      const res = await mentorApi.getInterns();
-      setInterns(res.data);
-      if (res.data.length > 0) {
-        setSelectedSubmissionId(res.data[0].id_submission);
-        setSelectedInternName(res.data[0].name);
-        fetchCompetencies(res.data[0].id_submission);
+      const [profileRes, internsRes] = await Promise.all([
+        mentorApi.getProfile(),
+        mentorApi.getInterns(),
+      ]);
+      
+      setMentor(profileRes.data);
+      setInterns(internsRes.data);
+      
+      // Filter to only unscored interns
+      const unscored = internsRes.data.filter(i => i.completed_competencies < i.total_competencies || i.total_competencies === 0);
+      if (unscored.length > 0) {
+        setSelectedSubmissionId(unscored[0].id_submission);
+        setSelectedInternName(unscored[0].name);
+        fetchCompetencies(unscored[0].id_submission);
       }
     } catch (error) {
-      console.error('Error fetching interns:', error);
+      console.error('Error fetching data:', error);
+      setError('Failed to load data');
     } finally {
       setLoading(false);
     }
@@ -119,6 +133,7 @@ export default function InputScoreMentor() {
   const handleSave = async () => {
     try {
       setSaving(true);
+      setError(null);
       const scoresArray = competencies.map(comp => ({
         id_competency: comp.id_competency,
         score: scores[comp.id_competency]?.score,
@@ -127,16 +142,55 @@ export default function InputScoreMentor() {
         notes: scores[comp.id_competency]?.notes,
       }));
 
-      await mentorApi.inputScores(selectedSubmissionId, scoresArray);
-      alert('Scores saved successfully!');
+      console.log('Saving scores:', {
+        idSubmission: selectedSubmissionId,
+        scoresArray,
+      });
+
+      const response = await mentorApi.inputScores(selectedSubmissionId, scoresArray);
+      console.log('Save response:', response.data);
+      
+      alert('✓ Scores saved successfully!');
+      // Refresh competencies to confirm save
+      await fetchCompetencies(selectedSubmissionId);
     } catch (error) {
       console.error('Error saving scores:', error);
-      alert('Failed to save scores');
+      console.error('Response data:', error.response?.data);
+      console.error('Response status:', error.response?.status);
+      console.error('Error message:', error.message);
+      
+      // Build detailed error message
+      let errorMsg = 'Failed to save scores';
+      if (error.response?.status === 422) {
+        // Validation error
+        const errors = error.response?.data?.errors;
+        if (errors) {
+          errorMsg = 'Validation Error: ' + Object.values(errors).flat().join(', ');
+        }
+      } else if (error.response?.status === 404) {
+        errorMsg = 'Submission not found or you don\'t have access';
+      } else if (error.response?.status === 403) {
+        errorMsg = 'Unauthorized - You don\'t have permission to edit this intern\'s scores';
+      } else if (error.response?.data?.error) {
+        errorMsg = error.response.data.error;
+      }
+      
+      setError(errorMsg);
+      alert('❌ ' + errorMsg);
     } finally {
       setSaving(false);
     }
   };
 
+  const handleLogout = () => {
+    localStorage.clear();
+    useAuthStore.setState({ isAuthenticated: false, token: null, user: null, company: null });
+    navigate("/login");
+  };
+
+  // Filter interns to only show those NOT fully scored
+  const unScoredInterns = interns.filter(i => i.completed_competencies < i.total_competencies || i.total_competencies === 0);
+  
   const selectedIntern = interns.find(i => i.id_submission === selectedSubmissionId);
   const scored = competencies.filter(c => scores[c.id_competency]?.score !== null && scores[c.id_competency]?.score !== undefined && scores[c.id_competency]?.score !== "");
   const avg = scored.length > 0 ? (scored.reduce((sum, c) => sum + Number(scores[c.id_competency].score), 0) / scored.length).toFixed(1) : null;
@@ -144,7 +198,7 @@ export default function InputScoreMentor() {
   if (loading) {
     return (
       <div style={s.app}>
-        <SidebarMentor />
+        <SidebarMentor mentor={mentor} onLogout={handleLogout} />
         <main style={s.main}>
           <div style={s.topbar}>
             <div style={s.bc}>
@@ -159,10 +213,35 @@ export default function InputScoreMentor() {
     );
   }
 
+  // Show empty state if no unscored interns
+  if (unScoredInterns.length === 0) {
+    return (
+      <div style={s.app}>
+        <SidebarMentor mentor={mentor} onLogout={handleLogout} />
+        <main style={s.main}>
+          <div style={s.topbar}>
+            <div style={s.bc}>
+              <span>Dashboard</span><span style={s.bcSep}>/</span>
+              <span>Assessment</span><span style={s.bcSep}>/</span>
+              <span style={s.bcActive}>Input Score</span>
+            </div>
+          </div>
+          <div style={s.content}>
+            <h1 style={s.h1}>Input Score</h1>
+            <p style={s.subtitle}>All assigned interns have been scored already.</p>
+            <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", color: "#166534", padding: "16px", borderRadius: "8px", marginTop: "16px" }}>
+              ✓ All interns have been scored. Check <Link to="/mentor/score-recap" style={{color: "#15803d", fontWeight: 600}}>Score Recap</Link> for details or <Link to="/mentor/evaluation" style={{color: "#15803d", fontWeight: 600}}>Evaluation</Link> to proceed.
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div style={s.app}>
       <style>{`* { box-sizing: border-box; margin: 0; padding: 0; } ::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 99px; }`}</style>
-      <SidebarMentor />
+      <SidebarMentor mentor={mentor} onLogout={handleLogout} />
       <main style={s.main}>
         <div style={s.topbar}>
           <div style={s.bc}>
@@ -175,6 +254,12 @@ export default function InputScoreMentor() {
         <div style={s.content}>
           <h1 style={s.h1}>Input Score</h1>
           <p style={s.subtitle}>Select an intern to input scores for each of their competencies. The average is calculated automatically.</p>
+          
+          {error && (
+            <div style={{ background: '#fee2e2', border: '1px solid #fecaca', color: '#991b1b', padding: '12px 16px', borderRadius: '8px', marginBottom: '16px', fontSize: '13px' }}>
+              ❌ {error}
+            </div>
+          )}
 
           <div style={s.layout}>
             {/* Main scoring card */}
@@ -189,7 +274,7 @@ export default function InputScoreMentor() {
                 <div style={s.pickerField}>
                   <label style={s.pickerLabel}>INTERN</label>
                   <select style={s.pickerSelect} value={selectedSubmissionId || ""} onChange={(e) => handleInternChange(e.target.value)}>
-                    {interns.map(i => <option key={i.id_submission} value={i.id_submission}>{i.name}</option>)}
+                    {unScoredInterns.map(i => <option key={i.id_submission} value={i.id_submission}>{i.name}</option>)}
                   </select>
                 </div>
                 <div style={s.pickerField}>
@@ -232,7 +317,7 @@ export default function InputScoreMentor() {
                         type="number" min="0" placeholder="hrs"
                         style={s.fieldInput}
                         value={sc.hours_completed || ""}
-                        onChange={(e) => updateScore(comp.id_competency, "hours_completed", e.target.value)}
+                        onChange={(e) => updateScore(comp.id_competency, "hours_completed", e.target.value === "" ? null : Number(e.target.value))}
                       />
                       <select style={s.fieldSelect} value={sc.status} onChange={(e) => updateScore(comp.id_competency, "status", e.target.value)}>
                         <option value="pending">Pending</option>

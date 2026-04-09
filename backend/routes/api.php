@@ -130,6 +130,9 @@ Route::prefix('candidate')->middleware(['auth:sanctum', 'ensureCandidate'])->gro
 
 // Mentor — Protected routes untuk mentor yang sudah login
 Route::prefix('mentor')->middleware(['auth:sanctum', 'mentorRole'])->group(function () {
+    // Profile
+    Route::get('/profile', [MentorController::class, 'getProfile']);
+
     // Dashboard
     Route::get('/dashboard', [MentorController::class, 'getDashboard']);
 
@@ -175,7 +178,7 @@ if (env('APP_DEBUG', false)) {
                         'is_active' => true,
                     ]);
                 }
-                
+
                 // Create a test HR user with valid company
                 $user = User::create([
                     'id_user' => 'USR' . strtoupper(Str::random(7)),

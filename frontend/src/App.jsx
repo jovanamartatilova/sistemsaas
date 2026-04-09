@@ -221,7 +221,7 @@ export default function App() {
                         </PrivateRoute>
                     }
                 />
-
+                {/* SUPERADMIN ROUTES */}
                 <Route path="/superadmin/*" element={<SuperAdminPages />} />
 
                 {/* HR ROUTES */}

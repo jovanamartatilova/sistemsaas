@@ -1,4 +1,4 @@
-const TOKEN_KEY = 'hr_token';
+const TOKEN_KEY = 'auth_token';
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 
 // Get test token in development if no token exists

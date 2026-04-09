@@ -5,7 +5,7 @@ import { useAuthStore } from "../stores/authStore";
 export default function SubmissionForm() {
   const { slug, vacancyId, positionId } = useParams();
   const navigate = useNavigate();
-  const { user, token } = useAuthStore();
+  const { user, token, loading: authLoading } = useAuthStore();
 
   const [company, setCompany] = useState(null);
   const [vacancy, setVacancy] = useState(null);
@@ -39,6 +39,17 @@ export default function SubmissionForm() {
       setForm((prev) => ({ ...prev, name: user.name }));
     }
   }, [user]);
+
+  // ✅ Check authentication on mount
+  useEffect(() => {
+    if (!authLoading && !token) {
+      // Redirect to login if not authenticated
+      const timer = setTimeout(() => {
+        navigate(`/c/${slug}/login`);
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [token, authLoading, slug, navigate]);
 
   useEffect(() => {
     let isMounted = true;
@@ -118,6 +129,12 @@ export default function SubmissionForm() {
     setErrorMsg("");
     setSuccessMsg("");
 
+    // ✅ Check authentication first
+    if (!token) {
+      setErrorMsg("Anda harus login terlebih dahulu untuk mendaftar. Silakan login dan coba lagi.");
+      return;
+    }
+
     // Block submit jika masih ada file error
     const activeFileErrors = Object.values(fileErrors).filter(Boolean);
     if (activeFileErrors.length > 0) {
@@ -169,7 +186,7 @@ export default function SubmissionForm() {
         method: "POST",
         headers: {
           "Accept": "application/json",
-          "Authorization": `Bearer ${token}`
+          ...(token ? { "Authorization": `Bearer ${token}` } : {})  // ✅ Only send token if it exists
         },
         body: formData,
         signal: submitController.signal,
@@ -212,6 +229,21 @@ export default function SubmissionForm() {
       <p style={{ color: "#64748b", fontSize: 14, fontWeight: 500 }}>Memuat form pendaftaran...</p>
     </div>
   );
+
+  // ✅ Show message if not authenticated
+  if (!token && !authLoading) {
+    return (
+      <div style={{ minHeight: "100vh", background: "#f8fafc", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16 }}>
+        <div style={{ padding: 40, background: "white", borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.1)", maxWidth: 400, textAlign: "center" }}>
+          <div style={{ fontSize: 36, marginBottom: 16 }}>🔐</div>
+          <h2 style={{ fontSize: 20, fontWeight: 700, color: "#1e293b", marginBottom: 8 }}>Login Diperlukan</h2>
+          <p style={{ color: "#64748b", fontSize: 14, marginBottom: 24 }}>Anda harus login terlebih dahulu untuk mendaftar. Sistem akan mengalihkan Anda ke halaman login...</p>
+          <div style={{ width: 40, height: 40, border: "4px solid #e2e8f0", borderTop: "4px solid #2d7ff3", borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto" }} />
+        </div>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
 
   return (
     <div style={{ minHeight: "100vh", background: "#f8fafc", fontFamily: "'Poppins', sans-serif", textAlign: "left", paddingBottom: "100px" }}>
