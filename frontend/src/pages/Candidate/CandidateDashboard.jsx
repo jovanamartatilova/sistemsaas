@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { LayoutDashboard, BookOpen, User, Award, LogOut, MapPin } from "lucide-react";
 import { useNavigate, useParams, Link, useLocation } from "react-router-dom";
-import { useAuthStore } from "../stores/authStore";
+import { useAuthStore } from "../../stores/authStore";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
 

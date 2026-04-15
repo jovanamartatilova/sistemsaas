@@ -1,6 +1,6 @@
 import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import { useAuthStore } from "../stores/authStore";
+import { useAuthStore } from "../../stores/authStore";
 
 // ── Minimal icons as inline SVG ─────────────────────────────────────────────
 const IconBriefcase = () => (
