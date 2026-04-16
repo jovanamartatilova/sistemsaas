@@ -70,34 +70,34 @@ class CandidateController extends Controller
                 'success' => true,
                 'data' => [
                     'profile' => [
-                        'id_user'          => $user->id_user ?? null,
-                        'name'             => $user->name ?? 'User',
-                        'email'            => $user->email ?? '',
-                        'phone'            => $user->phone ?? '',
-                        'photo_url'        => (isset($user->photo_path) && $user->photo_path)
-                                                ? asset('storage/' . $user->photo_path)
-                                                : null,
-                        'university'       => '-',
-                        'major'            => '-',
+                        'id_user' => $user->id_user ?? null,
+                        'name' => $user->name ?? 'User',
+                        'email' => $user->email ?? '',
+                        'phone' => $user->phone ?? '',
+                        'photo_url' => (isset($user->photo_path) && $user->photo_path)
+                            ? asset('storage/' . $user->photo_path)
+                            : null,
+                        'university' => '-',
+                        'major' => '-',
                         'overall_progress' => $overallProgress,
                     ],
                     'apprentice' => ($apprentice || $submission) ? [
                         'id_apprentice' => $apprentice->id_apprentice ?? null,
-                        'position'      => $submission?->position?->name ?? '-',
-                        'company'       => $submission?->vacancy?->company_name ?? '-',
-                        'start_date'    => $apprentice->start_date ?? null,
-                        'end_date'      => $apprentice->end_date ?? null,
-                        'batch'         => $submission?->vacancy?->batch ?? '-',
-                        'status'        => $apprentice->status ?? 'inactive',
-                        'mentor_name'   => $submission?->mentor?->name ?? null,
+                        'position' => $submission?->position?->name ?? '-',
+                        'company' => $submission?->vacancy?->company_name ?? '-',
+                        'start_date' => $apprentice->start_date ?? null,
+                        'end_date' => $apprentice->end_date ?? null,
+                        'batch' => $submission?->vacancy?->batch ?? '-',
+                        'status' => $apprentice->status ?? 'inactive',
+                        'mentor_name' => $submission?->mentor?->name ?? null,
                     ] : null,
                     'learning_progress' => [
-                        'total_learning_hours'  => 240,
+                        'total_learning_hours' => 240,
                         'target_learning_hours' => 320,
-                        'completed_modules'     => 18,
-                        'total_modules'         => 24,
+                        'completed_modules' => 18,
+                        'total_modules' => 24,
                         'submitted_assignments' => 34,
-                        'total_assignments'     => 40,
+                        'total_assignments' => 40,
                         'attendance_percentage' => 92,
                     ],
                     'competencies' => $competencies,
@@ -126,7 +126,7 @@ class CandidateController extends Controller
         // Check if user has any submissions
         $hasSubmissions = $user->submissions->count() > 0;
         $company = null;
-        
+
         // Only include company if user has submissions
         if ($hasSubmissions && $user->id_company) {
             $company = Company::find($user->id_company);
@@ -135,31 +135,31 @@ class CandidateController extends Controller
         return response()->json([
             'success' => true,
             'data' => [
-                'id_user'    => $user->id_user,
-                'name'       => $user->name,
-                'email'      => $user->email,
-                'phone'      => $user->phone,
-                'photo_url'  => $user->photo_path
-                                    ? asset('storage/' . $user->photo_path)
-                                    : null,
+                'id_user' => $user->id_user,
+                'name' => $user->name,
+                'email' => $user->email,
+                'phone' => $user->phone,
+                'photo_url' => $user->photo_path
+                    ? asset('storage/' . $user->photo_path)
+                    : null,
                 'university' => $user->university?->name,
-                'major'      => $user->major?->name,
-                'team'       => $user->team?->name,
-                'company'    => $company ? [
+                'major' => $user->major?->name,
+                'team' => $user->team?->name,
+                'company' => $company ? [
                     'id_company' => $company->id_company,
-                    'name'       => $company->name,
-                    'slug'       => $company->slug,
+                    'name' => $company->name,
+                    'slug' => $company->slug,
                 ] : null,
                 'has_submissions' => $hasSubmissions,
                 'submissions' => $user->submissions->map(fn($s) => [
                     'id_submission' => $s->id_submission,
-                    'vacancy'       => $s->vacancy?->description,
-                    'status'        => $s->status,
-                    'submitted_at'  => $s->submitted_at,
-                    'cv_url'        => asset('storage/' . $s->cv_file),
+                    'vacancy' => $s->vacancy?->description,
+                    'status' => $s->status,
+                    'submitted_at' => $s->submitted_at,
+                    'cv_url' => asset('storage/' . $s->cv_file),
                     'portfolio_url' => $s->portfolio_file
-                                          ? asset('storage/' . $s->portfolio_file)
-                                          : null,
+                        ? asset('storage/' . $s->portfolio_file)
+                        : null,
                 ]),
             ],
         ]);
@@ -169,10 +169,10 @@ class CandidateController extends Controller
     public function updateProfile(Request $request)
     {
         $request->validate([
-            'name'            => 'sometimes|string|max:50',
-            'phone'           => 'sometimes|string|max:13',
+            'name' => 'sometimes|string|max:50',
+            'phone' => 'sometimes|string|max:13',
             'university_name' => 'sometimes|string|max:100',
-            'major_name'      => 'sometimes|string|max:100',
+            'major_name' => 'sometimes|string|max:100',
         ]);
 
         $user = $request->user();
@@ -199,7 +199,7 @@ class CandidateController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Profile berhasil diperbarui',
-            'data'    => $user->fresh(['university', 'major']),
+            'data' => $user->fresh(['university', 'major']),
         ]);
     }
 
@@ -217,8 +217,8 @@ class CandidateController extends Controller
         $user->save();
 
         return response()->json([
-            'success'   => true,
-            'message'   => 'Foto profil berhasil diupload',
+            'success' => true,
+            'message' => 'Foto profil berhasil diupload',
             'photo_url' => asset('storage/' . $path),
         ]);
     }
@@ -239,7 +239,7 @@ class CandidateController extends Controller
     {
         $request->validate([
             'skill_name' => 'required|string|max:100',
-            'level'      => 'required|in:beginner,intermediate,advanced',
+            'level' => 'required|in:beginner,intermediate,advanced',
         ]);
 
         $user = $request->user();
@@ -256,16 +256,16 @@ class CandidateController extends Controller
         }
 
         $skill = CandidateSkill::create([
-            'id_skill'   => 'SK' . strtoupper(Str::random(8)),
-            'id_user'    => $user->id_user,
+            'id_skill' => 'SK' . strtoupper(Str::random(8)),
+            'id_user' => $user->id_user,
             'skill_name' => $request->skill_name,
-            'level'      => $request->level,
+            'level' => $request->level,
         ]);
 
         return response()->json([
             'success' => true,
             'message' => 'Skill berhasil ditambahkan',
-            'data'    => $skill,
+            'data' => $skill,
         ], 201);
     }
 
@@ -301,17 +301,17 @@ class CandidateController extends Controller
         return response()->json([
             'success' => true,
             'data' => [
-                'id_user'         => $user->id_user,
-                'full_name'       => $user->name,
-                'name'            => $user->name,
-                'email'           => $user->email,
-                'phone_number'    => $user->phone,
-                'university'      => $user->university?->name ?? '',   // ← nama universitas
-                'university_id'   => $user->id_university ?? '',
-                'major'           => $user->major?->name ?? '',        // ← nama jurusan
-                'major_id'        => $user->id_major ?? '',
+                'id_user' => $user->id_user,
+                'full_name' => $user->name,
+                'name' => $user->name,
+                'email' => $user->email,
+                'phone_number' => $user->phone,
+                'university' => $user->university?->name ?? '',   // ← nama universitas
+                'university_id' => $user->id_university ?? '',
+                'major' => $user->major?->name ?? '',        // ← nama jurusan
+                'major_id' => $user->id_major ?? '',
                 'profile_picture' => $user->photo_path ? asset('storage/' . $user->photo_path) : null,
-                'role'            => $user->role ?? 'Apprentice',
+                'role' => $user->role ?? 'Apprentice',
             ]
         ]);
     }
@@ -326,18 +326,21 @@ class CandidateController extends Controller
         }
 
         $validated = $request->validate([
-            'full_name'       => 'sometimes|string|max:100',
-            'email'           => 'sometimes|email|unique:users,email,' . $id_user . ',id_user',
-            'phone_number'    => 'sometimes|string|max:20',
+            'full_name' => 'sometimes|string|max:100',
+            'email' => 'sometimes|email|unique:users,email,' . $id_user . ',id_user',
+            'phone_number' => 'sometimes|string|max:20',
             'university_name' => 'sometimes|string|max:100',  // ← ganti dari city
-            'major_name'      => 'sometimes|string|max:100',  // ← ganti dari education_level
+            'major_name' => 'sometimes|string|max:100',  // ← ganti dari education_level
         ]);
 
         // Update field sederhana
         $updateData = [];
-        if (isset($validated['full_name']))    $updateData['name']  = $validated['full_name'];
-        if (isset($validated['email']))        $updateData['email'] = $validated['email'];
-        if (isset($validated['phone_number'])) $updateData['phone'] = $validated['phone_number'];
+        if (isset($validated['full_name']))
+            $updateData['name'] = $validated['full_name'];
+        if (isset($validated['email']))
+            $updateData['email'] = $validated['email'];
+        if (isset($validated['phone_number']))
+            $updateData['phone'] = $validated['phone_number'];
 
         // Update universitas — cari atau buat baru di tabel universities
         if (!empty($validated['university_name'])) {
@@ -367,16 +370,16 @@ class CandidateController extends Controller
             'success' => true,
             'message' => 'Profile updated successfully',
             'data' => [
-                'id_user'         => $user->id_user,
-                'full_name'       => $user->name,
-                'email'           => $user->email,
-                'phone_number'    => $user->phone,
-                'university'      => $user->university?->name ?? '',
-                'university_id'   => $user->id_university ?? '',
-                'major'           => $user->major?->name ?? '',
-                'major_id'        => $user->id_major ?? '',
+                'id_user' => $user->id_user,
+                'full_name' => $user->name,
+                'email' => $user->email,
+                'phone_number' => $user->phone,
+                'university' => $user->university?->name ?? '',
+                'university_id' => $user->id_university ?? '',
+                'major' => $user->major?->name ?? '',
+                'major_id' => $user->id_major ?? '',
                 'profile_picture' => $user->photo_path ? asset('storage/' . $user->photo_path) : null,
-                'role'            => $user->role ?? 'Apprentice',
+                'role' => $user->role ?? 'Apprentice',
             ]
         ]);
     }
@@ -406,51 +409,94 @@ class CandidateController extends Controller
         ]);
     }
 
-    /** GET /api/positions OR /api/candidate/programs */
     public function getPositions(Request $request)
     {
         $user = $request->user();
 
-        $submission = Submission::where('id_user', $user->id_user)
-            ->whereIn('status', ['pending', 'accepted'])
-            ->with(['position.competencies', 'vacancy'])
+        // Get all submissions for the candidate
+        $submissions = Submission::where('id_user', $user->id_user)
+            ->with(['position.competencies', 'vacancy', 'loa'])
             ->latest('submitted_at')
-            ->first();
+            ->get();
 
-        if (!$submission) {
+        if ($submissions->isEmpty()) {
             return response()->json([
                 'success' => true,
-                'message' => 'No active submission found',
+                'message' => 'No active submissions found',
                 'data' => []
             ]);
         }
 
-        $position = $submission->position;
-        if (!$position) {
-            return response()->json(['success' => true, 'data' => []]);
-        }
+        $data = $submissions->map(function ($submission) {
+            $position = $submission->position;
+            $vacancy = $submission->vacancy;
 
-        $competencies = $position->competencies->map(fn($c) => [
-            'id_competency'  => $c->id_competency,
-            'name'           => $c->name,
-            'description'    => $c->description,
-            'learning_hours' => $c->learning_hours,
-        ])->toArray();
+            $competencies = [];
+            if ($position) {
+                $competencies = $position->competencies->map(fn($c) => [
+                    'id_competency' => $c->id_competency,
+                    'name' => $c->name,
+                    'description' => $c->description,
+                    'learning_hours' => $c->learning_hours,
+                ])->toArray();
+            }
+
+            // Calculate total learning hours dynamically
+            $total_learning_hours = array_reduce($competencies, function($carry, $item) {
+                return $carry + ($item['learning_hours'] ?? 0);
+            }, 0);
+
+            // Fetch team details if candidate applied as team
+            $teamInfo = null;
+            if ($submission->id_team) {
+                $teamMember = \Illuminate\Support\Facades\DB::table('team_members')
+                    ->where('id_team', $submission->id_team)
+                    ->where('id_user', $submission->id_user)
+                    ->first();
+                
+                $team = \App\Models\Team::where('id_team', $submission->id_team)->first();
+                
+                if ($team) {
+                    $teamInfo = [
+                        'name' => $team->name,
+                        'code' => $team->team_code,
+                        'role' => $teamMember ? ucfirst($teamMember->role) : 'Member'
+                    ];
+                }
+            }
+
+            return [
+                'id_submission' => $submission->id_submission,
+                'id_position' => $position->id_position ?? null,
+                'name' => $position->name ?? ($vacancy->title ?? '-'),
+                'description' => $vacancy->description ?? ($position->name ?? '-'),
+                'company' => $vacancy->company_name ?? '-',
+                'batch' => $vacancy->batch ?? 'Batch 1',
+                'quota' => $position->quota ?? null,
+                // Status mapping
+                'status' => $submission->status, // "pending", "accepted", "rejected"
+                
+                // Active status specifically for UI active filters (accepted means active program in progress)
+                // If the user wants pending programs in Active tab, we preserve it. If rejected, it becomes inactive.
+                'is_active' => in_array($submission->status, ['pending', 'accepted']),
+                
+                // Only share hours and competencies if accepted
+                'learning_hours' => $submission->status === 'accepted' ? $total_learning_hours : 0,
+                'competencies' => $submission->status === 'accepted' ? $competencies : [],
+                'completed_hours' => 0, // Mock for now until scoring API integrates
+                
+                // LoA Mapping
+                'has_loa' => $submission->loa && $submission->loa->file_path ? true : false,
+                'loa_file_url' => $submission->loa && $submission->loa->file_path ? asset('storage/' . $submission->loa->file_path) : null,
+                
+                // Team Mapping
+                'team' => $teamInfo,
+            ];
+        });
 
         return response()->json([
             'success' => true,
-            'data' => [
-                [
-                    'id_position'    => $position->id_position,
-                    'name'           => $position->name,
-                    'description'    => $submission->vacancy?->description ?? $position->name,
-                    'company'        => $submission->vacancy?->company_name ?? '-',
-                    'batch'          => $submission->vacancy?->batch ?? 'Batch 1',
-                    'quota'          => $position->quota ?? 5,
-                    'learning_hours' => 'active',
-                    'competencies'   => $competencies,
-                ]
-            ]
+            'data' => $data
         ]);
     }
 

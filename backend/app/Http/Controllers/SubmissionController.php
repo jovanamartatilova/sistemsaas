@@ -34,8 +34,9 @@ class SubmissionController extends Controller
 
         if ($request->apply_as === 'team') {
             $request->validate([
-                'team_name' => 'required|string',
                 'team_role' => 'required|in:leader,member',
+                'team_name' => 'required_if:team_role,leader|string|nullable',
+                'team_code' => 'required_if:team_role,member|string|nullable',
             ]);
         }
 
@@ -67,7 +68,7 @@ class SubmissionController extends Controller
         }
 
         // ✅ Validate position is available for this vacancy
-        $positionInVacancy = DB::table('position_vacancy')
+        $positionInVacancy = DB::table('vacancy_positions')
             ->where('id_vacancy', $request->id_vacancy)
             ->where('id_position', $request->id_position)
             ->exists();
@@ -100,12 +101,33 @@ class SubmissionController extends Controller
             // 3. Process Team
             $teamId = null;
             if ($request->apply_as === 'team') {
-                $teamId = 'T' . strtoupper(Str::random(9));
-                $team = Team::create([
-                    'id_team' => $teamId,
-                    'name' => $request->team_name,
-                    'team_code' => strtoupper(Str::random(6))
-                ]);
+                if ($request->team_role === 'leader') {
+                    $teamId = 'T' . strtoupper(Str::random(9));
+                    $team = Team::create([
+                        'id_team' => $teamId,
+                        'name' => $request->team_name,
+                        'team_code' => strtoupper(Str::random(6))
+                    ]);
+                } else if ($request->team_role === 'member') {
+                    $team = Team::where('team_code', $request->team_code)->first();
+                    if (!$team) {
+                        DB::rollBack();
+                        return response()->json(['success' => false, 'message' => 'Team code not found. Please make sure the code entered is valid for this program.'], 404);
+                    }
+                    
+                    // Verify that the team belongs to a submission for the exact same id_vacancy
+                    $teamSubmission = Submission::where('id_team', $team->id_team)
+                                    ->where('id_vacancy', $request->id_vacancy)
+                                    ->first();
+                    if (!$teamSubmission) {
+                        DB::rollBack();
+                        return response()->json(['success' => false, 'message' => 'Team code not found. Please make sure the code entered is valid for this program.'], 404);
+                    }
+                    
+                    $teamId = $team->id_team;
+                }
+
+                // Track user role in team members table safely
                 DB::table('team_members')->insert([
                     'id_team' => $teamId,
                     'id_user' => $user->id_user,
