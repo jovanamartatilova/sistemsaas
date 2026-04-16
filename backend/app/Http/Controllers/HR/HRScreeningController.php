@@ -174,7 +174,10 @@ class HRScreeningController extends Controller
      * POST /hr/screening/{id}/ai-check
      * Gunakan Google Gemini untuk analisis kandidat (GRATIS!)
      */
-    public function aiCheck(Request $request, string $id)
+    /**
+ * POST /hr/screening/{id}/ai-check
+ */
+public function aiCheck(Request $request, string $id)
 {
     $submission = $this->findSubmission($id, $request->user()->id_company);
 
@@ -190,74 +193,101 @@ class HRScreeningController extends Controller
         ], 500);
     }
 
-    try {
-        $prompt = "You are an HR screening assistant. Analyze this candidate:\n\n" .
-            "Name: {$submission->user?->name}\n" .
-            "Email: {$submission->user?->email}\n" .
-            "Position: {$submission->position?->name}\n" .
-            "Program: {$submission->vacancy?->title}\n" .
-            "Has CV: " . ($submission->cv_file ? 'Yes' : 'No') . "\n" .
-            "Has Cover Letter: " . ($submission->cover_letter_file ? 'Yes' : 'No') . "\n" .
-            "Has Portfolio: " . ($submission->portfolio_file ? 'Yes' : 'No') . "\n" .
-            "Has Recommendation Letter: " . ($submission->institution_letter_file ? 'Yes' : 'No') . "\n" .
-            "Motivation: {$submission->motivation_message}\n" .
-            "HR Notes: " . ($submission->hr_notes ?? 'none') . "\n\n" .
-            "Give a brief analysis (2-3 sentences) and recommend whether to proceed to interview. " .
-            "Respond in JSON format: {\"summary\": \"...\", \"recommend\": true/false}";
-
-        $client = new \GuzzleHttp\Client(['verify' => false]);
-        $models = ['gemini-2.0-flash-lite', 'gemini-2.0-flash', 'gemini-1.5-flash-latest'];
-        $text = null;
-
-        foreach ($models as $model) {
-            for ($i = 0; $i < 3; $i++) {
-                try {
-                    $response = $client->post(
-                        "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent",
-                        [
-                            'query' => ['key' => $apiKey],
-                            'json'  => [
-                                'contents' => [
-                                    ['parts' => [['text' => $prompt]]]
-                                ]
-                            ]
-                        ]
-                    );
-                    $body = json_decode($response->getBody(), true);
-                    $text = $body['candidates'][0]['content']['parts'][0]['text'] ?? '';
-                    break 2; // sukses, keluar dari semua loop
-                } catch (\GuzzleHttp\Exception\ClientException $e) {
-                    if ($e->getResponse()->getStatusCode() === 429) {
-                        sleep(2 * ($i + 1)); // tunggu lalu retry
-                        continue;
-                    }
-                    break; // error lain, coba model berikutnya
-                }
+    // ── Ekstrak teks CV ──────────────────────────────────────────
+    $cvText = 'CV tidak tersedia.';
+    if (!empty($submission->cv_file)) {
+        $cvPath = storage_path('app/public/' . $submission->cv_file);
+        if (file_exists($cvPath)) {
+            try {
+                $parser = new \Smalot\PdfParser\Parser();
+                $pdf    = $parser->parseFile($cvPath);
+                $raw    = $pdf->getText();
+                // Bersihkan whitespace berlebih, batas 3000 karakter biar prompt tidak meledak
+                $cvText = mb_substr(preg_replace('/\s+/', ' ', trim($raw)), 0, 3000);
+            } catch (\Exception $e) {
+                $cvText = 'Gagal membaca CV: ' . $e->getMessage();
             }
         }
-
-        if (!$text) {
-            throw new \Exception('Semua model AI gagal, coba lagi nanti.');
-        }
-
-        // Extract JSON dari response
-        preg_match('/\{.*\}/s', $text, $matches);
-        $parsed = $matches ? json_decode($matches[0], true) : [
-            'summary'   => $text,
-            'recommend' => str_contains(strtolower($text), 'recommended') || str_contains(strtolower($text), 'yes')
-        ];
-
-        return response()->json([
-            'success' => true,
-            'result'  => $parsed
-        ]);
-
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'message' => 'AI analysis failed: ' . $e->getMessage()
-        ], 500);
     }
+
+    // ── Susun prompt ─────────────────────────────────────────────
+    $prompt = <<<PROMPT
+You are an experienced HR screening assistant. Analyze the candidate below and give an honest, concise evaluation.
+
+--- CANDIDATE INFO ---
+Name     : {$submission->user?->name}
+Position : {$submission->position?->name}
+Program  : {$submission->vacancy?->title}
+Documents: CV={$this->yesNo($submission->cv_file)}, Cover Letter={$this->yesNo($submission->cover_letter_file)}, Portfolio={$this->yesNo($submission->portfolio_file)}, Recommendation={$this->yesNo($submission->institution_letter_file)}
+LinkedIn : {$submission->linkedin_url}
+Motivation: {$submission->motivation_message}
+HR Notes : {$submission->hr_notes}
+
+--- CV CONTENT ---
+{$cvText}
+
+--- TASK ---
+1. Summarize the candidate's suitability in 2-3 sentences.
+2. List 2 key strengths and 1 concern (one line each).
+3. Decide: recommend to interview? (true/false)
+
+Respond ONLY in valid JSON (no markdown fences):
+{"summary":"...","strengths":["...","..."],"concern":"...","recommend":true}
+PROMPT;
+
+    // ── Panggil OpenRouter ───────────────────────────────────────
+try {
+    $client = new \GuzzleHttp\Client(['verify' => false, 'timeout' => 30]);
+
+    $response = $client->post('https://openrouter.ai/api/v1/chat/completions', [
+        'headers' => [
+            'Authorization' => 'Bearer ' . env('OPENROUTER_API_KEY'),
+            'Content-Type'  => 'application/json',
+            'HTTP-Referer'  => env('APP_URL', 'http://localhost'),
+            'X-Title'       => 'EarlyPath HR System',
+        ],
+        'json' => [
+            'model'    => 'google/gemma-3-27b-it:free',
+            'messages' => [
+                ['role' => 'user', 'content' => $prompt],
+            ],
+            'temperature' => 0.3,
+            'max_tokens'  => 512,
+        ],
+    ]);
+
+    $body = json_decode($response->getBody(), true);
+    $text = $body['choices'][0]['message']['content'] ?? null;
+
+    if (!$text) {
+        throw new \Exception('Model tidak merespons.');
+    }
+
+    // ── Parse JSON ───────────────────────────────────────────
+    preg_match('/\{.*\}/s', $text, $matches);
+    $parsed = $matches ? json_decode($matches[0], true) : null;
+
+    if (empty($parsed)) {
+        $parsed = [
+            'summary'   => $text,
+            'strengths' => [],
+            'concern'   => '',
+            'recommend' => str_contains(strtolower($text), '"recommend":true'),
+        ];
+    }
+
+    return response()->json(['success' => true, 'result' => $parsed]);
+
+} catch (\Exception $e) {
+    return response()->json([
+        'success' => false,
+        'message' => 'AI analysis failed: ' . $e->getMessage()
+    ], 500);
+}}
+
+private function yesNo($value): string
+{
+    return !empty($value) ? 'Yes' : 'No';
 }
 
     private function formatScreening(Submission $s): array
@@ -276,4 +306,94 @@ class HRScreeningController extends Controller
             'has_institution_letter' => !empty($s->institution_letter_file),
         ];
     }
+
+/**
+ * POST /hr/screening/ai-rank
+ * Rank semua kandidat sekaligus pakai AI
+ */
+public function aiRank(Request $request)
+{
+    $companyId = $request->user()->id_company;
+
+    $submissions = Submission::whereHas('vacancy', fn($q) =>
+        $q->where('id_company', $companyId)
+    )->whereIn('status', ['pending', 'screening'])
+     ->with(['user', 'position'])
+     ->get();
+
+    if ($submissions->isEmpty()) {
+        return response()->json(['success' => true, 'rankings' => []]);
+    }
+
+    if (!env('OPENROUTER_API_KEY')) {
+        return response()->json(['success' => false, 'message' => 'AI not configured'], 500);
+    }
+
+    $candidateList = $submissions->map(fn($s) => [
+        'id'                   => $s->id_submission,
+        'name'                 => $s->user?->name,
+        'position'             => $s->position?->name,
+        'has_cv'               => !empty($s->cv_file),
+        'has_cover_letter'     => !empty($s->cover_letter_file),
+        'has_portfolio'        => !empty($s->portfolio_file),
+        'has_recommendation'   => !empty($s->institution_letter_file),
+        'motivation'           => $s->motivation_message,
+        'hr_notes'             => $s->hr_notes,
+    ]);
+
+    $json = json_encode($candidateList, JSON_PRETTY_PRINT);
+
+    $prompt = <<<PROMPT
+You are a senior HR screening assistant. Evaluate and score each candidate from 0-100 based on their profile.
+
+Candidates (JSON):
+{$json}
+
+Scoring guide:
+- Has CV: +30 pts
+- Has Cover Letter: +20 pts
+- Has Portfolio: +20 pts
+- Has Recommendation Letter: +15 pts
+- Has motivation message (non-empty): +10 pts
+- Quality/length of motivation: up to +5 pts
+
+Return ONLY a valid JSON array sorted by score descending (no markdown, no explanation):
+[{"id":"SUB123","score":95},{"id":"SUB456","score":72}]
+PROMPT;
+
+    try {
+        $client   = new \GuzzleHttp\Client(['verify' => false, 'timeout' => 30]);
+        $response = $client->post('https://openrouter.ai/api/v1/chat/completions', [
+            'headers' => [
+                'Authorization' => 'Bearer ' . env('OPENROUTER_API_KEY'),
+                'Content-Type'  => 'application/json',
+                'HTTP-Referer'  => env('APP_URL', 'http://localhost'),
+                'X-Title'       => 'EarlyPath HR System',
+            ],
+            'json' => [
+                'model'       => 'google/gemma-3-27b-it:free',
+                'messages'    => [['role' => 'user', 'content' => $prompt]],
+                'temperature' => 0.1,
+                'max_tokens'  => 1024,
+            ],
+        ]);
+
+        $body = json_decode($response->getBody(), true);
+        $text = $body['choices'][0]['message']['content'] ?? '';
+
+        preg_match('/\[.*\]/s', $text, $matches);
+        $rankings = $matches ? json_decode($matches[0], true) : [];
+
+        if (empty($rankings)) {
+            throw new \Exception('AI returned empty rankings');
+        }
+
+        usort($rankings, fn($a, $b) => $b['score'] - $a['score']);
+
+        return response()->json(['success' => true, 'rankings' => $rankings]);
+
+    } catch (\Exception $e) {
+        return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+    }
+}
 }

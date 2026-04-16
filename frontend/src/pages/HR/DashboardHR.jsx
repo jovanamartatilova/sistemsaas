@@ -19,18 +19,7 @@ const s = {
   sidebarBottom: { borderTop: "1px solid rgba(255,255,255,0.08)", padding: "12px 14px", display: "flex", flexDirection: "column", gap: "10px" },
   userRow: { display: "flex", alignItems: "center", gap: "8px" },
   userAvatar: { width: "28px", height: "28px", borderRadius: "50%", background: "linear-gradient(135deg,#3b82f6,#06b6d4)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", fontWeight: 700, color: "#fff", flexShrink: 0 },
-  btnLogout: { 
-  width: "100%", 
-  padding: "6px", 
-  borderRadius: "6px", 
-  border: "1px solid rgba(239,68,68,0.3)", 
-  background: "rgba(239,68,68,0.08)", 
-  color: "#f87171", 
-  cursor: "pointer", 
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-},
+  btnLogout: { width: "100%", padding: "6px", borderRadius: "6px", border: "1px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.08)", color: "#f87171", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" },
   main: { marginLeft: "172px", flex: 1, display: "flex", flexDirection: "column", minHeight: "100vh" },
   topbar: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 28px", background: "#fff", borderBottom: "1px solid #e2e8f0", position: "sticky", top: 0, zIndex: 50 },
   breadcrumb: { display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "#64748b" },
@@ -145,16 +134,15 @@ function SidebarHR({ user, onLogout }) {
             <span style={{ fontSize: "11.5px", fontWeight: 600, color: "#e2e8f0", display: "block" }}>
               {user?.name || "Admin HR"}
             </span>
-            
           </div>
         </div>
         <button style={s.btnLogout} onClick={onLogout} title="Logout">
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-    <polyline points="16 17 21 12 16 7" />
-    <line x1="21" y1="12" x2="9" y2="12" />
-  </svg>
-</button>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <polyline points="16 17 21 12 16 7" />
+            <line x1="21" y1="12" x2="9" y2="12" />
+          </svg>
+        </button>
       </div>
     </aside>
   );
@@ -165,11 +153,38 @@ function LogoutModal({ onConfirm, onCancel }) {
   return (
     <div style={s.modalOverlay}>
       <div style={s.modalBox}>
-        <div style={s.modalTitle}>Konfirmasi Logout</div>
-        <div style={s.modalDesc}>Yakin ingin keluar dari sesi ini?</div>
+        <div style={s.modalTitle}>Confirm Logout</div>
+        <div style={s.modalDesc}>Are you sure you want to logout of this session?</div>
         <div style={s.modalActions}>
-          <button style={s.btnCancel} onClick={onCancel}>Batal</button>
-          <button style={s.btnConfirmLogout} onClick={onConfirm}>Ya, Logout</button>
+          <button style={s.btnCancel} onClick={onCancel}>Cancel</button>
+          <button style={s.btnConfirmLogout} onClick={onConfirm}>Yes, Logout</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── CONFIRM ACTION MODAL ─────────────────────────────────────────────────────
+function ConfirmActionModal({ action, onConfirm, onCancel }) {
+  const config = {
+    screening: { label: "Move to Screening?", bg: "#f59e0b" },
+    interview: { label: "Move to Interview?", bg: "#a855f7" },
+    accept:    { label: "Accept Candidate?",  bg: "#16a34a" },
+    reject:    { label: "Reject Candidate?",  bg: "#ef4444" },
+  };
+  const { label, bg } = config[action.type];
+  return (
+    <div style={s.modalOverlay}>
+      <div style={s.modalBox}>
+        <div style={s.modalTitle}>{label}</div>
+        <div style={s.modalDesc}>
+          Change status of <strong>{action.candidate.name}</strong> to <strong>{action.type}</strong>?
+        </div>
+        <div style={s.modalActions}>
+          <button style={s.btnCancel} onClick={onCancel}>Cancel</button>
+          <button style={{ ...s.btnConfirmLogout, background: bg }} onClick={onConfirm}>
+            Confirm
+          </button>
         </div>
       </div>
     </div>
@@ -179,7 +194,10 @@ function LogoutModal({ onConfirm, onCancel }) {
 // ─── PAGE ─────────────────────────────────────────────────────────────────────
 export default function DashboardHR() {
   const navigate = useNavigate();
+
+  // ── State ──────────────────────────────────────────────────────────────────
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [confirmAction, setConfirmAction] = useState(null);
   const [data, setData] = useState({
     user: {},
     stats: {
@@ -192,29 +210,35 @@ export default function DashboardHR() {
     pipeline: [],
   });
 
+  // ── Effects ────────────────────────────────────────────────────────────────
   useEffect(() => {
     api('/hr/dashboard').then(res => setData(res.data));
   }, []);
 
+  // ── Handlers ──────────────────────────────────────────────────────────────
   const handleLogout = () => {
     localStorage.clear();
     useAuthStore.setState({ isAuthenticated: false, token: null, user: null, company: null });
     navigate("/login");
   };
 
-  const handleAccept = async (id) => {
-    await api(`/hr/candidates/${id}/accept`, { method: 'PATCH' });
+  const executeAction = async () => {
+    const { type, candidate } = confirmAction;
+    const endpoints = {
+      screening: `/hr/candidates/${candidate.id_submission}/screening`,
+      interview: `/hr/candidates/${candidate.id_submission}/interview`,
+      accept:    `/hr/candidates/${candidate.id_submission}/accept`,
+      reject:    `/hr/candidates/${candidate.id_submission}/reject`,
+    };
+    await api(endpoints[type], { method: 'PATCH' });
     api('/hr/dashboard').then(res => setData(res.data));
+    setConfirmAction(null);
   };
 
-  const handleReject = async (id) => {
-    await api(`/hr/candidates/${id}/reject`, { method: 'PATCH' });
-    api('/hr/dashboard').then(res => setData(res.data));
-  };
-
-  // Format tanggal hari ini
+  // ── Helpers ────────────────────────────────────────────────────────────────
   const today = new Date().toLocaleDateString("en-US", { weekday: "short", day: "2-digit", month: "short", year: "numeric" });
 
+  // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div style={s.app}>
       <style>{`* { box-sizing: border-box; margin: 0; padding: 0; } ::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 99px; }`}</style>
@@ -301,10 +325,22 @@ export default function DashboardHR() {
                         </td>
                         <td style={s.td}>
                           <div style={s.actions}>
-                            {['pending', 'screening'].includes(c.status) && (
+                            {c.status === 'pending' && (
                               <>
-                                <button style={s.btnAccept} onClick={() => handleAccept(c.id_submission)}>Accept</button>
-                                <button style={s.btnReject} onClick={() => handleReject(c.id_submission)}>Reject</button>
+                                <button style={s.btnAccept} onClick={() => setConfirmAction({ type: 'screening', candidate: c })}>Screening</button>
+                                <button style={s.btnReject} onClick={() => setConfirmAction({ type: 'reject', candidate: c })}>Reject</button>
+                              </>
+                            )}
+                            {c.status === 'screening' && (
+                              <>
+                                <button style={s.btnAccept} onClick={() => setConfirmAction({ type: 'interview', candidate: c })}>Interview</button>
+                                <button style={s.btnReject} onClick={() => setConfirmAction({ type: 'reject', candidate: c })}>Reject</button>
+                              </>
+                            )}
+                            {c.status === 'interview' && (
+                              <>
+                                <button style={s.btnAccept} onClick={() => setConfirmAction({ type: 'accept', candidate: c })}>Accept</button>
+                                <button style={s.btnReject} onClick={() => setConfirmAction({ type: 'reject', candidate: c })}>Reject</button>
                               </>
                             )}
                             {c.status === 'accepted' && (
@@ -338,11 +374,18 @@ export default function DashboardHR() {
         </div>
       </main>
 
-      {/* Logout Confirmation Modal */}
+      {/* Modals */}
       {showLogoutModal && (
         <LogoutModal
           onConfirm={handleLogout}
           onCancel={() => setShowLogoutModal(false)}
+        />
+      )}
+      {confirmAction && (
+        <ConfirmActionModal
+          action={confirmAction}
+          onConfirm={executeAction}
+          onCancel={() => setConfirmAction(null)}
         />
       )}
     </div>

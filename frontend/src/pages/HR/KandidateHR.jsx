@@ -7,7 +7,6 @@ import { useAuthStore } from "../../stores/authStore";
 const s = {
   app: { display: "flex", minHeight: "100vh", background: "#f1f5f9", fontFamily: "'Poppins', 'Segoe UI', sans-serif", fontSize: "14px", color: "#1e293b" },
   sidebar: { position: "fixed", left: 0, top: 0, bottom: 0, width: "172px", background: "#0f172a", display: "flex", flexDirection: "column", zIndex: 100 },
-  logoBadge: { width: "28px", height: "28px", borderRadius: "7px", background: "linear-gradient(135deg,#3b82f6,#06b6d4)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", fontWeight: 700, color: "#fff", flexShrink: 0 },
   sidebarLogo: { display: "flex", alignItems: "center", gap: "3px", padding: "14px 16px", borderBottom: "1px solid rgba(255,255,255,0.08)" },
   logoImage: { height: "50px", width: "auto", minWidth: "50px", objectFit: "contain", display: "block" },
   logoText: { fontSize: "14px", fontWeight: 700, color: "#fff", lineHeight: "1" },
@@ -16,8 +15,10 @@ const s = {
   navLabel: { display: "block", fontSize: "9px", fontWeight: 700, letterSpacing: "0.1em", color: "#475569", padding: "0 8px", marginBottom: "4px", textTransform: "uppercase", textAlign: "left" },
   navItem: (active) => ({ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", padding: "7px 8px", border: "none", background: active ? "rgba(59,130,246,0.18)" : "transparent", color: active ? "#60a5fa" : "#94a3b8", fontSize: "12.5px", borderRadius: "6px", cursor: "pointer", textDecoration: "none", fontFamily: "inherit", textAlign: "left" }),
   navBadge: { background: "#3b82f6", color: "#fff", fontSize: "10px", fontWeight: 700, padding: "1px 6px", borderRadius: "10px" },
-  sidebarUser: { display: "flex", alignItems: "center", gap: "8px", padding: "12px 14px", borderTop: "1px solid rgba(255,255,255,0.08)" },
+  sidebarBottom: { borderTop: "1px solid rgba(255,255,255,0.08)", padding: "12px 14px", display: "flex", flexDirection: "column", gap: "10px" },
+  userRow: { display: "flex", alignItems: "center", gap: "8px" },
   userAvatar: { width: "28px", height: "28px", borderRadius: "50%", background: "linear-gradient(135deg,#3b82f6,#06b6d4)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", fontWeight: 700, color: "#fff", flexShrink: 0 },
+  btnLogout: { width: "100%", padding: "6px", borderRadius: "6px", border: "1px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.08)", color: "#f87171", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" },
   main: { marginLeft: "172px", flex: 1, display: "flex", flexDirection: "column", minHeight: "100vh" },
   topbar: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 28px", background: "#fff", borderBottom: "1px solid #e2e8f0", position: "sticky", top: 0, zIndex: 50 },
   breadcrumb: { display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "#64748b" },
@@ -67,14 +68,16 @@ const statusStyle = {
   rejected:  { bg: "#fee2e2", color: "#991b1b", dot: "#ef4444" },
 };
 
-const modalOverlay = { position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 999, display: "flex", alignItems: "center", justifyContent: "center" };
-const modalBox = { background: "#fff", borderRadius: "14px", padding: "28px", width: "320px", boxShadow: "0 8px 32px rgba(0,0,0,0.18)" };
-const modalTitle = { fontSize: "16px", fontWeight: 700, color: "#0f172a", marginBottom: "8px" };
-const modalDesc = { fontSize: "13px", color: "#64748b", marginBottom: "24px" };
-const modalActions = { display: "flex", gap: "10px", justifyContent: "flex-end" };
-const btnCancel = { padding: "7px 16px", borderRadius: "8px", border: "1px solid #e2e8f0", background: "#fff", color: "#334155", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" };
-const btnConfirmLogout = { padding: "7px 16px", borderRadius: "8px", border: "none", background: "#ef4444", color: "#fff", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" };
+// ─── MODAL STYLES ─────────────────────────────────────────────────────────────
+const modalOverlay  = { position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 999, display: "flex", alignItems: "center", justifyContent: "center" };
+const modalBox      = { background: "#fff", borderRadius: "14px", padding: "28px", width: "320px", boxShadow: "0 8px 32px rgba(0,0,0,0.18)" };
+const modalTitle    = { fontSize: "16px", fontWeight: 700, color: "#0f172a", marginBottom: "8px" };
+const modalDesc     = { fontSize: "13px", color: "#64748b", marginBottom: "24px" };
+const modalActions  = { display: "flex", gap: "10px", justifyContent: "flex-end" };
+const btnCancel     = { padding: "7px 16px", borderRadius: "8px", border: "1px solid #e2e8f0", background: "#fff", color: "#334155", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" };
+const btnConfirm    = { padding: "7px 16px", borderRadius: "8px", border: "none", color: "#fff", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" };
 
+// ─── MODALS ───────────────────────────────────────────────────────────────────
 function LogoutModal({ onConfirm, onCancel }) {
   return (
     <div style={modalOverlay}>
@@ -83,14 +86,55 @@ function LogoutModal({ onConfirm, onCancel }) {
         <div style={modalDesc}>Yakin ingin keluar dari sesi ini?</div>
         <div style={modalActions}>
           <button style={btnCancel} onClick={onCancel}>Batal</button>
-          <button style={btnConfirmLogout} onClick={onConfirm}>Ya, Logout</button>
+          <button style={{ ...btnConfirm, background: "#ef4444" }} onClick={onConfirm}>Ya, Logout</button>
         </div>
       </div>
     </div>
   );
 }
 
-// ─── SIDEBAR ─────────────────────────────────────────────────────────────────
+function ConfirmActionModal({ action, onConfirm, onCancel }) {
+  const config = {
+    screening: { label: "Move to Screening?", bg: "#f59e0b" },
+    interview: { label: "Move to Interview?", bg: "#a855f7" },
+    accept:    { label: "Accept Candidate?",  bg: "#16a34a" },
+    reject:    { label: "Reject Candidate?",  bg: "#ef4444" },
+  };
+  const { label, bg } = config[action.type];
+  return (
+    <div style={modalOverlay}>
+      <div style={modalBox}>
+        <div style={modalTitle}>{label}</div>
+        <div style={modalDesc}>
+          Change status of <strong>{action.candidate.name}</strong> to <strong>{action.type}</strong>?
+        </div>
+        <div style={modalActions}>
+          <button style={btnCancel} onClick={onCancel}>Cancel</button>
+          <button style={{ ...btnConfirm, background: bg }} onClick={onConfirm}>Confirm</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ConfirmExportModal({ total, onConfirm, onCancel }) {
+  return (
+    <div style={modalOverlay}>
+      <div style={modalBox}>
+        <div style={modalTitle}>Export CSV?</div>
+        <div style={modalDesc}>
+          This will export <strong>{total ?? "all"}</strong> candidate records to a CSV file.
+        </div>
+        <div style={modalActions}>
+          <button style={btnCancel} onClick={onCancel}>Cancel</button>
+          <button style={{ ...btnConfirm, background: "#2563eb" }} onClick={onConfirm}>Yes, Export</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── NAV ─────────────────────────────────────────────────────────────────────
 const navItems = {
   menu: [{ key: "/hr/dashboard", label: "Dashboard" }],
   selection: [
@@ -105,18 +149,13 @@ const navItems = {
   ],
 };
 
-const sidebarBottom = { borderTop: "1px solid rgba(255,255,255,0.08)", padding: "12px 14px", display: "flex", flexDirection: "column", gap: "10px" };
-const userRow = { display: "flex", alignItems: "center", gap: "8px" };
-const btnLogout = { width: "100%", padding: "6px", borderRadius: "6px", border: "1px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.08)", color: "#f87171", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" };
-
+// ─── SIDEBAR ─────────────────────────────────────────────────────────────────
 function SidebarHR({ user, onLogout }) {
   const location = useLocation();
   return (
     <aside style={s.sidebar}>
       <div style={s.sidebarLogo}>
-        <div style={{ display: "flex", alignItems: "center" }}>
-          <img src="/assets/images/logo.png" style={s.logoImage} />
-        </div>
+        <img src="/assets/images/logo.png" style={s.logoImage} alt="logo" />
         <span style={s.logoText}>EarlyPath</span>
       </div>
       <nav style={s.sidebarNav}>
@@ -132,8 +171,8 @@ function SidebarHR({ user, onLogout }) {
           </div>
         ))}
       </nav>
-      <div style={sidebarBottom}>
-        <div style={userRow}>
+      <div style={s.sidebarBottom}>
+        <div style={s.userRow}>
           <div style={s.userAvatar}>HR</div>
           <div>
             <span style={{ fontSize: "11.5px", fontWeight: 600, color: "#e2e8f0", display: "block" }}>
@@ -141,7 +180,7 @@ function SidebarHR({ user, onLogout }) {
             </span>
           </div>
         </div>
-        <button style={btnLogout} onClick={onLogout} title="Logout">
+        <button style={s.btnLogout} onClick={onLogout} title="Logout">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
             <polyline points="16 17 21 12 16 7" />
@@ -153,15 +192,23 @@ function SidebarHR({ user, onLogout }) {
   );
 }
 
-// ============ PAGE ============
+// ─── PAGE ─────────────────────────────────────────────────────────────────────
 export default function CandidatesHR() {
   const navigate = useNavigate();
-  const [showLogoutModal, setShowLogoutModal] = useState(false);
   const user = useAuthStore((state) => state.user);
-  const [data, setData] = useState({ stats: {}, candidates: [], user: {} });
-  const [search, setSearch] = useState('');
-  const [loading, setLoading] = useState(true);
 
+  // ── State ──────────────────────────────────────────────────────────────────
+  const [showLogoutModal, setShowLogoutModal]   = useState(false);
+  const [showExportModal, setShowExportModal]   = useState(false);
+  const [confirmAction, setConfirmAction]       = useState(null);
+  const [data, setData]                         = useState({ stats: {}, candidates: [] });
+  const [search, setSearch]                     = useState('');
+  const [loading, setLoading]                   = useState(true);
+
+  // ── Effects ────────────────────────────────────────────────────────────────
+  useEffect(() => { fetchCandidates(); }, []);
+
+  // ── Handlers ──────────────────────────────────────────────────────────────
   const fetchCandidates = () => {
     const params = new URLSearchParams();
     if (search) params.set('search', search);
@@ -170,22 +217,48 @@ export default function CandidatesHR() {
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => { fetchCandidates(); }, []);
-
-  const handleAccept = async (id) => {
-    await api(`/hr/candidates/${id}/accept`, { method: 'PATCH' });
+  const executeAction = async () => {
+    const { type, candidate } = confirmAction;
+    const endpoints = {
+      screening: `/hr/candidates/${candidate.id_submission}/screening`,
+      interview: `/hr/candidates/${candidate.id_submission}/interview`,
+      accept:    `/hr/candidates/${candidate.id_submission}/accept`,
+      reject:    `/hr/candidates/${candidate.id_submission}/reject`,
+    };
+    await api(endpoints[type], { method: 'PATCH' });
     fetchCandidates();
+    setConfirmAction(null);
   };
 
-  const handleReject = async (id) => {
-    await api(`/hr/candidates/${id}/reject`, { method: 'PATCH' });
-    fetchCandidates();
-  };
-
-  const handleExport = () => {
+  const executeExport = async () => {
+  setShowExportModal(false);
+  try {
+    const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
     const token = localStorage.getItem('hr_token');
-    window.open(`${import.meta.env.VITE_API_URL}/hr/candidates/export?token=${token}`);
-  };
+
+    const res = await fetch(`${BASE_URL}/hr/candidates/export`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    });
+
+    if (!res.ok) throw new Error(`Export failed: ${res.status}`);
+
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `candidates_${new Date().toISOString().slice(0,10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    alert('Gagal export CSV.');
+    console.error(err);
+  }
+};
 
   const handleLogout = () => {
     localStorage.clear();
@@ -193,6 +266,7 @@ export default function CandidatesHR() {
     navigate("/login");
   };
 
+  // ── Helpers ────────────────────────────────────────────────────────────────
   const statCards = [
     { value: data.stats.total,       label: "Total Applicants", badgeBg: "#dbeafe", badgeColor: "#1e40af", sub: "All registered candidates", barColor: "#3b82f6", barWidth: "60%" },
     { value: data.stats.unprocessed, label: "Unprocessed",      badgeBg: null,      badgeColor: null,      sub: "Needs follow-up",           barColor: "#f59e0b", barWidth: "34%" },
@@ -200,13 +274,17 @@ export default function CandidatesHR() {
     { value: data.stats.rejected,    label: "Rejected",         badgeBg: null,      badgeColor: null,      sub: "From total applicants",      barColor: "#ef4444", barWidth: "21%" },
   ];
 
+  const today = new Date().toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+
+  // ── Render ─────────────────────────────────────────────────────────────────
   if (loading) return <div style={{ padding: "40px", textAlign: "center", color: "#64748b" }}>Loading...</div>;
 
   return (
     <div style={s.app}>
-      {showLogoutModal && <LogoutModal onConfirm={handleLogout} onCancel={() => setShowLogoutModal(false)} />}
       <style>{`* { box-sizing: border-box; margin: 0; padding: 0; } ::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 99px; }`}</style>
+
       <SidebarHR user={user} onLogout={() => setShowLogoutModal(true)} />
+
       <main style={s.main}>
         <div style={s.topbar}>
           <div style={s.breadcrumb}>
@@ -222,7 +300,7 @@ export default function CandidatesHR() {
                 onKeyDown={e => e.key === 'Enter' && fetchCandidates()}
               />
             </div>
-            <div style={s.topbarDate}>{new Date().toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</div>
+            <div style={s.topbarDate}>{today}</div>
           </div>
         </div>
 
@@ -253,7 +331,7 @@ export default function CandidatesHR() {
                 <div style={s.cardSubtitle}>Click View CV to see details and documents</div>
               </div>
               <div style={s.headerActions}>
-                <button style={s.btnOutline} onClick={handleExport}>Export CSV</button>
+                <button style={s.btnOutline} onClick={() => setShowExportModal(true)}>Export CSV</button>
               </div>
             </div>
             <div style={s.tableWrap}>
@@ -283,49 +361,81 @@ export default function CandidatesHR() {
                     <tr>
                       <td colSpan={7} style={s.emptyState}>No candidates found.</td>
                     </tr>
-                  ) : (
-                    data.candidates.map((c, i) => (
-                      <tr key={i}>
-                        <td style={s.td}>
-                          <span style={s.candidateName}>{c.name}</span>
-                          <span style={s.candidateEmail}>{c.email}</span>
-                        </td>
-                        <td style={s.td}>{c.position}</td>
-                        <td style={s.td}>{c.program}</td>
-                        <td style={s.td}>{c.type}</td>
-                        <td style={s.td}>
-                          <span style={s.statusBadge(statusStyle[c.status]?.bg, statusStyle[c.status]?.color)}>
-                            <span style={s.statusDot(statusStyle[c.status]?.dot)} />
-                            {c.status}
-                          </span>
-                        </td>
-                        <td style={s.td}>
-                          {c.submitted_at
-                            ? new Date(c.submitted_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
-                            : '-'}
-                        </td>
-                        <td style={s.td}>
-                          <div style={s.actions}>
-                            {['pending', 'screening'].includes(c.status) && (
-                              <>
-                                <button style={s.btnAccept} onClick={() => handleAccept(c.id_submission)}>Accept</button>
-                                <button style={s.btnReject} onClick={() => handleReject(c.id_submission)}>Reject</button>
-                              </>
-                            )}
-                            {c.status === 'accepted' && (
-                              <button style={s.btnLoa}>Create LoA</button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
+                  ) : data.candidates.map((c, i) => (
+                    <tr key={i}>
+                      <td style={s.td}>
+                        <span style={s.candidateName}>{c.name}</span>
+                        <span style={s.candidateEmail}>{c.email}</span>
+                      </td>
+                      <td style={s.td}>{c.position}</td>
+                      <td style={s.td}>{c.program}</td>
+                      <td style={s.td}>{c.type}</td>
+                      <td style={s.td}>
+                        <span style={s.statusBadge(statusStyle[c.status]?.bg, statusStyle[c.status]?.color)}>
+                          <span style={s.statusDot(statusStyle[c.status]?.dot)} />
+                          {c.status}
+                        </span>
+                      </td>
+                      <td style={s.td}>
+                        {c.submitted_at
+                          ? new Date(c.submitted_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+                          : '-'}
+                      </td>
+                      <td style={s.td}>
+                        <div style={s.actions}>
+                          {c.status === 'pending' && (
+                            <>
+                              <button style={s.btnAccept} onClick={() => setConfirmAction({ type: 'screening', candidate: c })}>Screening</button>
+                              <button style={s.btnReject} onClick={() => setConfirmAction({ type: 'reject',    candidate: c })}>Reject</button>
+                            </>
+                          )}
+                          {c.status === 'screening' && (
+                            <>
+                              <button style={s.btnAccept} onClick={() => setConfirmAction({ type: 'interview', candidate: c })}>Interview</button>
+                              <button style={s.btnReject} onClick={() => setConfirmAction({ type: 'reject',    candidate: c })}>Reject</button>
+                            </>
+                          )}
+                          {c.status === 'interview' && (
+                            <>
+                              <button style={s.btnAccept} onClick={() => setConfirmAction({ type: 'accept', candidate: c })}>Accept</button>
+                              <button style={s.btnReject} onClick={() => setConfirmAction({ type: 'reject', candidate: c })}>Reject</button>
+                            </>
+                          )}
+                          {c.status === 'accepted' && (
+                            <button style={s.btnLoa}>Create LoA</button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
           </div>
         </div>
       </main>
+
+      {/* Modals */}
+      {showLogoutModal && (
+        <LogoutModal
+          onConfirm={handleLogout}
+          onCancel={() => setShowLogoutModal(false)}
+        />
+      )}
+      {confirmAction && (
+        <ConfirmActionModal
+          action={confirmAction}
+          onConfirm={executeAction}
+          onCancel={() => setConfirmAction(null)}
+        />
+      )}
+      {showExportModal && (
+        <ConfirmExportModal
+          total={data.stats.total}
+          onConfirm={executeExport}
+          onCancel={() => setShowExportModal(false)}
+        />
+      )}
     </div>
   );
 }

@@ -150,11 +150,11 @@ function LogoutModal({ onConfirm, onCancel }) {
   return (
     <div style={s.logoutOverlay}>
       <div style={s.logoutBox}>
-        <div style={s.logoutTitle}>Konfirmasi Logout</div>
-        <div style={s.logoutDesc}>Yakin ingin keluar dari sesi ini?</div>
+        <div style={s.logoutTitle}>Confirm Logout</div>
+        <div style={s.logoutDesc}>Are you sure you want to logout of this session?</div>
         <div style={s.logoutActions}>
-          <button style={s.btnCancelLogout} onClick={onCancel}>Batal</button>
-          <button style={s.btnConfirmLogout} onClick={onConfirm}>Ya, Logout</button>
+          <button style={s.btnCancelLogout} onClick={onCancel}>Cancel</button>
+          <button style={s.btnConfirmLogout} onClick={onConfirm}>Yes, Logout</button>
         </div>
       </div>
     </div>
@@ -173,6 +173,7 @@ export default function AssignMentorHR() {
   const [modal, setModal]     = useState(null);
   const [selectedMentor, setSelectedMentor] = useState(null);
   const [autoLoading, setAutoLoading] = useState(false);
+  const [unassignTarget, setUnassignTarget] = useState(null);
 
   // ── Fetch ──────────────────────────────────────────────
   const fetchData = () => {
@@ -257,6 +258,7 @@ export default function AssignMentorHR() {
   const activeMentors = data.stats.active_mentors  ?? 0;
 
   const today = new Date().toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+  const [showAutoConfirm, setShowAutoConfirm] = useState(false);
 
   if (loading) return <div style={{ padding: "40px", textAlign: "center", color: "#64748b" }}>Loading...</div>;
 
@@ -316,7 +318,7 @@ export default function AssignMentorHR() {
                   <div style={s.ct}>Accepted Interns</div>
                   <div style={s.cs}>Select a mentor for each intern, then click Assign</div>
                 </div>
-                <button style={s.btnOutline} onClick={handleAutoAssign} disabled={autoLoading}>
+                <button style={s.btnOutline} onClick={() => setShowAutoConfirm(true)} disabled={unassigned === 0 || autoLoading}>
                   {autoLoading ? 'Assigning...' : 'Auto-assign Unassigned'}
                 </button>
               </div>
@@ -379,7 +381,7 @@ export default function AssignMentorHR() {
                         </td>
                         <td style={s.td}>
                           {isSaved ? (
-                            <button style={s.btnSaved} onClick={() => handleUnassign(intern.id_submission)}>
+                            <button style={s.btnSaved} onClick={() => setUnassignTarget(intern.id_submission)}>
                               Assigned ✓
                             </button>
                           ) : (
@@ -465,6 +467,39 @@ export default function AssignMentorHR() {
           </div>
         );
       })()}
+
+      {unassignTarget && (
+  <div style={s.overlay} onClick={() => setUnassignTarget(null)}>
+    <div style={s.modal} onClick={e => e.stopPropagation()}>
+      <div style={s.modalTitle}>Unassign Mentor?</div>
+      <div style={s.modalSub}>This intern will no longer have an assigned mentor.</div>
+      <div style={s.modalFooter}>
+        <button style={s.btnCancel} onClick={() => setUnassignTarget(null)}>Cancel</button>
+        <button
+          style={{ ...s.btnConfirm, background: "#ef4444" }}
+          onClick={() => { handleUnassign(unassignTarget); setUnassignTarget(null); }}
+        >
+          Yes, Unassign
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+{showAutoConfirm && (
+  <div style={s.overlay} onClick={() => setShowAutoConfirm(false)}>
+    <div style={s.modal} onClick={e => e.stopPropagation()}>
+      <div style={s.modalTitle}>Auto-Assign All?</div>
+      <div style={s.modalSub}>System will assign mentors to all {unassigned} unassigned interns automatically.</div>
+      <div style={s.modalFooter}>
+        <button style={s.btnCancel} onClick={() => setShowAutoConfirm(false)}>Cancel</button>
+        <button style={s.btnConfirm} onClick={() => { handleAutoAssign(); setShowAutoConfirm(false); }}>
+          Yes, Auto-Assign
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
       {/* Logout confirmation modal */}
       {showLogoutModal && (

@@ -111,6 +111,65 @@ function LogoutModal({ onConfirm, onCancel }) {
   );
 }
 
+function ToastContainer({ toasts }) {
+  const colors = {
+    success: { bg: "#dcfce7", border: "#86efac", color: "#166534", icon: "✓" },
+    error:   { bg: "#fee2e2", border: "#fca5a5", color: "#991b1b", icon: "✕" },
+    info:    { bg: "#dbeafe", border: "#93c5fd", color: "#1e40af", icon: "i" },
+  };
+  return (
+    <div style={{ position: "fixed", bottom: "24px", right: "24px", display: "flex", flexDirection: "column", gap: "10px", zIndex: 9999, pointerEvents: "none" }}>
+      {toasts.map(toast => {
+        const c = colors[toast.type] || colors.success;
+        return (
+          <div key={toast.id} style={{
+            display: "flex", alignItems: "center", gap: "10px",
+            background: c.bg, border: `1px solid ${c.border}`, color: c.color,
+            padding: "12px 16px", borderRadius: "10px", fontSize: "13px", fontWeight: 500,
+            boxShadow: "0 4px 16px rgba(0,0,0,0.10)", minWidth: "240px", maxWidth: "340px",
+            animation: "slideIn 0.25s ease",
+            fontFamily: "'Poppins', 'Segoe UI', sans-serif",
+          }}>
+            <span style={{ width: "20px", height: "20px", borderRadius: "50%", background: c.color, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", fontWeight: 700, flexShrink: 0 }}>{c.icon}</span>
+            {toast.message}
+          </div>
+        );
+      })}
+      <style>{`@keyframes slideIn { from { opacity:0; transform:translateX(20px); } to { opacity:1; transform:translateX(0); } }`}</style>
+    </div>
+  );
+}
+
+function ConfirmModal({ config, onClose }) {
+  if (!config) return null;
+  const typeStyles = {
+    pay:     { accent: "#16a34a", bg: "#f0fdf4", border: "#86efac", btnBg: "#16a34a" },
+    export:  { accent: "#2563eb", bg: "#eff6ff", border: "#93c5fd", btnBg: "#2563eb" },
+    add:     { accent: "#2563eb", bg: "#eff6ff", border: "#93c5fd", btnBg: "#2563eb" },
+    default: { accent: "#334155", bg: "#f8fafc", border: "#e2e8f0", btnBg: "#334155" },
+  };
+  const t = typeStyles[config.type] || typeStyles.default;
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 998, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ background: "#fff", borderRadius: "14px", padding: "28px", width: "340px", boxShadow: "0 8px 32px rgba(0,0,0,0.18)", fontFamily: "'Poppins', 'Segoe UI', sans-serif" }}>
+        <div style={{ width: "40px", height: "40px", borderRadius: "10px", background: t.bg, border: `1px solid ${t.border}`, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "14px", fontSize: "18px" }}>
+          {config.icon || "?"}
+        </div>
+        <div style={{ fontSize: "16px", fontWeight: 700, color: "#0f172a", marginBottom: "6px" }}>{config.title}</div>
+        <div style={{ fontSize: "13px", color: "#64748b", marginBottom: "24px", lineHeight: 1.5 }}>{config.desc}</div>
+        <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+          <button onClick={onClose} style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid #e2e8f0", background: "#fff", color: "#334155", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+            Batal
+          </button>
+          <button onClick={() => { config.onConfirm(); onClose(); }} style={{ padding: "8px 16px", borderRadius: "8px", border: "none", background: t.btnBg, color: "#fff", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+            {config.confirmLabel || "Ya, Lanjutkan"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const sidebarBottom = { borderTop: "1px solid rgba(255,255,255,0.08)", padding: "12px 14px", display: "flex", flexDirection: "column", gap: "10px" };
 const userRow = { display: "flex", alignItems: "center", gap: "8px" };
 const btnLogout = { width: "100%", padding: "6px", borderRadius: "6px", border: "1px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.08)", color: "#f87171", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" };
@@ -171,6 +230,17 @@ export default function PayrollHR() {
   const [addForm, setAddForm]   = useState({});
   const [addError, setAddError] = useState('');
   const [saving, setSaving]     = useState(false);
+  const [toasts, setToasts] = useState([]);
+  const [confirmModal, setConfirmModal] = useState(null);
+  const [detailModal, setDetailModal] = useState(null);
+
+const showToast = (message, type = "success") => {
+  const id = Date.now();
+  setToasts(prev => [...prev, { id, message, type }]);
+  setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3500);
+};
+
+const showConfirm = (config) => setConfirmModal(config);
 
   // ── Fetch ─────────────────────────────────────────────
   const fetchPayroll = () => {
@@ -182,42 +252,99 @@ export default function PayrollHR() {
   useEffect(() => { fetchPayroll(); }, [period]);
 
   // ── Handlers ──────────────────────────────────────────
-  const handlePay = async (id) => {
-    await api(`/hr/payroll/${id}/pay`, { method: 'PATCH' });
-    fetchPayroll();
-  };
+  const handlePay = (id) => {
+  const intern = data.payrolls.find(p => p.id_payroll === id);
+  showConfirm({
+    type: "pay",
+    icon: "💸",
+    title: "Konfirmasi Pembayaran?",
+    desc: `Stipend ${intern?.stipend_formatted} akan ditransfer ke ${intern?.name} (${intern?.bank_name} · ${intern?.bank_account}). Tindakan ini tidak bisa dibatalkan.`,
+    confirmLabel: "Ya, Pay Now",
+    onConfirm: async () => {
+      await api(`/hr/payroll/${id}/pay`, { method: 'PATCH' });
+      showToast(`Pembayaran untuk ${intern?.name} berhasil diproses`, "success");
+      fetchPayroll();
+    },
+  });
+};
 
-  const handleExport = () => {
-    const token = localStorage.getItem('hr_token');
-    window.open(`${import.meta.env.VITE_API_URL}/hr/payroll/export?period=${period}&token=${token}`);
-  };
+const handleExport = () => {
+  showConfirm({
+    type: "export",
+    icon: "📄",
+    title: "Export CSV?",
+    desc: `Data payroll periode ${period} akan diunduh sebagai file CSV.`,
+    confirmLabel: "Ya, Export",
+    onConfirm: async () => {
+      try {
+        const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+        const token = localStorage.getItem('hr_token');
+
+        const res = await fetch(`${BASE_URL}/hr/payroll/export?period=${period}`, {
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        });
+
+        if (!res.ok) throw new Error(`Export failed: ${res.status}`);
+
+        const blob = await res.blob();
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        a.href     = url;
+        a.download = `payroll-${period}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+
+        showToast("Export CSV berhasil", "info");
+      } catch (err) {
+        showToast("Gagal export CSV", "error");
+        console.error(err);
+      }
+    },
+  });
+};
+
+const handleAddPayroll = () => {
+  setAddError('');
+  if (!addForm.id_submission || !addForm.stipend_amount || !addForm.bank_name || !addForm.bank_account || !addForm.account_holder) {
+    setAddError('Semua field wajib diisi.');
+    return;
+  }
+  showConfirm({
+    type: "add",
+    icon: "➕",
+    title: "Tambah Payroll?",
+    desc: `Data payroll untuk submission ID ${addForm.id_submission} dengan stipend Rp ${Number(addForm.stipend_amount).toLocaleString('id-ID')} akan disimpan.`,
+    confirmLabel: "Ya, Simpan",
+    onConfirm: async () => {
+      setSaving(true);
+      try {
+        await api('/hr/payroll', {
+          method: 'POST',
+          body: JSON.stringify({ ...addForm, period }),
+        });
+        setAddModal(false);
+        setAddForm({});
+        showToast("Payroll baru berhasil ditambahkan", "success");
+        fetchPayroll();
+      } catch (err) {
+        setAddError(err?.message || 'Failed to add payroll.');
+        showToast(err?.message || "Gagal menambah payroll", "error");
+      } finally {
+        setSaving(false);
+      }
+    },
+  });
+};
 
   const handleLogout = () => {
     localStorage.clear();
     useAuthStore.setState({ isAuthenticated: false, token: null, user: null, company: null });
     navigate("/login");
-  };
-
-  const handleAddPayroll = async () => {
-    setAddError('');
-    if (!addForm.id_submission || !addForm.stipend_amount || !addForm.bank_name || !addForm.bank_account || !addForm.account_holder) {
-      setAddError('Semua field wajib diisi.');
-      return;
-    }
-    setSaving(true);
-    try {
-      await api('/hr/payroll', {
-        method: 'POST',
-        body: JSON.stringify({ ...addForm, period }),
-      });
-      setAddModal(false);
-      setAddForm({});
-      fetchPayroll();
-    } catch (err) {
-      setAddError(err?.message || 'Failed to add payroll.');
-    } finally {
-      setSaving(false);
-    }
   };
 
   // ── Stat cards ────────────────────────────────────────
@@ -234,6 +361,8 @@ export default function PayrollHR() {
     <div style={s.app}>
       {showLogoutModal && <LogoutModal onConfirm={handleLogout} onCancel={() => setShowLogoutModal(false)} />}
       <style>{`* { box-sizing: border-box; margin: 0; padding: 0; } ::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 99px; }`}</style>
+      <ToastContainer toasts={toasts} />
+      <ConfirmModal config={confirmModal} onClose={() => setConfirmModal(null)} />
       <SidebarHR user={user} onLogout={() => setShowLogoutModal(true)} />
       <main style={s.main}>
 
@@ -334,7 +463,7 @@ export default function PayrollHR() {
                         </td>
                         <td style={s.td}>
                           <div style={s.actions}>
-                            <button style={s.btnAction}>Detail</button>
+                            <button style={s.btnAction} onClick={() => setDetailModal(p)}>Detail</button>
                             {p.status === 'pending' && (
                               <button style={s.btnPay} onClick={() => handlePay(p.id_payroll)}>Pay Now</button>
                             )}
@@ -421,6 +550,38 @@ export default function PayrollHR() {
           </div>
         </div>
       )}
+
+      {detailModal && (
+  <div style={s.modalOverlay} onClick={() => setDetailModal(null)}>
+    <div style={s.modal} onClick={e => e.stopPropagation()}>
+      <div style={s.modalTitle}>{detailModal.name}</div>
+      <div style={s.modalSubtitle}>{detailModal.email}</div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px", margin: "16px 0" }}>
+        {[
+          ["Position",       detailModal.position],
+          ["Program",        detailModal.program],
+          ["Stipend",        detailModal.stipend_formatted],
+          ["Period",         detailModal.period],
+          ["Bank",           detailModal.bank_name],
+          ["Account Number", detailModal.bank_account],
+          ["Account Holder", detailModal.account_holder],
+          ["Status",         detailModal.status === "paid" ? "✅ Paid" : "⏳ Pending"],
+          ["Paid At",        detailModal.paid_at ?? "-"],
+        ].map(([label, value]) => (
+          <div key={label}>
+            <div style={s.modalLabel}>{label}</div>
+            <div style={{ fontSize: "13px", color: "#0f172a", fontWeight: 500 }}>{value}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={s.modalFooter}>
+        <button style={s.btnOutline} onClick={() => setDetailModal(null)}>Tutup</button>
+      </div>
+    </div>
+  </div>
+)}
     </div>
   );
 }

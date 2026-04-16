@@ -229,6 +229,7 @@ Route::middleware(['auth:sanctum'])->prefix('hr')->group(function () {
 
     // Screening
     Route::get('/screening',                           [HRScreeningController::class, 'index']);
+    Route::post('/screening/ai-rank',                  [HRScreeningController::class, 'aiRank']);
     Route::patch('/screening/{id}/pass',               [HRScreeningController::class, 'pass']);
     Route::patch('/screening/{id}/reject',             [HRScreeningController::class, 'reject']);
     Route::post('/screening/{id}/notes',               [HRScreeningController::class, 'saveNotes']);
