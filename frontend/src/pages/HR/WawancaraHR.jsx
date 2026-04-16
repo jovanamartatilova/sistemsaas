@@ -115,6 +115,41 @@ function LogoutModal({ onConfirm, onCancel }) {
   );
 }
 
+function ToastContainer({ toasts }) {
+  const toastColors = {
+    success: { bg: "#dcfce7", border: "#86efac", color: "#166534", icon: "✓" },
+    error:   { bg: "#fee2e2", border: "#fca5a5", color: "#991b1b", icon: "✕" },
+    info:    { bg: "#dbeafe", border: "#93c5fd", color: "#1e40af", icon: "i" },
+  };
+
+  return (
+    <div style={{ position: "fixed", bottom: "24px", right: "24px", display: "flex", flexDirection: "column", gap: "10px", zIndex: 9999, pointerEvents: "none" }}>
+      {toasts.map(toast => {
+        const c = toastColors[toast.type] || toastColors.success;
+        return (
+          <div key={toast.id} style={{
+            display: "flex", alignItems: "center", gap: "10px",
+            background: c.bg, border: `1px solid ${c.border}`, color: c.color,
+            padding: "12px 16px", borderRadius: "10px", fontSize: "13px", fontWeight: 500,
+            boxShadow: "0 4px 16px rgba(0,0,0,0.10)", minWidth: "240px", maxWidth: "340px",
+            animation: "slideIn 0.25s ease",
+            fontFamily: "'Poppins', 'Segoe UI', sans-serif",
+          }}>
+            <span style={{
+              width: "20px", height: "20px", borderRadius: "50%",
+              background: c.color, color: "#fff",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: "11px", fontWeight: 700, flexShrink: 0,
+            }}>{c.icon}</span>
+            {toast.message}
+          </div>
+        );
+      })}
+      <style>{`@keyframes slideIn { from { opacity:0; transform:translateX(20px); } to { opacity:1; transform:translateX(0); } }`}</style>
+    </div>
+  );
+}
+
 const sidebarBottom = { borderTop: "1px solid rgba(255,255,255,0.08)", padding: "12px 14px", display: "flex", flexDirection: "column", gap: "10px" };
 const userRow = { display: "flex", alignItems: "center", gap: "8px" };
 const btnLogout = { width: "100%", padding: "6px", borderRadius: "6px", border: "1px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.08)", color: "#f87171", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" };
@@ -176,6 +211,15 @@ export default function InterviewHR() {
   const [addForm, setAddForm]     = useState({});
   const [addError, setAddError]   = useState("");
   const [saving, setSaving]       = useState(false);
+  const [toasts, setToasts] = useState([]);
+
+const showToast = (message, type = "success") => {
+  const id = Date.now();
+  setToasts(prev => [...prev, { id, message, type }]);
+  setTimeout(() => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  }, 3500);
+};
 
   // ── Fetch ────────────────────────────────────────────────
   const fetchInterviews = () => {
@@ -216,12 +260,14 @@ export default function InterviewHR() {
   };
 
   const handleResultChange = async (id, value) => {
-    await api(`/hr/interviews/${id}/result`, {
-      method: 'PATCH',
-      body: JSON.stringify({ result: value }),
-    });
-    fetchInterviews();
-  };
+  await api(`/hr/interviews/${id}/result`, {
+    method: 'PATCH',
+    body: JSON.stringify({ result: value }),
+  });
+  const label = resultOptions.find(o => o.value === value)?.label || value;
+  showToast(`Interview result updated to "${label}"`);
+  fetchInterviews();
+};
 
   const handleAddSchedule = async () => {
     setAddError("");
@@ -272,6 +318,7 @@ export default function InterviewHR() {
     <div style={s.app}>
       {showLogoutModal && <LogoutModal onConfirm={handleLogout} onCancel={() => setShowLogoutModal(false)} />}
       <style>{`* { box-sizing: border-box; margin: 0; padding: 0; } ::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 99px; }`}</style>
+      <ToastContainer toasts={toasts} />
       <SidebarHR user={user} onLogout={() => setShowLogoutModal(true)} />
       <main style={s.main}>
 

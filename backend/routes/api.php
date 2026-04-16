@@ -168,7 +168,7 @@ Route::prefix('mentor')->middleware(['auth:sanctum', 'mentorRole'])->group(funct
 
 // HR Routes
 
-Route::prefix('hr')->middleware('auth:sanctum')->group(function () {
+Route::middleware(['auth:sanctum'])->prefix('hr')->group(function () {
     Route::get('/dashboard', [HRDashboardController::class, 'index']);
 
     // Candidates
@@ -180,6 +180,7 @@ Route::prefix('hr')->middleware('auth:sanctum')->group(function () {
 
     // Screening
     Route::get('/screening',                        [HRScreeningController::class, 'index']);
+    Route::post('/screening/ai-rank',               [HRScreeningController::class, 'aiRank']);
     Route::patch('/screening/{id}/pass',            [HRScreeningController::class, 'pass']);
     Route::patch('/screening/{id}/reject',          [HRScreeningController::class, 'reject']);
     Route::post('/screening/{id}/notes',            [HRScreeningController::class, 'saveNotes']);
@@ -255,6 +256,7 @@ if (env('APP_DEBUG', false)) {
         'data'    => [
             'stats'      => ['today' => 0, 'pending' => 0, 'completed' => 0],
             'interviews' => [],
+
         ],
     ]));
 }

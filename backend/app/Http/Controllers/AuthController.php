@@ -493,7 +493,7 @@ class AuthController extends Controller
 
             // Create reset URL (frontend URL)
             $resetUrl = env('FRONTEND_URL', 'http://localhost:5173') . '/reset-password?token=' . $resetToken . '&email=' . urlencode($validated['email']);
-            
+
             // Send email using Laravel's Mail facade
             try {
                 \Mail::raw(
@@ -780,7 +780,6 @@ public function forgotPasswordCandidate(Request $request)
             return response()->json(['message' => 'An error occurred', 'error' => $e->getMessage()], 500);
         }
     }
-
 
 
     /**
