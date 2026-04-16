@@ -7,7 +7,7 @@ class Submission extends Model
     protected $primaryKey = 'id_submission';
     protected $keyType = 'string';
     public $incrementing = false;
-    public $timestamps = true;
+    public $timestamps = false;
 
     protected $fillable = [
         'id_submission', 'id_team', 'id_user', 'id_vacancy', 'id_position',

@@ -72,30 +72,103 @@ class HRLoaController extends Controller
             return response()->json(['success' => false, 'message' => 'Submission not found or not accepted'], 404);
         }
 
-        // Cek kalau sudah di-generate
-        if ($submission->loa) {
-            return response()->json(['success' => false, 'message' => 'LoA already generated'], 422);
-        }
-
-        // Generate nomor surat — format: LOA/{YEAR}/{INCREMENT}
         $year      = now()->year;
-        $lastCount = Loa::whereYear('created_at', $year)->count() + 1;
-        $loaNumber = 'LOA/' . $year . '/' . str_pad($lastCount, 3, '0', STR_PAD_LEFT);
 
-        $loa = Loa::create([
-            'id_loa'        => 'LOA' . strtoupper(Str::random(7)),
-            'id_submission' => $submission->id_submission,
-            'letter_number' => $loaNumber,
-            'signed_by'     => $request->user()->name,
-            'issued_date'   => now()->toDateString(),
-            'file_path'     => null, // nanti diisi setelah generate PDF
-        ]);
+        if ($submission->id_team) {
+            $acceptedSubmissions = Submission::where('id_team', $submission->id_team)
+                ->where('id_vacancy', $submission->id_vacancy)
+                ->where('status', 'accepted')
+                ->with(['user', 'position', 'vacancy.company', 'loa'])
+                ->get();
+                
+            $teamMembersRoles = \Illuminate\Support\Facades\DB::table('team_members')
+                ->where('id_team', $submission->id_team)
+                ->pluck('role', 'id_user');
 
-        // TODO: generate PDF pakai barryvdh/laravel-dompdf
-        // $pdf      = PDF::loadView('loa.template', compact('submission', 'loa'));
-        // $filePath = 'loas/' . $loa->id_loa . '.pdf';
-        // Storage::disk('public')->put($filePath, $pdf->output());
-        // $loa->update(['file_path' => $filePath]);
+            $team_members_raw = $acceptedSubmissions->map(function($sub) use ($teamMembersRoles) {
+                return [
+                    'name' => $sub->user->name,
+                    'position' => $sub->position ? $sub->position->name : '-',
+                    'role' => $teamMembersRoles[$sub->id_user] ?? 'member',
+                    'updated_at' => $sub->updated_at,
+                ];
+            })->toArray();
+
+            usort($team_members_raw, function($a, $b) {
+                if ($a['role'] === 'leader' && $b['role'] !== 'leader') return -1;
+                if ($b['role'] === 'leader' && $a['role'] !== 'leader') return 1;
+                return strtotime($a['updated_at']) - strtotime($b['updated_at']);
+            });
+
+            $team_members = $team_members_raw;
+
+            $team = \App\Models\Team::where('id_team', $submission->id_team)->first();
+            $team_name = $team ? $team->name : 'Tim Kandidat';
+            
+            $existingLoa = Loa::whereIn('id_submission', $acceptedSubmissions->pluck('id_submission'))
+                ->whereNotNull('letter_number')
+                ->first();
+                
+            if ($existingLoa) {
+                $loaNumber = $existingLoa->letter_number;
+            } else {
+                $lastCount = Loa::whereYear('created_at', $year)->count() + 1;
+                $loaNumber = 'LOA/' . $year . '/' . str_pad($lastCount, 3, '0', STR_PAD_LEFT);
+            }
+            
+            $idLoa = 'LOA' . strtoupper(Str::random(7));
+            $filePath = 'loas/' . $idLoa . '.pdf';
+            
+            $dummyLoa = new Loa([
+                'id_loa'        => $idLoa,
+                'letter_number' => $loaNumber,
+                'signed_by'     => $request->user()->name,
+                'issued_date'   => now()->toDateString(),
+                'file_path'     => $filePath,
+            ]);
+            
+            $this->generatePdfForTeamLoa($dummyLoa, $submission, $team_name, $team_members);
+            
+            foreach ($acceptedSubmissions as $ts) {
+                if ($ts->loa) {
+                    $ts->loa->update(['file_path' => $filePath, 'letter_number' => $loaNumber, 'issued_date' => now()->toDateString()]);
+                } else {
+                    Loa::create([
+                        'id_loa'        => 'LOA' . strtoupper(Str::random(7)),
+                        'id_submission' => $ts->id_submission,
+                        'letter_number' => $loaNumber,
+                        'signed_by'     => $request->user()->name,
+                        'issued_date'   => now()->toDateString(),
+                        'file_path'     => $filePath,
+                    ]);
+                }
+            }
+        } else {
+            if ($submission->loa) {
+                $loa = $submission->loa;
+                $loa->update([
+                    'signed_by'     => $request->user()->name,
+                    'issued_date'   => now()->toDateString(),
+                ]);
+            } else {
+                $lastCount = Loa::whereYear('created_at', $year)->count() + 1;
+                $loaNumber = 'LOA/' . $year . '/' . str_pad($lastCount, 3, '0', STR_PAD_LEFT);
+
+                $idLoa = 'LOA' . strtoupper(Str::random(7));
+                $filePath = 'loas/' . $idLoa . '.pdf';
+
+                $loa = Loa::create([
+                    'id_loa'        => $idLoa,
+                    'id_submission' => $submission->id_submission,
+                    'letter_number' => $loaNumber,
+                    'signed_by'     => $request->user()->name,
+                    'issued_date'   => now()->toDateString(),
+                    'file_path'     => $filePath,
+                ]);
+            }
+
+            $this->generatePdfForLoa($loa, $submission);
+        }
 
         return response()->json([
             'success' => true,
@@ -122,21 +195,113 @@ class HRLoaController extends Controller
             return response()->json(['success' => false, 'message' => 'No pending LoA to generate'], 422);
         }
 
+        $teams = [];
+        $individuals = [];
+        
+        foreach ($submissions as $sub) {
+            if ($sub->id_team) {
+                $key = $sub->id_team . '_' . $sub->id_vacancy;
+                if (!isset($teams[$key])) {
+                    $teams[$key] = $sub; 
+                }
+            } else {
+                $individuals[] = $sub;
+            }
+        }
+
         $year    = now()->year;
         $counter = Loa::whereYear('created_at', $year)->count();
 
-        foreach ($submissions as $submission) {
+        // Process Individuals
+        foreach ($individuals as $submission) {
             $counter++;
             $loaNumber = 'LOA/' . $year . '/' . str_pad($counter, 3, '0', STR_PAD_LEFT);
 
-            Loa::create([
-                'id_loa'        => 'LOA' . strtoupper(Str::random(7)),
+            $idLoa = 'LOA' . strtoupper(Str::random(7));
+            $filePath = 'loas/' . $idLoa . '.pdf';
+
+            $loa = Loa::create([
+                'id_loa'        => $idLoa,
                 'id_submission' => $submission->id_submission,
                 'letter_number' => $loaNumber,
                 'signed_by'     => $request->user()->name,
                 'issued_date'   => now()->toDateString(),
-                'file_path'     => null,
+                'file_path'     => $filePath,
             ]);
+
+            $this->generatePdfForLoa($loa, $submission);
+        }
+
+        // Process Teams
+        foreach ($teams as $teamSub) {
+            $acceptedSubmissions = Submission::where('id_team', $teamSub->id_team)
+                ->where('id_vacancy', $teamSub->id_vacancy)
+                ->where('status', 'accepted')
+                ->with(['user', 'position', 'vacancy.company', 'loa'])
+                ->get();
+                
+            $teamMembersRoles = \Illuminate\Support\Facades\DB::table('team_members')
+                ->where('id_team', $teamSub->id_team)
+                ->pluck('role', 'id_user');
+
+            $team_members_raw = $acceptedSubmissions->map(function($sub) use ($teamMembersRoles) {
+                return [
+                    'name' => $sub->user->name,
+                    'position' => $sub->position ? $sub->position->name : '-',
+                    'role' => $teamMembersRoles[$sub->id_user] ?? 'member',
+                    'updated_at' => $sub->updated_at,
+                ];
+            })->toArray();
+
+            usort($team_members_raw, function($a, $b) {
+                if ($a['role'] === 'leader' && $b['role'] !== 'leader') return -1;
+                if ($b['role'] === 'leader' && $a['role'] !== 'leader') return 1;
+                return strtotime($a['updated_at']) - strtotime($b['updated_at']);
+            });
+
+            $team_members = $team_members_raw;
+
+            $team = \App\Models\Team::where('id_team', $teamSub->id_team)->first();
+            $team_name = $team ? $team->name : 'Tim Kandidat';
+            
+            $existingLoa = Loa::whereIn('id_submission', $acceptedSubmissions->pluck('id_submission'))
+                ->whereNotNull('letter_number')
+                ->first();
+                
+            if ($existingLoa) {
+                $loaNumber = $existingLoa->letter_number;
+            } else {
+                $counter++;
+                $loaNumber = 'LOA/' . $year . '/' . str_pad($counter, 3, '0', STR_PAD_LEFT);
+            }
+            
+            $idLoa = 'LOA' . strtoupper(Str::random(7));
+            $filePath = 'loas/' . $idLoa . '.pdf';
+            
+            $dummyLoa = new Loa([
+                'id_loa'        => $idLoa,
+                'letter_number' => $loaNumber,
+                'signed_by'     => $request->user()->name,
+                'issued_date'   => now()->toDateString(),
+                'file_path'     => $filePath,
+            ]);
+            
+            $this->generatePdfForTeamLoa($dummyLoa, $teamSub, $team_name, $team_members);
+            
+            foreach ($acceptedSubmissions as $ts) {
+                if ($ts->loa) {
+                    $ts->loa->update(['file_path' => $filePath, 'letter_number' => $loaNumber, 'issued_date' => now()->toDateString()]);
+                } else {
+                    Loa::create([
+                        'id_loa'        => 'LOA' . strtoupper(Str::random(7)),
+                        'id_submission' => $ts->id_submission,
+                        'letter_number' => $loaNumber,
+                        'signed_by'     => $request->user()->name,
+                        'issued_date'   => now()->toDateString(),
+                        'file_path'     => $filePath,
+                    ]);
+                }
+            }
         }
 
         return response()->json([
@@ -171,8 +336,87 @@ class HRLoaController extends Controller
 
     // ── HELPERS ─────────────────────────────────────────────
 
+    private function generatePdfForLoa(Loa $loa, Submission $submission)
+    {
+        $company = $submission->vacancy->company;
+        
+        $logo_base64 = null;
+        if ($company->logo_path) {
+            $logoPath = storage_path('app/public/' . $company->logo_path);
+            if (file_exists($logoPath)) {
+                $type = pathinfo($logoPath, PATHINFO_EXTENSION);
+                $data = file_get_contents($logoPath);
+                $logo_base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
+            }
+        }
+
+        $companyCity = 'Jakarta';
+        if ($company->address) {
+            $parts = explode(',', $company->address);
+            if (count($parts) > 1) {
+                // assume city might be the last or second last part
+                $companyCity = trim(end($parts));
+            } else {
+                $companyCity = $company->address;
+            }
+        }
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('loa.template', compact('submission', 'loa', 'company', 'logo_base64', 'companyCity'));
+        
+        $filePath = $loa->file_path;
+        Storage::disk('public')->put($filePath, $pdf->output());
+    }
+
+    private function generatePdfForTeamLoa(Loa $loa, Submission $submission, string $team_name, array $team_members)
+    {
+        $company = $submission->vacancy->company;
+        
+        $logo_base64 = null;
+        if ($company->logo_path) {
+            $logoPath = storage_path('app/public/' . $company->logo_path);
+            if (file_exists($logoPath)) {
+                $type = pathinfo($logoPath, PATHINFO_EXTENSION);
+                $data = file_get_contents($logoPath);
+                $logo_base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
+            }
+        }
+
+        $companyCity = 'Jakarta';
+        if ($company->address) {
+            $parts = explode(',', $company->address);
+            if (count($parts) > 1) {
+                $companyCity = trim(end($parts));
+            } else {
+                $companyCity = $company->address;
+            }
+        }
+        
+        $position_name = $submission->position ? $submission->position->name : '';
+        $program_title = $submission->vacancy->title;
+        $internship_type = $submission->vacancy->type;
+        $start_date = $submission->vacancy->start_date;
+        $end_date = $submission->vacancy->end_date;
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('loa.template_team', compact(
+            'loa', 'company', 'logo_base64', 'companyCity',
+            'team_name', 'team_members', 'position_name', 'program_title',
+            'internship_type', 'start_date', 'end_date'
+        ));
+        
+        $filePath = $loa->file_path; // should already have 'loas/...'
+        Storage::disk('public')->put($filePath, $pdf->output());
+    }
+
     private function formatLoa(Submission $s): array
     {
+        $hasPending = false;
+        if ($s->id_team) {
+            $hasPending = Submission::where('id_team', $s->id_team)
+                ->where('id_vacancy', $s->id_vacancy)
+                ->whereNotIn('status', ['accepted', 'rejected'])
+                ->exists();
+        }
+
         return [
             'id_submission' => $s->id_submission,
             'name'          => $s->user?->name,
@@ -185,6 +429,10 @@ class HRLoaController extends Controller
             'issued_date'   => $s->loa?->issued_date,
             'signed_by'     => $s->loa?->signed_by,
             'has_file'      => !empty($s->loa?->file_path),
+            'file_url'      => $s->loa && $s->loa->file_path ? asset('storage/' . $s->loa->file_path) : null,
+            'is_team'       => !empty($s->id_team),
+            'has_pending_team_members' => $hasPending,
+            'id_team'       => $s->id_team,
         ];
     }
 }
