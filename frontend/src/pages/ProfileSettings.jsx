@@ -1,6 +1,7 @@
 import { User, LogOut, Upload, ChevronDown, LayoutDashboard, BookOpen, Award } from "lucide-react";
 import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { useAuthStore } from "../stores/authStore";
 
 // --- Sidebar ---
 function Sidebar({ userName, onLogout }) {
@@ -385,6 +386,7 @@ function ProfileContent({ userData, setUserData }) {
 // --- Page ---
 export default function ProfileSettings() {
   const navigate = useNavigate();
+  const { logout: globalLogout } = useAuthStore();
   const { slug } = useParams();
   const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
 
@@ -449,7 +451,8 @@ export default function ProfileSettings() {
       localStorage.removeItem("auth_token");
       localStorage.removeItem("token");
       localStorage.removeItem("candidate_user");
-      navigate("/c/" + slug + "/dashboard");
+      globalLogout();
+      navigate("/");
     }
   };
 

@@ -3,16 +3,16 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './stores/authStore';
 import PrivateRoute from './components/PrivateRoute';
 // Auth pages
-import LoginPage from './pages/Login';
+import LoginPage from './pages/login';
 import RegisterPage from './pages/signUp';
-import ForgotPassword from './pages/ForgotPassword';
-import ResetPassword from './pages/ResetPassword';
-import ForgotPasswordCandidate from './pages/ForgotPasswordCandidate';
+import ForgotPassword from './pages/forgotPassword';
+import ResetPassword from './pages/resetPassword';
+import ForgotPasswordCandidate from './pages/forgotPasswordCandidate';
 import ResetPasswordCandidate from './pages/resetPasswordCandidate';
 // Candidate (company public)
 import CompanyPublicPage from './pages/companyPublic';
-import SignUpCandidate from './pages/SignUpCandidate';
-import LoginCandidate from './pages/LoginCandidate';
+import SignUpCandidate from './pages/signUpCandidate';
+import LoginCandidate from './pages/loginCandidate';
 import CandidateDashboard from './pages/candidateDashboard';
 import SubmissionForm from './pages/SubmissionForm';
 import ProfileSettings from './pages/ProfileSettings';

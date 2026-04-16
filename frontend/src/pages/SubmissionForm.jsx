@@ -19,6 +19,7 @@ export default function SubmissionForm() {
     major_name: "",
     apply_as: "", // blank by default
     team_name: "",
+    team_code: "",
     team_role: "", // 'leader' atau 'member'
     cv_file: null,
     cover_letter_file: null,
@@ -152,9 +153,19 @@ export default function SubmissionForm() {
       return;
     }
 
-    if (form.apply_as === "team" && (!form.team_name || !form.team_role)) {
-      setErrorMsg("Harap lengkapi informasi tim Anda!");
-      return;
+    if (form.apply_as === "team") {
+      if (!form.team_role) {
+        setErrorMsg("Harap pilih peran Anda di tim (Leader/Member)!");
+        return;
+      }
+      if (form.team_role === "leader" && !form.team_name) {
+        setErrorMsg("Harap masukkan nama tim Anda!");
+        return;
+      }
+      if (form.team_role === "member" && !form.team_code) {
+        setErrorMsg("Harap masukkan kode tim Anda!");
+        return;
+      }
     }
 
     setSubmitting(true);
@@ -171,8 +182,12 @@ export default function SubmissionForm() {
       formData.append("major_name", form.major_name);
       formData.append("apply_as", form.apply_as);
       if (form.apply_as === "team") {
-        formData.append("team_name", form.team_name);
         formData.append("team_role", form.team_role);
+        if (form.team_role === "leader") {
+          formData.append("team_name", form.team_name);
+        } else if (form.team_role === "member") {
+          formData.append("team_code", form.team_code);
+        }
       }
 
       formData.append("cv_file", form.cv_file);
@@ -191,13 +206,6 @@ export default function SubmissionForm() {
         body: formData,
         signal: submitController.signal,
       });
-
-      if (response.status === 404) {
-        console.warn("API Endpoint not found. Simulating success for UI demo.");
-        setSuccessMsg("Pendaftaran berhasil dikirim!");
-        setTimeout(() => navigate(`/c/${slug}/dashboard`), 2000);
-        return;
-      }
 
       if (!response.ok) {
         let errMsg = "Gagal mengirim pendaftaran";
@@ -357,11 +365,6 @@ export default function SubmissionForm() {
               {form.apply_as === "team" && (
                 <div style={{ padding: "20px", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 10, display: "flex", flexDirection: "column", gap: 16 }}>
                   <div>
-                    <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#475569", marginBottom: 6 }}>Nama Tim <span style={{ color: "#ef4444" }}>*</span></label>
-                    <input type="text" name="team_name" value={form.team_name} onChange={handleChange} placeholder="Masukkan nama tim kalian" style={{ width: "100%", background: "#fff", border: "1px solid #cbd5e1", padding: "12px 14px", borderRadius: 8, color: "#0f172a", fontSize: 14, outline: "none" }} />
-                  </div>
-
-                  <div>
                     <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#475569", marginBottom: 8 }}>Peran Kamu di Tim <span style={{ color: "#ef4444" }}>*</span></label>
                     <div style={{ display: "flex", gap: 20 }}>
                       <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14, color: "#334155", cursor: "pointer" }} onClick={() => setForm({ ...form, team_role: "leader" })}>
@@ -372,6 +375,21 @@ export default function SubmissionForm() {
                       </label>
                     </div>
                   </div>
+
+                  {form.team_role === "leader" && (
+                    <div>
+                      <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#475569", marginBottom: 6 }}>Nama Tim <span style={{ color: "#ef4444" }}>*</span></label>
+                      <input type="text" name="team_name" value={form.team_name} onChange={handleChange} placeholder="Masukkan nama tim kalian" style={{ width: "100%", background: "#fff", border: "1px solid #cbd5e1", padding: "12px 14px", borderRadius: 8, color: "#0f172a", fontSize: 14, outline: "none" }} />
+                    </div>
+                  )}
+
+                  {form.team_role === "member" && (
+                    <div>
+                      <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#475569", marginBottom: 6 }}>Kode Tim <span style={{ color: "#ef4444" }}>*</span></label>
+                      <input type="text" name="team_code" value={form.team_code} onChange={handleChange} placeholder="Masukkan kode tim dari Team Leader" style={{ width: "100%", background: "#fff", border: "1px solid #cbd5e1", padding: "12px 14px", borderRadius: 8, color: "#0f172a", fontSize: 14, outline: "none", textTransform: "uppercase" }} />
+                      <p style={{ fontSize: 11, color: "#64748b", marginTop: 6 }}>Ketik kode unik tim yang dibagikan oleh ketua timmu.</p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

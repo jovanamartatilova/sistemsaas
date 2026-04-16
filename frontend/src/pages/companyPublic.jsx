@@ -118,7 +118,7 @@ const PositionDetailModal = ({ position, slug, isAuthenticated, onClose }) => {
           <div style={{ display: "flex", gap: "10px", marginBottom: "40px" }}>
             <span style={{ fontSize: "11px", fontWeight: "700", textTransform: "capitalize", padding: "6px 14px", borderRadius: "8px", background: "rgba(74,158,255,0.1)", color: "#4a9eff" }}>{vacancy.type}</span>
             <span style={{ fontSize: "12px", fontWeight: "700", textTransform: "capitalize", padding: "6px 14px", borderRadius: "8px", background: "rgba(16,185,129,0.1)", color: "#10b981" }}>{vacancy.payment_type}</span>
-            <span style={{ fontSize: "11px", fontWeight: "700", background: "rgba(74,158,255,0.1)", color: "#4a9eff", padding: "6px 14px", borderRadius: "8px" }}>{position.quota || 0} Kuota Posisi</span>
+            <span style={{ fontSize: "11px", fontWeight: "700", background: "rgba(74,158,255,0.1)", color: "#4a9eff", padding: "6px 14px", borderRadius: "8px" }}>{position.pivot?.quota || 0} Kuota Posisi</span>
             <span style={{ fontSize: "11px", fontWeight: "700", background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.5)", padding: "6px 14px", borderRadius: "8px", marginLeft: "auto" }}>{vacancy.total_quota || 0} Total Kuota</span>
           </div>
 
@@ -185,7 +185,7 @@ function PositionCard({ position, slug, onClick }) {
           </p>
           <div style={{ marginTop: 4 }}>
             <span style={{ fontSize: 11, fontWeight: 700, color: "#4a9eff", background: "rgba(74,158,255,0.1)", padding: "2px 8px", borderRadius: 6 }}>
-              {position.quota || 0} Kuota
+              {position.pivot?.quota || 0} Kuota
             </span>
           </div>
 

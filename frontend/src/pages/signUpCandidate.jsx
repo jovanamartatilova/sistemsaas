@@ -117,7 +117,7 @@ export default function SignUpCandidate() {
                 if (vacancyId && positionId) {
                     navigate(`/c/${slug}/apply/${vacancyId}/${positionId}`);
                 } else {
-                    navigate(`/c/${slug}/dashboard`);
+                    navigate(`/c/${slug}`);
                 }
             }, 500);
 

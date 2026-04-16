@@ -238,7 +238,7 @@ const VacancyDetailModal = ({ vacancy, onClose }) => {
                   <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "15px", color: "rgba(255,255,255,0.8)" }}>
                     <IconDot /> <span>{p.name || p}</span>
                   </div>
-                  <span style={{ fontSize: "12px", fontWeight: "700", color: "#4a9eff", background: "rgba(74,158,255,0.1)", padding: "2px 8px", borderRadius: "6px" }}>{p.quota || 0} Kuota</span>
+                  <span style={{ fontSize: "12px", fontWeight: "700", color: "#4a9eff", background: "rgba(74,158,255,0.1)", padding: "2px 8px", borderRadius: "6px" }}>{p.pivot?.quota || 0} Kuota</span>
                 </div>
               ))}
             </div>
