@@ -2,20 +2,24 @@ import { useState, useEffect } from "react";
 import {
   LayoutDashboard, BookOpen, User, Award, LogOut,
   Search, ChevronDown, ChevronUp, CheckCircle, Clock,
-  Users, BookMarked, Target,
+  Users, Target, MapPin, Calendar, Briefcase, Info
 } from "lucide-react";
 import { useNavigate, useParams, Link, useLocation } from "react-router-dom";
+import { useAuthStore } from "../stores/authStore";
 
 // --- Sidebar ---
 function Sidebar({ userName, onLogout }) {
   const { slug } = useParams();
   const location = useLocation();
+  const { company: authCompany } = useAuthStore();
+  
+  const resolvedSlug = slug !== "undefined" ? slug : (authCompany?.slug || "undefined");
 
   const navItems = [
-    { label: "Dashboard",    icon: <LayoutDashboard size={16} />, to: `/c/${slug}/dashboard` },
-    { label: "Programs",     icon: <BookOpen size={16} />,        to: `/c/${slug}/programs` },
-    { label: "My Profile",   icon: <User size={16} />,            to: `/c/${slug}/profile` },
-    { label: "Certificates", icon: <Award size={16} />,           to: `/c/${slug}/certificates` },
+    { label: "Dashboard",    icon: <LayoutDashboard size={16} />, to: `/c/${resolvedSlug}/dashboard` },
+    { label: "Programs",     icon: <BookOpen size={16} />,        to: `/c/${resolvedSlug}/programs` },
+    { label: "My Profile",   icon: <User size={16} />,            to: `/c/${resolvedSlug}/profile` },
+    { label: "Certificates", icon: <Award size={16} />,           to: `/c/${resolvedSlug}/certificates` },
   ];
 
   return (
@@ -46,7 +50,7 @@ function Sidebar({ userName, onLogout }) {
         <div className="w-8 h-8 rounded-full bg-slate-600 flex items-center justify-center text-xs font-bold">
           {userName?.charAt(0).toUpperCase() || "R"}
         </div>
-        <span className="text-sm text-slate-300 flex-1">{userName || "User"}</span>
+        <span className="text-sm text-slate-300 flex-1 truncate">{userName || "User"}</span>
         <button
           onClick={onLogout}
           className="text-slate-500 hover:text-white cursor-pointer transition-colors"
@@ -59,101 +63,277 @@ function Sidebar({ userName, onLogout }) {
   );
 }
 
-// --- Competency Item (inside program card) ---
+// --- Discovery Card (White Theme) ---
+function DiscoveryCard({ vacancy, onApply }) {
+  const [hov, setHov] = useState(false);
+  const formatDate = (dateStr) => {
+    if (!dateStr) return "-";
+    const MONTHS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+    const parts = String(dateStr).split("-");
+    if (parts.length !== 3) return dateStr;
+    return `${parseInt(parts[2])} ${MONTHS[parseInt(parts[1]) - 1]} ${parts[0]}`;
+  };
+
+  return (
+    <div
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      className="bg-white border border-slate-200 rounded-2xl overflow-hidden transition-all duration-300 flex flex-col h-full"
+      style={{
+        boxShadow: hov ? "0 12px 24px -8px rgba(0,0,0,0.1)" : "0 1px 3px rgba(0,0,0,0.05)",
+        transform: hov ? "translateY(-4px)" : "none"
+      }}
+    >
+      <div 
+        className="w-full h-40 bg-slate-100 relative"
+        style={{
+          background: vacancy.photo ? `url(http://localhost:8000/storage/${vacancy.photo}) center/cover` : "linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)"
+        }}
+      >
+        <div className="absolute top-3 left-3 px-2.5 py-1 bg-white/90 backdrop-blur-sm rounded-lg text-[10px] font-bold text-indigo-600 shadow-sm uppercase tracking-wider border border-white/20">
+          OPEN PROGRAM
+        </div>
+      </div>
+
+      <div className="p-5 flex flex-col flex-1 text-left">
+        <div className="mb-4">
+          <h3 className="text-lg font-bold text-slate-800 leading-tight mb-1">
+            {vacancy.title}
+          </h3>
+          <div className="flex items-center gap-2 text-sm text-slate-500 font-medium">
+            <span className="text-indigo-500 font-semibold">{vacancy.company?.name}</span>
+            <span>•</span>
+            <span>Batch {vacancy.batch}</span>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2.5 mb-5">
+            <div className="flex items-center gap-2 text-xs text-slate-500 text-left">
+                <MapPin size={14} className="text-slate-400" />
+                <span>{vacancy.location || "Jakarta"}</span>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-slate-500 text-left">
+                <Calendar size={14} className="text-slate-400" />
+                <span>{formatDate(vacancy.start_date)} - {formatDate(vacancy.end_date)}</span>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-rose-500 font-medium italic text-left">
+                <Clock size={14} />
+                <span>Deadline: {formatDate(vacancy.deadline)}</span>
+            </div>
+        </div>
+
+        <div className="mb-6 flex-1 text-left">
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                <Briefcase size={10} /> AVAILABLE POSITIONS
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+                {vacancy.positions?.slice(0, 3).map((pos, i) => (
+                    <span key={i} className="px-2 py-1 bg-slate-50 border border-slate-100 rounded-md text-[11px] text-slate-600 font-medium">
+                        {pos.name}
+                    </span>
+                ))}
+            </div>
+        </div>
+
+        <button
+          onClick={() => onApply(vacancy)}
+          className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold shadow-md shadow-indigo-100 transition-all active:scale-95"
+        >
+          Daftar Sekarang
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// --- Confirmation Modal ---
+function ConfirmModal({ vacancy, onConfirm, onCancel }) {
+  if (!vacancy) return null;
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={onCancel} />
+      <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl relative z-10 overflow-hidden">
+        <div className="p-8 text-center">
+            <div className="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Info size={32} />
+            </div>
+            <h3 className="text-xl font-bold text-slate-800 mb-2">Pilih Program Ini?</h3>
+            <p className="text-slate-500 text-sm leading-relaxed mb-8">
+                Apakah Anda yakin ingin memilih program <span className="font-semibold text-slate-700">"{vacancy.title}"</span>? Anda akan diarahkan ke halaman pendaftaran.
+            </p>
+            <div className="flex flex-col gap-3">
+                <button
+                    onClick={onConfirm}
+                    className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold shadow-lg shadow-indigo-200 transition-all active:scale-[98%]"
+                >
+                    Ya, Pilih Program
+                </button>
+                <button
+                    onClick={onCancel}
+                    className="w-full py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-2xl font-bold transition-all active:scale-[98%]"
+                >
+                    Batalkan
+                </button>
+            </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --- CompetencyItem ---
 function CompetencyItem({ name, description, learning_hours }) {
   return (
-    <div className="flex items-start gap-3 py-2.5 border-b border-slate-100 last:border-0">
-      <div className="mt-0.5 flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center bg-slate-100">
-        <BookOpen size={12} className="text-slate-400" />
+    <div className="flex items-start gap-3 p-3 bg-white border border-slate-200 rounded-xl">
+      <div className="mt-0.5 flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center bg-indigo-50 border border-indigo-100 text-indigo-600">
+        <BookOpen size={14} />
       </div>
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold text-slate-700 text-left">{name}</p>
-        {description && <p className="text-xs text-slate-400 mt-0.5 text-left">{description}</p>}
+      <div className="min-w-0 flex-1 text-left">
+        <p className="text-sm font-semibold text-slate-700 leading-tight mb-1">{name}</p>
+        {description && <p className="text-[11px] text-slate-500 line-clamp-2">{description}</p>}
       </div>
-      <span className="ml-auto flex-shrink-0 text-xs px-2.5 py-0.5 rounded-full font-medium border bg-slate-50 text-slate-500 border-slate-200 whitespace-nowrap">
+      <span className="flex-shrink-0 text-[10px] px-2 py-1 rounded-md font-bold border bg-slate-50 text-slate-600 border-slate-200">
         {learning_hours} jam
       </span>
     </div>
   );
 }
 
-// --- Program Card ---
+// --- Program Card (Redesigned Horizontal List) ---
 function ProgramCard({ program }) {
   const [expanded, setExpanded] = useState(false);
-  const { id_position, name, description, quota, batch, company, learning_hours, competencies, completed_hours } = program;
+  const { id_position, name, description, quota, batch, company, learning_hours, competencies, completed_hours, status, has_loa, loa_file_url, team } = program;
+  const isAccepted = status === 'accepted';
+  const isPending = status === 'pending';
+  const isRejected = status === 'rejected';
 
-  const isActive = learning_hours === "active";
+  const getStatusBadge = () => {
+    if (isAccepted) return <span className="px-3 py-1 bg-emerald-50 text-emerald-600 border border-emerald-200 rounded-full text-[11px] font-bold flex items-center gap-1.5 whitespace-nowrap"><CheckCircle size={12}/> ACCEPTED</span>;
+    if (isPending) return <span className="px-3 py-1 bg-amber-50 text-amber-600 border border-amber-200 rounded-full text-[11px] font-bold flex items-center gap-1.5 whitespace-nowrap"><Clock size={12}/> IN REVIEW</span>;
+    if (isRejected) return <span className="px-3 py-1 bg-rose-50 text-rose-600 border border-rose-200 rounded-full text-[11px] font-bold flex items-center gap-1.5 whitespace-nowrap"><LogOut size={12}/> NOT SELECTED</span>;
+    return <span className="px-3 py-1 bg-slate-50 text-slate-600 border border-slate-200 rounded-full text-[11px] font-bold flex items-center gap-1.5 whitespace-nowrap">{status}</span>;
+  };
+
+  const downloadFile = (url, fallbackName) => {
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fallbackName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  };
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-      {/* Top bar */}
-      <div className={`h-1.5 ${isActive ? "bg-gradient-to-r from-indigo-500 to-violet-400" : "bg-slate-200"}`} />
-
-      <div className="p-6">
-        {/* Header row — id_position + name di tengah */}
-<div className="flex flex-col items-center text-center gap-1 mb-4">
-  <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">
-    {id_position}
-  </p>
-  <h3 className="text-base font-bold text-slate-800 leading-snug">{name}</h3>
-  <span className="text-xs text-slate-500">{batch} · {company}</span>
-  {description && (
-    <span className="text-xs text-slate-400">· {description}</span>
-  )}
-</div>
-
-{/* Meta info — description sejajar sama kuota, status, jam */}
-<div className="flex items-center gap-3 flex-wrap">
-  <span className={`flex-shrink-0 text-xs px-2.5 py-1 rounded-full font-medium border flex items-center gap-1
-    ${isActive
-      ? "bg-indigo-50 text-indigo-600 border-indigo-200"
-      : "bg-slate-50 text-slate-500 border-slate-200"}`}>
-    {isActive ? <><CheckCircle size={10} /> Active</> : <><Clock size={10} /> Inactive</>}
-  </span>
-  <span className="flex items-center gap-1.5 text-xs text-slate-500">
-    <Users size={12} className="text-slate-400" />
-    Kuota: <span className="font-semibold text-slate-700">{quota}</span>
-  </span>
-  <span className="flex items-center gap-1.5 text-xs text-slate-500">
-    <Target size={12} className="text-slate-400" />
-    <span className="font-semibold text-slate-700">{learning_hours}</span> jam
-  </span>
-  <span className="text-xs text-slate-400">|</span>
-
-</div>
-
-        {/* Progress bar */}
-        <div className="mt-4 space-y-1.5">
-        <div className="flex justify-between text-xs text-slate-400">
-            <span>Learning Hours</span>
-            <span className="font-medium text-slate-600">{completed_hours} / {learning_hours} jam</span>
-        </div>
-        <div className="w-full bg-slate-100 rounded-full h-1.5">
-            <div
-            className={`h-1.5 rounded-full transition-all ${isActive ? "bg-indigo-500" : "bg-slate-400"}`}
-            style={{ width: `${Math.round((completed_hours / learning_hours) * 100)}%` }}
-            />
-        </div>
-        </div>
-
-        {/* Toggle competencies */}
-        <button
-          onClick={() => setExpanded(!expanded)}
-          className="mt-4 flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-500 transition-colors"
-        >
-          {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-          {expanded ? "Sembunyikan" : "Lihat"} Kompetensi
-        </button>
-
-        {/* Competency list */}
-        {expanded && (
-          <div className="mt-3 border border-slate-100 rounded-xl px-4 pt-1 pb-2 bg-slate-50">
-            {competencies.map((comp, i) => (
-              <CompetencyItem key={i} {...comp} />
-            ))}
+    <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col relative transition-all">
+      <div className={`absolute top-0 bottom-0 left-0 w-1.5 ${isAccepted ? "bg-emerald-500" : isPending ? "bg-amber-400" : isRejected ? "bg-rose-500" : "bg-slate-300"}`} />
+      
+      <div className="p-4 ml-1.5 flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
+        
+        {/* Left Side: Program Details */}
+        <div className="flex-1 text-left min-w-0">
+          <div className="flex flex-wrap items-center gap-3 mb-1">
+            <h3 className="text-lg font-bold text-slate-800 break-words">{name}</h3>
+            {getStatusBadge()}
           </div>
-        )}
+          <div className="flex items-center gap-2 mb-1.5">
+             <span className="text-xs font-bold text-indigo-600 truncate">{company}</span>
+             <span className="text-slate-300">•</span>
+             <span className="text-xs font-medium text-slate-500">{batch}</span>
+          </div>
+          <p className="text-xs text-slate-500 line-clamp-1 leading-relaxed max-w-xl">
+             Fokus pada {description}
+          </p>
+
+          {team && (
+            <div className="mt-3 p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs space-y-1 w-full max-w-sm">
+              <div className="flex justify-between items-center text-slate-600">
+                <span className="font-semibold text-slate-800 flex items-center gap-1.5"><Users size={12}/> Tim: {team.name}</span>
+                <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 font-bold rounded-md text-[10px] uppercase tracking-wider">{team.role}</span>
+              </div>
+              {team.role === 'Leader' && (
+                <div className="flex justify-between items-center text-slate-500 mt-1.5 pt-1.5 border-t border-slate-200">
+                  <span>Kode Tim: <strong className="text-slate-800 font-mono tracking-widest">{team.code}</strong></span>
+                  <button onClick={() => { navigator.clipboard.writeText(team.code); alert('Kode Tim berhasil disalin!'); }} className="text-indigo-600 hover:text-indigo-700 font-semibold hover:underline">Salin Kode</button>
+                </div>
+              )}
+              {team.role === 'Member' && (
+                <div className="text-slate-400 mt-1.5 pt-1.5 border-t border-slate-200 text-[10px]">
+                  Bergabung menggunakan kode: <strong className="font-mono text-slate-500">{team.code}</strong>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Right Side: Actions & Progress Data */}
+        <div className="flex flex-col md:items-end gap-2 w-full md:w-auto shrink-0">
+           {/* Progress Indicator (Only when Accepted) */}
+           {isAccepted && (
+              <div className="w-full md:w-48 flex flex-col gap-1.5 mb-1">
+                 <div className="flex justify-between items-end text-xs font-bold">
+                    <span className="text-slate-400 uppercase tracking-widest text-[10px]">Learning</span>
+                    <span className="text-indigo-600">{completed_hours} <span className="text-slate-400 font-medium">/ {learning_hours} h</span></span>
+                 </div>
+                 <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-indigo-500 rounded-full transition-all duration-1000"
+                      style={{ width: `${Math.min(100, ((completed_hours || 0) / (learning_hours || 1)) * 100)}%` }}
+                    />
+                 </div>
+              </div>
+           )}
+
+           {/* LoA Actions */}
+           <div className="flex gap-2 w-full md:w-auto">
+             <button 
+               disabled={!isAccepted || !has_loa}
+               onClick={() => { if(has_loa && loa_file_url) window.open(loa_file_url, '_blank')} }
+               className={`flex-1 md:flex-none px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 
+                 ${isAccepted && has_loa ? "bg-indigo-50 text-indigo-600 hover:bg-indigo-100 border border-indigo-200" : "bg-slate-50 text-slate-400 border border-slate-100 cursor-not-allowed"}`}
+             >
+               Preview LoA
+             </button>
+             <button 
+               disabled={!isAccepted || !has_loa}
+               onClick={() => { if(has_loa && loa_file_url) downloadFile(loa_file_url, `LoA_${company}.pdf`) }}
+               className={`flex-1 md:flex-none px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 
+                 ${isAccepted && has_loa ? "bg-indigo-600 text-white hover:bg-indigo-700 shadow-md shadow-indigo-100" : "bg-slate-100 text-slate-400 cursor-not-allowed"}`}
+             >
+               Download LoA
+             </button>
+           </div>
+           
+           {/* Expand Competencies */}
+           {isAccepted && (
+             <button
+               onClick={() => setExpanded(!expanded)}
+               className="mt-1 flex items-center justify-end gap-1.5 text-xs font-bold text-slate-400 hover:text-slate-600 transition-colors"
+             >
+               {expanded ? "Sembunyikan" : "Lihat"} Kompetensi
+               {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+             </button>
+           )}
+        </div>
       </div>
+
+      {/* Expandable Section */}
+      {expanded && isAccepted && (
+         <div className="ml-1.5 px-6 pb-6 pt-4 border-t border-slate-100 bg-slate-50/50">
+            <h4 className="text-[11px] font-bold text-slate-500 mb-3 uppercase tracking-widest flex items-center gap-1.5">
+               <Target size={14} className="text-indigo-400" /> Target Kompetensi & Modul
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+               {competencies?.map((comp, i) => (
+                  <CompetencyItem key={i} {...comp} />
+               ))}
+               {(!competencies || competencies.length === 0) && (
+                 <div className="col-span-full py-4 text-center text-xs font-medium text-slate-400">
+                    Belum ada kompetensi yang disusun untuk posisi ini.
+                 </div>
+               )}
+            </div>
+         </div>
+      )}
     </div>
   );
 }
@@ -163,45 +343,55 @@ export default function ProgramsPage() {
   const navigate = useNavigate();
   const { slug } = useParams();
   const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+  const { company: authCompany, logout: globalLogout } = useAuthStore();
+  
   const [filter, setFilter] = useState("All");
   const [search, setSearch] = useState("");
   const [userData, setUserData] = useState(null);
   const [programs, setPrograms] = useState([]);
+  const [publicVacancies, setPublicVacancies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedVacancy, setSelectedVacancy] = useState(null);
+
+  const isDiscoveryMode = slug === "undefined" && !authCompany?.slug;
 
   useEffect(() => {
+    if (slug === "undefined" && authCompany?.slug) {
+        navigate(`/c/${authCompany.slug}/programs`, { replace: true });
+        return;
+    }
+
     const fetchData = async () => {
       try {
-        const token = localStorage.getItem("auth_token");
+        const token = localStorage.getItem("auth_token") || localStorage.getItem("token");
         if (!token) {
-          navigate(`/c/${slug}/dashboard`);
+          navigate("/");
           return;
         }
 
         const userResp = await fetch(`${API_BASE_URL}/users/me`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
-          },
+          headers: { "Authorization": `Bearer ${token}` },
         });
         if (userResp.ok) {
           const data = await userResp.json();
           setUserData(data.data || data);
         }
 
-        const progResp = await fetch(`${API_BASE_URL}/positions`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
-          },
-        });
-        if (progResp.ok) {
-          const progData = await progResp.json();
-          const progs = progData.data || progData || [];
-          setPrograms(progs);
+        if (isDiscoveryMode) {
+          const resp = await fetch(`${API_BASE_URL}/vacancies/public`);
+          if (resp.ok) {
+            const data = await resp.json();
+            setPublicVacancies(data || []);
+          }
+        } else {
+          const progResp = await fetch(`${API_BASE_URL}/positions`, {
+            headers: { "Authorization": `Bearer ${token}` },
+          });
+          if (progResp.ok) {
+            const progData = await progResp.json();
+            setPrograms(progData.data || progData || []);
+          }
         }
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -212,118 +402,74 @@ export default function ProgramsPage() {
     };
 
     fetchData();
-  }, [slug, navigate]);
+  }, [slug, authCompany, navigate, isDiscoveryMode]);
 
   const handleLogout = async () => {
-    try {
-      const token = localStorage.getItem("auth_token");
-      await fetch(`${API_BASE_URL}/logout`, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-        },
-      });
-    } catch (error) {
-      console.error("Logout error:", error);
-    } finally {
-      localStorage.removeItem("auth_token");
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      localStorage.removeItem("company");
-      navigate("/");
-    }
+    localStorage.clear();
+    globalLogout();
+    navigate("/");
   };
 
-  // Fallback dummy data jika API belum tersedia
-  const defaultPrograms = programs && programs.length > 0 ? programs : [
-    {
-      id_position: "POS-0001",
-      name: "Frontend Developer",
-      description: "Fokus pada pengembangan antarmuka web modern menggunakan React & TypeScript.",
-      quota: 10,
-      batch: "Batch 5",
-      company: "PT. Teknologi Maju",
-      learning_hours: "active",
-      completed_hours: 45,
-      competencies: [
-        { name: "HTML5 & CSS3 Fundamentals",   description: "Dasar-dasar markup dan styling web.", learning_hours: "30" },
-        { name: "JavaScript ES6+",             description: "Sintaks modern dan konsep JS terkini.", learning_hours: "30" },
-      ],
-    },
-  ];
-
-  const filtered = filter === "Active"
-    ? defaultPrograms.filter((p) => p.learning_hours === "active")
-    : filter === "Inactive"
-    ? defaultPrograms.filter((p) => p.learning_hours === "inactive")
-    : defaultPrograms;
-
-  const searched = filtered.filter((p) =>
-    p.name.toLowerCase().includes(search.toLowerCase()) ||
-    p.id_position.toLowerCase().includes(search.toLowerCase()) ||
-    (p.company && p.company.toLowerCase().includes(search.toLowerCase()))
-  );
-
-  const activeCount = defaultPrograms.filter((p) => p.learning_hours === "active").length;
-  const inactiveCount = defaultPrograms.filter((p) => p.learning_hours === "inactive").length;
+  const filtered = isDiscoveryMode 
+    ? publicVacancies.filter(v => 
+        v.title?.toLowerCase().includes(search.toLowerCase()) || 
+        v.company?.name?.toLowerCase().includes(search.toLowerCase())
+      )
+    : programs.filter(p => {
+        const matchesSearch = p.name?.toLowerCase().includes(search.toLowerCase()) || (p.company && p.company?.toLowerCase().includes(search.toLowerCase()));
+        if (filter === "All") return matchesSearch;
+        const isActive = p.is_active; // Mapped by backend: includes 'pending' and 'accepted'
+        return matchesSearch && (filter === "Active" ? isActive : !isActive);
+    });
 
   return (
     <div className="min-h-screen bg-gray-50 flex" style={{ fontFamily: "Poppins, sans-serif" }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');`}</style>
-      <Sidebar userName={userData?.full_name} onLogout={handleLogout} />
+      
+      <Sidebar userName={userData?.name || userData?.full_name} onLogout={handleLogout} />
 
       <div className="ml-56 flex-1 flex flex-col">
         <main className="p-6 space-y-5">
           {loading ? (
             <div className="flex items-center justify-center min-h-screen">
-              <div className="text-center">
-                <div className="animate-spin h-12 w-12 border-4 border-indigo-500 border-t-transparent rounded-full mx-auto mb-4" />
-                <p className="text-slate-600">Loading programs...</p>
-              </div>
+               <div className="animate-spin h-12 w-12 border-4 border-indigo-500 border-t-transparent rounded-full" />
             </div>
           ) : error ? (
-            <div className="bg-red-50 text-red-700 border border-red-200 rounded-lg p-4 mb-4">
-              Error: {error}
-            </div>
+            <div className="bg-red-50 text-red-700 p-4 rounded-xl border border-red-200">Error: {error}</div>
           ) : (
             <>
-              {/* Page Header */}
-              <div className="text-center mb-6">
-                <h1 className="text-2xl font-bold text-gray-900">Programs</h1>
-                <p className="text-sm text-gray-400 mt-0.5">The internship programs You are currently undertaking and have previously completed</p>
+              <div className="text-center mb-8">
+                <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">
+                    {isDiscoveryMode ? "Discover Programs" : "My Programs"}
+                </h1>
+                <p className="text-slate-500 mt-2 max-w-lg mx-auto leading-relaxed">
+                    {isDiscoveryMode 
+                        ? "Jelajahi berbagai program magang terbaik dan mulailah perjalanan kariermu sekarang." 
+                        : "Program magang yang sedang Anda jalani dan telah Anda selesaikan."}
+                </p>
               </div>
 
-              {/* Filter + Search toolbar */}
-              <div className="flex items-center justify-between bg-white border border-slate-200 rounded-2xl px-4 py-3 shadow-sm">
-                <div className="flex items-center gap-2">
-                  {["All", "Active", "Inactive"].map((f) => (
-                    <button
-                      key={f}
-                      onClick={() => setFilter(f)}
-                      className={`text-sm px-4 py-2 rounded-lg font-medium transition-colors ${
-                        filter === f
-                          ? "bg-indigo-600 text-white"
-                          : "bg-white border border-slate-200 text-slate-500 hover:text-slate-800 hover:border-slate-300"
-                      }`}
-                    >
-                      {f}
-                      {f === "Active" && (
-                        <span className="ml-1.5 bg-indigo-100 text-indigo-600 text-xs px-1.5 py-0.5 rounded-full font-semibold">
-                          {activeCount}
-                        </span>
-                      )}
-                      {f === "Inactive" && (
-                        <span className="ml-1.5 bg-slate-100 text-slate-500 text-xs px-1.5 py-0.5 rounded-full font-semibold">
-                          {inactiveCount}
-                        </span>
-                      )}
-                    </button>
-                  ))}
-                </div>
-                <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 w-80">
-                  <Search size={14} className="text-slate-400 flex-shrink-0" />
+              <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                {!isDiscoveryMode ? (
+                  <div className="flex p-1 bg-slate-50 rounded-xl border border-slate-100">
+                    {["All", "Active", "Inactive"].map((f) => (
+                      <button
+                        key={f}
+                        onClick={() => setFilter(f)}
+                        className={`px-5 py-2 text-sm font-bold rounded-lg transition-all ${
+                          filter === f ? "bg-white text-indigo-600 shadow-md" : "text-slate-400 hover:text-slate-600"
+                        }`}
+                      >
+                        {f}
+                      </button>
+                    ))}
+                  </div>
+                ) : <div className="flex-1" />}
+                
+                <div className="relative w-full md:w-80 group">
+                  <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
                   <input
-                    className="bg-transparent text-sm text-slate-600 placeholder-slate-400 outline-none w-full"
+                    className="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all"
                     placeholder="Search programs or companies..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
@@ -331,30 +477,48 @@ export default function ProgramsPage() {
                 </div>
               </div>
 
-              {/* Program list */}
-              {searched.length > 0 ? (
-                <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm space-y-4">
-                  <p className="text-xs font-semibold text-gray-400 tracking-widest">
-                    PROGRAMS ({searched.length})
-                  </p>
-                  <div className="space-y-4">
-                    {searched.map((program) => (
-                      <ProgramCard key={program.id_position} program={program} />
-                    ))}
+              {filtered.length > 0 ? (
+                <>
+                  {!isDiscoveryMode && (
+                    <div className="flex items-center justify-center mb-6">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">
+                        PROGRAMS ({filtered.length})
+                      </span>
+                    </div>
+                  )}
+                  <div className={isDiscoveryMode ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "flex flex-col gap-4 w-full"}>
+                    {isDiscoveryMode 
+                      ? filtered.map(v => <DiscoveryCard key={v.id_vacancy} vacancy={v} onApply={setSelectedVacancy} />)
+                      : filtered.map(p => <ProgramCard key={p.id_position} program={p} />)
+                    }
                   </div>
-                </div>
+                </>
               ) : (
-                <div className="text-center py-16 text-slate-400 text-sm">
-                  No programs found.
+                <div className="text-center py-20 bg-white rounded-3xl border border-slate-100 shadow-sm">
+                  <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-300">
+                    <BookOpen size={40} />
+                  </div>
+                  <p className="text-slate-400 font-medium">No programs found.</p>
                 </div>
               )}
-              <p className="text-center text-xs text-slate-400 py-2">
+
+              <footer className="text-center text-xs text-slate-400 pt-10 pb-4">
                 © 2025 EarlyPath · Platform Magang Modern · All rights reserved
-              </p>
+              </footer>
             </>
           )}
         </main>
       </div>
+
+      <ConfirmModal 
+        vacancy={selectedVacancy} 
+        onCancel={() => setSelectedVacancy(null)} 
+        onConfirm={() => {
+            const slug = selectedVacancy.company?.slug;
+            navigate(`/c/${slug}`);
+            setSelectedVacancy(null);
+        }}
+      />
     </div>
   );
 }

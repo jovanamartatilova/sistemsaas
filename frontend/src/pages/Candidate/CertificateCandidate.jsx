@@ -4,6 +4,7 @@ import {
   Download, Lock, CheckCircle, Clock, Search,
 } from "lucide-react";
 import { useNavigate, useParams, Link, useLocation } from "react-router-dom";
+import { useAuthStore } from "../stores/authStore";
 
 // --- Sidebar ---
 function Sidebar({ userName, onLogout }) {
@@ -171,6 +172,7 @@ function LockedCertificateCard({ batch, company, progress }) {
 // --- Main Page ---
 export default function CertificatesPage() {
   const navigate = useNavigate();
+  const { logout: globalLogout } = useAuthStore();
   const { slug } = useParams();
   const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
   const [filter, setFilter] = useState("All");
@@ -244,6 +246,7 @@ export default function CertificatesPage() {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
       localStorage.removeItem("company");
+      globalLogout();
       navigate("/");
     }
   };

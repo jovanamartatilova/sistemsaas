@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { useAuthStore } from "../../stores/authStore";
+import { useAuthStore } from "../stores/authStore";
 
 export default function LoginCandidate() {
     const { slug } = useParams();
@@ -17,13 +17,13 @@ export default function LoginCandidate() {
                 // Priority: company.slug (from response/localStorage) > user.id_company (from DB)
                 if (authCompany?.slug) {
                     navigate(`/c/${authCompany.slug}`);
+                } else if (slug) {
+                    navigate(`/c/${slug}`);
                 } else if (user?.id_company) {
-                    // User has company but need to fetch slug
-                    // For now, redirect to dashboard - company will load from profile endpoint
+                    // Fallback if company details not in store but user has id_company
                     navigate("/candidate/dashboard");
                 } else {
-                    // New candidate without company - go to candidate dashboard
-                    navigate("/candidate/dashboard");
+                    navigate("/");
                 }
             } else {
                 navigate("/dashboard");
@@ -115,12 +115,10 @@ export default function LoginCandidate() {
             setTimeout(() => {
                 // Redirect based on whether candidate has company in response
                 if (data.company && data.company.slug) {
-                    // Candidate has company registration - go to company page
-                    console.log("Redirecting candidate to company public page ->", `/c/${data.company.slug}`);
                     navigate(`/c/${data.company.slug}`);
+                } else if (slug) {
+                    navigate(`/c/${slug}`);
                 } else {
-                    // Candidate without company - go to candidate dashboard
-                    console.log("Redirecting candidate to dashboard");
                     navigate(`/candidate/dashboard`);
                 }
             }, 1500);

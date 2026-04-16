@@ -4,6 +4,13 @@ import { api } from "../../api";
 import { useAuthStore } from "../../stores/authStore";
 
 // ============ STYLES ============
+const IconEye = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+    <circle cx="12" cy="12" r="3"></circle>
+  </svg>
+);
+
 const s = {
   app: { display: "flex", minHeight: "100vh", background: "#f1f5f9", fontFamily: "'Poppins', 'Segoe UI', sans-serif", fontSize: "14px", color: "#1e293b" },
   sidebar: { position: "fixed", left: 0, top: 0, bottom: 0, width: "172px", background: "#0f172a", display: "flex", flexDirection: "column", zIndex: 100 },
@@ -80,11 +87,13 @@ const s = {
     textTransform: "uppercase",
   },
   td: {
-    padding: "12px 14px",
-    fontSize: "13px",
+    padding: "16px 14px",
+    fontSize: "12.5px",
     color: "#334155",
     borderBottom: "1px solid #f1f5f9",
     display: "table-cell",
+    textAlign: "left",
+    verticalAlign: "middle"
   },
   candidateName: {
     fontWeight: 600,
@@ -101,7 +110,8 @@ const s = {
     marginTop: "2px"
   },
   miniBadge: (bg, color) => ({ display: "inline-flex", alignItems: "center", padding: "3px 9px", borderRadius: "6px", fontSize: "12px", fontWeight: 500, background: bg, color }),
-  actions: { display: "flex", gap: "6px", alignItems: "center" },
+  actions: { display: "flex", gap: "6px", alignItems: "center", justifyContent: "center", whiteSpace: "nowrap" },
+  btnEye: { padding: "6px", borderRadius: "6px", cursor: "pointer", border: "1px solid #e2e8f0", background: "#fff", color: "#64748b", display: "flex", alignItems: "center", justifyContent: "center" },
   btnAction: { padding: "4px 10px", borderRadius: "6px", fontSize: "12px", fontWeight: 500, cursor: "pointer", border: "1px solid #e2e8f0", background: "#fff", color: "#334155", whiteSpace: "nowrap", fontFamily: "inherit" },
   btnGenerate: { padding: "4px 10px", borderRadius: "6px", fontSize: "12px", fontWeight: 500, cursor: "pointer", border: "1px solid #86efac", background: "#f0fdf4", color: "#16a34a", whiteSpace: "nowrap", fontFamily: "inherit" },
   btnDownload: { padding: "4px 10px", borderRadius: "6px", fontSize: "12px", fontWeight: 500, cursor: "pointer", border: "1px solid #93c5fd", background: "#eff6ff", color: "#2563eb", whiteSpace: "nowrap", fontFamily: "inherit" },
@@ -147,65 +157,6 @@ function LogoutModal({ onConfirm, onCancel }) {
         <div style={s.modalActions}>
           <button style={s.btnCancel} onClick={onCancel}>Batal</button>
           <button style={s.btnConfirmLogout} onClick={onConfirm}>Ya, Logout</button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ToastContainer({ toasts }) {
-  const colors = {
-    success: { bg: "#dcfce7", border: "#86efac", color: "#166534", icon: "✓" },
-    error:   { bg: "#fee2e2", border: "#fca5a5", color: "#991b1b", icon: "✕" },
-    info:    { bg: "#dbeafe", border: "#93c5fd", color: "#1e40af", icon: "i" },
-  };
-  return (
-    <div style={{ position: "fixed", bottom: "24px", right: "24px", display: "flex", flexDirection: "column", gap: "10px", zIndex: 9999, pointerEvents: "none" }}>
-      {toasts.map(toast => {
-        const c = colors[toast.type] || colors.success;
-        return (
-          <div key={toast.id} style={{
-            display: "flex", alignItems: "center", gap: "10px",
-            background: c.bg, border: `1px solid ${c.border}`, color: c.color,
-            padding: "12px 16px", borderRadius: "10px", fontSize: "13px", fontWeight: 500,
-            boxShadow: "0 4px 16px rgba(0,0,0,0.10)", minWidth: "240px", maxWidth: "340px",
-            animation: "slideIn 0.25s ease",
-            fontFamily: "'Poppins', 'Segoe UI', sans-serif",
-          }}>
-            <span style={{ width: "20px", height: "20px", borderRadius: "50%", background: c.color, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", fontWeight: 700, flexShrink: 0 }}>{c.icon}</span>
-            {toast.message}
-          </div>
-        );
-      })}
-      <style>{`@keyframes slideIn { from { opacity:0; transform:translateX(20px); } to { opacity:1; transform:translateX(0); } }`}</style>
-    </div>
-  );
-}
-
-function ConfirmModal({ config, onClose }) {
-  if (!config) return null;
-  const typeStyles = {
-    generate: { bg: "#f0fdf4", border: "#86efac", btnBg: "#16a34a" },
-    bulk:     { bg: "#eff6ff", border: "#93c5fd", btnBg: "#2563eb" },
-    download: { bg: "#eff6ff", border: "#93c5fd", btnBg: "#2563eb" },
-    default:  { bg: "#f8fafc", border: "#e2e8f0", btnBg: "#334155" },
-  };
-  const t = typeStyles[config.type] || typeStyles.default;
-  return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 998, display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <div style={{ background: "#fff", borderRadius: "14px", padding: "28px", width: "340px", boxShadow: "0 8px 32px rgba(0,0,0,0.18)", fontFamily: "'Poppins', 'Segoe UI', sans-serif" }}>
-        <div style={{ width: "40px", height: "40px", borderRadius: "10px", background: t.bg, border: `1px solid ${t.border}`, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "14px", fontSize: "18px" }}>
-          {config.icon || "?"}
-        </div>
-        <div style={{ fontSize: "16px", fontWeight: 700, color: "#0f172a", marginBottom: "6px" }}>{config.title}</div>
-        <div style={{ fontSize: "13px", color: "#64748b", marginBottom: "24px", lineHeight: 1.5 }}>{config.desc}</div>
-        <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
-          <button onClick={onClose} style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid #e2e8f0", background: "#fff", color: "#334155", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
-            Batal
-          </button>
-          <button onClick={() => { config.onConfirm(); onClose(); }} style={{ padding: "8px 16px", borderRadius: "8px", border: "none", background: t.btnBg, color: "#fff", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
-            {config.confirmLabel || "Ya, Lanjutkan"}
-          </button>
         </div>
       </div>
     </div>
@@ -265,16 +216,6 @@ const [data, setData] = useState({ user: {}, stats: {}, candidates: [] });
 const [loading, setLoading] = useState(false);
 const [bulkLoading, setBulkLoading] = useState(false);
 const [error, setError] = useState('');
-const [toasts, setToasts] = useState([]);
-const [confirmModal, setConfirmModal] = useState(null);
-
-const showToast = (message, type = "success") => {
-  const id = Date.now();
-  setToasts(prev => [...prev, { id, message, type }]);
-  setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3500);
-};
-
-const showConfirm = (config) => setConfirmModal(config);
 
 // Clear old token on first load to force fresh auth
 useEffect(() => {
@@ -303,70 +244,58 @@ useEffect(() => {
   fetchLoa();
 }, []);
 
-const handleGenerate = (id) => {
-  const candidate = data.candidates.find(c => c.id_submission === id);
-  showConfirm({
-    type: "generate",
-    icon: "📄",
-    title: "Generate LoA?",
-    desc: `LoA akan dibuat untuk ${candidate?.name} (${candidate?.position} — ${candidate?.program}).`,
-    confirmLabel: "Ya, Generate",
-    onConfirm: async () => {
-      try {
-        setLoading(id);
-        setError('');
-        await api(`/hr/loa/${id}/generate`, { method: 'POST' });
-        showToast(`LoA untuk ${candidate?.name} berhasil dibuat`, "success");
-        await fetchLoa();
-      } catch (err) {
-        setError(err.message || 'Failed to generate LoA');
-        showToast(err.message || "Gagal generate LoA", "error");
-      } finally {
-        setLoading(null);
-      }
-    },
-  });
+const handleGenerate = async (id) => {
+  try {
+    setLoading(id);
+    setError('');
+    await api(`/hr/loa/${id}/generate`, { method: 'POST' });
+    await fetchLoa();
+  } catch (err) {
+    setError(err.message || 'Failed to generate LoA');
+    console.error(err);
+  } finally {
+    setLoading(null);
+  }
 };
 
-const handleBulkGenerate = () => {
-  const pendingCount = data.candidates.filter(c => c.loa_status === 'pending').length;
-  showConfirm({
-    type: "bulk",
-    icon: "📋",
-    title: "Bulk Generate LoA?",
-    desc: `LoA akan dibuat untuk semua ${pendingCount} kandidat yang statusnya masih Pending. Proses ini tidak bisa dibatalkan.`,
-    confirmLabel: "Ya, Bulk Generate",
-    onConfirm: async () => {
-      try {
-        setBulkLoading(true);
-        setError('');
-        await api('/hr/loa/bulk-generate', { method: 'POST' });
-        showToast(`Bulk generate LoA untuk ${pendingCount} kandidat berhasil`, "success");
-        await fetchLoa();
-      } catch (err) {
-        setError(err.message || 'Failed to generate bulk LoA');
-        showToast(err.message || "Gagal bulk generate LoA", "error");
-      } finally {
-        setBulkLoading(false);
-      }
-    },
-  });
+const handleBulkGenerate = async () => {
+  try {
+    setBulkLoading(true);
+    setError('');
+    await api('/hr/loa/bulk-generate', { method: 'POST' });
+    await fetchLoa();
+  } catch (err) {
+    setError(err.message || 'Failed to generate bulk LoA');
+    console.error(err);
+  } finally {
+    setBulkLoading(false);
+  }
 };
 
-const handleDownload = (id) => {
-  const candidate = data.candidates.find(c => c.id_submission === id);
-  showConfirm({
-    type: "download",
-    icon: "⬇️",
-    title: "Download / Preview LoA?",
-    desc: `File LoA untuk ${candidate?.name} akan dibuka di tab baru.`,
-    confirmLabel: "Ya, Buka",
-    onConfirm: () => {
-      const token = localStorage.getItem('hr_token');
-      window.open(`${import.meta.env.VITE_API_URL}/hr/loa/${id}/download?token=${token}`);
-      showToast("File LoA dibuka di tab baru", "info");
-    },
-  });
+const handlePreview = (url) => {
+  if (url) window.open(url, '_blank');
+};
+
+const handleDownload = async (url, id) => {
+  if (!url) return;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Failed to download file.');
+
+    const blob = await res.blob();
+    const blobUrl = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = `LoA_${id}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(blobUrl);
+  } catch (err) {
+    console.error(err);
+    // Fallback: strictly navigate to download url if fetch blocked by CORS or other exception
+    window.open(url, '_blank');
+  }
 };
 
 const statCards = [
@@ -384,8 +313,6 @@ const statCards = [
   return (
     <div style={s.app}>
       <style>{`* { box-sizing: border-box; margin: 0; padding: 0; } ::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 99px; }`}</style>
-      <ToastContainer toasts={toasts} />
-      <ConfirmModal config={confirmModal} onClose={() => setConfirmModal(null)} />
       <SidebarHR user={user} onLogout={() => setShowLogoutModal(true)} />
       <main style={s.main}>
         <div style={s.topbar}>
@@ -447,12 +374,12 @@ const statCards = [
                 ) : (
                 <table style={s.table}>
                   <colgroup>
+                    <col style={{ width: "19%" }} />
+                    <col style={{ width: "15%" }} />
+                    <col style={{ width: "24%" }} />
+                    <col style={{ width: "9%" }} />
+                    <col style={{ width: "11%" }} />
                     <col style={{ width: "22%" }} />
-                    <col style={{ width: "16%" }} />
-                    <col style={{ width: "20%" }} />
-                    <col style={{ width: "12%" }} />
-                    <col style={{ width: "14%" }} />
-                    <col style={{ width: "16%" }} />
                   </colgroup>
                   <thead style={s.thead}>
                     <tr>
@@ -461,7 +388,7 @@ const statCards = [
                       <th style={s.th}>PROGRAM</th>
                       <th style={s.th}>TYPE</th>
                       <th style={s.th}>LOA STATUS</th>
-                      <th style={s.th}>ACTION</th>
+                      <th style={{ ...s.th, textAlign: "center" }}>ACTION</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -484,17 +411,15 @@ const statCards = [
     </td>
     <td style={s.td}>
       <div style={s.actions}>
-        {c.has_file && <button style={s.btnAction} onClick={() => handleDownload(c.id_submission)}>Preview</button>}
-        {c.has_file && <button style={s.btnDownload} onClick={() => handleDownload(c.id_submission)}>Download</button>}
-        {c.loa_status === 'pending' && (
-          <button 
-            style={{...s.btnGenerate, opacity: loading === c.id_submission ? 0.6 : 1, cursor: loading === c.id_submission ? 'not-allowed' : 'pointer'}} 
-            onClick={() => handleGenerate(c.id_submission)}
-            disabled={loading === c.id_submission}
-          >
-            {loading === c.id_submission ? 'Generating...' : 'Generate'}
-          </button>
-        )}
+        {c.has_file && <button style={s.btnEye} onClick={() => handlePreview(c.file_url)} title="Preview"><IconEye /></button>}
+        {c.has_file && <button style={s.btnDownload} onClick={() => handleDownload(c.file_url, c.id_submission)}>Download</button>}
+        <button 
+          style={{...s.btnGenerate, opacity: loading === c.id_submission ? 0.6 : 1, cursor: loading === c.id_submission ? 'not-allowed' : 'pointer'}} 
+          onClick={() => handleGenerate(c.id_submission)}
+          disabled={loading === c.id_submission}
+        >
+          {loading === c.id_submission ? 'Generating...' : (c.loa_status === 'pending' ? 'Generate' : 'Regenerate')}
+        </button>
       </div>
     </td>
   </tr>
