@@ -15,6 +15,7 @@ class Assessment extends Model
         'id_assessment',
         'id_submission',
         'id_user',
+        'id_user_mentor',
         'scores_data',
         'narrative',
         'recommendation',

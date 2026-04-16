@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { useAuthStore } from "../stores/authStore";
-import { authService } from "../api/authService";
+import { useAuthStore } from "../../stores/authStore";
+import { authService } from "../../api/authService";
 import axios from "axios";
 
 // ── Icons ─────────────────────────────────────────────────────────────────────

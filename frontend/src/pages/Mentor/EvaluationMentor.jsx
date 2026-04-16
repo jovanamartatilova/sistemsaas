@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { SidebarMentor } from "./DashboardMentor";
 import { mentorApi } from "../../api/mentorApi";
+import { useAuthStore } from "../../stores/authStore";
 
 const s = {
   app: { display: "flex", minHeight: "100vh", background: "#f1f5f9", fontFamily: "'Poppins', 'Segoe UI', sans-serif", fontSize: "14px", color: "#1e293b" },
@@ -38,6 +40,8 @@ const s = {
 };
 
 export default function EvaluationMentor() {
+  const navigate = useNavigate();
+  const [mentor, setMentor] = useState(null);
   const [interns, setInterns] = useState([]);
   const [selectedSubmissionId, setSelectedSubmissionId] = useState(null);
   const [selectedInternName, setSelectedInternName] = useState("");
@@ -48,27 +52,31 @@ export default function EvaluationMentor() {
   const [evalStatuses, setEvalStatuses] = useState([]);
 
   useEffect(() => {
-    fetchInterns();
+    fetchData();
   }, []);
 
-  const fetchInterns = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true);
-      const res = await mentorApi.getInterns();
-      setInterns(res.data);
-      setEvalStatuses(res.data.map((intern, idx) => ({
+      const [profileRes, internsRes] = await Promise.all([
+        mentorApi.getProfile(),
+        mentorApi.getInterns(),
+      ]);
+      setMentor(profileRes.data);
+      setInterns(internsRes.data);
+      setEvalStatuses(internsRes.data.map((intern, idx) => ({
         name: intern.name,
         status: idx === 0 || idx === 1 || idx === 2 ? "Done" : idx === 3 ? "Draft" : "Pending",
         bg: idx === 0 || idx === 1 || idx === 2 ? "#eff6ff" : idx === 3 ? "#f5f3ff" : "#f1f5f9",
         color: idx === 0 || idx === 1 || idx === 2 ? "#1e40af" : idx === 3 ? "#7c3aed" : "#64748b",
       })));
-      if (res.data.length > 0) {
-        setSelectedSubmissionId(res.data[0].id_submission);
-        setSelectedInternName(res.data[0].name);
-        fetchEvaluation(res.data[0].id_submission);
+      if (internsRes.data.length > 0) {
+        setSelectedSubmissionId(internsRes.data[0].id_submission);
+        setSelectedInternName(internsRes.data[0].name);
+        fetchEvaluation(internsRes.data[0].id_submission);
       }
     } catch (error) {
-      console.error('Error fetching interns:', error);
+      console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
     }
@@ -94,6 +102,12 @@ export default function EvaluationMentor() {
     fetchEvaluation(idSubmission);
   };
 
+  const handleLogout = () => {
+    localStorage.clear();
+    useAuthStore.setState({ isAuthenticated: false, token: null, user: null, company: null });
+    navigate("/login");
+  };
+
   const handleSaveEvaluation = async () => {
     try {
       setSaving(true);
@@ -110,7 +124,7 @@ export default function EvaluationMentor() {
   if (loading) {
     return (
       <div style={s.app}>
-        <SidebarMentor />
+        <SidebarMentor mentor={mentor} onLogout={handleLogout} />
         <main style={s.main}>
           <div style={s.topbar}>
             <div style={s.bc}>
@@ -128,7 +142,7 @@ export default function EvaluationMentor() {
   return (
     <div style={s.app}>
       <style>{`* { box-sizing: border-box; margin: 0; padding: 0; } ::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 99px; }`}</style>
-      <SidebarMentor />
+      <SidebarMentor mentor={mentor} onLogout={handleLogout} />
       <main style={s.main}>
         <div style={s.topbar}>
           <div style={s.bc}>

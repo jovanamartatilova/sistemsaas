@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Company;
 use App\Models\Major;
+use App\Models\Position;
 use App\Models\Submission;
 use App\Models\Team;
 use App\Models\University;
+use App\Models\Vacancy;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
@@ -45,6 +47,33 @@ class SubmissionController extends Controller
         $user = $request->user();
         if (!$user) {
             return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        // ✅ Validate vacancy and position belong to the same company
+        $vacancy = Vacancy::where('id_vacancy', $request->id_vacancy)
+            ->where('id_company', $company->id_company)
+            ->first();
+
+        if (!$vacancy) {
+            return response()->json(['message' => 'Posisi atau Lowongan tidak valid untuk perusahaan ini'], 404);
+        }
+
+        $position = Position::where('id_position', $request->id_position)
+            ->where('id_company', $company->id_company)
+            ->first();
+
+        if (!$position) {
+            return response()->json(['message' => 'Posisi tidak valid untuk perusahaan ini'], 404);
+        }
+
+        // ✅ Validate position is available for this vacancy
+        $positionInVacancy = DB::table('position_vacancy')
+            ->where('id_vacancy', $request->id_vacancy)
+            ->where('id_position', $request->id_position)
+            ->exists();
+
+        if (!$positionInVacancy) {
+            return response()->json(['message' => 'Posisi tidak tersedia untuk lowongan ini'], 422);
         }
 
         try {
@@ -99,8 +128,8 @@ class SubmissionController extends Controller
             $cvPath = $request->file('cv_file')->store('submissions/cv', 'public');
             $coverLetterPath = $request->file('cover_letter_file')->store('submissions/cover_letters', 'public');
             $institutionLetterPath = $request->file('institution_letter_file')->store('submissions/institution_letters', 'public');
-            $portfolioPath = $request->hasFile('portfolio_file') 
-                ? $request->file('portfolio_file')->store('submissions/portfolios', 'public') 
+            $portfolioPath = $request->hasFile('portfolio_file')
+                ? $request->file('portfolio_file')->store('submissions/portfolios', 'public')
                 : null;
 
             // 6. Create Submission

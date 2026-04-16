@@ -17,6 +17,7 @@ class HRInterviewController extends Controller
     {
         $companyId = $request->user()->id_company;
 
+        // Get scheduled interviews
         $interviews = Interview::whereHas('submission.vacancy', fn($q) =>
             $q->where('id_company', $companyId)
         )->with(['submission.user', 'submission.position', 'interviewer'])
@@ -25,12 +26,36 @@ class HRInterviewController extends Controller
          ->get()
          ->map(fn($i) => $this->formatInterview($i));
 
+        // Get submissions ready for interview (status='interview' but no Interview record yet)
+        $readyForInterview = Submission::whereHas('vacancy', fn($q) =>
+            $q->where('id_company', $companyId)
+        )->where('status', 'interview')
+         ->with(['user', 'position', 'vacancy'])
+         ->whereDoesntHave('interview')
+         ->orderByDesc('submitted_at')
+         ->get()
+         ->map(fn($s) => [
+             'id_submission'  => $s->id_submission,
+             'candidate_name' => $s->user?->name,
+             'position'       => $s->position?->name,
+             'type'           => 'pending_schedule',
+             'submitted_at'   => $s->submitted_at,
+             'screening_status' => $s->screening_status,
+         ]);
+
         $today = now()->toDateString();
 
-        // Stats
+        // Stats (only count Interview records)
         $base = Interview::whereHas('submission.vacancy', fn($q) =>
             $q->where('id_company', $companyId)
         );
+
+        // Stats for ready-for-interview submissions
+        $readyCount = Submission::whereHas('vacancy', fn($q) =>
+            $q->where('id_company', $companyId)
+        )->where('status', 'interview')
+         ->whereDoesntHave('interview')
+         ->count();
 
         return response()->json([
             'success' => true,
@@ -39,8 +64,10 @@ class HRInterviewController extends Controller
                     'today'     => (clone $base)->whereDate('interview_date', $today)->count(),
                     'pending'   => (clone $base)->where('result', 'pending')->count(),
                     'completed' => (clone $base)->whereIn('result', ['accepted', 'rejected', 'continue'])->count(),
+                    'ready_for_schedule' => $readyCount,
                 ],
                 'interviews' => $interviews,
+                'ready_for_interview' => $readyForInterview,
             ],
         ]);
     }
@@ -167,12 +194,25 @@ class HRInterviewController extends Controller
 
     private function formatInterview(Interview $i): array
     {
+        // Handle date - may be string or Carbon instance
+        $date = $i->interview_date;
+        if ($date && !is_string($date)) {
+            $date = $date->format('Y-m-d');
+        }
+
+        // Handle time - may be string or Carbon instance
+        $time = $i->interview_time;
+        if ($time && !is_string($time)) {
+            $time = $time->format('H:i');
+        }
+
         return [
             'id_interview'   => $i->id_interview,
             'candidate_name' => $i->submission?->user?->name,
             'position'       => $i->submission?->position?->name,
-            'interview_date' => $i->interview_date,
-            'interview_time' => $i->interview_time,
+            'interview_date' => $date ?? '',
+            'interview_time' => $time ?? '',
+            'id_interviewer' => $i->id_interviewer,
             'interviewer'    => $i->interviewer?->name,
             'media'          => $i->media,
             'link'           => $i->link,

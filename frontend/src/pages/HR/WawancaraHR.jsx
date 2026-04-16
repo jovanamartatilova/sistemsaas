@@ -203,7 +203,7 @@ export default function InterviewHR() {
   const navigate = useNavigate();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const user = useAuthStore((state) => state.user);
-  const [data, setData]         = useState({ stats: {}, interviews: [], user: {} });
+  const [data, setData]         = useState({ stats: {}, interviews: [], ready_for_interview: [], user: {} });
   const [loading, setLoading]   = useState(true);
   const [editModal, setEditModal] = useState(null);
   const [addModal, setAddModal]   = useState(false);
@@ -309,6 +309,7 @@ const showToast = (message, type = "success") => {
     { value: data.stats.today,     label: "Today's Interviews", badge: "Today", badgeBg: "#dcfce7", badgeColor: "#166534", sub: "Schedule confirmed",    barColor: "#3b82f6", barWidth: "45%" },
     { value: data.stats.pending,   label: "Pending Schedule",   badge: null,    sub: "Need to be scheduled",               barColor: "#f59e0b",        barWidth: "35%" },
     { value: data.stats.completed, label: "Completed",          badge: null,    sub: "Decision made",                      barColor: "#22c55e",        barWidth: "55%" },
+    { value: data.stats.ready_for_schedule, label: "Ready for Schedule", badge: null, sub: "Passed screening",          barColor: "#a855f7",        barWidth: "28%" },
   ];
 
   if (loading) return <div style={{ padding: "40px", textAlign: "center", color: "#64748b" }}>Loading...</div>;
@@ -349,8 +350,56 @@ const showToast = (message, type = "success") => {
             ))}
           </div>
 
+          {/* Candidates Ready for Interview Scheduling */}
+          {(data.ready_for_interview && data.ready_for_interview.length > 0) && (
+            <div style={s.card}>
+              <div style={s.cardHeader}>
+                <div>
+                  <div style={s.cardTitle}>Ready for Interview Scheduling</div>
+                  <div style={s.cardSubtitle}>Candidates who passed screening</div>
+                </div>
+              </div>
+              <div style={s.tableWrap}>
+                <table style={s.table}>
+                  <colgroup>
+                    <col style={{ width: "25%" }} />
+                    <col style={{ width: "25%" }} />
+                    <col style={{ width: "20%" }} />
+                    <col style={{ width: "30%" }} />
+                  </colgroup>
+                  <thead style={s.thead}>
+                    <tr>
+                      <th style={s.th}>CANDIDATE</th>
+                      <th style={s.th}>POSITION</th>
+                      <th style={s.th}>PASSED ON</th>
+                      <th style={s.th}>ACTION</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.ready_for_interview.map((c, i) => (
+                      <tr key={i}>
+                        <td style={s.td}>{c.candidate_name}</td>
+                        <td style={s.td}>{c.position}</td>
+                        <td style={s.td}>{new Date(c.submitted_at).toLocaleDateString('en-GB')}</td>
+                        <td style={s.td}>
+                          <button style={s.btnPrimary} onClick={() => {
+                            setAddForm({ id_submission: c.id_submission, media: "Google Meet" });
+                            setAddError("");
+                            setAddModal(true);
+                          }}>
+                            Schedule Interview
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
           {/* Table */}
-          <div style={s.card}>
+          <div style={{ ...s.card, marginTop: "32px" }}>
             <div style={s.cardHeader}>
               <div>
                 <div style={s.cardTitle}>Interview Schedule</div>
@@ -443,9 +492,8 @@ const showToast = (message, type = "success") => {
             </div>
             <div style={s.modalField}>
               <label style={s.modalLabel}>Interviewer</label>
-              <input style={s.modalInput} value={form.interviewer || ""}
-                onChange={e => setForm({ ...form, interviewer: e.target.value })}
-                placeholder="Interviewer name" />
+              <input style={{...s.modalInput, background: "#f1f5f9", cursor: "not-allowed"}} value={form.interviewer || ""} disabled placeholder="Interviewer name" />
+              <span style={{ fontSize: "11px", color: "#94a3b8", marginTop: "4px", display: "block" }}>Set at time of scheduling</span>
             </div>
             <div style={s.modalField}>
               <label style={s.modalLabel}>Media</label>
@@ -492,13 +540,14 @@ const showToast = (message, type = "success") => {
             <div style={s.modalField}>
               <label style={s.modalLabel}>Submission ID</label>
               <input
-                style={s.modalInput}
+                style={{...s.modalInput, background: addForm.id_submission ? "#f1f5f9" : undefined, cursor: addForm.id_submission ? "not-allowed" : undefined}}
                 value={addForm.id_submission || ""}
-                onChange={e => setAddForm({ ...addForm, id_submission: e.target.value })}
+                onChange={e => !addForm.id_submission && setAddForm({ ...addForm, id_submission: e.target.value })}
+                disabled={!!addForm.id_submission}
                 placeholder="ID submission kandidat (dari halaman Screening)"
               />
               <span style={{ fontSize: "11px", color: "#94a3b8", marginTop: "4px", display: "block" }}>
-                Lihat ID di halaman Screening → kolom kandidat yang sudah Pass.
+                {addForm.id_submission ? "Candidate selected" : "Click 'Schedule Interview' from candidate list above"}
               </span>
             </div>
 

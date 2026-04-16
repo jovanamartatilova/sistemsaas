@@ -2,248 +2,129 @@ import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './stores/authStore';
 import PrivateRoute from './components/PrivateRoute';
-// Auth pages
-import LoginPage from './pages/Login';
-import RegisterPage from './pages/signUp';
-import ForgotPassword from './pages/ForgotPassword';
-import ResetPassword from './pages/ResetPassword';
-import ForgotPasswordCandidate from './pages/ForgotPasswordCandidate';
-import ResetPasswordCandidate from './pages/resetPasswordCandidate';
-// Candidate (company public)
-import CompanyPublicPage from './pages/companyPublic';
-import SignUpCandidate from './pages/SignUpCandidate';
-import LoginCandidate from './pages/LoginCandidate';
-import CandidateDashboard from './pages/candidateDashboard';
-import SubmissionForm from './pages/SubmissionForm';
-import ProfileSettings from './pages/ProfileSettings';
-import CertificateCandidate from './pages/CertificateCandidate';
-import ProgramsPage from './pages/ProgramsCandidate';
-// Staff
-import ActivateAccount from './pages/activateAccount';
-// Main pages
-import DashboardPage from './pages/DashboardPage';
-import ProgramManagement from './pages/ProgramManagement';
-import PositionsManagement from './pages/PositionsManagement';
-import LandingPage from './pages/LandingPage';
-import HomePage from './pages/HomePage';
-import ProfilePage from './pages/ProfilePage';
-import UserManagement from './pages/UserManagement';
-import SettingsAdmin from './pages/SettingsAdmin';
+
+// Auth
+import LoginPage         from './pages/Auth/Login';
+import RegisterPage      from './pages/Auth/SignUp';
+import ForgotPassword    from './pages/Auth/ForgotPassword';
+import ResetPassword     from './pages/Auth/ResetPassword';
+import ActivateAccount   from './pages/Auth/ActivateAccount';
+
+// Candidate
+import SignUpCandidate          from './pages/Candidate/SignUpCandidate';
+import LoginCandidate           from './pages/Candidate/LoginCandidate';
+import ForgotPasswordCandidate  from './pages/Candidate/ForgotPasswordCandidate';
+import ResetPasswordCandidate   from './pages/Candidate/ResetPasswordCandidate';
+import CompanyPublicPage        from './pages/Candidate/CompanyPublic';
+import CandidateDashboard       from './pages/Candidate/CandidateDashboard';
+import SubmissionForm           from './pages/Candidate/SubmissionForm';
+import ProfileSettings          from './pages/Candidate/ProfileSettings';
+import CertificateCandidate     from './pages/Candidate/CertificateCandidate';
+import ProgramsPage             from './pages/Candidate/ProgramsCandidate';
+
+// Admin
+import DashboardPage        from './pages/Admin/DashboardPage';
+import ProgramManagement    from './pages/Admin/ProgramManagement';
+import PositionsManagement  from './pages/Admin/PositionsManagement';
+import UserManagement       from './pages/Admin/UserManagement';
+import SettingsAdmin        from './pages/Admin/SettingsAdmin';
+
+// Main
+import LandingPage  from './pages/Main/LandingPage';
+import ProfilePage  from './pages/Main/ProfilePage';
+
 // Super Admin
-import SuperAdminPages from "./pages/SuperAdminPages";
+import SuperAdminPages from './pages/SuperAdmin/SuperAdminPages';
+
 // HR
-import DashboardHR from "./pages/HR/DashboardHR";
-import KandidateHR from "./pages/HR/KandidateHR";
-import ScreeningHR from "./pages/HR/ScreeningHR";
-import WawancaraHR from "./pages/HR/WawancaraHR";
-import GenerateLOA from "./pages/HR/GenerateLOA";
-import PayrollHR from './pages/HR/PayrollHR';
+import DashboardHR  from './pages/HR/DashboardHR';
+import KandidateHR  from './pages/HR/KandidateHR';
+import ScreeningHR  from './pages/HR/ScreeningHR';
+import WawancaraHR  from './pages/HR/WawancaraHR';
+import GenerateLOA  from './pages/HR/GenerateLOA';
+import PayrollHR    from './pages/HR/PayrollHR';
 import AssignMentor from './pages/HR/AssignMentor';
+
 // Mentor
-import CertificateMentor from './pages/Mentor/CertificateMentor';
-import EvaluationMentor from './pages/Mentor/EvaluationMentor';
+import DashboardMentor    from './pages/Mentor/DashboardMentor';
+import InternsMentor      from './pages/Mentor/InternsMentor';
+import InputScoreMentor   from './pages/Mentor/InputScoreMentor';
+import ScoreRecapMentor   from './pages/Mentor/ScoreRecapMentor';
 import CompetenciesMentor from './pages/Mentor/CompetenciesMentor';
-import DashboardMentor from './pages/Mentor/DashboardMentor';
-import InputScoreMentor from './pages/Mentor/InputScoreMentor';
-import InternsMentor from './pages/Mentor/InternsMentor';
-import ScoreRecapMentor from './pages/Mentor/ScoreRecapMentor';
+import EvaluationMentor   from './pages/Mentor/EvaluationMentor';
+import CertificateMentor  from './pages/Mentor/CertificateMentor';
 
+// Helper
+const Private = ({ children }) => <PrivateRoute>{children}</PrivateRoute>;
+
+/** Redirect ke mentor dashboard jika role === 'mentor', selain itu tampilkan DashboardPage */
+const DashboardRouter = () => {
+    const { company } = useAuthStore();
+    return company?.role === 'mentor'
+        ? <Navigate to="/mentor/dashboard" replace />
+        : <DashboardPage />;
+};
+
+// App
 export default function App() {
-    const { token, isAuthenticated, company } = useAuthStore();
-    const isApplicant = company?.role === "applicant";
-
-    // Component untuk handle dashboard routing berdasarkan role
-    const DashboardRouter = () => {
-        const { company } = useAuthStore();
-        
-        // Jika user adalah mentor, redirect ke mentor dashboard
-        if (company?.role === 'mentor') {
-            return <Navigate to="/mentor/dashboard" replace />;
-        }
-        
-        return <DashboardPage />;
-    };
-
     return (
         <BrowserRouter>
             <Routes>
-                {/* Landing page as default root */}
-                <Route path="/" element={<LandingPage />} />
-                {/* Auth */}
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/register" element={<RegisterPage />} />
-                <Route path="/forgot-password" element={<ForgotPassword />} />
-                <Route path="/reset-password" element={<ResetPassword />} />
-
-
-                {/* Company Public */}
-                <Route path="/c/:slug" element={<CompanyPublicPage />} />
-                <Route path="/c/:slug/register" element={<SignUpCandidate />} />
-                <Route path="/c/:slug/login" element={<LoginCandidate />} />
-                <Route path="/c/:slug/staff/login" element={<Navigate to="/login" replace />} />
-
-
-                {/* Candidate Dashboard & Apply */}
-                <Route
-                    path="/candidate/dashboard"
-                    element={
-                        <PrivateRoute>
-                            <CandidateDashboard />
-                        </PrivateRoute>
-                    }
-                />
-                <Route
-                    path="/c/:slug/dashboard"
-                    element={
-                        <PrivateRoute>
-                            <CandidateDashboard />
-                        </PrivateRoute>
-                    }
-                />
-                <Route
-                    path="/c/:slug/programs"
-                    element={
-                        <PrivateRoute>
-                            <ProgramsPage />
-                        </PrivateRoute>
-                    }
-                />
-                <Route
-                    path="/c/:slug/certificates"
-                    element={
-                        <PrivateRoute>
-                            <CertificateCandidate />
-                        </PrivateRoute>
-                    }
-                />
-                <Route
-                    path="/c/:slug/profile"
-                    element={
-                        <PrivateRoute>
-                            <ProfileSettings />
-                        </PrivateRoute>
-                    }
-                />
-                <Route
-                    path="/c/:slug/apply/:vacancyId/:positionId"
-                    element={
-                        <PrivateRoute>
-                            <SubmissionForm />
-                        </PrivateRoute>
-                    }
-                />
+                {/* Public */}
+                <Route path="/"                          element={<LandingPage />} />
+                <Route path="/login"                     element={<LoginPage />} />
+                <Route path="/register"                  element={<RegisterPage />} />
+                <Route path="/forgot-password"           element={<ForgotPassword />} />
+                <Route path="/reset-password"            element={<ResetPassword />} />
+                <Route path="/activate"                  element={<ActivateAccount />} />
                 <Route path="/forgot-password-candidate" element={<ForgotPasswordCandidate />} />
-                <Route path="/c/:slug/forgot-password" element={<ForgotPasswordCandidate />} />
-                <Route path="/c/:slug/reset-password" element={<ResetPasswordCandidate />} />
 
-                {/* Activation */}
-                <Route path="/activate" element={<ActivateAccount />} />
+                {/* Company — Public */}
+                <Route path="/c/:slug"                   element={<CompanyPublicPage />} />
+                <Route path="/c/:slug/register"          element={<SignUpCandidate />} />
+                <Route path="/c/:slug/login"             element={<LoginCandidate />} />
+                <Route path="/c/:slug/forgot-password"   element={<ForgotPasswordCandidate />} />
+                <Route path="/c/:slug/reset-password"    element={<ResetPasswordCandidate />} />
+                <Route path="/c/:slug/staff/login"       element={<Navigate to="/login" replace />} />
 
-                {/* Home tambahan */}
-                <Route path="/home" element={<HomePage />} />
-                {/* Protected */}
-                <Route
-                    path="/dashboard"
-                    element={
-                        <PrivateRoute>
-                            <DashboardRouter />
-                        </PrivateRoute>
-                    }
-                />
-                <Route
-                    path="/positions"
-                    element={
-                        <PrivateRoute>
-                            <PositionsManagement />
-                        </PrivateRoute>
-                    }
-                />
+                {/* Candidate — Private */}
+                <Route path="/candidate/dashboard"                   element={<Private><CandidateDashboard /></Private>} />
+                <Route path="/c/:slug/dashboard"                     element={<Private><CandidateDashboard /></Private>} />
+                <Route path="/c/:slug/programs"                      element={<Private><ProgramsPage /></Private>} />
+                <Route path="/c/:slug/certificates"                  element={<Private><CertificateCandidate /></Private>} />
+                <Route path="/c/:slug/profile"                       element={<Private><ProfileSettings /></Private>} />
+                <Route path="/c/:slug/apply/:vacancyId/:positionId"  element={<Private><SubmissionForm /></Private>} />
 
-                <Route
-                    path="/programs"
-                    element={
-                        <PrivateRoute>
-                            <ProgramManagement />
-                        </PrivateRoute>
-                    }
-                />
+                {/* Admin — Private */}
+                <Route path="/dashboard"  element={<Private><DashboardRouter /></Private>} />
+                <Route path="/positions"  element={<Private><PositionsManagement /></Private>} />
+                <Route path="/programs"   element={<Private><ProgramManagement /></Private>} />
+                <Route path="/users"      element={<Private><UserManagement /></Private>} />
+                <Route path="/settings"   element={<Private><SettingsAdmin /></Private>} />
+                <Route path="/profile"    element={<Private><ProfilePage /></Private>} />
 
-                <Route
-                    path="/users"
-                    element={
-                        <PrivateRoute>
-                            <UserManagement />
-                        </PrivateRoute>
-                    }
-                />
-
-                <Route
-                    path="/settings"
-                    element={
-                        <PrivateRoute>
-                            <SettingsAdmin />
-                        </PrivateRoute>
-                    }
-                />
-
-                <Route
-                    path="/profile"
-                    element={
-                        <PrivateRoute>
-                            <ProfilePage />
-                        </PrivateRoute>
-                    }
-                />
-
-                <Route
-                    path="/c/:slug/profile"
-                    element={
-                        <PrivateRoute>
-                            <ProfileSettings />
-                        </PrivateRoute>
-                    }
-                />
-
-                <Route
-                    path="/c/:slug/certificates"
-                    element={
-                        <PrivateRoute>
-                            <CertificateCandidate />
-                        </PrivateRoute>
-                    }
-                />
-
-                <Route
-                    path="/c/:slug/programs"
-                    element={
-                        <PrivateRoute>
-                            <ProgramsPage />
-                        </PrivateRoute>
-                    }
-                />
-
+                {/* Super Admin */}
                 <Route path="/superadmin/*" element={<SuperAdminPages />} />
 
-                {/* HR ROUTES */}
-                <Route path="/hr/dashboard" element={<PrivateRoute><DashboardHR /></PrivateRoute>} />
-                <Route path="/hr/kandidate" element={<PrivateRoute><KandidateHR /></PrivateRoute>} />
-                <Route path="/hr/screening" element={<PrivateRoute><ScreeningHR /></PrivateRoute>} />
-                <Route path="/hr/wawancara" element={<PrivateRoute><WawancaraHR /></PrivateRoute>} />
-                <Route path="/hr/generate-loa" element={<PrivateRoute><GenerateLOA /></PrivateRoute>} />
-                <Route path="/hr/payroll" element={<PrivateRoute><PayrollHR /></PrivateRoute>} />
-                <Route path="/hr/assign-mentor" element={<PrivateRoute><AssignMentor /></PrivateRoute>} />
+                {/* HR — Private */}
+                <Route path="/hr/dashboard"     element={<Private><DashboardHR /></Private>} />
+                <Route path="/hr/kandidate"     element={<Private><KandidateHR /></Private>} />
+                <Route path="/hr/screening"     element={<Private><ScreeningHR /></Private>} />
+                <Route path="/hr/wawancara"     element={<Private><WawancaraHR /></Private>} />
+                <Route path="/hr/generate-loa"  element={<Private><GenerateLOA /></Private>} />
+                <Route path="/hr/payroll"       element={<Private><PayrollHR /></Private>} />
+                <Route path="/hr/assign-mentor" element={<Private><AssignMentor /></Private>} />
 
-                {/* MENTOR ROUTES*/}
-                <Route path="/mentor/dashboard" element={<PrivateRoute><DashboardMentor /></PrivateRoute>} />
-                <Route path="/mentor/interns" element={<PrivateRoute><InternsMentor /></PrivateRoute>} />
-                <Route path="/mentor/input-score" element={<PrivateRoute><InputScoreMentor /></PrivateRoute>} />
-                <Route path="/mentor/score-recap" element={<PrivateRoute><ScoreRecapMentor /></PrivateRoute>} />
-                <Route path="/mentor/competencies" element={<PrivateRoute><CompetenciesMentor /></PrivateRoute>} />
-                <Route path="/mentor/evaluation" element={<PrivateRoute><EvaluationMentor /></PrivateRoute>} />
-                <Route path="/mentor/certificates" element={<PrivateRoute><CertificateMentor /></PrivateRoute>} />
+                {/* Mentor — Private */}
+                <Route path="/mentor/dashboard"     element={<Private><DashboardMentor /></Private>} />
+                <Route path="/mentor/interns"        element={<Private><InternsMentor /></Private>} />
+                <Route path="/mentor/input-score"    element={<Private><InputScoreMentor /></Private>} />
+                <Route path="/mentor/score-recap"    element={<Private><ScoreRecapMentor /></Private>} />
+                <Route path="/mentor/competencies"   element={<Private><CompetenciesMentor /></Private>} />
+                <Route path="/mentor/evaluation"     element={<Private><EvaluationMentor /></Private>} />
+                <Route path="/mentor/certificates"   element={<Private><CertificateMentor /></Private>} />
 
             </Routes>
         </BrowserRouter>
     );
 }
-

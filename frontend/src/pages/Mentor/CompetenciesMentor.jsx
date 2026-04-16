@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { SidebarMentor } from "./DashboardMentor";
 import { mentorApi } from "../../api/mentorApi";
+import { useAuthStore } from "../../stores/authStore";
 
 const levelColorMap = {
   "Beginner": { bg: "#eff6ff", color: "#1e40af" },
@@ -40,6 +42,8 @@ const s = {
 };
 
 export default function CompetenciesMentor() {
+  const navigate = useNavigate();
+  const [mentor, setMentor] = useState(null);
   const [interns, setInterns] = useState([]);
   const [selectedSubmissionId, setSelectedSubmissionId] = useState(null);
   const [selectedInternName, setSelectedInternName] = useState("");
@@ -47,21 +51,25 @@ export default function CompetenciesMentor() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchInterns();
+    fetchData();
   }, []);
 
-  const fetchInterns = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true);
-      const res = await mentorApi.getInterns();
-      setInterns(res.data);
-      if (res.data.length > 0) {
-        setSelectedSubmissionId(res.data[0].id_submission);
-        setSelectedInternName(res.data[0].name);
-        fetchCompetencies(res.data[0].id_submission);
+      const [profileRes, internsRes] = await Promise.all([
+        mentorApi.getProfile(),
+        mentorApi.getInterns(),
+      ]);
+      setMentor(profileRes.data);
+      setInterns(internsRes.data);
+      if (internsRes.data.length > 0) {
+        setSelectedSubmissionId(internsRes.data[0].id_submission);
+        setSelectedInternName(internsRes.data[0].name);
+        fetchCompetencies(internsRes.data[0].id_submission);
       }
     } catch (error) {
-      console.error('Error fetching interns:', error);
+      console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
     }
@@ -82,10 +90,16 @@ export default function CompetenciesMentor() {
     fetchCompetencies(idSubmission);
   };
 
+  const handleLogout = () => {
+    localStorage.clear();
+    useAuthStore.setState({ isAuthenticated: false, token: null, user: null, company: null });
+    navigate("/login");
+  };
+
   if (loading) {
     return (
       <div style={s.app}>
-        <SidebarMentor />
+        <SidebarMentor mentor={mentor} onLogout={handleLogout} />
         <main style={s.main}>
           <div style={s.topbar}>
             <div style={s.bc}>
@@ -105,7 +119,7 @@ export default function CompetenciesMentor() {
   return (
     <div style={s.app}>
       <style>{`* { box-sizing: border-box; margin: 0; padding: 0; } ::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 99px; } tr:last-child td { border-bottom: none; }`}</style>
-      <SidebarMentor />
+      <SidebarMentor mentor={mentor} onLogout={handleLogout} />
       <main style={s.main}>
         <div style={s.topbar}>
           <div style={s.bc}>
