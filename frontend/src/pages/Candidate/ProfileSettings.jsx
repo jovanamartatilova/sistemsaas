@@ -1,7 +1,7 @@
 import { User, LogOut, Upload, ChevronDown, LayoutDashboard, BookOpen, Award } from "lucide-react";
 import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { useAuthStore } from "../stores/authStore";
+import { useAuthStore } from "../../stores/authStore";
 
 // --- Sidebar ---
 function Sidebar({ userName, onLogout }) {
