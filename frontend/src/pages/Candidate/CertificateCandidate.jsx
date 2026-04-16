@@ -4,7 +4,7 @@ import {
   Download, Lock, CheckCircle, Clock, Search,
 } from "lucide-react";
 import { useNavigate, useParams, Link, useLocation } from "react-router-dom";
-import { useAuthStore } from "../stores/authStore";
+import { useAuthStore } from "../../stores/authStore";
 
 // --- Sidebar ---
 function Sidebar({ userName, onLogout }) {
