@@ -2,11 +2,13 @@ import { User, LogOut, Upload, ChevronDown, LayoutDashboard, BookOpen, Award } f
 import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useAuthStore } from "../../stores/authStore";
+import { LoadingSpinner } from "../../components/LoadingSpinner";
 
 // --- Sidebar ---
 function Sidebar({ userName, onLogout }) {
   const { slug } = useParams();
   const location = useLocation();
+  const company = JSON.parse(localStorage.getItem("company"));
   const navItems = [
     { label: "Dashboard", icon: <LayoutDashboard size={16} />, to: `/c/${slug}/dashboard` },
     { label: "Programs", icon: <BookOpen size={16} />, to: `/c/${slug}/programs` },
@@ -34,13 +36,24 @@ function Sidebar({ userName, onLogout }) {
         })}
       </nav>
       <div className="mt-auto flex items-center gap-3 px-2">
-        <div className="w-8 h-8 rounded-full bg-slate-600 flex items-center justify-center text-xs font-bold">
-          {userName?.charAt(0).toUpperCase() || "U"}
+        {company?.logo_path ? (
+          <img 
+            src={`http://localhost:8000/storage/${company.logo_path}`} 
+            alt="Company" 
+            className="w-8 h-8 rounded-lg object-cover bg-white shadow-sm flex-shrink-0" 
+          />
+        ) : (
+          <div className="w-8 h-8 rounded-lg bg-slate-600 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
+            {company?.name?.charAt(0).toUpperCase() || "C"}
+          </div>
+        )}
+        <div className="flex-1 min-w-0">
+          <p className="text-xs text-slate-300 truncate font-medium">{company?.name || "Company"}</p>
+          <p className="text-xs text-slate-400 truncate">{userName || "User"}</p>
         </div>
-        <span className="text-sm text-slate-300 flex-1">{userName || "User"}</span>
         <button
           onClick={onLogout}
-          className="text-slate-500 hover:text-white cursor-pointer transition-colors"
+          className="text-slate-500 hover:text-white cursor-pointer transition-colors flex-shrink-0"
           title="Logout"
         >
           <LogOut size={14} />
@@ -273,7 +286,7 @@ function ProfileContent({ userData, setUserData }) {
               </button>
             </div>
             <p className="text-gray-300 text-[10px] mt-1.5 text-left">
-              Format: JPG, PNG. Ukuran maks. 2MB.
+              Formats: JPG, PNG. Max size 2MB.
             </p>
           </div>
         </div>
@@ -325,28 +338,28 @@ function ProfileContent({ userData, setUserData }) {
 
           {/* Universitas */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs text-gray-500 font-medium text-left">Universitas</label>
+            <label className="text-xs text-gray-500 font-medium text-left">University</label>
             <input
               type="text"
               name="university_name"
               value={formData.university_name}
               onChange={handleInputChange}
               disabled={loading}
-              placeholder="Nama universitas kamu"
+              placeholder="Your university name"
               className="bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-sm text-gray-800 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
             />
           </div>
 
           {/* Jurusan — full width */}
           <div className="flex flex-col gap-1.5 col-span-2">
-            <label className="text-xs text-gray-500 font-medium text-left">Jurusan</label>
+            <label className="text-xs text-gray-500 font-medium text-left">Major</label>
             <input
               type="text"
               name="major_name"
               value={formData.major_name}
               onChange={handleInputChange}
               disabled={loading}
-              placeholder="Jurusan kamu"
+              placeholder="Your Major"
               className="bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-sm text-gray-800 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
             />
           </div>
@@ -377,7 +390,7 @@ function ProfileContent({ userData, setUserData }) {
 
       {/* Footer */}
       <p className="text-center text-xs text-gray-300 mt-6">
-        © 2025 EarlyPath · Platform Magang Modern
+        © 2025 EarlyPath · All rights reserved
       </p>
     </div>
   );
@@ -457,14 +470,7 @@ export default function ProfileSettings() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin h-12 w-12 border-4 border-indigo-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading profile...</p>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner message="Loading profile..." />;
   }
 
   if (error && !userData) {
