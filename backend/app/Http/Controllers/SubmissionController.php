@@ -141,6 +141,8 @@ class SubmissionController extends Controller
             $user->name = $request->name;
             $user->id_university = $university->id_university;
             $user->id_major = $major->id_major;
+            // ✅ Set the company from the vacancy being applied to
+            $user->id_company = $company->id_company;
             if ($teamId) {
                 $user->id_team = $teamId;
             }

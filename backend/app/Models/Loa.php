@@ -18,6 +18,7 @@ class Loa extends Model
         'file_path',
         'signed_by',
         'issued_date',
+        'is_sent',
     ];
 
     public function submission()

@@ -505,22 +505,42 @@ class CandidateController extends Controller
     {
         $user = $request->user();
 
-        $submission = Submission::where('id_user', $user->id_user)
-            ->with(['apprentice'])
-            ->latest('submitted_at')
-            ->first();
+        // Get all submissions for this candidate
+        $submissions = Submission::where('id_user', $user->id_user)
+            ->with(['certificate', 'vacancy', 'position'])
+            ->get();
 
-        if (!$submission || !$submission->apprentice) {
-            return response()->json([
-                'success' => true,
-                'data' => []
-            ]);
+        if ($submissions->isEmpty()) {
+            return response()->json(['success' => true, 'data' => []]);
         }
 
-        return response()->json([
-            'success' => true,
-            'data' => []
-        ]);
+        $data = $submissions->map(function ($sub) {
+            $cert = $sub->certificate;
+
+            // Certificate is visible only when it has been sent (is_sent=true)
+            if ($cert && $cert->is_sent) {
+                return [
+                    'status'             => 'issued',
+                    'id_certificate'     => $cert->id_certificate,
+                    'certificate_number' => $cert->certificate_number,
+                    'final_score'        => $cert->final_score,
+                    'issued_date'        => $cert->issued_date,
+                    'file_path'          => $cert->file_path ? asset('storage/' . $cert->file_path) : null,
+                    'program'            => $sub->vacancy?->title ?? '-',
+                    'position'           => $sub->position?->name ?? '-',
+                ];
+            }
+
+            // On-going / not yet issued
+            return [
+                'status'    => 'on_going',
+                'batch'     => $sub->vacancy?->batch ?? 'Batch 1',
+                'company'   => $sub->vacancy?->company_name ?? '-',
+                'progress'  => 60,
+            ];
+        });
+
+        return response()->json(['success' => true, 'data' => $data]);
     }
 
     /** POST /api/logout */

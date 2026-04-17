@@ -160,6 +160,8 @@ Route::prefix('mentor')->middleware(['auth:sanctum', 'mentorRole'])->group(funct
     Route::get('/interns/{id_submission}/evaluation',               [MentorController::class, 'getEvaluation']);
     Route::post('/interns/{id_submission}/evaluation',              [MentorController::class, 'saveEvaluation']);
     Route::post('/interns/{id_submission}/generate-certificate',    [MentorController::class, 'generateCertificate']);
+    Route::get('/interns/{id_submission}/preview-certificate',      [MentorController::class, 'previewCertificate']);
+    Route::post('/interns/{id_submission}/send-certificate',        [MentorController::class, 'sendCertificate']);
 
     // Recap & certificates
     Route::get('/score-recap',   [MentorController::class, 'getScoreRecap']);
@@ -198,6 +200,7 @@ Route::middleware(['auth:sanctum'])->prefix('hr')->group(function () {
     Route::post('/loa/bulk-generate',   [HRLoaController::class, 'bulkGenerate']);
     Route::post('/loa/{id}/generate',   [HRLoaController::class, 'generate']);
     Route::get('/loa/{id}/download',    [HRLoaController::class, 'download']);
+    Route::post('/loa/{id}/send',       [HRLoaController::class, 'sendLoa']);
 
     // Payroll
     Route::get('/payroll',              [HRPayrollController::class, 'index']);

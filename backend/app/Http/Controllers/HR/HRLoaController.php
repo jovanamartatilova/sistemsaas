@@ -131,7 +131,7 @@ class HRLoaController extends Controller
             
             foreach ($acceptedSubmissions as $ts) {
                 if ($ts->loa) {
-                    $ts->loa->update(['file_path' => $filePath, 'letter_number' => $loaNumber, 'issued_date' => now()->toDateString()]);
+                    $ts->loa->update(['file_path' => $filePath, 'letter_number' => $loaNumber, 'issued_date' => now()->toDateString(), 'is_sent' => false]);
                 } else {
                     Loa::create([
                         'id_loa'        => 'LOA' . strtoupper(Str::random(7)),
@@ -149,6 +149,7 @@ class HRLoaController extends Controller
                 $loa->update([
                     'signed_by'     => $request->user()->name,
                     'issued_date'   => now()->toDateString(),
+                    'is_sent'       => false,
                 ]);
             } else {
                 $lastCount = Loa::whereYear('created_at', $year)->count() + 1;
@@ -433,6 +434,34 @@ class HRLoaController extends Controller
             'is_team'       => !empty($s->id_team),
             'has_pending_team_members' => $hasPending,
             'id_team'       => $s->id_team,
+            'is_sent'       => $s->loa ? (bool)$s->loa->is_sent : false,
         ];
+    }
+
+    /**
+     * POST /hr/loa/{id_submission}/send
+     * Mark a LoA as sent to candidate
+     */
+    public function sendLoa(Request $request, string $id)
+    {
+        try {
+            $companyId = $request->user()->id_company;
+
+            $submission = Submission::where('id_submission', $id)
+                ->whereHas('vacancy', fn($q) => $q->where('id_company', $companyId))
+                ->with('loa')
+                ->first();
+
+            if (!$submission || !$submission->loa) {
+                return response()->json(['success' => false, 'message' => 'LoA not found'], 404);
+            }
+
+            $submission->loa->update(['is_sent' => true]);
+
+            return response()->json(['success' => true, 'message' => 'LoA sent to candidate']);
+        } catch (\Exception $e) {
+            \Log::error('sendLoa error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Server error: ' . $e->getMessage()], 500);
+        }
     }
 }

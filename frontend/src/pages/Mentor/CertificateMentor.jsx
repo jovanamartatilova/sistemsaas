@@ -3,9 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { SidebarMentor } from "./DashboardMentor";
 import { mentorApi } from "../../api/mentorApi";
 import { useAuthStore } from "../../stores/authStore";
+import { Eye, RefreshCw, Check, Send } from 'lucide-react';
+
+
+
 
 const s = {
-  app: { display: "flex", minHeight: "100vh", background: "#f1f5f9", fontFamily: "'Poppins', 'Segoe UI', sans-serif", fontSize: "14px", color: "#1e293b" },
+  app: { display: "flex", minHeight: "100vh", background: "#f1f5f9", fontFamily: "'Poppins', 'Segoe UI', sans-serif", fontSize: "14px", color: "#1e293b", textAlign: "left" },
   main: { marginLeft: "172px", flex: 1, display: "flex", flexDirection: "column", minHeight: "100vh" },
   topbar: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 28px", background: "#fff", borderBottom: "1px solid #e2e8f0", position: "sticky", top: 0, zIndex: 50 },
   bc: { display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "#64748b" },
@@ -32,14 +36,16 @@ const s = {
   table: { width: "100%", borderCollapse: "collapse", tableLayout: "fixed" },
   thead: { background: "#f8fafc", borderBottom: "1px solid #e2e8f0" },
   th: { padding: "10px 16px", textAlign: "left", fontSize: "10px", fontWeight: 700, color: "#94a3b8", letterSpacing: "0.06em", textTransform: "uppercase", whiteSpace: "nowrap" },
-  td: { padding: "13px 16px", fontSize: "13px", color: "#334155", borderBottom: "1px solid #f8fafc", verticalAlign: "middle" },
+  td: { padding: "13px 16px", fontSize: "13px", color: "#334155", borderBottom: "1px solid #f8fafc", verticalAlign: "middle", textAlign: "left" },
   cname: { fontWeight: 600, color: "#0f172a", fontSize: "13px", display: "block" },
   csub: { fontSize: "11px", color: "#94a3b8", display: "block", marginTop: "1px" },
   badge: (bg, color) => ({ display: "inline-flex", padding: "3px 9px", borderRadius: "6px", fontSize: "12px", fontWeight: 500, background: bg, color }),
-  acts: { display: "flex", gap: "6px" },
+  acts: { display: "flex", gap: "6px", alignItems: "center" },
   btnView: { padding: "4px 10px", borderRadius: "6px", fontSize: "11px", fontWeight: 500, cursor: "pointer", border: "1px solid #e2e8f0", background: "#fff", color: "#334155", fontFamily: "inherit" },
-  btnDownload: { padding: "4px 10px", borderRadius: "6px", fontSize: "11px", fontWeight: 500, cursor: "pointer", border: "1px solid #93c5fd", background: "#eff6ff", color: "#2563eb", fontFamily: "inherit" },
-  btnGenerate: { padding: "4px 10px", borderRadius: "6px", fontSize: "11px", fontWeight: 500, cursor: "pointer", border: "1px solid #86efac", background: "#f0fdf4", color: "#16a34a", fontFamily: "inherit" },
+  btnSend: { height: "28px", padding: "0 10px", borderRadius: "6px", fontSize: "11px", fontWeight: 600, cursor: "pointer", border: "1px solid #93c5fd", background: "#eff6ff", color: "#2563eb", fontFamily: "inherit" },
+  btnSent: { height: "28px", padding: "0 10px", borderRadius: "6px", fontSize: "11px", fontWeight: 600, cursor: "default", border: "1px solid #a7f3d0", background: "#ecfdf5", color: "#059669", fontFamily: "inherit" },
+  btnGenerate: { height: "28px", padding: "0 10px", borderRadius: "6px", fontSize: "11px", fontWeight: 500, cursor: "pointer", border: "1px solid #86efac", background: "#f0fdf4", color: "#16a34a", fontFamily: "inherit" },
+  btnIconBox: { width: "28px", height: "28px", borderRadius: "6px", cursor: "pointer", border: "1px solid #e2e8f0", background: "#fff", color: "#64748b", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 },
 };
 
 const statCards = [
@@ -57,6 +63,10 @@ export default function CertificateMentor() {
   const [certList, setCertList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState({});
+  const [previewing, setPreviewing] = useState({});
+  const [sending, setSending] = useState({});
+  const [regenerateSuccess, setRegenerateSuccess] = useState({});
+
 
   useEffect(() => {
     fetchData();
@@ -83,13 +93,40 @@ export default function CertificateMentor() {
     try {
       setGenerating(prev => ({ ...prev, [idSubmission]: true }));
       await mentorApi.generateCertificate(idSubmission);
-      alert('Certificate generated successfully!');
+      setRegenerateSuccess(prev => ({ ...prev, [idSubmission]: true }));
+      setTimeout(() => setRegenerateSuccess(prev => ({ ...prev, [idSubmission]: false })), 3000);
       fetchData();
     } catch (error) {
       console.error('Error generating certificate:', error);
       alert('Failed to generate certificate');
     } finally {
       setGenerating(prev => ({ ...prev, [idSubmission]: false }));
+    }
+  };
+
+  const handleSendCertificate = async (idSubmission) => {
+    try {
+      setSending(prev => ({ ...prev, [idSubmission]: true }));
+      await mentorApi.sendCertificate(idSubmission);
+      fetchData();
+    } catch (error) {
+      console.error('Error sending certificate:', error);
+      alert('Failed to send certificate');
+    } finally {
+      setSending(prev => ({ ...prev, [idSubmission]: false }));
+    }
+  };
+
+  const handlePreview = async (idSubmission) => {
+    try {
+      setPreviewing(prev => ({ ...prev, [idSubmission]: true }));
+      const url = await mentorApi.previewCertificate(idSubmission);
+      window.open(url, '_blank');
+    } catch (error) {
+      console.error('Error previewing certificate:', error);
+      alert('Failed to preview certificate');
+    } finally {
+      setPreviewing(prev => ({ ...prev, [idSubmission]: false }));
     }
   };
 
@@ -146,10 +183,11 @@ export default function CertificateMentor() {
 
           <div style={s.card}>
             <div style={s.ch}>
-              <div><div style={s.ct}>Certificate List</div><div style={s.cs}>Interns who have completed all competency assessments</div></div>
+              <div style={{ textAlign: "left" }}><div style={s.ct}>Certificate List</div><div style={s.cs}>Interns who have completed all competency assessments</div></div>
               <button style={s.btnPrimary}>Bulk Generate</button>
             </div>
-            <table style={s.table}>
+            <div style={{ overflowX: "auto", width: "100%" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "900px" }}>
               <colgroup>
                 <col style={{ width: "22%" }} /><col style={{ width: "18%" }} /><col style={{ width: "20%" }} />
                 <col style={{ width: "12%" }} /><col style={{ width: "14%" }} /><col style={{ width: "14%" }} />
@@ -157,7 +195,7 @@ export default function CertificateMentor() {
               <thead style={s.thead}>
                 <tr>
                   <th style={s.th}>INTERN</th><th style={s.th}>POSITION</th><th style={s.th}>PROGRAM</th>
-                  <th style={s.th}>FINAL SCORE</th><th style={s.th}>STATUS</th><th style={s.th}>ACTION</th>
+                   <th style={s.th}>FINAL SCORE</th><th style={s.th}>STATUS</th><th style={{...s.th, textAlign:'center'}}>ACTION</th>
                 </tr>
               </thead>
               <tbody>
@@ -168,20 +206,64 @@ export default function CertificateMentor() {
                     <td style={s.td}>{cert.program}</td>
                     <td style={s.td}>{cert.score !== null ? <span style={{ fontWeight: 700, color: "#8b5cf6" }}>{cert.score.toFixed(1)}</span> : <span style={{ color: "#94a3b8" }}>—</span>}</td>
                     <td style={s.td}><span style={s.badge(cert.statusBg, cert.statusColor)}>{cert.status}</span></td>
-                    <td style={s.td}>
-                      <div style={s.acts}>
-                        {cert.status === "Passed" && (
-                          <button style={s.btnGenerate} onClick={() => handleGenerateCertificate(cert.id_submission)} disabled={generating[cert.id_submission]}>
-                            {generating[cert.id_submission] ? 'Generating...' : 'Generate'}
-                          </button>
+                    <td style={{...s.td, textAlign:'center'}}>
+                      <div style={{...s.acts, justifyContent:'center'}}>
+                        {(cert.status === "Passed" || cert.status === "Generated") && (
+                          <>
+                            {/* Preview Icon */}
+                            <button 
+                              style={s.btnIconBox}
+                              onClick={() => handlePreview(cert.id_submission)}
+                              disabled={previewing[cert.id_submission]}
+                              title="Preview"
+                            >
+                              <Eye size={15} />
+                            </button>
+
+                            {/* Send / Sent Button — only if generated */}
+                            {cert.status === "Generated" && (
+                              cert.is_sent
+                                ? <button style={s.btnSent} disabled>Sent</button>
+                                : <button
+                                    style={{...s.btnSend, opacity: sending[cert.id_submission] ? 0.6 : 1}}
+                                    onClick={() => handleSendCertificate(cert.id_submission)}
+                                    disabled={sending[cert.id_submission]}
+                                  >Send</button>
+                            )}
+
+                            {/* Regenerate Icon — only if generated */}
+                            {cert.status === "Generated" && (
+                              <button 
+                                style={{...s.btnIconBox, color: regenerateSuccess[cert.id_submission] ? '#16a34a' : '#64748b', opacity: generating[cert.id_submission] ? 0.5 : 1}}
+                                onClick={() => handleGenerateCertificate(cert.id_submission)}
+                                disabled={generating[cert.id_submission]}
+                                title="Regenerate"
+                              >
+                                {regenerateSuccess[cert.id_submission] ? <Check size={15} color="#16a34a" /> : <RefreshCw size={15} />}
+                              </button>
+                            )}
+
+                            {/* Generate button if status is Passed but not yet generated */}
+                            {cert.status === "Passed" && (
+                              <button 
+                                style={{...s.btnGenerate, opacity: generating[cert.id_submission] ? 0.6 : 1}}
+                                onClick={() => handleGenerateCertificate(cert.id_submission)}
+                                disabled={generating[cert.id_submission]}
+                              >
+                                {generating[cert.id_submission] ? 'Generating...' : 'Generate'}
+                              </button>
+                            )}
+                          </>
                         )}
                         {cert.status === "Not Passed" && <span style={{ color: "#cbd5e1", fontSize: "12px" }}>—</span>}
                       </div>
+
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+            </div>
           </div>
         </div>
       </main>
