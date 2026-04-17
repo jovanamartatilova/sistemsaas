@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { SidebarMentor } from "./DashboardMentor";
+import { SidebarMentor } from "./MentorComponents";
 import { mentorApi } from "../../api/mentorApi";
 import { useAuthStore } from "../../stores/authStore";
 
 const s = {
   app: { display: "flex", minHeight: "100vh", background: "#f1f5f9", fontFamily: "'Poppins', 'Segoe UI', sans-serif", fontSize: "14px", color: "#1e293b" },
-  main: { marginLeft: "172px", flex: 1, display: "flex", flexDirection: "column", minHeight: "100vh" },
+  main: { marginLeft: "250px", flex: 1, display: "flex", flexDirection: "column", minHeight: "100vh" },
   topbar: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 28px", background: "#fff", borderBottom: "1px solid #e2e8f0", position: "sticky", top: 0, zIndex: 50 },
   bc: { display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "#64748b" },
   bcSep: { color: "#cbd5e1" },
@@ -48,6 +48,7 @@ export default function ScoreRecapMentor() {
   const [recapData, setRecapData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [logoutModal, setLogoutModal] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -78,11 +79,30 @@ export default function ScoreRecapMentor() {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.clear();
-    useAuthStore.setState({ isAuthenticated: false, token: null, user: null, company: null });
-    navigate("/login");
+  const handleLogoutClick = () => {
+    setLogoutModal(true);
   };
+
+  const confirmLogout = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (token) {
+        await fetch("http://localhost:8000/api/auth/logout", {
+          method: "POST",
+          headers: { "Authorization": `Bearer ${token}` },
+        });
+      }
+    } catch (err) {
+      console.error("Logout error:", err);
+    } finally {
+      localStorage.clear();
+      useAuthStore.setState({ isAuthenticated: false, token: null, user: null, company: null });
+      setLogoutModal(false);
+      navigate("/login");
+    }
+  };
+
+  const handleLogout = handleLogoutClick;
 
   if (loading) {
     return (
@@ -145,12 +165,9 @@ export default function ScoreRecapMentor() {
           </div>
 
           <div style={s.card}>
-            <div style={s.ch}>
-              <div><div style={s.ct}>Intern Score Recap</div><div style={s.cs}>All supervised interns — scores per individual</div></div>
-              <div style={s.hdrActs}>
-                <button style={s.btnOutline}>Export CSV</button>
-                <button style={s.btnOutline}>Export PDF</button>
-              </div>
+            <div style={{...s.ch, flexDirection: "column", alignItems: "center", textAlign: "center", gap: "8px", justifyContent: "center"}}>
+              <div style={s.ct}>Intern Score Recap</div>
+              <button style={s.btnOutline}>Export CSV</button>
             </div>
             <table style={s.table}>
               <colgroup>
@@ -183,6 +200,25 @@ export default function ScoreRecapMentor() {
           </div>
         </div>
       </main>
+
+{/* Logout Modal */}
+      {logoutModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(10,22,40,0.5)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ background: "#fff", borderRadius: "16px", padding: "28px", width: "340px", boxShadow: "0 20px 60px rgba(0,0,0,0.18)", textAlign: "left" }}>
+            <div style={{ width: "40px", height: "40px", borderRadius: "10px", background: "#fff1f2", display: "flex", alignItems: "center", justifyContent: "center", color: "#ef4444", marginBottom: "14px" }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 3 16 13 2 13"></polyline>
+              </svg>
+            </div>
+            <div style={{ fontSize: "16px", fontWeight: "800", color: "#0f172a", marginBottom: "6px" }}>Sign Out?</div>
+            <div style={{ fontSize: "13px", color: "#64748b", lineHeight: "1.6", marginBottom: "20px" }}>Are you sure you want to sign out of your account?</div>
+            <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+              <button onClick={() => setLogoutModal(false)} style={{ padding: "9px 18px", borderRadius: "9px", border: "1px solid #e2e8f0", background: "#fff", fontSize: "13px", fontWeight: "700", color: "#64748b", cursor: "pointer" }}>Cancel</button>
+              <button onClick={confirmLogout} style={{ padding: "9px 18px", borderRadius: "9px", border: "none", background: "#ef4444", fontSize: "13px", fontWeight: "700", color: "#fff", cursor: "pointer" }}>Yes, Sign Out</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { SidebarMentor } from "./DashboardMentor";
+import { SidebarMentor } from "./MentorComponents";
 import { mentorApi } from "../../api/mentorApi";
 import { useAuthStore } from "../../stores/authStore";
 import { Eye, RefreshCw, Check, Send } from 'lucide-react';
@@ -10,7 +10,7 @@ import { Eye, RefreshCw, Check, Send } from 'lucide-react';
 
 const s = {
   app: { display: "flex", minHeight: "100vh", background: "#f1f5f9", fontFamily: "'Poppins', 'Segoe UI', sans-serif", fontSize: "14px", color: "#1e293b", textAlign: "left" },
-  main: { marginLeft: "172px", flex: 1, display: "flex", flexDirection: "column", minHeight: "100vh" },
+  main: { marginLeft: "250px", flex: 1, display: "flex", flexDirection: "column", minHeight: "100vh" },
   topbar: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 28px", background: "#fff", borderBottom: "1px solid #e2e8f0", position: "sticky", top: 0, zIndex: 50 },
   bc: { display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "#64748b" },
   bcSep: { color: "#cbd5e1" },
@@ -66,6 +66,7 @@ export default function CertificateMentor() {
   const [previewing, setPreviewing] = useState({});
   const [sending, setSending] = useState({});
   const [regenerateSuccess, setRegenerateSuccess] = useState({});
+  const [logoutModal, setLogoutModal] = useState(false);
 
 
   useEffect(() => {
@@ -81,7 +82,13 @@ export default function CertificateMentor() {
       ]);
       setMentor(profileRes.data);
       setStatCards(certRes.data.stats || []);
-      setCertList(certRes.data.certificates || []);
+      
+      // Transform certificate list to show "In Progress" for unevaluated interns
+      const transformedCerts = (certRes.data.certificates || []).map(cert => ({
+        ...cert,
+        status: (cert.score === null || cert.score === 0) ? "In Progress" : cert.status
+      }));
+      setCertList(transformedCerts);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -130,11 +137,20 @@ export default function CertificateMentor() {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.clear();
-    useAuthStore.setState({ isAuthenticated: false, token: null, user: null, company: null });
-    navigate("/login");
+  const handleLogoutClick = () => setLogoutModal(true);
+
+  const confirmLogout = async () => {
+    try {
+      await mentorApi.logout();
+    } finally {
+      localStorage.clear();
+      useAuthStore.setState({ isAuthenticated: false, mentor: null });
+      setLogoutModal(false);
+      navigate("/login");
+    }
   };
+
+  const handleLogout = handleLogoutClick;
 
   if (loading) {
     return (
@@ -219,42 +235,52 @@ export default function CertificateMentor() {
                             >
                               <Eye size={15} />
                             </button>
-
-                            {/* Send / Sent Button — only if generated */}
-                            {cert.status === "Generated" && (
-                              cert.is_sent
-                                ? <button style={s.btnSent} disabled>Sent</button>
-                                : <button
-                                    style={{...s.btnSend, opacity: sending[cert.id_submission] ? 0.6 : 1}}
-                                    onClick={() => handleSendCertificate(cert.id_submission)}
-                                    disabled={sending[cert.id_submission]}
-                                  >Send</button>
-                            )}
-
-                            {/* Regenerate Icon — only if generated */}
+                            {/* Regenerate Icon */}
+                            <button
+                              style={s.btnIconBox}
+                              onClick={() => handleGenerateCertificate(cert.id_submission)}
+                              disabled={generating[cert.id_submission]}
+                              title="Regenerate"
+                            >
+                              <RefreshCw size={15} />
+                            </button>
+                          </>
+                        )}
+                        {(cert.status === "Generated" || cert.status === "Passed") && (
+                          <>
+                            {/* Check Icon if already sent*/}
                             {cert.status === "Generated" && (
                               <button 
-                                style={{...s.btnIconBox, color: regenerateSuccess[cert.id_submission] ? '#16a34a' : '#64748b', opacity: generating[cert.id_submission] ? 0.5 : 1}}
-                                onClick={() => handleGenerateCertificate(cert.id_submission)}
-                                disabled={generating[cert.id_submission]}
-                                title="Regenerate"
+                                style={{...s.btnIconBox, opacity: 0.5, pointerEvents: 'none'}}
+                                title="Already sent"
                               >
-                                {regenerateSuccess[cert.id_submission] ? <Check size={15} color="#16a34a" /> : <RefreshCw size={15} />}
+                                <Check size={15} />
+                              </button>
+                            )}
+                            {/* Send Button */}
+                            {cert.status === "Generated" && (
+                              <button
+                                style={s.btnSend}
+                                onClick={() => handleSendCertificate(cert.id_submission)}
+                                disabled={sending[cert.id_submission]}
+                              >
+                                {sending[cert.id_submission] ? 'Sending...' : 'Send'}
                               </button>
                             )}
 
                             {/* Generate button if status is Passed but not yet generated */}
                             {cert.status === "Passed" && (
-                              <button 
-                                style={{...s.btnGenerate, opacity: generating[cert.id_submission] ? 0.6 : 1}}
+                              <button
+                                style={s.btnGenerate}
                                 onClick={() => handleGenerateCertificate(cert.id_submission)}
                                 disabled={generating[cert.id_submission]}
                               >
-                                {generating[cert.id_submission] ? 'Generating...' : 'Generate'}
+                                {regenerateSuccess[cert.id_submission] ? '✓ Generated' : generating[cert.id_submission] ? 'Generating...' : 'Generate'}
                               </button>
                             )}
                           </>
                         )}
+                        {(cert.status === "Not Passed" || cert.status === "In Progress") && <span style={{ color: "#cbd5e1", fontSize: "12px" }}>—</span>}
                         {cert.status === "Not Passed" && <span style={{ color: "#cbd5e1", fontSize: "12px" }}>—</span>}
                       </div>
 
@@ -266,6 +292,25 @@ export default function CertificateMentor() {
             </div>
           </div>
         </div>
+
+        {/* Logout Modal */}
+      {logoutModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(10,22,40,0.5)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ background: "#fff", borderRadius: "16px", padding: "28px", width: "340px", boxShadow: "0 20px 60px rgba(0,0,0,0.18)", textAlign: "left" }}>
+            <div style={{ width: "40px", height: "40px", borderRadius: "10px", background: "#fff1f2", display: "flex", alignItems: "center", justifyContent: "center", color: "#ef4444", marginBottom: "14px" }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 3 16 13 2 13"></polyline>
+              </svg>
+            </div>
+            <div style={{ fontSize: "16px", fontWeight: "800", color: "#0f172a", marginBottom: "6px" }}>Sign Out?</div>
+            <div style={{ fontSize: "13px", color: "#64748b", lineHeight: "1.6", marginBottom: "20px" }}>Are you sure you want to sign out of your account?</div>
+            <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+              <button onClick={() => setLogoutModal(false)} style={{ padding: "9px 18px", borderRadius: "9px", border: "1px solid #e2e8f0", background: "#fff", fontSize: "13px", fontWeight: "700", color: "#64748b", cursor: "pointer" }}>Cancel</button>
+              <button onClick={confirmLogout} style={{ padding: "9px 18px", borderRadius: "9px", border: "none", background: "#ef4444", fontSize: "13px", fontWeight: "700", color: "#fff", cursor: "pointer" }}>Yes, Sign Out</button>
+            </div>
+          </div>
+        </div>
+        )}
       </main>
     </div>
   );

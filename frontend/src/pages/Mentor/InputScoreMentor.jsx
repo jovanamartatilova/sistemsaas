@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { SidebarMentor } from "./DashboardMentor";
+import { SidebarMentor } from "./MentorComponents";
 import { mentorApi } from "../../api/mentorApi";
 import { useAuthStore } from "../../stores/authStore";
 
 const s = {
   app: { display: "flex", minHeight: "100vh", background: "#f1f5f9", fontFamily: "'Poppins', 'Segoe UI', sans-serif", fontSize: "14px", color: "#1e293b" },
-  main: { marginLeft: "172px", flex: 1, display: "flex", flexDirection: "column", minHeight: "100vh" },
+  main: { marginLeft: "250px", flex: 1, display: "flex", flexDirection: "column", minHeight: "100vh" },
   topbar: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 28px", background: "#fff", borderBottom: "1px solid #e2e8f0", position: "sticky", top: 0, zIndex: 50 },
   bc: { display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "#64748b" },
   bcSep: { color: "#cbd5e1" },
@@ -27,7 +27,7 @@ const s = {
   pickerSelect: { padding: "7px 10px", border: "1px solid #e2e8f0", borderRadius: "8px", fontSize: "13px", color: "#334155", background: "#fff", outline: "none", fontFamily: "inherit" },
   // competency rows
   compRow: { borderBottom: "1px solid #f8fafc" },
-  compHeader: { display: "grid", gridTemplateColumns: "1fr 90px 90px 100px 110px 90px", alignItems: "center", padding: "12px 24px", gap: "12px" },
+  compHeader: { display: "grid", gridTemplateColumns: "1fr 90px 90px 100px 90px", alignItems: "center", padding: "12px 24px", gap: "12px" },
   compLabel: { fontSize: "12px", fontWeight: 600, color: "#0f172a" },
   compHrs: { fontSize: "11px", color: "#94a3b8" },
   fieldInput: { width: "100%", padding: "6px 8px", border: "1px solid #e2e8f0", borderRadius: "6px", fontSize: "12px", color: "#334155", background: "#f8fafc", outline: "none", fontFamily: "inherit", boxSizing: "border-box" },
@@ -59,6 +59,8 @@ export default function InputScoreMentor() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
+  const [logoutModal, setLogoutModal] = useState(false);
+  const [successModal, setSuccessModal] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -137,7 +139,6 @@ export default function InputScoreMentor() {
       const scoresArray = competencies.map(comp => ({
         id_competency: comp.id_competency,
         score: scores[comp.id_competency]?.score,
-        hours_completed: scores[comp.id_competency]?.hours_completed,
         status: scores[comp.id_competency]?.status,
         notes: scores[comp.id_competency]?.notes,
       }));
@@ -150,9 +151,10 @@ export default function InputScoreMentor() {
       const response = await mentorApi.inputScores(selectedSubmissionId, scoresArray);
       console.log('Save response:', response.data);
       
-      alert('✓ Scores saved successfully!');
+      setSuccessModal(true);
       // Refresh competencies to confirm save
       await fetchCompetencies(selectedSubmissionId);
+      setScores({});
     } catch (error) {
       console.error('Error saving scores:', error);
       console.error('Response data:', error.response?.data);
@@ -176,17 +178,25 @@ export default function InputScoreMentor() {
       }
       
       setError(errorMsg);
-      alert('❌ ' + errorMsg);
     } finally {
       setSaving(false);
     }
   };
 
-  const handleLogout = () => {
-    localStorage.clear();
-    useAuthStore.setState({ isAuthenticated: false, token: null, user: null, company: null });
-    navigate("/login");
+  const handleLogoutClick = () => setLogoutModal(true);
+
+  const confirmLogout = async () => {
+    try {
+      await mentorApi.logout();
+    } finally {
+      localStorage.clear();
+      useAuthStore.setState({ isAuthenticated: false, mentor: null });
+      setLogoutModal(false);
+      navigate("/login");
+    }
   };
+
+  const handleLogout = handleLogoutClick;
 
   // Filter interns to only show those NOT fully scored
   const unScoredInterns = interns.filter(i => i.completed_competencies < i.total_competencies || i.total_competencies === 0);
@@ -291,14 +301,13 @@ export default function InputScoreMentor() {
                 <div style={s.colLabel}>Competency</div>
                 <div style={s.colLabel}>Req. Hours</div>
                 <div style={s.colLabel}>Score (0–100)</div>
-                <div style={s.colLabel}>Learning Hrs</div>
                 <div style={s.colLabel}>Status</div>
                 <div style={s.colLabel}>Notes</div>
               </div>
 
               {/* One row per competency */}
               {competencies.map((comp) => {
-                const sc = scores[comp.id_competency] || { score: "", hours_completed: "", status: "pending", notes: "" };
+                const sc = scores[comp.id_competency] || { score: "", status: "passed", notes: "" };
                 return (
                   <div key={comp.id_competency} style={s.compRow}>
                     <div style={s.compHeader}>
@@ -313,17 +322,9 @@ export default function InputScoreMentor() {
                         value={sc.score ?? ""}
                         onChange={(e) => updateScore(comp.id_competency, "score", e.target.value === "" ? null : Number(e.target.value))}
                       />
-                      <input
-                        type="number" min="0" placeholder="hrs"
-                        style={s.fieldInput}
-                        value={sc.hours_completed || ""}
-                        onChange={(e) => updateScore(comp.id_competency, "hours_completed", e.target.value === "" ? null : Number(e.target.value))}
-                      />
                       <select style={s.fieldSelect} value={sc.status} onChange={(e) => updateScore(comp.id_competency, "status", e.target.value)}>
-                        <option value="pending">Pending</option>
                         <option value="passed">Passed</option>
                         <option value="failed">Failed</option>
-                        <option value="in_progress">In Progress</option>
                       </select>
                       <input
                         type="text" placeholder="Optional note..."
@@ -371,6 +372,43 @@ export default function InputScoreMentor() {
             </div>
           </div>
         </div>
+
+        {/* Success Notification Modal */}
+        {successModal && (
+          <div style={{ position: "fixed", inset: 0, background: "rgba(10,22,40,0.5)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div style={{ background: "#fff", borderRadius: "16px", padding: "28px", width: "340px", boxShadow: "0 20px 60px rgba(0,0,0,0.18)", textAlign: "left" }}>
+              <div style={{ width: "40px", height: "40px", borderRadius: "10px", background: "#dcfce7", display: "flex", alignItems: "center", justifyContent: "center", color: "#16a34a", marginBottom: "14px" }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+              </div>
+              <div style={{ fontSize: "16px", fontWeight: "800", color: "#0f172a", marginBottom: "6px" }}>Scores Saved</div>
+              <div style={{ fontSize: "13px", color: "#64748b", lineHeight: "1.6", marginBottom: "20px" }}>Competency scores have been saved successfully.</div>
+              <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+                <button onClick={() => setSuccessModal(false)} style={{ padding: "8px 16px", background: "#8b5cf6", color: "#fff", border: "none", borderRadius: "8px", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Done</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Logout Modal */}
+      {logoutModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(10,22,40,0.5)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ background: "#fff", borderRadius: "16px", padding: "28px", width: "340px", boxShadow: "0 20px 60px rgba(0,0,0,0.18)", textAlign: "left" }}>
+            <div style={{ width: "40px", height: "40px", borderRadius: "10px", background: "#fff1f2", display: "flex", alignItems: "center", justifyContent: "center", color: "#ef4444", marginBottom: "14px" }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 3 16 13 2 13"></polyline>
+              </svg>
+            </div>
+            <div style={{ fontSize: "16px", fontWeight: "800", color: "#0f172a", marginBottom: "6px" }}>Sign Out?</div>
+            <div style={{ fontSize: "13px", color: "#64748b", lineHeight: "1.6", marginBottom: "20px" }}>Are you sure you want to sign out of your account?</div>
+            <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+              <button onClick={() => setLogoutModal(false)} style={{ padding: "9px 18px", borderRadius: "9px", border: "1px solid #e2e8f0", background: "#fff", fontSize: "13px", fontWeight: "700", color: "#64748b", cursor: "pointer" }}>Cancel</button>
+              <button onClick={confirmLogout} style={{ padding: "9px 18px", borderRadius: "9px", border: "none", background: "#ef4444", fontSize: "13px", fontWeight: "700", color: "#fff", cursor: "pointer" }}>Yes, Sign Out</button>
+            </div>
+          </div>
+        </div>
+        )}
       </main>
     </div>
   );
