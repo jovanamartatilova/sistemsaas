@@ -20,7 +20,8 @@ const getTestToken = async () => {
 };
 
 export const api = async (endpoint, options = {}) => {
-  let token = localStorage.getItem(TOKEN_KEY);
+  // Try hr_token first (for HR pages), then fall back to auth_token
+  let token = localStorage.getItem('hr_token') || localStorage.getItem(TOKEN_KEY);
   
   // Try to get test token if in development and no token exists
   if (!token && import.meta.env.DEV) {
@@ -28,7 +29,14 @@ export const api = async (endpoint, options = {}) => {
   }
   
   const url = `${BASE_URL}${endpoint}`;
-  console.log(`[API] ${options.method || 'GET'} ${url}`, { token: token ? 'present' : 'missing' });
+  const tokenPreview = token ? token.substring(0, 20) + '...' : 'MISSING';
+  const localStorage_keys = Object.keys(localStorage);
+  console.log(`[API] ${options.method || 'GET'} ${url}`, { 
+    token: tokenPreview,
+    localStorage_has_hr_token: !!localStorage.getItem('hr_token'),
+    localStorage_has_auth_token: !!localStorage.getItem(TOKEN_KEY),
+    all_storage_keys: localStorage_keys
+  });
   
   const res = await fetch(url, {
     ...options,
@@ -42,8 +50,13 @@ export const api = async (endpoint, options = {}) => {
   console.log(`[API] Response status: ${res.status} ${res.statusText}`);
   
   if (!res.ok) {
-    const errData = await res.json();
-    console.error('[API] Error response:', errData);
+    let errData;
+    try {
+      errData = await res.json();
+    } catch {
+      errData = { message: res.statusText, status: res.status };
+    }
+    console.error('[API] Error response:', { url, status: res.status, data: errData, token_was_sent: !!token });
     throw errData;
   }
   
