@@ -1,18 +1,19 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { SidebarMentor } from "./DashboardMentor";
+import { SidebarMentor } from "../../components/SidebarMentor";
 import { mentorApi } from "../../api/mentorApi";
 import { useAuthStore } from "../../stores/authStore";
+import { onDataRefresh } from "../../utils/dataRefresh";
 
 const s = {
-  app: { display: "flex", minHeight: "100vh", background: "#f1f5f9", fontFamily: "'Poppins', 'Segoe UI', sans-serif", fontSize: "14px", color: "#1e293b" },
-  main: { marginLeft: "172px", flex: 1, display: "flex", flexDirection: "column", minHeight: "100vh" },
-  topbar: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 28px", background: "#fff", borderBottom: "1px solid #e2e8f0", position: "sticky", top: 0, zIndex: 50 },
+  app: { display: "flex", minHeight: "100vh", background: "#f1f5f9", fontFamily: "'Poppins', 'Segoe UI', sans-serif", fontSize: "14px", color: "#1e293b", gap: 0 },
+  main: { flex: 1, display: "flex", flexDirection: "column", minHeight: "100vh", gap: 0, overflow: "hidden" },
+  topbar: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 28px", background: "#fff", borderBottom: "1px solid #e2e8f0", position: "sticky", top: 0, zIndex: 50, flexShrink: 0 },
   bc: { display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "#64748b" },
   bcSep: { color: "#cbd5e1" },
   bcActive: { color: "#1e293b", fontWeight: 600 },
   topbarDate: { fontSize: "12px", color: "#64748b", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "6px", padding: "5px 10px" },
-  content: { padding: "28px" },
+  content: { padding: "28px", flex: 1, overflowY: "auto" },
   h1: { fontSize: "22px", fontWeight: 700, color: "#0f172a", margin: 0 },
   subtitle: { fontSize: "13px", color: "#64748b", marginTop: "4px", marginBottom: "20px" },
   grid3: { display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "16px", marginBottom: "24px" },
@@ -48,9 +49,30 @@ export default function ScoreRecapMentor() {
   const [recapData, setRecapData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [logoutModal, setLogoutModal] = useState(false);
 
   useEffect(() => {
     fetchData();
+  }, []);
+
+  useEffect(() => {
+    // Listen for data refresh events and refetch data
+    const cleanup = onDataRefresh(() => {
+      console.log('ScoreRecapMentor: Data refresh event received, refetching...');
+      fetchData();
+    });
+    
+    // Also refetch when window gains focus
+    const handleFocus = () => {
+      console.log('ScoreRecapMentor: Window focused, refetching data...');
+      fetchData();
+    };
+    window.addEventListener('focus', handleFocus);
+    
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      cleanup();
+    };
   }, []);
 
   const fetchData = async () => {
@@ -78,11 +100,69 @@ export default function ScoreRecapMentor() {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.clear();
-    useAuthStore.setState({ isAuthenticated: false, token: null, user: null, company: null });
-    navigate("/login");
+  const handleExportCSV = () => {
+    try {
+      // Create CSV header
+      const headers = ['Intern', 'Position', 'Program', 'Type', 'Competencies Scored', 'Total Hours', 'Average Score', 'Status'];
+      
+      // Create CSV rows from recapData
+      const rows = recapData.map(row => [
+        row.name,
+        row.position,
+        row.program,
+        row.type,
+        row.scored,
+        row.hours,
+        row.avg !== null ? row.avg.toFixed(1) : '',
+        row.status
+      ]);
+      
+      // Combine headers and rows
+      const csvContent = [
+        headers.join(','),
+        ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+      ].join('\n');
+      
+      // Create blob and download
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `score-recap-${new Date().toISOString().slice(0,10)}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error('Error exporting CSV:', error);
+      alert('Failed to export CSV');
+    }
   };
+
+  const handleLogoutClick = () => {
+    setLogoutModal(true);
+  };
+
+  const confirmLogout = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (token) {
+        await fetch("http://localhost:8000/api/auth/logout", {
+          method: "POST",
+          headers: { "Authorization": `Bearer ${token}` },
+        });
+      }
+    } catch (err) {
+      console.error("Logout error:", err);
+    } finally {
+      localStorage.clear();
+      useAuthStore.setState({ isAuthenticated: false, token: null, user: null, company: null });
+      setLogoutModal(false);
+      navigate("/login");
+    }
+  };
+
+  const handleLogout = handleLogoutClick;
 
   if (loading) {
     return (
@@ -130,27 +210,10 @@ export default function ScoreRecapMentor() {
             </div>
           )}
 
-          <div style={s.grid3}>
-            {statCards.map((c, i) => (
-              <div key={i} style={s.stat}>
-                <div style={s.statTop}>
-                  <span style={s.statLabel}>{c.label}</span>
-                  {c.badge && <span style={s.statBadge(c.badgeBg, c.badgeColor)}>{c.badge}</span>}
-                </div>
-                <div style={s.statVal}>{c.value}</div>
-                <div style={s.statBar}><div style={s.statFill(c.barWidth, c.barColor)} /></div>
-                <div style={s.statSub}>{c.sub}</div>
-              </div>
-            ))}
-          </div>
-
           <div style={s.card}>
-            <div style={s.ch}>
-              <div><div style={s.ct}>Intern Score Recap</div><div style={s.cs}>All supervised interns — scores per individual</div></div>
-              <div style={s.hdrActs}>
-                <button style={s.btnOutline}>Export CSV</button>
-                <button style={s.btnOutline}>Export PDF</button>
-              </div>
+            <div style={{...s.ch, flexDirection: "column", alignItems: "center", textAlign: "center", gap: "8px", justifyContent: "center"}}>
+              <div style={s.ct}>Intern Score Recap</div>
+              <button onClick={handleExportCSV} style={s.btnOutline}>Export CSV</button>
             </div>
             <table style={s.table}>
               <colgroup>
@@ -183,6 +246,25 @@ export default function ScoreRecapMentor() {
           </div>
         </div>
       </main>
+
+{/* Logout Modal */}
+      {logoutModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(10,22,40,0.5)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ background: "#fff", borderRadius: "16px", padding: "28px", width: "340px", boxShadow: "0 20px 60px rgba(0,0,0,0.18)", textAlign: "left" }}>
+            <div style={{ width: "40px", height: "40px", borderRadius: "10px", background: "#fff1f2", display: "flex", alignItems: "center", justifyContent: "center", color: "#ef4444", marginBottom: "14px" }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 3 16 13 2 13"></polyline>
+              </svg>
+            </div>
+            <div style={{ fontSize: "16px", fontWeight: "800", color: "#0f172a", marginBottom: "6px" }}>Sign Out?</div>
+            <div style={{ fontSize: "13px", color: "#64748b", lineHeight: "1.6", marginBottom: "20px" }}>Are you sure you want to sign out of your account?</div>
+            <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+              <button onClick={() => setLogoutModal(false)} style={{ padding: "9px 18px", borderRadius: "9px", border: "1px solid #e2e8f0", background: "#fff", fontSize: "13px", fontWeight: "700", color: "#64748b", cursor: "pointer" }}>Cancel</button>
+              <button onClick={confirmLogout} style={{ padding: "9px 18px", borderRadius: "9px", border: "none", background: "#ef4444", fontSize: "13px", fontWeight: "700", color: "#fff", cursor: "pointer" }}>Yes, Sign Out</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
