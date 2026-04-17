@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Apprentice;
 use App\Models\Company;
+use App\Models\Interview;
 use App\Models\Major;
 use App\Models\Submission;
 use App\Models\University;
@@ -37,7 +38,7 @@ class CandidateController extends Controller
             if (isset($user->id_user)) {
                 $submission = Submission::where('id_user', $user->id_user)
                     ->whereIn('status', ['pending', 'accepted'])
-                    ->with(['vacancy', 'position.competencies', 'mentor'])
+                    ->with(['vacancy', 'position.competencies', 'mentor', 'interviews'])
                     ->latest('submitted_at')
                     ->first();
             }
@@ -88,7 +89,7 @@ class CandidateController extends Controller
                         'start_date' => $apprentice->start_date ?? null,
                         'end_date' => $apprentice->end_date ?? null,
                         'batch' => $submission?->vacancy?->batch ?? '-',
-                        'status' => $apprentice->status ?? 'inactive',
+                        'status' => $submission?->status ?? ($apprentice->status ?? 'inactive'),
                         'mentor_name' => $submission?->mentor?->name ?? null,
                     ] : null,
                     'vacancy' => $submission ? [
@@ -98,6 +99,13 @@ class CandidateController extends Controller
                         'start_date' => $submission->vacancy?->start_date ?? null,
                         'end_date' => $submission->vacancy?->end_date ?? null,
                     ] : null,
+                    'interviews' => $submission && $submission->interviews ? $submission->interviews->map(fn($interview) => [
+                        'id_interview' => $interview->id_interview,
+                        'interview_date' => $interview->interview_date,
+                        'interview_time' => $interview->interview_time,
+                        'link' => $interview->link,
+                        'status' => $interview->result ?? 'pending',
+                    ])->toArray() : [],
                     'learning_progress' => [
                         'total_learning_hours' => 240,
                         'target_learning_hours' => 320,
