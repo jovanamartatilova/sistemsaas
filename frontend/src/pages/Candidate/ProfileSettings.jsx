@@ -430,7 +430,18 @@ export default function ProfileSettings() {
           },
         });
 
-        if (!response.ok) throw new Error("Failed to fetch user data");
+        if (!response.ok) {
+          if (response.status === 401) {
+            localStorage.removeItem("auth_token");
+            localStorage.removeItem("token");
+            localStorage.removeItem("company");
+            localStorage.removeItem("user");
+            localStorage.removeItem("candidate_user");
+            navigate("/");
+            return;
+          }
+          throw new Error("Failed to fetch user data");
+        }
 
         const data = await response.json();
         const user = data.data || data;

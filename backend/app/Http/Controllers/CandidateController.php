@@ -91,6 +91,13 @@ class CandidateController extends Controller
                         'status' => $apprentice->status ?? 'inactive',
                         'mentor_name' => $submission?->mentor?->name ?? null,
                     ] : null,
+                    'vacancy' => $submission ? [
+                        'id_vacancy' => $submission->vacancy?->id_vacancy ?? null,
+                        'type' => $submission->vacancy?->type ?? '-',
+                        'location' => $submission->vacancy?->location ?? '-',
+                        'start_date' => $submission->vacancy?->start_date ?? null,
+                        'end_date' => $submission->vacancy?->end_date ?? null,
+                    ] : null,
                     'learning_progress' => [
                         'total_learning_hours' => 240,
                         'target_learning_hours' => 320,
@@ -453,9 +460,9 @@ class CandidateController extends Controller
                     ->where('id_team', $submission->id_team)
                     ->where('id_user', $submission->id_user)
                     ->first();
-                
+
                 $team = \App\Models\Team::where('id_team', $submission->id_team)->first();
-                
+
                 if ($team) {
                     $teamInfo = [
                         'name' => $team->name,
@@ -475,20 +482,20 @@ class CandidateController extends Controller
                 'quota' => $position->quota ?? null,
                 // Status mapping
                 'status' => $submission->status, // "pending", "accepted", "rejected"
-                
+
                 // Active status specifically for UI active filters (accepted means active program in progress)
                 // If the user wants pending programs in Active tab, we preserve it. If rejected, it becomes inactive.
                 'is_active' => in_array($submission->status, ['pending', 'accepted']),
-                
+
                 // Only share hours and competencies if accepted
                 'learning_hours' => $submission->status === 'accepted' ? $total_learning_hours : 0,
                 'competencies' => $submission->status === 'accepted' ? $competencies : [],
                 'completed_hours' => 0, // Mock for now until scoring API integrates
-                
+
                 // LoA Mapping
                 'has_loa' => $submission->loa && $submission->loa->file_path ? true : false,
                 'loa_file_url' => $submission->loa && $submission->loa->file_path ? asset('storage/' . $submission->loa->file_path) : null,
-                
+
                 // Team Mapping
                 'team' => $teamInfo,
             ];

@@ -377,6 +377,17 @@ export default function ProgramsPage() {
         const userResp = await fetch(`${API_BASE_URL}/users/me`, {
           headers: { "Authorization": `Bearer ${token}` },
         });
+        
+        if (!userResp.ok && userResp.status === 401) {
+          localStorage.removeItem("auth_token");
+          localStorage.removeItem("token");
+          localStorage.removeItem("company");
+          localStorage.removeItem("user");
+          localStorage.removeItem("candidate_user");
+          navigate("/");
+          return;
+        }
+        
         if (userResp.ok) {
           const data = await userResp.json();
           setUserData(data.data || data);
@@ -392,6 +403,17 @@ export default function ProgramsPage() {
           const progResp = await fetch(`${API_BASE_URL}/positions`, {
             headers: { "Authorization": `Bearer ${token}` },
           });
+          
+          if (!progResp.ok && progResp.status === 401) {
+            localStorage.removeItem("auth_token");
+            localStorage.removeItem("token");
+            localStorage.removeItem("company");
+            localStorage.removeItem("user");
+            localStorage.removeItem("candidate_user");
+            navigate("/");
+            return;
+          }
+          
           if (progResp.ok) {
             const progData = await progResp.json();
             setPrograms(progData.data || progData || []);

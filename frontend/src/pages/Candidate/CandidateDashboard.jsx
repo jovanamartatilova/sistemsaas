@@ -139,6 +139,7 @@ function Sidebar({ userName, onLogout }) {
 // --- Main Dashboard ---
 export default function EarlyPathDashboard() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [skillFilter, setSkillFilter] = useState("Active");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -146,8 +147,9 @@ export default function EarlyPathDashboard() {
   const { logout: globalLogout } = useAuthStore();
 
   useEffect(() => {
+    setError(null);
     fetchDashboardData();
-  }, []);
+  }, [location.pathname]);
 
   const fetchDashboardData = async () => {
     try {
@@ -171,7 +173,10 @@ export default function EarlyPathDashboard() {
         if (response.status === 401) {
           localStorage.removeItem("auth_token");
           localStorage.removeItem("token");
-          setError("Session expired. Please login again.");
+          localStorage.removeItem("company");
+          localStorage.removeItem("user");
+          localStorage.removeItem("candidate_user");
+          navigate("/");
           return;
         }
         throw new Error("Failed to fetch dashboard data");
@@ -215,9 +220,10 @@ export default function EarlyPathDashboard() {
   const userData = dashboardData ? {
     profile: dashboardData.profile,
     apprentice: dashboardData.apprentice,
+    vacancy: dashboardData.vacancy,
     learning_progress: dashboardData.learning_progress,
     competencies: dashboardData.competencies,
-  } : { profile: null, apprentice: null, learning_progress: null, competencies: [] };
+  } : { profile: null, apprentice: null, vacancy: null, learning_progress: null, competencies: [] };
 
   if (error || !dashboardData) {
     return (
@@ -246,13 +252,13 @@ export default function EarlyPathDashboard() {
     );
   }
 
-  const { profile, apprentice, learning_progress, competencies } = userData;
+  const { profile, apprentice, vacancy, learning_progress, competencies } = userData;
 
   // Format competencies for display
   const competencyList = competencies.map((comp) => ({
     title: comp.name,
-    hours: `${comp.learning_hours} jam pembelajaran`,
-    projects: "0 proyek",
+    hours: `${comp.learning_hours} learning hours`,
+    projects: "0 projects",
     progress: 0,
     status: "Active",
   }));
@@ -276,7 +282,7 @@ export default function EarlyPathDashboard() {
         {!loading && (
           <>
             {/* Status Alert - Jika submissi masih pending atau apprentice belum ada */}
-        {!apprentice && (
+        {!vacancy && (
           <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 shadow-sm">
             <div className="flex items-start gap-3">
               <div className="flex-shrink-0 w-5 h-5 rounded-full bg-amber-400 flex items-center justify-center mt-0.5">
@@ -303,7 +309,7 @@ export default function EarlyPathDashboard() {
           <div className="flex-1 min-w-0">
             <h1 className="text-xl font-bold text-slate-800 text-left">{profile?.name || "User"}</h1>
             <p className="text-slate-500 text-sm mt-0.5 text-left">
-              {apprentice?.position || "Position"} • {apprentice?.batch || "Batch"} – {apprentice?.company || "Company"}
+              {apprentice?.position || "Position"} • {vacancy?.start_date ? new Date(vacancy.start_date).toLocaleDateString('en-US') : "Date"} – {vacancy?.location || "Location"}
             </p>
             {apprentice?.mentor_name && (
   <p className="text-xs text-slate-400 mt-0.5 text-left flex items-center gap-1">
@@ -332,7 +338,6 @@ export default function EarlyPathDashboard() {
             {[
               { value: `${profile?.overall_progress || 0}%`, label: "Progress", bar: true },
               { value: `${competencies?.length || 0}`, label: "Competencies", sub: "0 Completed", subColor: "text-slate-400" },
-              { value: `${learning_progress?.total_learning_hours || 0}`, label: "Learning Hours", sub: "+12 This Week", subColor: "text-emerald-500" },
             ].map((stat, i) => (
               <div key={i} className="text-center px-6 first:pl-0 last:pr-0">
                 <p className="text-2xl font-bold text-slate-800">{stat.value}</p>
@@ -359,13 +364,13 @@ export default function EarlyPathDashboard() {
             {/* Apprentice Info */}
             <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
               <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Internship Info</h2>
-              {apprentice ? (
+              {apprentice || vacancy ? (
                 <div className="space-y-3">
                   {[
-                    { label: "Type", value: apprentice?.position_type || apprentice?.position || "-" },
-                    { label: "Location", value: apprentice?.location || "-" },
-                    { label: "Start Date", value: apprentice?.start_date ? new Date(apprentice.start_date).toLocaleDateString('en-US') : "-" },
-                    { label: "End Date", value: apprentice?.end_date ? new Date(apprentice.end_date).toLocaleDateString('en-US') : "-" },
+                    { label: "Type", value: vacancy?.type || apprentice?.position || "-" },
+                    { label: "Location", value: vacancy?.location || "-" },
+                    { label: "Start Date", value: vacancy?.start_date ? new Date(vacancy.start_date).toLocaleDateString('en-US') : "-" },
+                    { label: "End Date", value: vacancy?.end_date ? new Date(vacancy.end_date).toLocaleDateString('en-US') : "-" },
                     { label: "Status", value: apprentice?.status || "Screening", badge: true },
                   ].map((row, i) => (
                     <div key={i} className="flex justify-between items-center text-sm">
@@ -388,8 +393,8 @@ export default function EarlyPathDashboard() {
                 </div>
               ) : (
                 <div className="space-y-3 text-center py-4">
-                  <p className="text-sm text-slate-500">Waiting for HR selection...</p>
-                  <p className="text-xs text-slate-400">Internship data will appear after HR selection is complete</p>
+                  <p className="text-sm text-slate-500">No apprenticeship selected yet...</p>
+                  <p className="text-xs text-slate-400">Internship data will appear once HR selects you</p>
                 </div>
               )}
             </div>

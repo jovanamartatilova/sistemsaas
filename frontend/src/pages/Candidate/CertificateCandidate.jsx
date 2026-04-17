@@ -209,6 +209,17 @@ export default function CertificatesPage() {
             "Authorization": `Bearer ${token}`,
           },
         });
+        
+        if (!userResp.ok && userResp.status === 401) {
+          localStorage.removeItem("auth_token");
+          localStorage.removeItem("token");
+          localStorage.removeItem("company");
+          localStorage.removeItem("user");
+          localStorage.removeItem("candidate_user");
+          navigate("/");
+          return;
+        }
+        
         if (userResp.ok) {
           const data = await userResp.json();
           setUserData(data.data || data);
@@ -221,6 +232,17 @@ export default function CertificatesPage() {
             "Authorization": `Bearer ${token}`,
           },
         });
+        
+        if (!certResp.ok && certResp.status === 401) {
+          localStorage.removeItem("auth_token");
+          localStorage.removeItem("token");
+          localStorage.removeItem("company");
+          localStorage.removeItem("user");
+          localStorage.removeItem("candidate_user");
+          navigate("/");
+          return;
+        }
+        
         if (certResp.ok) {
           const certData = await certResp.json();
           const certs = certData.data || certData || [];
