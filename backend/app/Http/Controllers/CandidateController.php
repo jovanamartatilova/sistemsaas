@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Apprentice;
 use App\Models\Company;
+use App\Models\Interview;
 use App\Models\Major;
 use App\Models\Submission;
 use App\Models\University;
@@ -37,7 +38,7 @@ class CandidateController extends Controller
             if (isset($user->id_user)) {
                 $submission = Submission::where('id_user', $user->id_user)
                     ->whereIn('status', ['pending', 'accepted'])
-                    ->with(['vacancy', 'position.competencies', 'mentor'])
+                    ->with(['vacancy', 'position.competencies', 'mentor', 'interviews'])
                     ->latest('submitted_at')
                     ->first();
             }
@@ -88,9 +89,23 @@ class CandidateController extends Controller
                         'start_date' => $apprentice->start_date ?? null,
                         'end_date' => $apprentice->end_date ?? null,
                         'batch' => $submission?->vacancy?->batch ?? '-',
-                        'status' => $apprentice->status ?? 'inactive',
+                        'status' => $submission?->status ?? ($apprentice->status ?? 'inactive'),
                         'mentor_name' => $submission?->mentor?->name ?? null,
                     ] : null,
+                    'vacancy' => $submission ? [
+                        'id_vacancy' => $submission->vacancy?->id_vacancy ?? null,
+                        'type' => $submission->vacancy?->type ?? '-',
+                        'location' => $submission->vacancy?->location ?? '-',
+                        'start_date' => $submission->vacancy?->start_date ?? null,
+                        'end_date' => $submission->vacancy?->end_date ?? null,
+                    ] : null,
+                    'interviews' => $submission && $submission->interviews ? $submission->interviews->map(fn($interview) => [
+                        'id_interview' => $interview->id_interview,
+                        'interview_date' => $interview->interview_date,
+                        'interview_time' => $interview->interview_time,
+                        'link' => $interview->link,
+                        'status' => $interview->result ?? 'pending',
+                    ])->toArray() : [],
                     'learning_progress' => [
                         'total_learning_hours' => 240,
                         'target_learning_hours' => 320,
@@ -453,9 +468,9 @@ class CandidateController extends Controller
                     ->where('id_team', $submission->id_team)
                     ->where('id_user', $submission->id_user)
                     ->first();
-                
+
                 $team = \App\Models\Team::where('id_team', $submission->id_team)->first();
-                
+
                 if ($team) {
                     $teamInfo = [
                         'name' => $team->name,
@@ -475,20 +490,20 @@ class CandidateController extends Controller
                 'quota' => $position->quota ?? null,
                 // Status mapping
                 'status' => $submission->status, // "pending", "accepted", "rejected"
-                
+
                 // Active status specifically for UI active filters (accepted means active program in progress)
                 // If the user wants pending programs in Active tab, we preserve it. If rejected, it becomes inactive.
                 'is_active' => in_array($submission->status, ['pending', 'accepted']),
-                
+
                 // Only share hours and competencies if accepted
                 'learning_hours' => $submission->status === 'accepted' ? $total_learning_hours : 0,
                 'competencies' => $submission->status === 'accepted' ? $competencies : [],
                 'completed_hours' => 0, // Mock for now until scoring API integrates
-                
+
                 // LoA Mapping
                 'has_loa' => $submission->loa && $submission->loa->file_path ? true : false,
                 'loa_file_url' => $submission->loa && $submission->loa->file_path ? asset('storage/' . $submission->loa->file_path) : null,
-                
+
                 // Team Mapping
                 'team' => $teamInfo,
             ];
@@ -505,22 +520,42 @@ class CandidateController extends Controller
     {
         $user = $request->user();
 
-        $submission = Submission::where('id_user', $user->id_user)
-            ->with(['apprentice'])
-            ->latest('submitted_at')
-            ->first();
+        // Get all submissions for this candidate
+        $submissions = Submission::where('id_user', $user->id_user)
+            ->with(['certificate', 'vacancy', 'position'])
+            ->get();
 
-        if (!$submission || !$submission->apprentice) {
-            return response()->json([
-                'success' => true,
-                'data' => []
-            ]);
+        if ($submissions->isEmpty()) {
+            return response()->json(['success' => true, 'data' => []]);
         }
 
-        return response()->json([
-            'success' => true,
-            'data' => []
-        ]);
+        $data = $submissions->map(function ($sub) {
+            $cert = $sub->certificate;
+
+            // Certificate is visible only when it has been sent (is_sent=true)
+            if ($cert && $cert->is_sent) {
+                return [
+                    'status'             => 'issued',
+                    'id_certificate'     => $cert->id_certificate,
+                    'certificate_number' => $cert->certificate_number,
+                    'final_score'        => $cert->final_score,
+                    'issued_date'        => $cert->issued_date,
+                    'file_path'          => $cert->file_path ? asset('storage/' . $cert->file_path) : null,
+                    'program'            => $sub->vacancy?->title ?? '-',
+                    'position'           => $sub->position?->name ?? '-',
+                ];
+            }
+
+            // On-going / not yet issued
+            return [
+                'status'    => 'on_going',
+                'batch'     => $sub->vacancy?->batch ?? 'Batch 1',
+                'company'   => $sub->vacancy?->company_name ?? '-',
+                'progress'  => 60,
+            ];
+        });
+
+        return response()->json(['success' => true, 'data' => $data]);
     }
 
     /** POST /api/logout */

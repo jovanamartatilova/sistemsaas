@@ -6,13 +6,14 @@ import {
 } from "lucide-react";
 import { useNavigate, useParams, Link, useLocation } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore";
+import { LoadingSpinner } from "../../components/LoadingSpinner";
 
 // --- Sidebar ---
 function Sidebar({ userName, onLogout }) {
   const { slug } = useParams();
   const location = useLocation();
   const { company: authCompany } = useAuthStore();
-  
+  const company = JSON.parse(localStorage.getItem("company"));
   const resolvedSlug = slug !== "undefined" ? slug : (authCompany?.slug || "undefined");
 
   const navItems = [
@@ -47,13 +48,24 @@ function Sidebar({ userName, onLogout }) {
         })}
       </nav>
       <div className="mt-auto flex items-center gap-3 px-2">
-        <div className="w-8 h-8 rounded-full bg-slate-600 flex items-center justify-center text-xs font-bold">
-          {userName?.charAt(0).toUpperCase() || "R"}
+        {company?.logo_path ? (
+          <img 
+            src={`http://localhost:8000/storage/${company.logo_path}`} 
+            alt="Company" 
+            className="w-8 h-8 rounded-lg object-cover bg-white shadow-sm flex-shrink-0" 
+          />
+        ) : (
+          <div className="w-8 h-8 rounded-lg bg-slate-600 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
+            {company?.name?.charAt(0).toUpperCase() || "C"}
+          </div>
+        )}
+        <div className="flex-1 min-w-0">
+          <p className="text-xs text-slate-300 truncate font-medium">{company?.name || "Company"}</p>
+          <p className="text-xs text-slate-400 truncate">{userName || "User"}</p>
         </div>
-        <span className="text-sm text-slate-300 flex-1 truncate">{userName || "User"}</span>
         <button
           onClick={onLogout}
-          className="text-slate-500 hover:text-white cursor-pointer transition-colors"
+          className="text-slate-500 hover:text-white cursor-pointer transition-colors flex-shrink-0"
           title="Logout"
         >
           <LogOut size={14} />
@@ -124,7 +136,7 @@ function DiscoveryCard({ vacancy, onApply }) {
 
         <div className="mb-6 flex-1 text-left">
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-1.5">
-                <Briefcase size={10} /> AVAILABLE POSITIONS
+                <Briefcase size={10} /> Available Positions
             </p>
             <div className="flex flex-wrap gap-1.5">
                 {vacancy.positions?.slice(0, 3).map((pos, i) => (
@@ -139,7 +151,7 @@ function DiscoveryCard({ vacancy, onApply }) {
           onClick={() => onApply(vacancy)}
           className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold shadow-md shadow-indigo-100 transition-all active:scale-95"
         >
-          Daftar Sekarang
+          Apply Now
         </button>
       </div>
     </div>
@@ -157,22 +169,22 @@ function ConfirmModal({ vacancy, onConfirm, onCancel }) {
             <div className="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-6">
                 <Info size={32} />
             </div>
-            <h3 className="text-xl font-bold text-slate-800 mb-2">Pilih Program Ini?</h3>
+            <h3 className="text-xl font-bold text-slate-800 mb-2">Choose This Program?</h3>
             <p className="text-slate-500 text-sm leading-relaxed mb-8">
-                Apakah Anda yakin ingin memilih program <span className="font-semibold text-slate-700">"{vacancy.title}"</span>? Anda akan diarahkan ke halaman pendaftaran.
+                Are you sure you want to choose the program <span className="font-semibold text-slate-700">"{vacancy.title}"</span>? You will be directed to the registration page.
             </p>
             <div className="flex flex-col gap-3">
                 <button
                     onClick={onConfirm}
                     className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold shadow-lg shadow-indigo-200 transition-all active:scale-[98%]"
                 >
-                    Ya, Pilih Program
+                    Yes, Choose Program
                 </button>
                 <button
                     onClick={onCancel}
                     className="w-full py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-2xl font-bold transition-all active:scale-[98%]"
                 >
-                    Batalkan
+                    Cancel
                 </button>
             </div>
         </div>
@@ -193,7 +205,7 @@ function CompetencyItem({ name, description, learning_hours }) {
         {description && <p className="text-[11px] text-slate-500 line-clamp-2">{description}</p>}
       </div>
       <span className="flex-shrink-0 text-[10px] px-2 py-1 rounded-md font-bold border bg-slate-50 text-slate-600 border-slate-200">
-        {learning_hours} jam
+        {learning_hours} hours
       </span>
     </div>
   );
@@ -241,24 +253,24 @@ function ProgramCard({ program }) {
              <span className="text-xs font-medium text-slate-500">{batch}</span>
           </div>
           <p className="text-xs text-slate-500 line-clamp-1 leading-relaxed max-w-xl">
-             Fokus pada {description}
+             Focus on {description}
           </p>
 
           {team && (
             <div className="mt-3 p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs space-y-1 w-full max-w-sm">
               <div className="flex justify-between items-center text-slate-600">
-                <span className="font-semibold text-slate-800 flex items-center gap-1.5"><Users size={12}/> Tim: {team.name}</span>
+                <span className="font-semibold text-slate-800 flex items-center gap-1.5"><Users size={12}/> Team: {team.name}</span>
                 <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 font-bold rounded-md text-[10px] uppercase tracking-wider">{team.role}</span>
               </div>
               {team.role === 'Leader' && (
                 <div className="flex justify-between items-center text-slate-500 mt-1.5 pt-1.5 border-t border-slate-200">
-                  <span>Kode Tim: <strong className="text-slate-800 font-mono tracking-widest">{team.code}</strong></span>
-                  <button onClick={() => { navigator.clipboard.writeText(team.code); alert('Kode Tim berhasil disalin!'); }} className="text-indigo-600 hover:text-indigo-700 font-semibold hover:underline">Salin Kode</button>
+                  <span>Team Code: <strong className="text-slate-800 font-mono tracking-widest">{team.code}</strong></span>
+                  <button onClick={() => { navigator.clipboard.writeText(team.code); alert('Team code copied!'); }} className="text-indigo-600 hover:text-indigo-700 font-semibold hover:underline">Copy Code</button>
                 </div>
               )}
               {team.role === 'Member' && (
                 <div className="text-slate-400 mt-1.5 pt-1.5 border-t border-slate-200 text-[10px]">
-                  Bergabung menggunakan kode: <strong className="font-mono text-slate-500">{team.code}</strong>
+                  Join using code: <strong className="font-mono text-slate-500">{team.code}</strong>
                 </div>
               )}
             </div>
@@ -287,14 +299,6 @@ function ProgramCard({ program }) {
            <div className="flex gap-2 w-full md:w-auto">
              <button 
                disabled={!isAccepted || !has_loa}
-               onClick={() => { if(has_loa && loa_file_url) window.open(loa_file_url, '_blank')} }
-               className={`flex-1 md:flex-none px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 
-                 ${isAccepted && has_loa ? "bg-indigo-50 text-indigo-600 hover:bg-indigo-100 border border-indigo-200" : "bg-slate-50 text-slate-400 border border-slate-100 cursor-not-allowed"}`}
-             >
-               Preview LoA
-             </button>
-             <button 
-               disabled={!isAccepted || !has_loa}
                onClick={() => { if(has_loa && loa_file_url) downloadFile(loa_file_url, `LoA_${company}.pdf`) }}
                className={`flex-1 md:flex-none px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 
                  ${isAccepted && has_loa ? "bg-indigo-600 text-white hover:bg-indigo-700 shadow-md shadow-indigo-100" : "bg-slate-100 text-slate-400 cursor-not-allowed"}`}
@@ -309,7 +313,7 @@ function ProgramCard({ program }) {
                onClick={() => setExpanded(!expanded)}
                className="mt-1 flex items-center justify-end gap-1.5 text-xs font-bold text-slate-400 hover:text-slate-600 transition-colors"
              >
-               {expanded ? "Sembunyikan" : "Lihat"} Kompetensi
+               {expanded ? "Hide" : "View"} Competencies
                {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
              </button>
            )}
@@ -320,7 +324,7 @@ function ProgramCard({ program }) {
       {expanded && isAccepted && (
          <div className="ml-1.5 px-6 pb-6 pt-4 border-t border-slate-100 bg-slate-50/50">
             <h4 className="text-[11px] font-bold text-slate-500 mb-3 uppercase tracking-widest flex items-center gap-1.5">
-               <Target size={14} className="text-indigo-400" /> Target Kompetensi & Modul
+               <Target size={14} className="text-indigo-400" /> Target Competencies & Modules
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                {competencies?.map((comp, i) => (
@@ -328,7 +332,7 @@ function ProgramCard({ program }) {
                ))}
                {(!competencies || competencies.length === 0) && (
                  <div className="col-span-full py-4 text-center text-xs font-medium text-slate-400">
-                    Belum ada kompetensi yang disusun untuk posisi ini.
+                    No competencies yet for this position.
                  </div>
                )}
             </div>
@@ -353,6 +357,7 @@ export default function ProgramsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedVacancy, setSelectedVacancy] = useState(null);
+  const [logoutModal, setLogoutModal] = useState(false);
 
   const isDiscoveryMode = slug === "undefined" && !authCompany?.slug;
 
@@ -373,6 +378,17 @@ export default function ProgramsPage() {
         const userResp = await fetch(`${API_BASE_URL}/users/me`, {
           headers: { "Authorization": `Bearer ${token}` },
         });
+        
+        if (!userResp.ok && userResp.status === 401) {
+          localStorage.removeItem("auth_token");
+          localStorage.removeItem("token");
+          localStorage.removeItem("company");
+          localStorage.removeItem("user");
+          localStorage.removeItem("candidate_user");
+          navigate("/");
+          return;
+        }
+        
         if (userResp.ok) {
           const data = await userResp.json();
           setUserData(data.data || data);
@@ -388,6 +404,17 @@ export default function ProgramsPage() {
           const progResp = await fetch(`${API_BASE_URL}/positions`, {
             headers: { "Authorization": `Bearer ${token}` },
           });
+          
+          if (!progResp.ok && progResp.status === 401) {
+            localStorage.removeItem("auth_token");
+            localStorage.removeItem("token");
+            localStorage.removeItem("company");
+            localStorage.removeItem("user");
+            localStorage.removeItem("candidate_user");
+            navigate("/");
+            return;
+          }
+          
           if (progResp.ok) {
             const progData = await progResp.json();
             setPrograms(progData.data || progData || []);
@@ -404,11 +431,18 @@ export default function ProgramsPage() {
     fetchData();
   }, [slug, authCompany, navigate, isDiscoveryMode]);
 
-  const handleLogout = async () => {
+  const handleLogoutClick = () => {
+    setLogoutModal(true);
+  };
+
+  const confirmLogout = async () => {
     localStorage.clear();
     globalLogout();
+    setLogoutModal(false);
     navigate("/");
   };
+
+  const handleLogout = handleLogoutClick;
 
   const filtered = isDiscoveryMode 
     ? publicVacancies.filter(v => 
@@ -431,9 +465,7 @@ export default function ProgramsPage() {
       <div className="ml-56 flex-1 flex flex-col">
         <main className="p-6 space-y-5">
           {loading ? (
-            <div className="flex items-center justify-center min-h-screen">
-               <div className="animate-spin h-12 w-12 border-4 border-indigo-500 border-t-transparent rounded-full" />
-            </div>
+            <LoadingSpinner message="Loading programs..." />
           ) : error ? (
             <div className="bg-red-50 text-red-700 p-4 rounded-xl border border-red-200">Error: {error}</div>
           ) : (
@@ -444,8 +476,8 @@ export default function ProgramsPage() {
                 </h1>
                 <p className="text-slate-500 mt-2 max-w-lg mx-auto leading-relaxed">
                     {isDiscoveryMode 
-                        ? "Jelajahi berbagai program magang terbaik dan mulailah perjalanan kariermu sekarang." 
-                        : "Program magang yang sedang Anda jalani dan telah Anda selesaikan."}
+                        ? "Explore various internship programs and start your career journey now." 
+                        : "Internship programs you are currently participating in and have completed."}
                 </p>
               </div>
 
@@ -503,7 +535,7 @@ export default function ProgramsPage() {
               )}
 
               <footer className="text-center text-xs text-slate-400 pt-10 pb-4">
-                © 2025 EarlyPath · Platform Magang Modern · All rights reserved
+                © 2026 EarlyPath · All rights reserved
               </footer>
             </>
           )}
@@ -519,6 +551,23 @@ export default function ProgramsPage() {
             setSelectedVacancy(null);
         }}
       />
+
+      {/* Logout Modal */}
+      {logoutModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(10,22,40,0.5)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ background: "#fff", borderRadius: "16px", padding: "28px", width: "340px", boxShadow: "0 20px 60px rgba(0,0,0,0.18)", textAlign: "left" }}>
+            <div style={{ width: "40px", height: "40px", borderRadius: "10px", background: "#fff1f2", display: "flex", alignItems: "center", justifyContent: "center", color: "#ef4444", marginBottom: "14px" }}>
+              <LogOut size={20} />
+            </div>
+            <div style={{ fontSize: "16px", fontWeight: "800", color: "#0f172a", marginBottom: "6px" }}>Sign Out?</div>
+            <div style={{ fontSize: "13px", color: "#64748b", lineHeight: "1.6", marginBottom: "20px" }}>Are you sure you want to sign out of your account?</div>
+            <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+              <button onClick={() => setLogoutModal(false)} style={{ padding: "9px 18px", borderRadius: "9px", border: "1px solid #e2e8f0", background: "#fff", fontSize: "13px", fontWeight: "700", color: "#64748b", cursor: "pointer" }}>Cancel</button>
+              <button onClick={confirmLogout} style={{ padding: "9px 18px", borderRadius: "9px", border: "none", background: "#ef4444", fontSize: "13px", fontWeight: "700", color: "#fff", cursor: "pointer" }}>Yes, Sign Out</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

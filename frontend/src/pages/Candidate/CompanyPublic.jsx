@@ -761,7 +761,7 @@ export default function CompanyPublicPage() {
 
             {/* Bottom - Styling disesuaikan untuk background gelap */}
             <div style={{ paddingTop: 24, borderTop: "1px solid rgba(255,255,255,0.1)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <p style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", margin: 0 }}>© 2025 {company.name}. All rights reserved.</p>
+              <p style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", margin: 0 }}>© 2026 {company.name}. All rights reserved.</p>
               <p style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", margin: 0 }}>
                 Powered by <span style={{ color: "#38bdf8", fontWeight: 600 }}>EarlyPath</span>
               </p>

@@ -190,14 +190,14 @@ export default function SignUp() {
 
         <div className="w-full max-w-md relative z-10 text-left">
           {/* Logo + Title */}
-          <div className="text-center mb-6">
-            <div className="flex justify-center mb-4">
-              <img src="/assets/images/logo.png" alt="Logo" className="w-23 h-23 object-contain" />
+          <div className="text-center mb-3">
+            <div className="flex justify-center mb-2">
+              <img src="/assets/images/logo.png" alt="Logo" className="w-13 h-13 object-contain" />
             </div>
-            <h1 className="text-2xl font-bold text-white mb-1" style={{ letterSpacing: "-0.3px" }}>
+            <h1 className="text-xl font-bold text-white mb-1" style={{ letterSpacing: "-0.3px" }}>
               Welcome To EarlyPath
             </h1>
-            <p className="text-sm" style={{ color: "rgba(255,255,255,0.45)" }}>
+            <p className="text-xs" style={{ color: "rgba(255,255,255,0.45)" }}>
               {activeTab === "company"
                 ? "Sign up your company account and start your journey with us."
                 : "Create your candidate account and start exploring internship opportunities."}

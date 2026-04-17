@@ -283,13 +283,13 @@ export default function Login() {
 
         <div className="w-full max-w-md relative z-10">
           {/* Logo + Title */}
-          <div className="text-center mb-8">
-            <div className="flex justify-center mb-4">
-              <img src="/assets/images/logo.png" alt="Logo" className="w-23 h-23 object-contain" />
+          <div className="text-center mb-3">
+            <div className="flex justify-center mb-2">
+              <img src="/assets/images/logo.png" alt="Logo" className="w-15 h-10 object-contain" />
             </div>
             <p className="text-sm font-medium mb-1" style={{ color: "rgba(74,158,255,0.85)" }}>Welcome back to</p>
-            <h1 className="text-2xl font-bold text-white mb-1" style={{ letterSpacing: "-0.3px" }}>{companyName}</h1>
-            <p className="text-sm" style={{ color: "rgba(255,255,255,0.4)" }}>
+            <h1 className="text-xl font-bold text-white mb-1" style={{ letterSpacing: "-0.3px" }}>{companyName}</h1>
+            <p className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>
               {activeTab === "company"
                 ? companyType === "staff"
                   ? "Sign in as HR or Mentor staff."

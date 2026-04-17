@@ -50,21 +50,29 @@ export const authService = {
 
   logout: async () => {
     try {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('company');
+        localStorage.removeItem('user');
+        localStorage.removeItem('candidate_user');
+        return;
+      }
+
       await api.post('/logout');
-
-      localStorage.removeItem('auth_token');
-      localStorage.removeItem('company');
-      localStorage.removeItem('user');
-      // ✅ Bersihkan cache candidate user saat logout
-      localStorage.removeItem('candidate_user');
     } catch (error) {
+      // If 401, session already expired - that's ok, just clear locally
+      if (error.response?.status === 401) {
+        console.log('Session already expired on server');
+      } else {
+        console.error('Logout error:', error.message);
+      }
+    } finally {
+      // Always clear localStorage regardless of endpoint success/failure
       localStorage.removeItem('auth_token');
       localStorage.removeItem('company');
       localStorage.removeItem('user');
-      // ✅ Tetap bersihkan cache meski logout gagal
       localStorage.removeItem('candidate_user');
-
-      throw error.response?.data || error.message;
     }
   },
 

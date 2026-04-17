@@ -12,7 +12,7 @@ use App\Models\Position;
 use App\Models\Submission;
 use App\Models\Apprentice;
 use App\Models\Competency;
-use App\Models\CandidateSkill;
+
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 
@@ -41,6 +41,7 @@ class CandidateDashboardSeeder extends Seeder
                 'phone' => '021-123456789',
                 'description' => 'Perusahaan telekomunikasi terbesar di Indonesia',
                 'status' => 'active',
+                'password' => bcrypt('company123'),
             ]
         );
 
@@ -106,7 +107,6 @@ class CandidateDashboardSeeder extends Seeder
             [
                 'id_position' => 'P' . strtoupper(Str::random(8)),
                 'name' => 'Full Stack Developer',
-                'quota' => 5,
             ]
         );
         $position->competencies()->sync($competencyIds);
@@ -161,26 +161,7 @@ class CandidateDashboardSeeder extends Seeder
             ]
         );
 
-        // Skills
-        CandidateSkill::firstOrCreate(
-            ['id_user' => $user->id_user, 'skill_name' => 'PHP'],
-            [
-                'id_skill' => 'SK' . strtoupper(Str::random(8)),
-                'id_user' => $user->id_user,
-                'skill_name' => 'PHP',
-                'level' => 'advanced',
-            ]
-        );
 
-        CandidateSkill::firstOrCreate(
-            ['id_user' => $user->id_user, 'skill_name' => 'JavaScript'],
-            [
-                'id_skill' => 'SK' . strtoupper(Str::random(8)),
-                'id_user' => $user->id_user,
-                'skill_name' => 'JavaScript',
-                'level' => 'intermediate',
-            ]
-        );
 
         $this->command->info('✓ Candidate Dashboard seeder completed!');
         $this->command->info('');

@@ -7,6 +7,8 @@ use App\Models\Assessment;
 use App\Models\Certificate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 
 class MentorController extends Controller
 {
@@ -461,20 +463,30 @@ class MentorController extends Controller
             $scores = array_filter($scoresData, fn($s) => $s['score'] !== null);
             $avgScore = count($scores) > 0 ? round(array_sum(array_column($scores, 'score')) / count($scores), 1) : null;
 
-            // Status: hanya "Passed" (>= 75) atau "Not Passed" (< 75 atau null)
             $status = ($avgScore !== null && $avgScore >= 75) ? 'Passed' : 'Not Passed';
             $statusBg = $status === 'Passed' ? '#dcfce7' : '#fecaca';
             $statusColor = $status === 'Passed' ? '#166534' : '#991b1b';
+            $fileUrl = null;
+
+            $cert = Certificate::where('id_submission', $sub->id_submission)->first();
+            if ($cert) {
+                $status = 'Generated';
+                $statusBg = '#ccfbf1';
+                $statusColor = '#0f766e';
+                $fileUrl = $cert->file_path ? asset('storage/' . $cert->file_path) : null;
+            }
 
             return [
                 'id_submission' => $sub->id_submission,
                 'name' => $sub->user->name,
                 'position' => $sub->position->name ?? 'N/A',
-                'program' => 'Regular Batch 3',
+                'program' => $sub->vacancy->title ?? 'N/A',
                 'score' => $avgScore,
                 'status' => $status,
                 'statusBg' => $statusBg,
                 'statusColor' => $statusColor,
+                'file_url' => $fileUrl,
+                'is_sent' => $cert ? (bool)$cert->is_sent : false,
             ];
         });
 
@@ -490,30 +502,222 @@ class MentorController extends Controller
     public function generateCertificate(Request $request, $idSubmission)
     {
         $mentorId = $request->user()->id_user;
+        $mentorName = $request->user()->name;
 
         // Verify submission belongs to this mentor
         $submission = Submission::where('id_submission', $idSubmission)
             ->where('id_user_mentor', $mentorId)
+            ->with(['user', 'position', 'vacancy.company'])
             ->firstOrFail();
 
-        // Calculate average score from Assessment (not Submission)
+        // Calculate average score
         $assessment = Assessment::where('id_submission', $idSubmission)->first();
         $scoresData = $assessment->scores_data ?? [];
         $scores = array_filter($scoresData, fn($s) => $s['score'] !== null);
         $avgScore = count($scores) > 0 ? round(array_sum(array_column($scores, 'score')) / count($scores), 2) : 0;
 
-        // Create or update certificate
-        $certificate = Certificate::updateOrCreate(
+        $positionComps = DB::table('position_competencies')
+            ->join('competencies', 'position_competencies.id_competency', '=', 'competencies.id_competency')
+            ->where('position_competencies.id_position', $submission->id_position)
+            ->select('competencies.*')
+            ->get()->keyBy('id_competency');
+
+        $competenciesData = [];
+        foreach ($scores as $s) {
+            $comp = $positionComps->get($s['id_competency']);
+            if ($comp) {
+                // Determine predicate based on score
+                $predicate = 'Kurang';
+                if ($s['score'] >= 85) {
+                    $predicate = 'Sangat Baik';
+                } elseif ($s['score'] >= 75) {
+                    $predicate = 'Baik';
+                } elseif ($s['score'] >= 65) {
+                    $predicate = 'Cukup';
+                }
+                
+                $competenciesData[] = [
+                    'name' => $comp->name,
+                    'description' => $comp->description,
+                    'hours' => $comp->learning_hours,
+                    'score' => $s['score'],
+                    'predicate' => $predicate,
+                ];
+            }
+        }
+
+        // Generate Certificate Number
+        $certExists = Certificate::where('id_submission', $idSubmission)->first();
+        if ($certExists && $certExists->certificate_number) {
+            $certNumber = $certExists->certificate_number;
+        } else {
+            $year = now()->year;
+            $count = Certificate::whereYear('issued_date', $year)->count() + 1;
+            $certNumber = 'CERT/' . $year . '/' . str_pad($count, 3, '0', STR_PAD_LEFT);
+        }
+
+        $company = $submission->vacancy->company;
+        $logo_base64 = null;
+        if ($company && $company->logo_path) {
+            $logoPath = storage_path('app/public/' . $company->logo_path);
+            if (file_exists($logoPath)) {
+                $type = pathinfo($logoPath, PATHINFO_EXTENSION);
+                $data = file_get_contents($logoPath);
+                $logo_base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
+            }
+        }
+
+        $companyCity = 'Jakarta';
+        if ($company && $company->address) {
+            $parts = explode(',', $company->address);
+            if (count($parts) > 1) {
+                $companyCity = trim(end($parts));
+            } else {
+                $companyCity = $company->address;
+            }
+        }
+
+        $idCert = $certExists ? $certExists->id_certificate : 'CERT' . strtoupper(Str::random(6));
+        $filePath = 'certificates/' . $idCert . '.pdf';
+
+        $data = [
+            'submission' => $submission,
+            'company' => $company,
+            'mentorName' => $mentorName,
+            'logo_base64' => $logo_base64,
+            'companyCity' => $companyCity,
+            'certNumber' => $certNumber,
+            'issuedDate' => now()->translatedFormat('d F Y'),
+            'competencies' => $competenciesData,
+            'avgScore' => $avgScore,
+        ];
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('certificate.template', $data)->setPaper('a4', 'landscape');
+        Storage::disk('public')->put($filePath, $pdf->output());
+
+        Certificate::updateOrCreate(
             ['id_submission' => $idSubmission],
             [
-                'id_user' => $submission->id_user,
+                'id_certificate' => $idCert,
+                'certificate_number' => $certNumber,
+                'file_path' => $filePath,
                 'final_score' => $avgScore,
                 'issued_date' => now(),
-                'status' => 'generated',
+                'is_sent' => false,
             ]
         );
 
-        return response()->json(['message' => 'Certificate generated successfully']);
+        return response()->json([
+            'message' => 'Certificate generated successfully',
+            'file_url' => asset('storage/' . $filePath)
+        ]);
+    }
+
+    public function previewCertificate(Request $request, $idSubmission)
+    {
+        $mentorId = $request->user()->id_user;
+        $mentorName = $request->user()->name;
+
+        // Verify submission belongs to this mentor
+        $submission = Submission::where('id_submission', $idSubmission)
+            ->where('id_user_mentor', $mentorId)
+            ->with(['user', 'position', 'vacancy.company'])
+            ->firstOrFail();
+
+        // Calculate average score
+        $assessment = Assessment::where('id_submission', $idSubmission)->first();
+        $scoresData = $assessment->scores_data ?? [];
+        $scores = array_filter($scoresData, fn($s) => $s['score'] !== null);
+        $avgScore = count($scores) > 0 ? round(array_sum(array_column($scores, 'score')) / count($scores), 2) : 0;
+
+        $positionComps = DB::table('position_competencies')
+            ->join('competencies', 'position_competencies.id_competency', '=', 'competencies.id_competency')
+            ->where('position_competencies.id_position', $submission->id_position)
+            ->select('competencies.*')
+            ->get()->keyBy('id_competency');
+
+        $competenciesData = [];
+        foreach ($scores as $s) {
+            $comp = $positionComps->get($s['id_competency']);
+            if ($comp) {
+                $predicate = 'Kurang';
+                if ($s['score'] >= 85) $predicate = 'Sangat Baik';
+                elseif ($s['score'] >= 75) $predicate = 'Baik';
+                elseif ($s['score'] >= 65) $predicate = 'Cukup';
+                
+                $competenciesData[] = [
+                    'name' => $comp->name,
+                    'description' => $comp->description,
+                    'hours' => $comp->learning_hours,
+                    'score' => $s['score'],
+                    'predicate' => $predicate,
+                ];
+            }
+        }
+
+        $certNumber = 'PREVIEW/' . now()->year . '/000';
+
+        $company = $submission->vacancy->company;
+        $logo_base64 = null;
+        if ($company && $company->logo_path) {
+            $logoPath = storage_path('app/public/' . $company->logo_path);
+            if (file_exists($logoPath)) {
+                $type = pathinfo($logoPath, PATHINFO_EXTENSION);
+                $data = file_get_contents($logoPath);
+                $logo_base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
+            }
+        }
+
+        $companyCity = 'Jakarta';
+        if ($company && $company->address) {
+            $parts = explode(',', $company->address);
+            if (count($parts) > 1) {
+                $companyCity = trim(end($parts));
+            } else {
+                $companyCity = $company->address;
+            }
+        }
+
+        $data = [
+            'submission' => $submission,
+            'company' => $company,
+            'mentorName' => $mentorName,
+            'logo_base64' => $logo_base64,
+            'companyCity' => $companyCity,
+            'certNumber' => $certNumber,
+            'issuedDate' => now()->translatedFormat('d F Y'),
+            'competencies' => $competenciesData,
+            'avgScore' => $avgScore,
+        ];
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('certificate.template', $data)->setPaper('a4', 'landscape');
+        return @$pdf->stream('preview.pdf');
+    }
+
+    /**
+     * POST /mentor/interns/{id_submission}/send-certificate
+     * Mark a certificate as sent to candidate
+     */
+    public function sendCertificate(Request $request, $idSubmission)
+    {
+        $mentorId = $request->user()->id_user;
+
+        $submission = Submission::where('id_submission', $idSubmission)
+            ->where('id_user_mentor', $mentorId)
+            ->first();
+
+        if (!$submission) {
+            return response()->json(['success' => false, 'message' => 'Submission not found'], 404);
+        }
+
+        $cert = Certificate::where('id_submission', $idSubmission)->first();
+        if (!$cert) {
+            return response()->json(['success' => false, 'message' => 'Certificate not found'], 404);
+        }
+
+        $cert->update(['is_sent' => true]);
+
+        return response()->json(['success' => true, 'message' => 'Certificate sent to candidate']);
     }
 
     /**

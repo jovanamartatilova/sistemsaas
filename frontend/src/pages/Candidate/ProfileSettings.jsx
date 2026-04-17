@@ -2,11 +2,13 @@ import { User, LogOut, Upload, ChevronDown, LayoutDashboard, BookOpen, Award } f
 import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useAuthStore } from "../../stores/authStore";
+import { LoadingSpinner } from "../../components/LoadingSpinner";
 
 // --- Sidebar ---
 function Sidebar({ userName, onLogout }) {
   const { slug } = useParams();
   const location = useLocation();
+  const company = JSON.parse(localStorage.getItem("company"));
   const navItems = [
     { label: "Dashboard", icon: <LayoutDashboard size={16} />, to: `/c/${slug}/dashboard` },
     { label: "Programs", icon: <BookOpen size={16} />, to: `/c/${slug}/programs` },
@@ -34,13 +36,24 @@ function Sidebar({ userName, onLogout }) {
         })}
       </nav>
       <div className="mt-auto flex items-center gap-3 px-2">
-        <div className="w-8 h-8 rounded-full bg-slate-600 flex items-center justify-center text-xs font-bold">
-          {userName?.charAt(0).toUpperCase() || "U"}
+        {company?.logo_path ? (
+          <img 
+            src={`http://localhost:8000/storage/${company.logo_path}`} 
+            alt="Company" 
+            className="w-8 h-8 rounded-lg object-cover bg-white shadow-sm flex-shrink-0" 
+          />
+        ) : (
+          <div className="w-8 h-8 rounded-lg bg-slate-600 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
+            {company?.name?.charAt(0).toUpperCase() || "C"}
+          </div>
+        )}
+        <div className="flex-1 min-w-0">
+          <p className="text-xs text-slate-300 truncate font-medium">{company?.name || "Company"}</p>
+          <p className="text-xs text-slate-400 truncate">{userName || "User"}</p>
         </div>
-        <span className="text-sm text-slate-300 flex-1">{userName || "User"}</span>
         <button
           onClick={onLogout}
-          className="text-slate-500 hover:text-white cursor-pointer transition-colors"
+          className="text-slate-500 hover:text-white cursor-pointer transition-colors flex-shrink-0"
           title="Logout"
         >
           <LogOut size={14} />
@@ -249,7 +262,6 @@ function ProfileContent({ userData, setUserData }) {
           {/* Name + actions */}
           <div className="flex flex-col gap-0.5">
             <p className="text-gray-900 font-bold text-lg text-left">{formData.full_name}</p>
-            <p className="text-gray-500 text-sm text-left">{userData?.role || "Apprentice"}</p>
             <p className="text-gray-400 text-xs mb-3 text-left">
               {formData.university_name || "Universitas belum diisi"}
             </p>
@@ -273,7 +285,7 @@ function ProfileContent({ userData, setUserData }) {
               </button>
             </div>
             <p className="text-gray-300 text-[10px] mt-1.5 text-left">
-              Format: JPG, PNG. Ukuran maks. 2MB.
+              Formats: JPG, PNG. Max size 2MB.
             </p>
           </div>
         </div>
@@ -325,28 +337,28 @@ function ProfileContent({ userData, setUserData }) {
 
           {/* Universitas */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs text-gray-500 font-medium text-left">Universitas</label>
+            <label className="text-xs text-gray-500 font-medium text-left">University</label>
             <input
               type="text"
               name="university_name"
               value={formData.university_name}
               onChange={handleInputChange}
               disabled={loading}
-              placeholder="Nama universitas kamu"
+              placeholder="Your university name"
               className="bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-sm text-gray-800 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
             />
           </div>
 
           {/* Jurusan — full width */}
           <div className="flex flex-col gap-1.5 col-span-2">
-            <label className="text-xs text-gray-500 font-medium text-left">Jurusan</label>
+            <label className="text-xs text-gray-500 font-medium text-left">Major</label>
             <input
               type="text"
               name="major_name"
               value={formData.major_name}
               onChange={handleInputChange}
               disabled={loading}
-              placeholder="Jurusan kamu"
+              placeholder="Your Major"
               className="bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-sm text-gray-800 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
             />
           </div>
@@ -377,7 +389,7 @@ function ProfileContent({ userData, setUserData }) {
 
       {/* Footer */}
       <p className="text-center text-xs text-gray-300 mt-6">
-        © 2025 EarlyPath · Platform Magang Modern
+        © 2026 EarlyPath · All rights reserved
       </p>
     </div>
   );
@@ -400,6 +412,7 @@ export default function ProfileSettings() {
   });
   const [loading, setLoading] = useState(!userData);
   const [error, setError] = useState(null);
+  const [logoutModal, setLogoutModal] = useState(false);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -418,7 +431,18 @@ export default function ProfileSettings() {
           },
         });
 
-        if (!response.ok) throw new Error("Failed to fetch user data");
+        if (!response.ok) {
+          if (response.status === 401) {
+            localStorage.removeItem("auth_token");
+            localStorage.removeItem("token");
+            localStorage.removeItem("company");
+            localStorage.removeItem("user");
+            localStorage.removeItem("candidate_user");
+            navigate("/");
+            return;
+          }
+          throw new Error("Failed to fetch user data");
+        }
 
         const data = await response.json();
         const user = data.data || data;
@@ -436,7 +460,11 @@ export default function ProfileSettings() {
     fetchUserData();
   }, [navigate, slug]);
 
-  const handleLogout = async () => {
+  const handleLogoutClick = () => {
+    setLogoutModal(true);
+  };
+
+  const confirmLogout = async () => {
     try {
       const token = localStorage.getItem("auth_token") || localStorage.getItem("token");
       if (token) {
@@ -452,17 +480,20 @@ export default function ProfileSettings() {
       localStorage.removeItem("token");
       localStorage.removeItem("candidate_user");
       globalLogout();
+      setLogoutModal(false);
       navigate("/");
     }
   };
 
+  const handleLogout = handleLogoutClick;
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin h-12 w-12 border-4 border-indigo-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading profile...</p>
-        </div>
+      <div className="min-h-screen bg-gray-50 flex">
+        <Sidebar userName={userData?.full_name} onLogout={handleLogout} />
+        <main className="ml-56 flex-1 flex items-center justify-center">
+          <LoadingSpinner message="Loading profile..." />
+        </main>
       </div>
     );
   }
@@ -491,6 +522,23 @@ export default function ProfileSettings() {
           <ProfileContent userData={userData} setUserData={setUserData} />
         </main>
       </div>
+
+      {/* Logout Modal */}
+      {logoutModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(10,22,40,0.5)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ background: "#fff", borderRadius: "16px", padding: "28px", width: "340px", boxShadow: "0 20px 60px rgba(0,0,0,0.18)", textAlign: "left" }}>
+            <div style={{ width: "40px", height: "40px", borderRadius: "10px", background: "#fff1f2", display: "flex", alignItems: "center", justifyContent: "center", color: "#ef4444", marginBottom: "14px" }}>
+              <LogOut size={20} />
+            </div>
+            <div style={{ fontSize: "16px", fontWeight: "800", color: "#0f172a", marginBottom: "6px" }}>Sign Out?</div>
+            <div style={{ fontSize: "13px", color: "#64748b", lineHeight: "1.6", marginBottom: "20px" }}>Are you sure you want to sign out of your account?</div>
+            <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+              <button onClick={() => setLogoutModal(false)} style={{ padding: "9px 18px", borderRadius: "9px", border: "1px solid #e2e8f0", background: "#fff", fontSize: "13px", fontWeight: "700", color: "#64748b", cursor: "pointer" }}>Cancel</button>
+              <button onClick={confirmLogout} style={{ padding: "9px 18px", borderRadius: "9px", border: "none", background: "#ef4444", fontSize: "13px", fontWeight: "700", color: "#fff", cursor: "pointer" }}>Yes, Sign Out</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

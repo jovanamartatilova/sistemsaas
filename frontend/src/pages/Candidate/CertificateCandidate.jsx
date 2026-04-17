@@ -5,11 +5,13 @@ import {
 } from "lucide-react";
 import { useNavigate, useParams, Link, useLocation } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore";
+import { LoadingSpinner } from "../../components/LoadingSpinner";
 
 // --- Sidebar ---
 function Sidebar({ userName, onLogout }) {
   const { slug } = useParams();
   const location = useLocation();
+  const company = JSON.parse(localStorage.getItem("company"));
 
   const navItems = [
     { label: "Dashboard",    icon: <LayoutDashboard size={16} />, to: `/c/${slug}/dashboard` },
@@ -43,13 +45,24 @@ function Sidebar({ userName, onLogout }) {
         })}
       </nav>
       <div className="mt-auto flex items-center gap-3 px-2">
-        <div className="w-8 h-8 rounded-full bg-slate-600 flex items-center justify-center text-xs font-bold">
-          {userName?.charAt(0).toUpperCase() || "R"}
+        {company?.logo_path ? (
+          <img 
+            src={`http://localhost:8000/storage/${company.logo_path}`} 
+            alt="Company" 
+            className="w-8 h-8 rounded-lg object-cover bg-white shadow-sm flex-shrink-0" 
+          />
+        ) : (
+          <div className="w-8 h-8 rounded-lg bg-slate-600 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
+            {company?.name?.charAt(0).toUpperCase() || "C"}
+          </div>
+        )}
+        <div className="flex-1 min-w-0">
+          <p className="text-xs text-slate-300 truncate font-medium">{company?.name || "Company"}</p>
+          <p className="text-xs text-slate-400 truncate">{userName || "User"}</p>
         </div>
-        <span className="text-sm text-slate-300 flex-1">{userName || "User"}</span>
         <button
           onClick={onLogout}
-          className="text-slate-500 hover:text-white cursor-pointer transition-colors"
+          className="text-slate-500 hover:text-white cursor-pointer transition-colors flex-shrink-0"
           title="Logout"
         >
           <LogOut size={14} />
@@ -60,49 +73,46 @@ function Sidebar({ userName, onLogout }) {
 }
 
 // --- Certificate Card (Issued) ---
-function CertificateCard({ id_certificate, certificate_number, file_path, final_score, issued_date }) {
+function CertificateCard({ id_certificate, certificate_number, file_path, final_score, issued_date, program, position }) {
   return (
     <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden hover:shadow-md transition-shadow">
-      <div className="h-1.5 bg-gradient-to-r from-emerald-500 to-teal-400" />
-      <div className="p-5">
+      <div className="h-1 bg-gradient-to-r from-emerald-500 to-teal-400" />
+      <div className="flex flex-col px-5 pt-2.5 pb-3.5 gap-2">
 
-        {/* Header */}
-        <div className="flex items-start justify-between pb-4">
-          <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center flex-shrink-0">
-            <Award size={18} className="text-emerald-500" />
-          </div>
-          <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center gap-1">
-            <CheckCircle size={10} /> Issued
+        {/* Row 1: Issued badge + date */}
+        <div className="flex items-center gap-1.5">
+          <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center gap-1">
+            <CheckCircle size={9} /> Issued
           </span>
+          <span className="text-[10px] text-slate-400">{issued_date}</span>
         </div>
 
-        {/* Info */}
-        <div className="border-t border-slate-100 py-4">
-          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1">
-            Internship Certificate
-          </p>
-          <p className="text-sm font-bold text-slate-800 leading-snug">{certificate_number}</p>
-          <p className="text-[10px] text-slate-400 font-mono mt-1">{id_certificate}</p>
-        </div>
-
-        {/* Final Score */}
-        <div className="border-t border-slate-100 py-4">
-          <div className="flex items-center justify-between bg-slate-50 rounded-xl px-3 py-2">
-            <span className="text-xs text-slate-500">Final Score</span>
-            <span className="text-sm font-bold text-emerald-600">{Number(final_score).toFixed(2)}</span>
+        {/* Row 2: icon + text + score + download — all horizontal */}
+        <div className="flex items-center gap-4">
+          <div className="w-8 h-8 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center flex-shrink-0">
+            <Award size={15} className="text-emerald-500" />
           </div>
-        </div>
 
-        {/* Date + Download */}
-        <div className="border-t border-slate-100 pt-4 flex items-center justify-between">
-          <p className="text-xs text-slate-400">Issued: {issued_date}</p>
+          <div className="flex-1 min-w-0 text-left">
+            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-0.5 truncate">
+              {program || 'Internship Program'}
+            </p>
+            <p className="text-sm font-bold text-slate-800 leading-snug truncate">{position || 'Internship'}</p>
+            <p className="text-[10px] text-slate-400 font-mono mt-0.5">{certificate_number}</p>
+          </div>
+
+          <div className="flex-shrink-0 text-center w-14">
+            <p className="text-[10px] text-slate-400 mb-0.5">Score</p>
+            <p className="text-base font-extrabold text-emerald-600">{Number(final_score).toFixed(1)}</p>
+          </div>
+
           <a
             href={file_path}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
+            className="flex-shrink-0 flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors whitespace-nowrap"
           >
-            <Download size={11} />
+            <Download size={12} />
             Download PDF
           </a>
         </div>
@@ -182,6 +192,7 @@ export default function CertificatesPage() {
   const [locked, setLocked] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [logoutModal, setLogoutModal] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -199,6 +210,17 @@ export default function CertificatesPage() {
             "Authorization": `Bearer ${token}`,
           },
         });
+        
+        if (!userResp.ok && userResp.status === 401) {
+          localStorage.removeItem("auth_token");
+          localStorage.removeItem("token");
+          localStorage.removeItem("company");
+          localStorage.removeItem("user");
+          localStorage.removeItem("candidate_user");
+          navigate("/");
+          return;
+        }
+        
         if (userResp.ok) {
           const data = await userResp.json();
           setUserData(data.data || data);
@@ -211,11 +233,22 @@ export default function CertificatesPage() {
             "Authorization": `Bearer ${token}`,
           },
         });
+        
+        if (!certResp.ok && certResp.status === 401) {
+          localStorage.removeItem("auth_token");
+          localStorage.removeItem("token");
+          localStorage.removeItem("company");
+          localStorage.removeItem("user");
+          localStorage.removeItem("candidate_user");
+          navigate("/");
+          return;
+        }
+        
         if (certResp.ok) {
           const certData = await certResp.json();
           const certs = certData.data || certData || [];
-          const issuedCerts = certs.filter(c => c.status === "issued" || c.issued_date);
-          const lockedCerts = certs.filter(c => c.status === "on_going" || !c.issued_date);
+          const issuedCerts = certs.filter(c => c.status === 'issued');
+          const lockedCerts = certs.filter(c => c.status === 'on_going');
           setIssued(issuedCerts);
           setLocked(lockedCerts);
         }
@@ -230,7 +263,11 @@ export default function CertificatesPage() {
     fetchData();
   }, [slug, navigate]);
 
-  const handleLogout = async () => {
+  const handleLogoutClick = () => {
+    setLogoutModal(true);
+  };
+
+  const confirmLogout = async () => {
     try {
       const token = localStorage.getItem("auth_token");
       await fetch(`${API_BASE_URL}/logout`, {
@@ -247,16 +284,20 @@ export default function CertificatesPage() {
       localStorage.removeItem("user");
       localStorage.removeItem("company");
       globalLogout();
+      setLogoutModal(false);
       navigate("/");
     }
   };
+
+  const handleLogout = handleLogoutClick;
 
   const filteredIssued = filter === "Locked" ? [] : issued;
   const filteredLocked  = filter === "Issued" ? [] : locked;
 
   const searchedIssued = filteredIssued.filter((c) =>
-    c.certificate_number.toLowerCase().includes(search.toLowerCase()) ||
-    c.id_certificate.toLowerCase().includes(search.toLowerCase())
+    (c.certificate_number || '').toLowerCase().includes(search.toLowerCase()) ||
+    (c.id_certificate || '').toLowerCase().includes(search.toLowerCase()) ||
+    (c.program || '').toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -266,12 +307,7 @@ export default function CertificatesPage() {
 
       <main className="ml-56 flex-1 px-6 py-6 space-y-5 min-w-0">
         {loading && (
-          <div className="flex items-center justify-center min-h-screen">
-            <div className="text-center">
-              <div className="animate-spin h-12 w-12 border-4 border-indigo-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-              <p className="text-slate-600">Loading certificates...</p>
-            </div>
-          </div>
+          <LoadingSpinner message="Loading certificates..." />
         )}
         {error && (
           <div className="bg-red-50 text-red-700 border border-red-200 rounded-lg p-4 mb-4">
@@ -328,7 +364,7 @@ export default function CertificatesPage() {
         {searchedIssued.length > 0 && (
         <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm space-y-4">
             <p className="text-xs font-semibold text-gray-400 tracking-widest">ISSUED ({searchedIssued.length})</p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="flex flex-col gap-3">
             {searchedIssued.map((cert) => (
                 <CertificateCard key={cert.id_certificate} {...cert} />
             ))}
@@ -340,7 +376,7 @@ export default function CertificatesPage() {
         {filteredLocked.length > 0 && (
         <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm space-y-4">
             <p className="text-xs font-semibold text-gray-400 tracking-widest">INTERNSHIP IN PROGRESS — NOT YET ISSUED ({filteredLocked.length})</p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="flex flex-col gap-3">
             {filteredLocked.map((cert, i) => (
                 <LockedCertificateCard key={i} {...cert} />
             ))}
@@ -356,11 +392,28 @@ export default function CertificatesPage() {
               )}
 
               <p className="text-center text-xs text-slate-400 py-2">
-                © 2025 EarlyPath · Platform Magang Modern · All rights reserved
+                © 2026 EarlyPath · All rights reserved
               </p>
             </>
           )}
       </main>
+
+      {/* Logout Modal */}
+      {logoutModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(10,22,40,0.5)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ background: "#fff", borderRadius: "16px", padding: "28px", width: "340px", boxShadow: "0 20px 60px rgba(0,0,0,0.18)", textAlign: "left" }}>
+            <div style={{ width: "40px", height: "40px", borderRadius: "10px", background: "#fff1f2", display: "flex", alignItems: "center", justifyContent: "center", color: "#ef4444", marginBottom: "14px" }}>
+              <LogOut size={20} />
+            </div>
+            <div style={{ fontSize: "16px", fontWeight: "800", color: "#0f172a", marginBottom: "6px" }}>Sign Out?</div>
+            <div style={{ fontSize: "13px", color: "#64748b", lineHeight: "1.6", marginBottom: "20px" }}>Are you sure you want to sign out of your account?</div>
+            <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+              <button onClick={() => setLogoutModal(false)} style={{ padding: "9px 18px", borderRadius: "9px", border: "1px solid #e2e8f0", background: "#fff", fontSize: "13px", fontWeight: "700", color: "#64748b", cursor: "pointer" }}>Cancel</button>
+              <button onClick={confirmLogout} style={{ padding: "9px 18px", borderRadius: "9px", border: "none", background: "#ef4444", fontSize: "13px", fontWeight: "700", color: "#fff", cursor: "pointer" }}>Yes, Sign Out</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

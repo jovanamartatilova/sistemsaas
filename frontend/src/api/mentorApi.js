@@ -55,14 +55,14 @@ export const mentorApi = {
   getEvaluation: (idSubmission) =>
     api.get(`/mentor/interns/${idSubmission}/evaluation`),
 
-  saveEvaluation: (idSubmission, data) =>
-    api.post(`/mentor/interns/${idSubmission}/evaluation`, data),
-
-  // Certificates
+  saveEvaluation: (idSubmission, data) => api.post(`/mentor/interns/${idSubmission}/evaluation`, data),
   getCertificates: () => api.get('/mentor/certificates'),
-
-  generateCertificate: (idSubmission) =>
-    api.post(`/mentor/interns/${idSubmission}/generate-certificate`),
+  generateCertificate: (idSubmission) => api.post(`/mentor/interns/${idSubmission}/generate-certificate`),
+  sendCertificate: (idSubmission) => api.post(`/mentor/interns/${idSubmission}/send-certificate`),
+  previewCertificate: async (idSubmission) => {
+    const response = await api.get(`/mentor/interns/${idSubmission}/preview-certificate`, {responseType:'blob'});
+    return URL.createObjectURL(response.data);
+  }
 };
 
 export default api;

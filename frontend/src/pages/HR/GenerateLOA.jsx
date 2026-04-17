@@ -64,6 +64,11 @@ const IC = {
       <polyline points="2 12 12 17 22 12" />
     </svg>
   ),
+  Check: () => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="20 6 9 17 4 12" />
+    </svg>
+  ),
 };
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -73,7 +78,7 @@ function todayStr() {
   });
 }
 
-// ── Stat Card (matches dashboard StatCard exactly) ─────────────────────────────
+// ── Stat Card ──────────────────────────────────────────────────────────────────
 function StatCard({ icon, iconBg, iconColor, title, value, sub, barColors }) {
   return (
     <div style={{
@@ -115,7 +120,7 @@ function StatCard({ icon, iconBg, iconColor, title, value, sub, barColors }) {
   );
 }
 
-// ── Action Button helper (matches dashboard ActionBtn) ─────────────────────────
+// ── Action Button ──────────────────────────────────────────────────────────────
 const VARIANT = {
   green:  { bg: "#f0fdf4", color: "#15803d", border: "#86efac" },
   red:    { bg: "#fff1f2", color: "#be123c", border: "#fecdd3" },
@@ -124,13 +129,14 @@ const VARIANT = {
   ghost:  { bg: "#f8fafc", color: "#475569", border: "#e2e8f0" },
 };
 
-function ActionBtn({ label, icon, variant = "blue", onClick, disabled }) {
+function ActionBtn({ label, icon, variant = "blue", onClick, disabled, title }) {
   const v = VARIANT[variant];
   const [hov, setHov] = useState(false);
   return (
     <button
       onClick={onClick}
       disabled={disabled}
+      title={title}
       onMouseEnter={() => setHov(true)}
       onMouseLeave={() => setHov(false)}
       style={{
@@ -192,16 +198,18 @@ const LOA_STATUS = {
 
 // ── Main Page ──────────────────────────────────────────────────────────────────
 export default function GenerateLoAHR() {
-  const navigate   = useNavigate();
-  const user       = useAuthStore((state) => state.user);
+  const navigate = useNavigate();
+  const user     = useAuthStore((state) => state.user);
 
-  const [showLogout, setShowLogout] = useState(false);
-  const [data, setData]             = useState({ user: {}, stats: {}, candidates: [] });
-  const [loading, setLoading]       = useState(null);
-  const [bulkLoading, setBulkLoading] = useState(false);
-  const [error, setError]           = useState("");
+  const [showLogout, setShowLogout]               = useState(false);
+  const [data, setData]                           = useState({ user: {}, stats: {}, candidates: [] });
+  const [loading, setLoading]                     = useState(null);
+  const [bulkLoading, setBulkLoading]             = useState(false);
+  const [error, setError]                         = useState("");
+  const [sending, setSending]                     = useState({});
+  const [regenerateSuccess, setRegenerateSuccess] = useState({});
 
-  // ── Fetch ──────────────────────────────────────────────────────────────────
+  // ── Fetch ────────────────────────────────────────────────────────────────────
   const fetchLoa = async () => {
     try {
       setError("");
@@ -214,7 +222,7 @@ export default function GenerateLoAHR() {
 
   useEffect(() => { fetchLoa(); }, []);
 
-  // ── Handlers ──────────────────────────────────────────────────────────────
+  // ── Handlers ─────────────────────────────────────────────────────────────────
   const handleLogout = () => {
     localStorage.clear();
     useAuthStore.setState({ isAuthenticated: false, token: null, user: null, company: null });
@@ -227,10 +235,24 @@ export default function GenerateLoAHR() {
       setError("");
       await api(`/hr/loa/${id}/generate`, { method: "POST" });
       await fetchLoa();
+      setRegenerateSuccess((prev) => ({ ...prev, [id]: true }));
+      setTimeout(() => setRegenerateSuccess((prev) => ({ ...prev, [id]: false })), 3000);
     } catch (err) {
       setError(err.message || "Failed to generate LoA.");
     } finally {
       setLoading(null);
+    }
+  };
+
+  const handleSendLoa = async (id) => {
+    try {
+      setSending((prev) => ({ ...prev, [id]: true }));
+      await api(`/hr/loa/${id}/send`, { method: "POST" });
+      await fetchLoa();
+    } catch (err) {
+      setError(err.message || "Failed to send LoA.");
+    } finally {
+      setSending((prev) => ({ ...prev, [id]: false }));
     }
   };
 
@@ -247,12 +269,12 @@ export default function GenerateLoAHR() {
     }
   };
 
-  const handlePreview  = (url) => { if (url) window.open(url, "_blank"); };
+  const handlePreview = (url) => { if (url) window.open(url, "_blank"); };
 
   const handleDownload = async (url, id) => {
     if (!url) return;
     try {
-      const res  = await fetch(url);
+      const res = await fetch(url);
       if (!res.ok) throw new Error("Download failed.");
       const blob    = await res.blob();
       const blobUrl = window.URL.createObjectURL(blob);
@@ -268,7 +290,7 @@ export default function GenerateLoAHR() {
     }
   };
 
-  // ── Stat cards (same pattern as dashboard) ─────────────────────────────────
+  // ── Stat cards ───────────────────────────────────────────────────────────────
   const statCards = [
     {
       icon: <IC.Layers />, iconBg: "#eff6ff", iconColor: "#3b82f6",
@@ -314,7 +336,7 @@ export default function GenerateLoAHR() {
       {/* Main */}
       <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
 
-        {/* Topbar — identical to dashboard */}
+        {/* Topbar */}
         <header style={{
           height: "56px", background: "#fff", borderBottom: "1px solid #e2e8f0",
           display: "flex", alignItems: "center", padding: "0 28px", gap: "16px",
@@ -367,7 +389,7 @@ export default function GenerateLoAHR() {
             </div>
           )}
 
-          {/* Stat Cards — 3 columns, same style as dashboard */}
+          {/* Stat Cards */}
           <div style={{
             display: "grid", gridTemplateColumns: "repeat(3, 1fr)",
             gap: "20px", marginBottom: "24px",
@@ -412,7 +434,7 @@ export default function GenerateLoAHR() {
             {/* Table header */}
             <div style={{
               display: "grid",
-              gridTemplateColumns: "2fr 1.2fr 1.8fr 0.7fr 1fr 0.9fr",
+              gridTemplateColumns: "2fr 1.2fr 1.8fr 0.7fr 1fr 1.1fr",
               gap: "12px", padding: "10px 24px",
               background: "#f8fafc", borderBottom: "1px solid #f1f5f9",
             }}>
@@ -429,14 +451,14 @@ export default function GenerateLoAHR() {
             {/* Rows */}
             {!data.candidates || data.candidates.length === 0 ? (
               <div style={{ padding: "48px 0", textAlign: "center", color: "#94a3b8", fontSize: "13px" }}>
-                <div style={{ marginBottom: "6px", fontSize: "28px", color: "#e2e8f0" }}>
-                  <IC.FileCheck />
+                <div style={{ marginBottom: "8px", fontSize: "13px" }}>No accepted candidates yet.</div>
+                <div style={{ fontSize: "12px" }}>
+                  Candidates must have submissions with "accepted" status to generate LoA.
                 </div>
-                No accepted candidates yet.
               </div>
             ) : (
               data.candidates.map((c, i) => {
-                const st  = LOA_STATUS[c.loa_status] || LOA_STATUS.pending;
+                const st = LOA_STATUS[c.loa_status] || LOA_STATUS.pending;
                 const isGenerating = loading === c.id_submission;
                 return (
                   <div
@@ -444,13 +466,13 @@ export default function GenerateLoAHR() {
                     className="row-hover"
                     style={{
                       display: "grid",
-                      gridTemplateColumns: "2fr 1.2fr 1.8fr 0.7fr 1fr 0.9fr",
+                      gridTemplateColumns: "2fr 1.2fr 1.8fr 0.7fr 1fr 1.1fr",
                       gap: "12px", padding: "14px 24px", alignItems: "center",
                       borderBottom: i < data.candidates.length - 1 ? "1px solid #f8fafc" : "none",
                       transition: "background 0.15s",
                     }}
                   >
-                    {/* Candidate name + email */}
+                    {/* Candidate */}
                     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                       <div style={{
                         width: "32px", height: "32px", borderRadius: "50%", flexShrink: 0,
@@ -475,25 +497,20 @@ export default function GenerateLoAHR() {
                     {/* Type */}
                     <div style={{ fontSize: "13px", color: "#475569" }}>{c.type}</div>
 
-                    {/* LoA Status badge */}
+                    {/* LoA Status */}
                     <div>
                       <span style={{
                         display: "inline-flex", padding: "3px 10px", borderRadius: "20px",
                         fontSize: "11px", fontWeight: "600",
-                        background: st.bg, color: st.color,
-                        border: `1px solid ${st.border}`,
+                        background: st.bg, color: st.color, border: `1px solid ${st.border}`,
                       }}>
                         {st.label}
                       </span>
                     </div>
 
                     {/* Actions */}
-                    <div style={{ 
-                      display: "flex", 
-                      gap: "8px", 
-                      justifyContent: "center", 
-                      alignItems: "center" 
-                    }}>
+                    <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+                      {/* Preview */}
                       {c.has_file && (
                         <ActionBtn
                           icon={<IC.Eye />}
@@ -502,6 +519,42 @@ export default function GenerateLoAHR() {
                           title="Preview LoA"
                         />
                       )}
+
+                      {/* Send / Sent */}
+                      {c.has_file && (
+                        c.is_sent ? (
+                          <ActionBtn label="Sent" variant="green" disabled />
+                        ) : (
+                          <ActionBtn
+                            label={sending[c.id_submission] ? "Sending…" : "Send"}
+                            variant="blue"
+                            onClick={() => handleSendLoa(c.id_submission)}
+                            disabled={sending[c.id_submission]}
+                          />
+                        )
+                      )}
+
+                      {/* Generate / Regenerate */}
+                      {c.has_file ? (
+                        <ActionBtn
+                          icon={regenerateSuccess[c.id_submission] ? <IC.Check /> : <IC.Refresh />}
+                          variant={regenerateSuccess[c.id_submission] ? "green" : "amber"}
+                          onClick={() => handleGenerate(c.id_submission)}
+                          disabled={isGenerating}
+                          title="Regenerate LoA"
+                        />
+                      ) : (
+                        <ActionBtn
+                          icon={<IC.FilePlus />}
+                          label={isGenerating ? "Generating…" : "Generate"}
+                          variant="green"
+                          onClick={() => handleGenerate(c.id_submission)}
+                          disabled={isGenerating}
+                          title="Generate LoA"
+                        />
+                      )}
+
+                      {/* Download */}
                       {c.has_file && (
                         <ActionBtn
                           icon={<IC.Download />}
@@ -510,13 +563,6 @@ export default function GenerateLoAHR() {
                           title="Download LoA"
                         />
                       )}
-                      <ActionBtn
-                        icon={c.loa_status !== "pending" ? <IC.Refresh /> : <IC.FilePlus />}
-                        variant={c.loa_status === "pending" ? "green" : "amber"}
-                        onClick={() => handleGenerate(c.id_submission)}
-                        disabled={isGenerating}
-                        title={c.loa_status === "pending" ? "Generate LoA" : "Regenerate LoA"}
-                      />
                     </div>
                   </div>
                 );
@@ -526,7 +572,7 @@ export default function GenerateLoAHR() {
         </main>
       </div>
 
-      {/* Modals */}
+      {/* Logout Modal */}
       {showLogout && (
         <LogoutModal onConfirm={handleLogout} onCancel={() => setShowLogout(false)} />
       )}
