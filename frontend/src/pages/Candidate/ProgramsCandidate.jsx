@@ -279,22 +279,6 @@ function ProgramCard({ program }) {
 
         {/* Right Side: Actions & Progress Data */}
         <div className="flex flex-col md:items-end gap-2 w-full md:w-auto shrink-0">
-           {/* Progress Indicator (Only when Accepted) */}
-           {isAccepted && (
-              <div className="w-full md:w-48 flex flex-col gap-1.5 mb-1">
-                 <div className="flex justify-between items-end text-xs font-bold">
-                    <span className="text-slate-400 uppercase tracking-widest text-[10px]">Learning</span>
-                    <span className="text-indigo-600">{completed_hours} <span className="text-slate-400 font-medium">/ {learning_hours} h</span></span>
-                 </div>
-                 <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-indigo-500 rounded-full transition-all duration-1000"
-                      style={{ width: `${Math.min(100, ((completed_hours || 0) / (learning_hours || 1)) * 100)}%` }}
-                    />
-                 </div>
-              </div>
-           )}
-
            {/* LoA Actions */}
            <div className="flex gap-2 w-full md:w-auto">
              <button 

@@ -1,21 +1,22 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { SidebarMentor } from "./MentorComponents";
+import { SidebarMentor } from "../../components/SidebarMentor";
 import { mentorApi } from "../../api/mentorApi";
 import { useAuthStore } from "../../stores/authStore";
+import { broadcastDataRefresh, onDataRefresh } from "../../utils/dataRefresh";
 
 const s = {
-  app: { display: "flex", minHeight: "100vh", background: "#f1f5f9", fontFamily: "'Poppins', 'Segoe UI', sans-serif", fontSize: "14px", color: "#1e293b" },
-  main: { marginLeft: "250px", flex: 1, display: "flex", flexDirection: "column", minHeight: "100vh" },
-  topbar: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 28px", background: "#fff", borderBottom: "1px solid #e2e8f0", position: "sticky", top: 0, zIndex: 50 },
+  app: { display: "flex", minHeight: "100vh", background: "#f1f5f9", fontFamily: "'Poppins', 'Segoe UI', sans-serif", fontSize: "14px", color: "#1e293b", gap: 0 },
+  main: { flex: 1, display: "flex", flexDirection: "column", minHeight: "100vh", gap: 0, overflow: "hidden" },
+  topbar: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 28px", background: "#fff", borderBottom: "1px solid #e2e8f0", position: "sticky", top: 0, zIndex: 50, flexShrink: 0 },
   bc: { display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "#64748b" },
   bcSep: { color: "#cbd5e1" },
   bcActive: { color: "#1e293b", fontWeight: 600 },
   topbarDate: { fontSize: "12px", color: "#64748b", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "6px", padding: "5px 10px" },
-  content: { padding: "28px" },
+  content: { padding: "28px", flex: 1, overflowY: "auto" },
   h1: { fontSize: "22px", fontWeight: 700, color: "#0f172a", margin: 0 },
   subtitle: { fontSize: "13px", color: "#64748b", marginTop: "4px", marginBottom: "20px" },
-  layout: { display: "grid", gridTemplateColumns: "1fr 300px", gap: "16px" },
+  layout: { display: "grid", gridTemplateColumns: "1fr", gap: "16px" },
   card: { background: "#fff", borderRadius: "12px", border: "1px solid #e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,0.04)", overflow: "hidden" },
   ch: { padding: "18px 24px", borderBottom: "1px solid #f1f5f9" },
   ct: { fontSize: "15px", fontWeight: 700, color: "#0f172a" },
@@ -66,6 +67,26 @@ export default function InputScoreMentor() {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    // Listen for data refresh events and refetch data
+    const cleanup = onDataRefresh(() => {
+      console.log('InputScoreMentor: Data refresh event received, refetching...');
+      fetchData();
+    });
+    
+    // Also refetch when window gains focus
+    const handleFocus = () => {
+      console.log('InputScoreMentor: Window focused, refetching data...');
+      fetchData();
+    };
+    window.addEventListener('focus', handleFocus);
+    
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      cleanup();
+    };
+  }, []);
+
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -102,7 +123,7 @@ export default function InputScoreMentor() {
         newScores[comp.id_competency] = {
           score: comp.score,
           hours_completed: comp.hours_completed,
-          status: comp.status,
+          status: comp.status || 'pending', // Ensure status always has a value
           notes: comp.notes,
         };
       });
@@ -136,20 +157,43 @@ export default function InputScoreMentor() {
     try {
       setSaving(true);
       setError(null);
-      const scoresArray = competencies.map(comp => ({
-        id_competency: comp.id_competency,
-        score: scores[comp.id_competency]?.score,
-        status: scores[comp.id_competency]?.status,
-        notes: scores[comp.id_competency]?.notes,
-      }));
+      const scoresArray = competencies.map(comp => {
+        const compScore = scores[comp.id_competency];
+        let status = compScore?.status ?? 'pending';
+        
+        // Auto-set status based on score if not explicitly set
+        if (compScore?.score !== null && compScore?.score !== undefined && compScore?.score !== '') {
+          // If score was entered but no explicit status, determine based on score
+          if (!compScore?.status) {
+            status = compScore.score >= 75 ? 'passed' : 'failed';
+          }
+        }
+        
+        // If passed, use required hours; otherwise use existing hours_completed or 0
+        const hoursCompleted = status === 'passed' ? comp.hours : (compScore?.hours_completed ?? 0);
+        
+        return {
+          id_competency: comp.id_competency,
+          score: compScore?.score,
+          hours_completed: hoursCompleted,
+          status: status,
+          notes: compScore?.notes,
+        };
+      });
 
-      console.log('Saving scores:', {
+      console.log('DEBUG - Saving scores:', {
         idSubmission: selectedSubmissionId,
         scoresArray,
+        competenciesCount: competencies.length,
+        scoresStateKeys: Object.keys(scores),
       });
+      console.log('DEBUG - Individual scores state:', scores);
 
       const response = await mentorApi.inputScores(selectedSubmissionId, scoresArray);
       console.log('Save response:', response.data);
+      
+      // Broadcast data refresh to notify dashboard and other pages
+      broadcastDataRefresh('scores');
       
       setSuccessModal(true);
       // Refresh competencies to confirm save
@@ -198,8 +242,13 @@ export default function InputScoreMentor() {
 
   const handleLogout = handleLogoutClick;
 
-  // Filter interns to only show those NOT fully scored
-  const unScoredInterns = interns.filter(i => i.completed_competencies < i.total_competencies || i.total_competencies === 0);
+  // Filter interns to only show those NOT fully scored and NOT already passed
+  const unScoredInterns = interns.filter(i => {
+    // Exclude if recommendation is "Recommended to Pass" (already evaluated/passed)
+    if (i.recommendation === "Recommended to Pass") return false;
+    // Include if not fully scored
+    return i.completed_competencies < i.total_competencies || i.total_competencies === 0;
+  });
   
   const selectedIntern = interns.find(i => i.id_submission === selectedSubmissionId);
   const scored = competencies.filter(c => scores[c.id_competency]?.score !== null && scores[c.id_competency]?.score !== undefined && scores[c.id_competency]?.score !== "");
@@ -347,27 +396,6 @@ export default function InputScoreMentor() {
                   <div style={s.avgVal}>{avg !== null ? avg : "—"}</div>
                 </div>
                 <button style={s.btnSave} onClick={handleSave} disabled={saving}>{saving ? 'Saving...' : 'Save All Scores'}</button>
-              </div>
-            </div>
-
-            {/* Side panels */}
-            <div>
-              {/* Score summary */}
-              <div style={s.sideCard}>
-                <div style={s.sideCh}><div style={s.sideCt}>Score Summary — {selectedInternName.split(" ")[0]}</div></div>
-                {competencies.map((comp, i) => {
-                  const sc = scores[comp.id_competency];
-                  return (
-                    <div key={comp.id_competency} style={{ ...s.scoreRow, borderBottom: i < competencies.length - 1 ? "1px solid #f8fafc" : "none" }}>
-                      <span style={s.scoreName}>{comp.name}</span>
-                      {sc?.score !== null && sc?.score !== undefined && sc?.score !== "" ? <span style={s.scoreVal}>{sc.score}</span> : <span style={s.scoreEmpty}>—</span>}
-                    </div>
-                  );
-                })}
-                <div style={{ display: "flex", justifyContent: "space-between", padding: "12px 18px", borderTop: "1px solid #e2e8f0", background: "#f8fafc" }}>
-                  <span style={{ fontSize: "12px", color: "#64748b" }}>Average</span>
-                  <span style={{ fontSize: "16px", fontWeight: 800, color: "#8b5cf6" }}>{avg !== null ? avg : "—"}</span>
-                </div>
               </div>
             </div>
           </div>

@@ -2,22 +2,23 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { mentorApi } from "../../api/mentorApi";
 import { useAuthStore } from "../../stores/authStore";
-import { SidebarMentor, MentorLoadingSpinner } from "./MentorComponents";
+import { SidebarMentor, MentorLoadingSpinner } from "../../components/SidebarMentor";
+import { onDataRefresh } from "../../utils/dataRefresh";
 
 
 // ─── STYLES ───────────────────────────────────────────────────────────────────
 const s = {
-  app: { display: "flex", minHeight: "100vh", background: "#f1f5f9", fontFamily: "'Poppins', 'Segoe UI', sans-serif", fontSize: "14px", color: "#1e293b" },
-  main: { marginLeft: "250px", flex: 1, display: "flex", flexDirection: "column", minHeight: "100vh" },
-  topbar: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 28px", background: "#fff", borderBottom: "1px solid #e2e8f0", position: "sticky", top: 0, zIndex: 50 },
+  app: { display: "flex", minHeight: "100vh", background: "#f1f5f9", fontFamily: "'Poppins', 'Segoe UI', sans-serif", fontSize: "14px", color: "#1e293b", gap: 0 },
+  main: { flex: 1, display: "flex", flexDirection: "column", minHeight: "100vh", gap: 0, overflow: "hidden" },
+  topbar: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 28px", background: "#fff", borderBottom: "1px solid #e2e8f0", position: "sticky", top: 0, zIndex: 50, flexShrink: 0 },
   bc: { display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "#64748b" },
   bcSep: { color: "#cbd5e1" },
   bcActive: { color: "#1e293b", fontWeight: 600 },
   topbarDate: { fontSize: "12px", color: "#64748b", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "6px", padding: "5px 10px" },
-  content: { padding: "28px" },
+  content: { padding: "28px", flex: 1, overflowY: "auto" },
   h1: { fontSize: "22px", fontWeight: 700, color: "#0f172a", margin: 0 },
   subtitle: { fontSize: "13px", color: "#64748b", marginTop: "4px", marginBottom: "20px" },
-  grid4: { display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "16px", marginBottom: "24px" },
+  grid4: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "16px", marginBottom: "24px" },
   stat: { background: "#fff", borderRadius: "12px", padding: "18px 20px", border: "1px solid #e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" },
   statTop: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px" },
   statLabel: { fontSize: "13px", fontWeight: 600, color: "#64748b" },
@@ -56,6 +57,23 @@ export default function DashboardMentor() {
 
   useEffect(() => {
     fetchDashboardData();
+    
+    // Refetch data when page gains focus
+    const handleFocus = () => {
+      fetchDashboardData();
+    };
+    window.addEventListener('focus', handleFocus);
+    
+    // Setup listener for data refresh events from other pages
+    const cleanup = onDataRefresh(() => {
+      console.log('Dashboard: Data refresh event received, refetching...');
+      fetchDashboardData();
+    });
+    
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      cleanup();
+    };
   }, []);
 
   const fetchDashboardData = async () => {
@@ -125,14 +143,14 @@ export default function DashboardMentor() {
 
   const handleLogout = handleLogoutClick;
 
-  const avgScore = interns.length > 0 ? (interns.reduce((sum, i) => sum + (Number(i.avg_score) || 0), 0) / interns.length).toFixed(1) : 0;
-  const avgScorePercent = Math.min(Math.round(avgScore), 100) + "%";
+  // Use new accurate metrics from backend - keep only 4 main cards
+  const avgScore = dashData?.average_score ?? 0;
   
   const statCards = [
-    { value: dashData?.total_interns ?? 0, label: "My Interns", badge: "Active", badgeBg: "#f5f3ff", badgeColor: "#7c3aed", sub: "2 programs", barColor: "#8b5cf6", barWidth: "80%" },
-    { value: avgScore, label: "Average Score", badge: null, sub: "Scale 0–100", barColor: "#14b8a6", barWidth: avgScorePercent },
-    { value: dashData?.in_progress ?? 0, label: "Pending Scores", badge: "Pending", badgeBg: "#fef9c3", badgeColor: "#92400e", sub: "Needs input", barColor: "#f59e0b", barWidth: "37%" },
-    { value: dashData?.interns_passed ?? 0, label: "Passed", badge: null, sub: "Ready for certificate", barColor: "#22c55e", barWidth: "62%" },
+    { value: dashData?.total_interns ?? 0, label: "My Interns", badge: "Active", badgeBg: "#f5f3ff", badgeColor: "#7c3aed", sub: "Total active", barColor: "#8b5cf6", barWidth: "80%" },
+    { value: dashData?.needs_input ?? 0, label: "Needs Input", badge: "Action", badgeBg: "#ede9fe", badgeColor: "#6d28d9", sub: "Evaluation", barColor: "#a855f7", barWidth: "45%" },
+    { value: dashData?.interns_passed ?? 0, label: "Passed", badge: null, sub: "Recommended", barColor: "#22c55e", barWidth: "62%" },
+    { value: dashData?.ready_for_certificate ?? 0, label: "Ready for Certificate", badge: null, sub: "For issuance", barColor: "#06b6d4", barWidth: "50%" },
   ];
 
   if (loading) {

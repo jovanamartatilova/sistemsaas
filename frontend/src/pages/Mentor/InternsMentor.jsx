@@ -1,18 +1,19 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { SidebarMentor } from "./MentorComponents";
+import { SidebarMentor } from "../../components/SidebarMentor";
 import { mentorApi } from "../../api/mentorApi";
 import { useAuthStore } from "../../stores/authStore";
+import { onDataRefresh } from "../../utils/dataRefresh";
 
 const s = {
-  app: { display: "flex", minHeight: "100vh", background: "#f1f5f9", fontFamily: "'Poppins', 'Segoe UI', sans-serif", fontSize: "14px", color: "#1e293b" },
-  main: { marginLeft: "250px", flex: 1, display: "flex", flexDirection: "column", minHeight: "100vh" },
-  topbar: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 28px", background: "#fff", borderBottom: "1px solid #e2e8f0", position: "sticky", top: 0, zIndex: 50 },
+  app: { display: "flex", minHeight: "100vh", background: "#f1f5f9", fontFamily: "'Poppins', 'Segoe UI', sans-serif", fontSize: "14px", color: "#1e293b", gap: 0 },
+  main: { flex: 1, display: "flex", flexDirection: "column", minHeight: "100vh", gap: 0, overflow: "hidden" },
+  topbar: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 28px", background: "#fff", borderBottom: "1px solid #e2e8f0", position: "sticky", top: 0, zIndex: 50, flexShrink: 0 },
   bc: { display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "#64748b" },
   bcSep: { color: "#cbd5e1" },
   bcActive: { color: "#1e293b", fontWeight: 600 },
   topbarDate: { fontSize: "12px", color: "#64748b", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "6px", padding: "5px 10px" },
-  content: { padding: "28px" },
+  content: { padding: "28px", flex: 1, overflowY: "auto" },
   h1: { fontSize: "22px", fontWeight: 700, color: "#0f172a", margin: 0 },
   subtitle: { fontSize: "13px", color: "#64748b", marginTop: "4px", marginBottom: "20px" },
   grid3: { display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "16px", marginBottom: "24px" },
@@ -55,6 +56,26 @@ export default function InternsMentor() {
 
   useEffect(() => {
     fetchInterns();
+  }, []);
+
+  useEffect(() => {
+    // Listen for data refresh events and refetch interns
+    const cleanup = onDataRefresh(() => {
+      console.log('InternsMentor: Data refresh event received, refetching...');
+      fetchInterns();
+    });
+    
+    // Also refetch when window gains focus
+    const handleFocus = () => {
+      console.log('InternsMentor: Window focused, refetching data...');
+      fetchInterns();
+    };
+    window.addEventListener('focus', handleFocus);
+    
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      cleanup();
+    };
   }, []);
 
   const fetchInterns = async () => {
@@ -146,17 +167,6 @@ export default function InternsMentor() {
         <div style={s.content}>
           <h1 style={s.h1}>My Interns</h1>
           <p style={s.subtitle}>All interns assigned to you. Scores are always recorded per individual — team enrollment only affects how they applied.</p>
-
-          <div style={s.grid3}>
-            {stats?.map((c, i) => (
-              <div key={i} style={s.stat}>
-                <div style={s.statTop}><span style={s.statLabel}>{c.label}</span></div>
-                <div style={s.statVal}>{c.value}</div>
-                <div style={s.statBar}><div style={s.statFill(c.barWidth, c.barColor)} /></div>
-                <div style={s.statSub}>{c.sub}</div>
-              </div>
-            ))}
-          </div>
 
           <div style={s.card}>
             <div style={{...s.ch, flexDirection: "column", alignItems: "center", textAlign: "center", gap: "8px", justifyContent: "center"}}>

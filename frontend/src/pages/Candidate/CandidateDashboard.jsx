@@ -34,25 +34,15 @@ function CompetencyCard({ title, hours, projects, score, maxScore, status, progr
         </div>
         <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${statusColor}`}>{status}</span>
       </div>
-      <div className="space-y-1">
-        {score !== undefined ? (
-          <>
-            <div className="flex justify-between text-xs text-slate-500">
-              <span>Score Evaluation</span>
-              <span className="text-emerald-600 font-semibold">{score} / {maxScore}</span>
-            </div>
-            <ProgressBar value={score} max={maxScore} color="bg-emerald-500" />
-          </>
-        ) : (
-          <>
-            <div className="flex justify-between text-xs text-slate-500">
-              <span>Progress</span>
-              <span className="text-indigo-600 font-semibold">{progress}%</span>
-            </div>
-            <ProgressBar value={progress} max={100} color={barColor} />
-          </>
-        )}
-      </div>
+      {score !== undefined && (
+        <div className="space-y-1">
+          <div className="flex justify-between text-xs text-slate-500">
+            <span>Score Evaluation</span>
+            <span className="text-emerald-600 font-semibold">{score} / {maxScore}</span>
+          </div>
+          <ProgressBar value={score} max={maxScore} color="bg-emerald-500" />
+        </div>
+      )}
     </div>
   );
 }
@@ -374,7 +364,7 @@ export default function EarlyPathDashboard() {
           </div>
           <div className="flex gap-6 flex-shrink-0 divide-x divide-slate-100">
             {[
-              { value: `${competencies?.length || 0}`, label: "Competencies", sub: "0 Completed", subColor: "text-slate-400" },
+              { value: `${competencies?.length || 0}`, label: "Competencies" },
             ].map((stat, i) => (
               <div key={i} className="text-center px-6 first:pl-0 last:pr-0">
                 <p className="text-2xl font-bold text-slate-800">{stat.value}</p>
@@ -387,7 +377,6 @@ export default function EarlyPathDashboard() {
                     />
                   </div>
                 )}
-                {stat.sub && <p className={`text-xs mt-0.5 ${stat.subColor}`}>{stat.sub}</p>}
               </div>
             ))}
           </div>
