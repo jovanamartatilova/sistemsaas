@@ -144,6 +144,7 @@ export default function EarlyPathDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [dashboardData, setDashboardData] = useState(null);
+  const [logoutModal, setLogoutModal] = useState(false);
   const { logout: globalLogout } = useAuthStore();
 
   useEffect(() => {
@@ -193,7 +194,11 @@ export default function EarlyPathDashboard() {
     }
   };
 
-  const handleLogout = async () => {
+  const handleLogoutClick = () => {
+    setLogoutModal(true);
+  };
+
+  const confirmLogout = async () => {
     try {
       const token = localStorage.getItem("token") || localStorage.getItem("auth_token");
       if (token) {
@@ -208,10 +213,17 @@ export default function EarlyPathDashboard() {
     } catch (err) {
       console.error("Error during logout:", err);
     } finally {
-      globalLogout();
+      localStorage.removeItem("auth_token");
+      localStorage.removeItem("token");
+      localStorage.removeItem("company");
+      localStorage.removeItem("user");
+      localStorage.removeItem("candidate_user");
+      setLogoutModal(false);
       navigate("/");
     }
   };
+
+  const handleLogout = handleLogoutClick;
 
   if (loading) {
     // Loading state will be shown inside main with Sidebar visible
@@ -221,40 +233,66 @@ export default function EarlyPathDashboard() {
     profile: dashboardData.profile,
     apprentice: dashboardData.apprentice,
     vacancy: dashboardData.vacancy,
+    interviews: dashboardData.interviews,
     learning_progress: dashboardData.learning_progress,
     competencies: dashboardData.competencies,
-  } : { profile: null, apprentice: null, vacancy: null, learning_progress: null, competencies: [] };
+  } : { profile: null, apprentice: null, vacancy: null, interviews: [], learning_progress: null, competencies: [] };
 
   if (error || !dashboardData) {
     return (
       <div className="min-h-screen bg-gray-50 flex" style={{ fontFamily: 'Poppins, sans-serif' }}>
         <Sidebar userName={userData.profile?.name} onLogout={handleLogout} />
         <main className="ml-56 flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <p className="text-slate-600 mb-4">{error || "Failed to load dashboard"}</p>
-            <div className="flex gap-3 justify-center">
-              <button
-                onClick={fetchDashboardData}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-              >
-                Retry
-              </button>
-              <button
-                onClick={() => navigate("/")}
-                className="px-4 py-2 bg-slate-300 text-slate-700 rounded-lg hover:bg-slate-400"
-              >
-                Back Home
-              </button>
+          {loading ? (
+            <LoadingSpinner message="Loading dashboard..." />
+          ) : (
+            <div className="text-center">
+              <p className="text-slate-600 mb-4">{error || "Failed to load dashboard"}</p>
+              <div className="flex gap-3 justify-center">
+                <button
+                  onClick={fetchDashboardData}
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                >
+                  Retry
+                </button>
+                <button
+                  onClick={() => navigate("/")}
+                  className="px-4 py-2 bg-slate-300 text-slate-700 rounded-lg hover:bg-slate-400"
+                >
+                  Back Home
+                </button>
+              </div>
             </div>
-          </div>
+          )}
         </main>
       </div>
     );
   }
 
-  const { profile, apprentice, vacancy, learning_progress, competencies } = userData;
+  const { profile, apprentice, vacancy, interviews, learning_progress, competencies } = userData;
 
-  // Format competencies for display
+  // Format status display
+  const formatStatus = (status) => {
+    const statusMap = {
+      'pending': 'Screening',
+      'accepted': 'Accepted',
+      'rejected': 'Rejected',
+      'active': 'Active',
+      'inactive': 'Inactive',
+    };
+    return statusMap[status?.toLowerCase()] || (status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Unknown');
+  };
+
+  const getStatusColor = (status) => {
+    const normalized = status?.toLowerCase();
+    if (normalized === 'accepted' || normalized === 'active') {
+      return 'bg-emerald-50 text-emerald-600 border-emerald-200';
+    } else if (normalized === 'rejected') {
+      return 'bg-rose-50 text-rose-600 border-rose-200';
+    }
+    return 'bg-amber-50 text-amber-600 border-amber-200';
+  };
+
   const competencyList = competencies.map((comp) => ({
     title: comp.name,
     hours: `${comp.learning_hours} learning hours`,
@@ -270,7 +308,7 @@ export default function EarlyPathDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex" style={{ fontFamily: 'Poppins, sans-serif' }}>
-      <Sidebar userName={profile?.name} onLogout={handleLogout} />
+      <Sidebar userName={profile?.name} onLogout={handleLogoutClick} />
 
       <main className="ml-56 flex-1 px-6 py-6 space-y-5 min-w-0">
         <style>{`@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');`}</style>
@@ -336,7 +374,6 @@ export default function EarlyPathDashboard() {
           </div>
           <div className="flex gap-6 flex-shrink-0 divide-x divide-slate-100">
             {[
-              { value: `${profile?.overall_progress || 0}%`, label: "Progress", bar: true },
               { value: `${competencies?.length || 0}`, label: "Competencies", sub: "0 Completed", subColor: "text-slate-400" },
             ].map((stat, i) => (
               <div key={i} className="text-center px-6 first:pl-0 last:pr-0">
@@ -371,18 +408,12 @@ export default function EarlyPathDashboard() {
                     { label: "Location", value: vacancy?.location || "-" },
                     { label: "Start Date", value: vacancy?.start_date ? new Date(vacancy.start_date).toLocaleDateString('en-US') : "-" },
                     { label: "End Date", value: vacancy?.end_date ? new Date(vacancy.end_date).toLocaleDateString('en-US') : "-" },
-                    { label: "Status", value: apprentice?.status || "Screening", badge: true },
+                    { label: "Status", value: formatStatus(apprentice?.status), badge: true, isStatus: true },
                   ].map((row, i) => (
                     <div key={i} className="flex justify-between items-center text-sm">
                       <span className="text-slate-400">{row.label}</span>
                       {row.badge ? (
-                        <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium border ${
-                          row.value === 'accepted' || row.value === 'Accepted'
-                            ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
-                            : row.value === 'rejected' || row.value === 'Rejected'
-                            ? 'bg-rose-50 text-rose-600 border-rose-200'
-                            : 'bg-amber-50 text-amber-600 border-amber-200'
-                        }`}>
+                        <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium border ${getStatusColor(apprentice?.status)}`}>
                           ● {row.value}
                         </span>
                       ) : (
@@ -398,6 +429,50 @@ export default function EarlyPathDashboard() {
                 </div>
               )}
             </div>
+
+            {/* Interview Section */}
+            {interviews && interviews.length > 0 && (
+              <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+                <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Interview Schedule</h2>
+                <div className="space-y-4">
+                  {interviews.map((interview, idx) => {
+                    const interviewDateTime = interview.interview_date && interview.interview_time
+                      ? new Date(`${interview.interview_date}T${interview.interview_time}`).toLocaleString('en-US')
+                      : 'TBD';
+                    
+                    return (
+                      <div key={idx} className="border border-slate-100 rounded-lg p-3 space-y-2">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Interview {idx + 1}</p>
+                            <p className="text-sm font-medium text-slate-700 mt-1">Date & Time</p>
+                            <p className="text-sm text-slate-600">{interviewDateTime}</p>
+                          </div>
+                          <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium border whitespace-nowrap ${
+                            interview.status === 'passed' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' :
+                            interview.status === 'failed' ? 'bg-rose-50 text-rose-600 border-rose-200' :
+                            'bg-blue-50 text-blue-600 border-blue-200'
+                          }`}>
+                            ● {interview.status || 'pending'}
+                          </span>
+                        </div>
+                        {interview.link && (
+                          <a
+                            href={interview.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-block text-xs font-semibold text-indigo-600 hover:text-indigo-700 underline"
+                          >
+                            Join Meeting →
+                          </a>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
           </div>
 
           {/* Right Column */}
@@ -434,11 +509,28 @@ export default function EarlyPathDashboard() {
 
 
         <p className="text-center text-xs text-slate-400 py-2">
-          © 2025 EarlyPath · All rights reserved
+          © 2026 EarlyPath · All rights reserved
         </p>
           </>
         )}
       </main>
+
+      {/* Logout Modal */}
+      {logoutModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(10,22,40,0.5)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ background: "#fff", borderRadius: "16px", padding: "28px", width: "340px", boxShadow: "0 20px 60px rgba(0,0,0,0.18)", textAlign: "left" }}>
+            <div style={{ width: "40px", height: "40px", borderRadius: "10px", background: "#fff1f2", display: "flex", alignItems: "center", justifyContent: "center", color: "#ef4444", marginBottom: "14px" }}>
+              <LogOut size={20} />
+            </div>
+            <div style={{ fontSize: "16px", fontWeight: "800", color: "#0f172a", marginBottom: "6px" }}>Sign Out?</div>
+            <div style={{ fontSize: "13px", color: "#64748b", lineHeight: "1.6", marginBottom: "20px" }}>Are you sure you want to sign out of your account?</div>
+            <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+              <button onClick={() => setLogoutModal(false)} style={{ padding: "9px 18px", borderRadius: "9px", border: "1px solid #e2e8f0", background: "#fff", fontSize: "13px", fontWeight: "700", color: "#64748b", cursor: "pointer" }}>Cancel</button>
+              <button onClick={confirmLogout} style={{ padding: "9px 18px", borderRadius: "9px", border: "none", background: "#ef4444", fontSize: "13px", fontWeight: "700", color: "#fff", cursor: "pointer" }}>Yes, Sign Out</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

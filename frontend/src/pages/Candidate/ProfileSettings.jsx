@@ -389,7 +389,7 @@ function ProfileContent({ userData, setUserData }) {
 
       {/* Footer */}
       <p className="text-center text-xs text-gray-300 mt-6">
-        © 2025 EarlyPath · All rights reserved
+        © 2026 EarlyPath · All rights reserved
       </p>
     </div>
   );
@@ -412,6 +412,7 @@ export default function ProfileSettings() {
   });
   const [loading, setLoading] = useState(!userData);
   const [error, setError] = useState(null);
+  const [logoutModal, setLogoutModal] = useState(false);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -459,7 +460,11 @@ export default function ProfileSettings() {
     fetchUserData();
   }, [navigate, slug]);
 
-  const handleLogout = async () => {
+  const handleLogoutClick = () => {
+    setLogoutModal(true);
+  };
+
+  const confirmLogout = async () => {
     try {
       const token = localStorage.getItem("auth_token") || localStorage.getItem("token");
       if (token) {
@@ -475,12 +480,22 @@ export default function ProfileSettings() {
       localStorage.removeItem("token");
       localStorage.removeItem("candidate_user");
       globalLogout();
+      setLogoutModal(false);
       navigate("/");
     }
   };
 
+  const handleLogout = handleLogoutClick;
+
   if (loading) {
-    return <LoadingSpinner message="Loading profile..." />;
+    return (
+      <div className="min-h-screen bg-gray-50 flex">
+        <Sidebar userName={userData?.full_name} onLogout={handleLogout} />
+        <main className="ml-56 flex-1 flex items-center justify-center">
+          <LoadingSpinner message="Loading profile..." />
+        </main>
+      </div>
+    );
   }
 
   if (error && !userData) {
@@ -507,6 +522,23 @@ export default function ProfileSettings() {
           <ProfileContent userData={userData} setUserData={setUserData} />
         </main>
       </div>
+
+      {/* Logout Modal */}
+      {logoutModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(10,22,40,0.5)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ background: "#fff", borderRadius: "16px", padding: "28px", width: "340px", boxShadow: "0 20px 60px rgba(0,0,0,0.18)", textAlign: "left" }}>
+            <div style={{ width: "40px", height: "40px", borderRadius: "10px", background: "#fff1f2", display: "flex", alignItems: "center", justifyContent: "center", color: "#ef4444", marginBottom: "14px" }}>
+              <LogOut size={20} />
+            </div>
+            <div style={{ fontSize: "16px", fontWeight: "800", color: "#0f172a", marginBottom: "6px" }}>Sign Out?</div>
+            <div style={{ fontSize: "13px", color: "#64748b", lineHeight: "1.6", marginBottom: "20px" }}>Are you sure you want to sign out of your account?</div>
+            <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+              <button onClick={() => setLogoutModal(false)} style={{ padding: "9px 18px", borderRadius: "9px", border: "1px solid #e2e8f0", background: "#fff", fontSize: "13px", fontWeight: "700", color: "#64748b", cursor: "pointer" }}>Cancel</button>
+              <button onClick={confirmLogout} style={{ padding: "9px 18px", borderRadius: "9px", border: "none", background: "#ef4444", fontSize: "13px", fontWeight: "700", color: "#fff", cursor: "pointer" }}>Yes, Sign Out</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -357,6 +357,7 @@ export default function ProgramsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedVacancy, setSelectedVacancy] = useState(null);
+  const [logoutModal, setLogoutModal] = useState(false);
 
   const isDiscoveryMode = slug === "undefined" && !authCompany?.slug;
 
@@ -430,11 +431,18 @@ export default function ProgramsPage() {
     fetchData();
   }, [slug, authCompany, navigate, isDiscoveryMode]);
 
-  const handleLogout = async () => {
+  const handleLogoutClick = () => {
+    setLogoutModal(true);
+  };
+
+  const confirmLogout = async () => {
     localStorage.clear();
     globalLogout();
+    setLogoutModal(false);
     navigate("/");
   };
+
+  const handleLogout = handleLogoutClick;
 
   const filtered = isDiscoveryMode 
     ? publicVacancies.filter(v => 
@@ -527,7 +535,7 @@ export default function ProgramsPage() {
               )}
 
               <footer className="text-center text-xs text-slate-400 pt-10 pb-4">
-                © 2025 EarlyPath · All rights reserved
+                © 2026 EarlyPath · All rights reserved
               </footer>
             </>
           )}
@@ -543,6 +551,23 @@ export default function ProgramsPage() {
             setSelectedVacancy(null);
         }}
       />
+
+      {/* Logout Modal */}
+      {logoutModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(10,22,40,0.5)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ background: "#fff", borderRadius: "16px", padding: "28px", width: "340px", boxShadow: "0 20px 60px rgba(0,0,0,0.18)", textAlign: "left" }}>
+            <div style={{ width: "40px", height: "40px", borderRadius: "10px", background: "#fff1f2", display: "flex", alignItems: "center", justifyContent: "center", color: "#ef4444", marginBottom: "14px" }}>
+              <LogOut size={20} />
+            </div>
+            <div style={{ fontSize: "16px", fontWeight: "800", color: "#0f172a", marginBottom: "6px" }}>Sign Out?</div>
+            <div style={{ fontSize: "13px", color: "#64748b", lineHeight: "1.6", marginBottom: "20px" }}>Are you sure you want to sign out of your account?</div>
+            <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+              <button onClick={() => setLogoutModal(false)} style={{ padding: "9px 18px", borderRadius: "9px", border: "1px solid #e2e8f0", background: "#fff", fontSize: "13px", fontWeight: "700", color: "#64748b", cursor: "pointer" }}>Cancel</button>
+              <button onClick={confirmLogout} style={{ padding: "9px 18px", borderRadius: "9px", border: "none", background: "#ef4444", fontSize: "13px", fontWeight: "700", color: "#fff", cursor: "pointer" }}>Yes, Sign Out</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

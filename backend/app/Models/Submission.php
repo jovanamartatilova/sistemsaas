@@ -2,6 +2,7 @@
 namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Certificate;
+use App\Models\Interview;
 
 class Submission extends Model
 {
@@ -53,6 +54,11 @@ class Submission extends Model
     public function interview()
     {
         return $this->hasOne(Interview::class, 'id_submission', 'id_submission');
+    }
+
+    public function interviews()
+    {
+        return $this->hasMany(Interview::class, 'id_submission', 'id_submission');
     }
 
     public function payroll()

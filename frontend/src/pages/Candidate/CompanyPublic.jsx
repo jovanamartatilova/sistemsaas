@@ -603,7 +603,7 @@ export default function CompanyPublicPage() {
           {/* Bottom bar */}
           <div style={{ paddingTop: 20, borderTop: "1px solid rgba(255,255,255,0.05)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <p style={{ fontSize: 12, color: "rgba(255,255,255,0.2)", margin: 0 }}>
-              © 2025 {company.name}. All rights reserved.
+              © 2026 {company.name}. All rights reserved.
             </p>
             <p style={{ fontSize: 12, color: "rgba(255,255,255,0.18)", margin: 0 }}>
               Powered by <span style={{ color: "rgba(45,127,243,0.5)" }}>EarlyPath</span>
