@@ -6,6 +6,16 @@ import { LoadingSpinner } from "../../components/LoadingSpinner";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
 
+// --- Progress Bar ---
+function ProgressBar({ value, max, color = "bg-indigo-500", height = "h-1.5" }) {
+  const pct = Math.round((value / max) * 100);
+  return (
+    <div className={`w-full bg-slate-100 rounded-full ${height}`}>
+      <div className={`${color} rounded-full ${height} transition-all`} style={{ width: `${pct}%` }} />
+    </div>
+  );
+}
+
 // --- Competency Card ---
 function CompetencyCard({ title, hours, projects, score, maxScore, status, progress }) {
   const statusColor = status === "Done" ? "bg-emerald-50 text-emerald-600 border border-emerald-200" : "bg-indigo-50 text-indigo-600 border border-indigo-200";
