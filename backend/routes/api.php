@@ -171,11 +171,13 @@ Route::prefix('mentor')->middleware(['auth:sanctum', 'mentorRole'])->group(funct
 Route::middleware(['auth:sanctum'])->prefix('hr')->group(function () {
     Route::get('/dashboard', [HRDashboardController::class, 'index']);
 
-    // Candidates
-    Route::get('/candidates',                       [HRCandidateController::class, 'index']);
+    // Candidates (export must be before {id} pattern)
     Route::get('/candidates/export',                [HRCandidateController::class, 'exportCsv']);
+    Route::get('/candidates',                       [HRCandidateController::class, 'index']);
     Route::patch('/candidates/{id}/accept',         [HRCandidateController::class, 'accept']);
     Route::patch('/candidates/{id}/reject',         [HRCandidateController::class, 'reject']);
+    Route::patch('/candidates/{id}/screening',      [HRCandidateController::class, 'screening']);
+    Route::patch('/candidates/{id}/interview',      [HRCandidateController::class, 'interview']);
     Route::get('/candidates/{id}/documents/{type}', [HRCandidateController::class, 'viewDocument']);
 
     // Screening

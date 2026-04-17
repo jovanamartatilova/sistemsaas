@@ -193,6 +193,48 @@ class HRCandidateController extends Controller
         ]);
     }
 
+    /**
+     * PATCH /hr/candidates/{id}/screening
+     * Mark candidate as screening
+     */
+    public function screening(Request $request, string $id)
+    {
+        $submission = $this->findSubmission($id, $request->user()->id_company);
+
+        if (!$submission) {
+            return response()->json(['success' => false, 'message' => 'Candidate not found'], 404);
+        }
+
+        $submission->update(['status' => 'screening']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Candidate moved to screening',
+            'data'    => $this->formatSubmission($submission->fresh(['user', 'position', 'vacancy'])),
+        ]);
+    }
+
+    /**
+     * PATCH /hr/candidates/{id}/interview
+     * Mark candidate as interview
+     */
+    public function interview(Request $request, string $id)
+    {
+        $submission = $this->findSubmission($id, $request->user()->id_company);
+
+        if (!$submission) {
+            return response()->json(['success' => false, 'message' => 'Candidate not found'], 404);
+        }
+
+        $submission->update(['status' => 'interview']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Candidate moved to interview',
+            'data'    => $this->formatSubmission($submission->fresh(['user', 'position', 'vacancy'])),
+        ]);
+    }
+
     // ── HELPERS ─────────────────────────────────────────────
 
     private function findSubmission(string $id, string $companyId): ?Submission
