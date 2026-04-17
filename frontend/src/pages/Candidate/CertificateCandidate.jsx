@@ -60,49 +60,46 @@ function Sidebar({ userName, onLogout }) {
 }
 
 // --- Certificate Card (Issued) ---
-function CertificateCard({ id_certificate, certificate_number, file_path, final_score, issued_date }) {
+function CertificateCard({ id_certificate, certificate_number, file_path, final_score, issued_date, program, position }) {
   return (
     <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden hover:shadow-md transition-shadow">
-      <div className="h-1.5 bg-gradient-to-r from-emerald-500 to-teal-400" />
-      <div className="p-5">
+      <div className="h-1 bg-gradient-to-r from-emerald-500 to-teal-400" />
+      <div className="flex flex-col px-5 pt-2.5 pb-3.5 gap-2">
 
-        {/* Header */}
-        <div className="flex items-start justify-between pb-4">
-          <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center flex-shrink-0">
-            <Award size={18} className="text-emerald-500" />
-          </div>
-          <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center gap-1">
-            <CheckCircle size={10} /> Issued
+        {/* Row 1: Issued badge + date */}
+        <div className="flex items-center gap-1.5">
+          <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center gap-1">
+            <CheckCircle size={9} /> Issued
           </span>
+          <span className="text-[10px] text-slate-400">{issued_date}</span>
         </div>
 
-        {/* Info */}
-        <div className="border-t border-slate-100 py-4">
-          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1">
-            Internship Certificate
-          </p>
-          <p className="text-sm font-bold text-slate-800 leading-snug">{certificate_number}</p>
-          <p className="text-[10px] text-slate-400 font-mono mt-1">{id_certificate}</p>
-        </div>
-
-        {/* Final Score */}
-        <div className="border-t border-slate-100 py-4">
-          <div className="flex items-center justify-between bg-slate-50 rounded-xl px-3 py-2">
-            <span className="text-xs text-slate-500">Final Score</span>
-            <span className="text-sm font-bold text-emerald-600">{Number(final_score).toFixed(2)}</span>
+        {/* Row 2: icon + text + score + download — all horizontal */}
+        <div className="flex items-center gap-4">
+          <div className="w-8 h-8 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center flex-shrink-0">
+            <Award size={15} className="text-emerald-500" />
           </div>
-        </div>
 
-        {/* Date + Download */}
-        <div className="border-t border-slate-100 pt-4 flex items-center justify-between">
-          <p className="text-xs text-slate-400">Issued: {issued_date}</p>
+          <div className="flex-1 min-w-0 text-left">
+            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-0.5 truncate">
+              {program || 'Internship Program'}
+            </p>
+            <p className="text-sm font-bold text-slate-800 leading-snug truncate">{position || 'Internship'}</p>
+            <p className="text-[10px] text-slate-400 font-mono mt-0.5">{certificate_number}</p>
+          </div>
+
+          <div className="flex-shrink-0 text-center w-14">
+            <p className="text-[10px] text-slate-400 mb-0.5">Score</p>
+            <p className="text-base font-extrabold text-emerald-600">{Number(final_score).toFixed(1)}</p>
+          </div>
+
           <a
             href={file_path}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
+            className="flex-shrink-0 flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors whitespace-nowrap"
           >
-            <Download size={11} />
+            <Download size={12} />
             Download PDF
           </a>
         </div>
@@ -214,8 +211,8 @@ export default function CertificatesPage() {
         if (certResp.ok) {
           const certData = await certResp.json();
           const certs = certData.data || certData || [];
-          const issuedCerts = certs.filter(c => c.status === "issued" || c.issued_date);
-          const lockedCerts = certs.filter(c => c.status === "on_going" || !c.issued_date);
+          const issuedCerts = certs.filter(c => c.status === 'issued');
+          const lockedCerts = certs.filter(c => c.status === 'on_going');
           setIssued(issuedCerts);
           setLocked(lockedCerts);
         }
@@ -255,8 +252,9 @@ export default function CertificatesPage() {
   const filteredLocked  = filter === "Issued" ? [] : locked;
 
   const searchedIssued = filteredIssued.filter((c) =>
-    c.certificate_number.toLowerCase().includes(search.toLowerCase()) ||
-    c.id_certificate.toLowerCase().includes(search.toLowerCase())
+    (c.certificate_number || '').toLowerCase().includes(search.toLowerCase()) ||
+    (c.id_certificate || '').toLowerCase().includes(search.toLowerCase()) ||
+    (c.program || '').toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -328,7 +326,7 @@ export default function CertificatesPage() {
         {searchedIssued.length > 0 && (
         <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm space-y-4">
             <p className="text-xs font-semibold text-gray-400 tracking-widest">ISSUED ({searchedIssued.length})</p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="flex flex-col gap-3">
             {searchedIssued.map((cert) => (
                 <CertificateCard key={cert.id_certificate} {...cert} />
             ))}
@@ -340,7 +338,7 @@ export default function CertificatesPage() {
         {filteredLocked.length > 0 && (
         <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm space-y-4">
             <p className="text-xs font-semibold text-gray-400 tracking-widest">INTERNSHIP IN PROGRESS — NOT YET ISSUED ({filteredLocked.length})</p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="flex flex-col gap-3">
             {filteredLocked.map((cert, i) => (
                 <LockedCertificateCard key={i} {...cert} />
             ))}

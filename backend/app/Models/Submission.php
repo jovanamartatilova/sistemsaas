@@ -1,6 +1,7 @@
 <?php
 namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Certificate;
 
 class Submission extends Model
 {
@@ -62,5 +63,10 @@ class Submission extends Model
 public function mentor()
 {
     return $this->belongsTo(User::class, 'id_user_mentor', 'id_user');
+}
+
+public function certificate()
+{
+    return $this->hasOne(Certificate::class, 'id_submission', 'id_submission');
 }
 }

@@ -2,14 +2,8 @@ import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { api } from "../../api";
 import { useAuthStore } from "../../stores/authStore";
+import { Eye, RefreshCw, Check } from "lucide-react";
 
-// ============ STYLES ============
-const IconEye = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-    <circle cx="12" cy="12" r="3"></circle>
-  </svg>
-);
 
 const s = {
   app: { display: "flex", minHeight: "100vh", background: "#f1f5f9", fontFamily: "'Poppins', 'Segoe UI', sans-serif", fontSize: "14px", color: "#1e293b" },
@@ -110,11 +104,12 @@ const s = {
     marginTop: "2px"
   },
   miniBadge: (bg, color) => ({ display: "inline-flex", alignItems: "center", padding: "3px 9px", borderRadius: "6px", fontSize: "12px", fontWeight: 500, background: bg, color }),
-  actions: { display: "flex", gap: "6px", alignItems: "center", justifyContent: "center", whiteSpace: "nowrap" },
+  actions: { display: "flex", gap: "6px", alignItems: "center", whiteSpace: "nowrap" },
   btnEye: { padding: "6px", borderRadius: "6px", cursor: "pointer", border: "1px solid #e2e8f0", background: "#fff", color: "#64748b", display: "flex", alignItems: "center", justifyContent: "center" },
   btnAction: { padding: "4px 10px", borderRadius: "6px", fontSize: "12px", fontWeight: 500, cursor: "pointer", border: "1px solid #e2e8f0", background: "#fff", color: "#334155", whiteSpace: "nowrap", fontFamily: "inherit" },
-  btnGenerate: { padding: "4px 10px", borderRadius: "6px", fontSize: "12px", fontWeight: 500, cursor: "pointer", border: "1px solid #86efac", background: "#f0fdf4", color: "#16a34a", whiteSpace: "nowrap", fontFamily: "inherit" },
-  btnDownload: { padding: "4px 10px", borderRadius: "6px", fontSize: "12px", fontWeight: 500, cursor: "pointer", border: "1px solid #93c5fd", background: "#eff6ff", color: "#2563eb", whiteSpace: "nowrap", fontFamily: "inherit" },
+  btnSend: { height: "28px", padding: "0 10px", borderRadius: "6px", fontSize: "12px", fontWeight: 600, cursor: "pointer", border: "1px solid #93c5fd", background: "#eff6ff", color: "#2563eb", whiteSpace: "nowrap", fontFamily: "inherit" },
+  btnSent: { height: "28px", padding: "0 10px", borderRadius: "6px", fontSize: "12px", fontWeight: 600, cursor: "default", border: "1px solid #a7f3d0", background: "#ecfdf5", color: "#059669", whiteSpace: "nowrap", fontFamily: "inherit" },
+  btnIconBox: { width: "28px", height: "28px", borderRadius: "6px", cursor: "pointer", border: "1px solid #e2e8f0", background: "#fff", color: "#64748b", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 },
   btnPrimary: { padding: "7px 16px", background: "#2563eb", color: "#fff", border: "none", borderRadius: "8px", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" },
   previewCard: { background: "#fff", borderRadius: "12px", border: "1px solid #e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,0.04)", padding: "20px", alignSelf: "start" },
   loaDoc: { background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "8px", padding: "20px", fontSize: "12px", lineHeight: 1.9 },
@@ -216,6 +211,8 @@ const [data, setData] = useState({ user: {}, stats: {}, candidates: [] });
 const [loading, setLoading] = useState(false);
 const [bulkLoading, setBulkLoading] = useState(false);
 const [error, setError] = useState('');
+const [sending, setSending] = useState({});
+const [regenerateSuccess, setRegenerateSuccess] = useState({});
 
 // Clear old token on first load to force fresh auth
 useEffect(() => {
@@ -250,11 +247,26 @@ const handleGenerate = async (id) => {
     setError('');
     await api(`/hr/loa/${id}/generate`, { method: 'POST' });
     await fetchLoa();
+    setRegenerateSuccess(prev => ({ ...prev, [id]: true }));
+    setTimeout(() => setRegenerateSuccess(prev => ({ ...prev, [id]: false })), 3000);
   } catch (err) {
     setError(err.message || 'Failed to generate LoA');
     console.error(err);
   } finally {
     setLoading(null);
+  }
+};
+
+const handleSendLoa = async (id) => {
+  try {
+    setSending(prev => ({ ...prev, [id]: true }));
+    await api(`/hr/loa/${id}/send`, { method: 'POST' });
+    await fetchLoa();
+  } catch (err) {
+    console.error(err);
+    setError(err.message || 'Failed to send LoA');
+  } finally {
+    setSending(prev => ({ ...prev, [id]: false }));
   }
 };
 
@@ -409,17 +421,33 @@ const statCards = [
         {c.loa_status === 'generated' ? 'Done' : 'Pending'}
       </span>
     </td>
-    <td style={s.td}>
-      <div style={s.actions}>
-        {c.has_file && <button style={s.btnEye} onClick={() => handlePreview(c.file_url)} title="Preview"><IconEye /></button>}
-        {c.has_file && <button style={s.btnDownload} onClick={() => handleDownload(c.file_url, c.id_submission)}>Download</button>}
-        <button 
-          style={{...s.btnGenerate, opacity: loading === c.id_submission ? 0.6 : 1, cursor: loading === c.id_submission ? 'not-allowed' : 'pointer'}} 
-          onClick={() => handleGenerate(c.id_submission)}
-          disabled={loading === c.id_submission}
-        >
-          {loading === c.id_submission ? 'Generating...' : (c.loa_status === 'pending' ? 'Generate' : 'Regenerate')}
-        </button>
+    <td style={{...s.td, textAlign:'center'}}>
+      <div style={{...s.actions, justifyContent:'center'}}>
+        {c.has_file && <button style={s.btnIconBox} onClick={() => handlePreview(c.file_url)} title="Preview"><Eye size={15} /></button>}
+        {c.has_file && (
+          c.is_sent
+            ? <button style={s.btnSent} disabled>Sent</button>
+            : <button style={{...s.btnSend, opacity: sending[c.id_submission] ? 0.6 : 1}} onClick={() => handleSendLoa(c.id_submission)} disabled={sending[c.id_submission]}>Send</button>
+        )}
+        {c.has_file && (
+          <button
+            style={{...s.btnIconBox, color: regenerateSuccess[c.id_submission] ? '#16a34a' : '#64748b', opacity: loading === c.id_submission ? 0.5 : 1}}
+            onClick={() => handleGenerate(c.id_submission)}
+            disabled={loading === c.id_submission}
+            title="Regenerate"
+          >
+            {regenerateSuccess[c.id_submission] ? <Check size={15} color="#16a34a" /> : <RefreshCw size={15} />}
+          </button>
+        )}
+        {!c.has_file && (
+          <button
+            style={{ height: "28px", padding: "0 10px", borderRadius: "6px", fontSize: "12px", fontWeight: 500, cursor: loading === c.id_submission ? 'not-allowed' : 'pointer', border: '1px solid #86efac', background: '#f0fdf4', color: '#16a34a', fontFamily: 'inherit' }}
+            onClick={() => handleGenerate(c.id_submission)}
+            disabled={loading === c.id_submission}
+          >
+            {loading === c.id_submission ? 'Generating...' : 'Generate'}
+          </button>
+        )}
       </div>
     </td>
   </tr>
