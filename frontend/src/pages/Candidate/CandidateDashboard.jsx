@@ -209,34 +209,44 @@ export default function EarlyPathDashboard() {
   };
 
   if (loading) {
-    return <LoadingSpinner message="Loading dashboard..." />;
+    // Loading state will be shown inside main with Sidebar visible
   }
+
+  const userData = dashboardData ? {
+    profile: dashboardData.profile,
+    apprentice: dashboardData.apprentice,
+    learning_progress: dashboardData.learning_progress,
+    competencies: dashboardData.competencies,
+  } : { profile: null, apprentice: null, learning_progress: null, competencies: [] };
 
   if (error || !dashboardData) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-slate-600 mb-4">{error || "Failed to load dashboard"}</p>
-          <div className="flex gap-3 justify-center">
-            <button
-              onClick={fetchDashboardData}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-            >
-              Retry
-            </button>
-            <button
-              onClick={() => navigate("/")}
-              className="px-4 py-2 bg-slate-300 text-slate-700 rounded-lg hover:bg-slate-400"
-            >
-              Back Home
-            </button>
+      <div className="min-h-screen bg-gray-50 flex" style={{ fontFamily: 'Poppins, sans-serif' }}>
+        <Sidebar userName={userData.profile?.name} onLogout={handleLogout} />
+        <main className="ml-56 flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-slate-600 mb-4">{error || "Failed to load dashboard"}</p>
+            <div className="flex gap-3 justify-center">
+              <button
+                onClick={fetchDashboardData}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+              >
+                Retry
+              </button>
+              <button
+                onClick={() => navigate("/")}
+                className="px-4 py-2 bg-slate-300 text-slate-700 rounded-lg hover:bg-slate-400"
+              >
+                Back Home
+              </button>
+            </div>
           </div>
-        </div>
+        </main>
       </div>
     );
   }
 
-  const { profile, apprentice, learning_progress, competencies } = dashboardData;
+  const { profile, apprentice, learning_progress, competencies } = userData;
 
   // Format competencies for display
   const competencyList = competencies.map((comp) => ({
@@ -259,7 +269,13 @@ export default function EarlyPathDashboard() {
       <main className="ml-56 flex-1 px-6 py-6 space-y-5 min-w-0">
         <style>{`@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');`}</style>
 
-        {/* Status Alert - Jika submissi masih pending atau apprentice belum ada */}
+        {loading && (
+          <LoadingSpinner message="Loading dashboard..." />
+        )}
+
+        {!loading && (
+          <>
+            {/* Status Alert - Jika submissi masih pending atau apprentice belum ada */}
         {!apprentice && (
           <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 shadow-sm">
             <div className="flex items-start gap-3">
@@ -346,19 +362,21 @@ export default function EarlyPathDashboard() {
               {apprentice ? (
                 <div className="space-y-3">
                   {[
-                    { label: "ID Apprentice", value: apprentice?.id_apprentice || "-" },
-                    { label: "Program", value: apprentice?.position || "-" },
-                    { label: "Batch", value: apprentice?.batch || "-" },
-                    { label: "Period", value: apprentice?.start_date && apprentice?.end_date ? `${new Date(apprentice.start_date).toLocaleDateString('en-US')} – ${new Date(apprentice.end_date).toLocaleDateString('en-US')}` : "-" },
-                    { label: "Status", value: apprentice?.status || "Inactive", badge: true },
+                    { label: "Type", value: apprentice?.position_type || apprentice?.position || "-" },
+                    { label: "Location", value: apprentice?.location || "-" },
+                    { label: "Start Date", value: apprentice?.start_date ? new Date(apprentice.start_date).toLocaleDateString('en-US') : "-" },
+                    { label: "End Date", value: apprentice?.end_date ? new Date(apprentice.end_date).toLocaleDateString('en-US') : "-" },
+                    { label: "Status", value: apprentice?.status || "Screening", badge: true },
                   ].map((row, i) => (
                     <div key={i} className="flex justify-between items-center text-sm">
                       <span className="text-slate-400">{row.label}</span>
                       {row.badge ? (
                         <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium border ${
-                          row.value === 'active'
+                          row.value === 'accepted' || row.value === 'Accepted'
                             ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
-                            : 'bg-slate-50 text-slate-600 border-slate-200'
+                            : row.value === 'rejected' || row.value === 'Rejected'
+                            ? 'bg-rose-50 text-rose-600 border-rose-200'
+                            : 'bg-amber-50 text-amber-600 border-amber-200'
                         }`}>
                           ● {row.value}
                         </span>
@@ -413,6 +431,8 @@ export default function EarlyPathDashboard() {
         <p className="text-center text-xs text-slate-400 py-2">
           © 2025 EarlyPath · All rights reserved
         </p>
+          </>
+        )}
       </main>
     </div>
   );

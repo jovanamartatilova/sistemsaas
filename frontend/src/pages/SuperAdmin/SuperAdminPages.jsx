@@ -32,12 +32,32 @@ function LoginForm({ onLoginSuccess }) {
   };
 
   return (
-    <div style={{ width: "100vw", height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(180deg, #0f1c2e 0%, #0d1a28 100%)", fontFamily: "'Poppins','Inter',sans-serif" }}>
-      <div style={{ position: "absolute", top: "28px", left: "32px", display: "flex", alignItems: "center", gap: "10px" }}>
-        <div style={{ width: "36px", height: "36px", borderRadius: "9px", background: "linear-gradient(135deg, #2d7dd2, #4a9eff)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "13px", fontWeight: "800", color: "#fff" }}>EP</div>
-        <span style={{ fontSize: "16px", fontWeight: "700", color: "#fff", letterSpacing: "-0.3px" }}>EarlyPath</span>
-      </div>
-      <div style={{ background: "#fff", borderRadius: "18px", padding: "42px 40px", width: "100%", maxWidth: "400px", boxShadow: "0 24px 64px rgba(0,0,0,0.45)" }}>
+    <div style={{
+      width: "100vw", height: "100vh",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      fontFamily: "'Poppins','Inter',sans-serif",
+      position: "relative", overflow: "hidden",
+    }}>
+      {/* Background image with 50% opacity overlay */}
+      <div style={{
+        position: "absolute", inset: 0,
+        backgroundImage: "url('/assets/images/bg.png')",
+        backgroundSize: "cover", backgroundPosition: "center",
+        zIndex: 0,
+      }} />
+      <div style={{
+        position: "absolute", inset: 0,
+        background: "rgba(0,0,0,0.5)",
+        zIndex: 1,
+      }} />
+
+      {/* Login card */}
+      <div style={{
+        position: "relative", zIndex: 2,
+        background: "#fff", borderRadius: "18px",
+        padding: "42px 40px", width: "100%", maxWidth: "400px",
+        boxShadow: "0 24px 64px rgba(0,0,0,0.45)",
+      }}>
         <div style={{ marginBottom: "30px", textAlign: "center" }}>
           <div style={{ fontSize: "22px", fontWeight: "800", color: "#0f172a", marginBottom: "5px" }}>Super Admin Login</div>
           <div style={{ fontSize: "13px", color: "#64748b" }}>Enter your credentials to continue</div>
@@ -81,17 +101,18 @@ function LoginForm({ onLoginSuccess }) {
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
 const IC = {
-  Dashboard: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" /></svg>,
-  Tenant: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>,
-  Users: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>,
-  Logout: () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>,
-  Search: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>,
+  Dashboard: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" /></svg>,
+  Tenant: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>,
+  Users: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>,
+  Logout: () => <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>,
+  Search: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>,
   TrendUp: () => <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12" /></svg>,
   ChevDown: () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>,
   Close: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>,
   Mail: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><polyline points="22,6 12,13 2,6" /></svg>,
   MapPin: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>,
   Phone: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.06 6.06l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" /></svg>,
+  FileText: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /></svg>,
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -99,6 +120,7 @@ function today() {
   return new Date().toLocaleDateString("en-US", { weekday: "long", day: "numeric", month: "short", year: "numeric" });
 }
 
+// Table header style — aligned with td padding
 const TH = {
   padding: "10px 16px",
   textAlign: "left",
@@ -114,7 +136,7 @@ const TH = {
 // ── Loading & Error ───────────────────────────────────────────────────────────
 function LoadingPage() {
   return (
-    <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", background: "#f1f5f9" }}>
+    <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", background: "#f8fafc" }}>
       <div style={{ textAlign: "center" }}>
         <div style={{ width: "32px", height: "32px", border: "3px solid #e2e8f0", borderTop: "3px solid #3b82f6", borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 12px" }} />
         <div style={{ fontSize: "13px", color: "#94a3b8" }}>Loading...</div>
@@ -125,7 +147,7 @@ function LoadingPage() {
 
 function ErrorState({ message, onRetry }) {
   return (
-    <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", background: "#f1f5f9" }}>
+    <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", background: "#f8fafc" }}>
       <div style={{ textAlign: "center", padding: "40px" }}>
         <div style={{ fontSize: "14px", color: "#ef4444", marginBottom: "10px" }}>{message || "Failed to load data"}</div>
         <button onClick={onRetry} style={{ padding: "8px 18px", borderRadius: "9px", border: "1px solid #e2e8f0", background: "#fff", fontSize: "13px", fontWeight: "600", color: "#475569", cursor: "pointer" }}>Retry</button>
@@ -153,6 +175,7 @@ function TenantDetailModal({ tenant, onClose }) {
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(10,22,40,0.5)", zIndex: 400, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
       <div style={{ background: "#fff", borderRadius: "16px", width: "100%", maxWidth: "480px", boxShadow: "0 24px 64px rgba(0,0,0,0.2)", overflow: "hidden" }}>
+        {/* Header */}
         <div style={{ padding: "20px 24px 16px", borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", gap: "14px" }}>
           <div style={{ width: "44px", height: "44px", borderRadius: "11px", background: "#eff6ff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", fontWeight: "800", color: "#3b82f6", flexShrink: 0 }}>
             {initials(tenant.name)}
@@ -168,15 +191,24 @@ function TenantDetailModal({ tenant, onClose }) {
             <IC.Close />
           </button>
         </div>
+
+        {/* Body — email, address, phone, description */}
         <div style={{ padding: "4px 24px 8px" }}>
           <Row icon={<IC.Mail />} label="EMAIL" value={tenant.email} />
           <Row icon={<IC.MapPin />} label="ADDRESS" value={tenant.address} />
           <Row icon={<IC.Phone />} label="PHONE" value={tenant.phone} />
           <div style={{ padding: "10px 0", borderBottom: "1px solid #f8fafc" }}>
-            <div style={{ fontSize: "10.5px", fontWeight: "600", color: "#94a3b8", letterSpacing: "0.4px", marginBottom: "4px" }}>DESCRIPTION</div>
-            <div style={{ fontSize: "13px", color: "#475569", lineHeight: "1.6" }}>{tenant.description || "No description provided."}</div>
+            <div style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
+              <div style={{ color: "#94a3b8", flexShrink: 0, marginTop: "1px" }}><IC.FileText /></div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: "10.5px", fontWeight: "600", color: "#94a3b8", letterSpacing: "0.4px", marginBottom: "2px" }}>DESCRIPTION</div>
+                <div style={{ fontSize: "13px", color: "#475569", lineHeight: "1.6" }}>{tenant.description || "No description provided."}</div>
+              </div>
+            </div>
           </div>
         </div>
+
+        {/* Stats */}
         <div style={{ padding: "14px 24px", background: "#f8fafc", display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px" }}>
           {[
             { label: "Total Users", value: tenant.users_count ?? 0, color: "#3b82f6" },
@@ -189,6 +221,7 @@ function TenantDetailModal({ tenant, onClose }) {
             </div>
           ))}
         </div>
+
         <div style={{ padding: "14px 24px", borderTop: "1px solid #f1f5f9", display: "flex", justifyContent: "flex-end" }}>
           <button onClick={onClose} style={{ padding: "9px 22px", borderRadius: "9px", border: "1px solid #e2e8f0", background: "#fff", fontSize: "13px", fontWeight: "700", color: "#64748b", cursor: "pointer" }}>Close</button>
         </div>
@@ -202,43 +235,65 @@ function SideItem({ icon, label, active, onClick }) {
   const [hov, setHov] = useState(false);
   return (
     <button onClick={onClick} onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
-      style={{ display: "flex", alignItems: "center", gap: "10px", width: "100%", padding: "9px 12px", borderRadius: "9px", background: active ? "rgba(74,158,255,0.13)" : hov ? "rgba(255,255,255,0.05)" : "transparent", border: active ? "1px solid rgba(74,158,255,0.25)" : "1px solid transparent", color: active ? "#4a9eff" : "rgba(255,255,255,0.58)", fontSize: "13px", fontWeight: active ? "600" : "500", cursor: "pointer", transition: "all 0.18s", textAlign: "left" }}>
-      <span style={{ opacity: active ? 1 : 0.7, flexShrink: 0 }}>{icon}</span>
-      <span>{label}</span>
+      style={{
+        display: "flex", alignItems: "center", gap: "11px",
+        width: "100%", padding: "10px 14px", borderRadius: "10px",
+        background: active ? "rgba(74,158,255,0.12)" : hov ? "rgba(255,255,255,0.05)" : "transparent",
+        border: active ? "1px solid rgba(74,158,255,0.22)" : "1px solid transparent",
+        color: active ? "#4a9eff" : "rgba(255,255,255,0.6)",
+        fontSize: "13.5px", fontWeight: active ? "600" : "500",
+        cursor: "pointer", transition: "all 0.2s", textAlign: "left",
+      }}>
+      <span style={{ opacity: active ? 1 : 0.75, flexShrink: 0 }}>{icon}</span>
+      <span style={{ flex: 1 }}>{label}</span>
     </button>
   );
 }
 
 // ── Sidebar ───────────────────────────────────────────────────────────────────
-function Sidebar({ onLogout }) {
+// NOTE: Exported so it can be used as a standalone component if needed
+export function SuperAdminSidebar({ onLogout }) {
   const navigate = useNavigate();
   const location = useLocation();
   const nav = [
-    { label: "Dashboard", icon: <IC.Dashboard />, key: "dashboard", path: "/superadmin/dashboard" },
-    { label: "Tenant Management", icon: <IC.Tenant />, key: "tenant", path: "/superadmin/tenants" },
-    { label: "User Management", icon: <IC.Users />, key: "users", path: "/superadmin/users" },
+    { label: "Dashboard", icon: <IC.Dashboard />, path: "/superadmin/dashboard" },
+    { label: "Tenant Management", icon: <IC.Tenant />, path: "/superadmin/tenants" },
+    { label: "User Management", icon: <IC.Users />, path: "/superadmin/users" },
   ];
   const isActive = (path) => location.pathname.includes(path.split("/").pop());
 
   return (
-    <aside style={{ width: "220px", flexShrink: 0, background: "linear-gradient(180deg, #0f1c2e 0%, #0d1a28 100%)", display: "flex", flexDirection: "column", height: "100vh", position: "sticky", top: 0, padding: "18px 10px", gap: "3px", overflowY: "auto" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "6px" }}>
-        <img src="/assets/images/logo.png" alt="Logo" style={{ width: "60px", height: "60px", objectFit: "contain", borderRadius: "8px" }} />
-        <span style={{ fontSize: "16px", fontWeight: "700", color: "#fff", letterSpacing: "-0.3px" }}>EarlyPath</span>
+    <aside style={{
+      width: "250px", flexShrink: 0,
+      background: "linear-gradient(180deg, #0f1c2e 0%, #0d1a28 100%)",
+      display: "flex", flexDirection: "column",
+      height: "100vh", position: "sticky", top: 0,
+      padding: "20px 12px", gap: "4px", overflowY: "auto",
+    }}>
+      {/* Logo */}
+      <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "4px 6px 20px" }}>
+        <img src="/assets/images/logo.png" alt="Logo" style={{ height: "46px", objectFit: "contain", flexShrink: 0 }} />
+        <span style={{ fontSize: "15px", fontWeight: "800", color: "#fff", letterSpacing: "-0.3px", whiteSpace: "nowrap" }}>EarlyPath</span>
       </div>
-      <p style={{ fontSize: "9.5px", fontWeight: "700", color: "rgba(255,255,255,0.22)", letterSpacing: "1.2px", padding: "0 12px 4px", textTransform: "uppercase" }}>Menu</p>
-      {nav.map(n => <SideItem key={n.key} icon={n.icon} label={n.label} active={isActive(n.path)} onClick={() => navigate(n.path)} />)}
+
+      <p style={{ fontSize: "10px", fontWeight: "700", color: "rgba(255,255,255,0.25)", letterSpacing: "1.2px", padding: "0 14px 4px", textTransform: "uppercase" }}>Main Menu</p>
+      {nav.map(n => (
+        <SideItem key={n.label} icon={n.icon} label={n.label} active={isActive(n.path)} onClick={() => navigate(n.path)} />
+      ))}
+
       <div style={{ flex: 1 }} />
-      <div style={{ borderTop: "1px solid rgba(255,255,255,0.07)", paddingTop: "12px", display: "flex", alignItems: "center", gap: "9px" }}>
-        <div style={{ width: "32px", height: "32px", borderRadius: "9px", background: "linear-gradient(135deg,#2d7dd2,#4a9eff)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", fontWeight: "800", color: "#fff", flexShrink: 0 }}>SA</div>
+
+      {/* Profile bottom */}
+      <div style={{ borderTop: "1px solid rgba(255,255,255,0.07)", paddingTop: "14px", display: "flex", alignItems: "center", gap: "10px" }}>
+        <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: "linear-gradient(135deg,#2d7dd2,#4a9eff)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: "800", color: "#fff", flexShrink: 0 }}>SA</div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: "12px", fontWeight: "700", color: "#fff" }}>Super Admin</div>
-          <div style={{ fontSize: "10.5px", color: "rgba(255,255,255,0.38)" }}>earlypath.id</div>
+          <div style={{ fontSize: "12.5px", fontWeight: "700", color: "#fff" }}>Super Admin</div>
+          <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)" }}>earlypath.id</div>
         </div>
         <button onClick={onLogout} title="Logout"
-          style={{ background: "transparent", border: "none", color: "rgba(255,255,255,0.3)", cursor: "pointer", padding: "4px", borderRadius: "6px", display: "flex", transition: "all 0.18s" }}
+          style={{ background: "transparent", border: "none", color: "rgba(255,255,255,0.35)", cursor: "pointer", padding: "4px", borderRadius: "6px", display: "flex", transition: "all 0.2s" }}
           onMouseEnter={e => { e.currentTarget.style.color = "#f87171"; e.currentTarget.style.background = "rgba(248,113,113,0.1)"; }}
-          onMouseLeave={e => { e.currentTarget.style.color = "rgba(255,255,255,0.3)"; e.currentTarget.style.background = "transparent"; }}>
+          onMouseLeave={e => { e.currentTarget.style.color = "rgba(255,255,255,0.35)"; e.currentTarget.style.background = "transparent"; }}>
           <IC.Logout />
         </button>
       </div>
@@ -249,12 +304,17 @@ function Sidebar({ onLogout }) {
 // ── Topbar ────────────────────────────────────────────────────────────────────
 function Topbar({ title, sub }) {
   return (
-    <header style={{ height: "54px", background: "#fff", borderBottom: "1px solid #e8edf2", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 26px", position: "sticky", top: 0, zIndex: 50 }}>
+    <header style={{
+      height: "56px", background: "#fff",
+      borderBottom: "1px solid #e2e8f0",
+      display: "flex", alignItems: "center", justifyContent: "space-between",
+      padding: "0 26px", position: "sticky", top: 0, zIndex: 50,
+    }}>
       <div style={{ display: "flex", alignItems: "center" }}>
-        <span style={{ fontSize: "14px", fontWeight: "700", color: "#1e293b" }}>{title}</span>
-        {sub && <><span style={{ fontSize: "12px", color: "#94a3b8", margin: "0 6px" }}>/</span><span style={{ fontSize: "12px", color: "#94a3b8" }}>{sub}</span></>}
+        <span style={{ fontSize: "15px", fontWeight: "700", color: "#1e293b" }}>{title}</span>
+        {sub && <><span style={{ fontSize: "13px", color: "#94a3b8", margin: "0 6px" }}>/</span><span style={{ fontSize: "13px", color: "#94a3b8" }}>{sub}</span></>}
       </div>
-      <span style={{ fontSize: "11.5px", color: "#94a3b8", whiteSpace: "nowrap" }}>{today()}</span>
+      <span style={{ fontSize: "12px", color: "#94a3b8", whiteSpace: "nowrap" }}>{today()}</span>
     </header>
   );
 }
@@ -281,35 +341,61 @@ function DashboardPage() {
 
   const barHeights = [28, 42, 34, 55, 40, 60, 50, 72, 58, 82, 65, 88];
   const stats = [
-    { icon: <IC.Tenant />, accent: "#3b82f6", title: "Total Tenants", value: data.total_tenant?.toLocaleString() ?? "0", trend: `+${data.active_tenant ?? 0} active`, sub: `${data.active_tenant ?? 0} active · ${data.suspended_tenant ?? 0} suspended · ${data.inactive_tenant ?? 0} inactive` },
-    { icon: <IC.Users />, accent: "#10b981", title: "Total Users", value: data.total_user?.toLocaleString() ?? "0", trend: `+${data.new_user_7days ?? 0}`, sub: `${data.new_user_7days ?? 0} new users in the last 7 days` },
-    { icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" /><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" /></svg>, accent: "#f59e0b", title: "Active Vacancies", value: data.active_vacancies?.toLocaleString() ?? "0", trend: "+0%", sub: "Total published vacancies" },
-    { icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /></svg>, accent: "#ef4444", title: "Certificates Issued", value: data.total_certificate?.toLocaleString() ?? "0", trend: "+0%", sub: "Total certificates generated" },
+    {
+      icon: <IC.Tenant />, accent: "#3b82f6", title: "Total Tenants",
+      value: data.total_tenant?.toLocaleString() ?? "0",
+      trend: `+${data.active_tenant ?? 0} active`,
+      sub: `${data.active_tenant ?? 0} active · ${data.suspended_tenant ?? 0} suspended · ${data.inactive_tenant ?? 0} inactive`,
+    },
+    {
+      icon: <IC.Users />, accent: "#10b981", title: "Total Users",
+      value: data.total_user?.toLocaleString() ?? "0",
+      trend: `+${data.new_user_7days ?? 0}`,
+      sub: `${data.new_user_7days ?? 0} new users in the last 7 days`,
+    },
+    {
+      icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" /><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" /></svg>,
+      accent: "#f59e0b", title: "Active Vacancies",
+      value: data.active_vacancies?.toLocaleString() ?? "0",
+      trend: "+0%", sub: "Total published vacancies",
+    },
+    {
+      icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /></svg>,
+      accent: "#ef4444", title: "Certificates Issued",
+      value: data.total_certificate?.toLocaleString() ?? "0",
+      trend: "+0%", sub: "Total certificates generated",
+    },
   ];
 
   const chartData = data.growth_chart ?? [];
   const maxV = Math.max(...chartData.map(d => Math.max(d.new_user ?? 0, 1)), 10);
   const chartH = 140; const bw = 16; const gap = 3; const gw = bw * 2 + gap; const colW = gw + 24;
   const total = data.total_tenant ?? 0;
-  const aktif = data.tenant_status?.active ?? 0; const susp = data.tenant_status?.suspended ?? 0; const nonaktif = data.tenant_status?.inactive ?? 0;
+  const aktif = data.tenant_status?.active ?? 0;
+  const susp = data.tenant_status?.suspended ?? 0;
+  const nonaktif = data.tenant_status?.inactive ?? 0;
   const C = 2 * Math.PI * 34;
-  const aD = total > 0 ? (aktif / total) * C : 0; const sD = total > 0 ? (susp / total) * C : 0; const nD = total > 0 ? (nonaktif / total) * C : 0;
+  const aD = total > 0 ? (aktif / total) * C : 0;
+  const sD = total > 0 ? (susp / total) * C : 0;
+  const nD = total > 0 ? (nonaktif / total) * C : 0;
 
   return (
-    <main style={{ flex: 1, padding: "26px 26px 40px", overflowY: "auto", background: "#f1f5f9" }}>
-      <div style={{ marginBottom: "24px" }}>
-        <div style={{ fontSize: "19px", fontWeight: "800", color: "#0f172a" }}>Good morning, Super Admin 👋</div>
-        <div style={{ fontSize: "12.5px", color: "#64748b", marginTop: "2px" }}>Here's a summary of today's platform activity.</div>
+    <main style={{ flex: 1, padding: "28px 28px 40px", overflowY: "auto", background: "#f8fafc" }}>
+      <div style={{ marginBottom: "28px" }}>
+        <div style={{ fontSize: "20px", fontWeight: "800", color: "#0f172a" }}>Good morning, Super Admin 👋</div>
+        <div style={{ fontSize: "13px", color: "#64748b", marginTop: "3px" }}>Here's a summary of today's platform activity.</div>
       </div>
-      <div style={{ display: "flex", gap: "16px", marginBottom: "20px", flexWrap: "wrap" }}>
+
+      {/* Stat cards */}
+      <div style={{ display: "flex", gap: "20px", marginBottom: "24px", flexWrap: "wrap" }}>
         {stats.map((s, i) => (
-          <div key={i} style={{ flex: "1 1 180px", minWidth: 0, background: "#fff", borderRadius: "13px", padding: "18px 20px", borderTop: `3px solid ${s.accent}`, boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "10px" }}>
-              <div style={{ width: "34px", height: "34px", borderRadius: "9px", background: `${s.accent}14`, display: "flex", alignItems: "center", justifyContent: "center", color: s.accent }}>{s.icon}</div>
+          <div key={i} style={{ flex: "1 1 200px", minWidth: 0, background: "#fff", borderRadius: "16px", padding: "22px 24px", borderTop: `3px solid ${s.accent}`, boxShadow: "0 1px 4px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
+              <div style={{ width: "38px", height: "38px", borderRadius: "10px", background: `${s.accent}14`, display: "flex", alignItems: "center", justifyContent: "center", color: s.accent }}>{s.icon}</div>
               <span style={{ fontSize: "11px", fontWeight: "700", color: "#16a34a", background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: "100px", padding: "2px 7px", display: "flex", alignItems: "center", gap: "2px" }}><IC.TrendUp /> {s.trend}</span>
             </div>
-            <div style={{ fontSize: "26px", fontWeight: "800", color: "#0f172a", letterSpacing: "-1px", lineHeight: 1 }}>{s.value}</div>
-            <div style={{ fontSize: "12px", color: "#64748b", fontWeight: "500", marginTop: "3px" }}>{s.title}</div>
+            <div style={{ fontSize: "28px", fontWeight: "800", color: "#0f172a", letterSpacing: "-1px", lineHeight: 1 }}>{s.value}</div>
+            <div style={{ fontSize: "13px", color: "#64748b", fontWeight: "500", marginTop: "3px" }}>{s.title}</div>
             <div style={{ display: "flex", gap: "2px", alignItems: "flex-end", height: "28px", marginTop: "12px" }}>
               {barHeights.map((h, bi) => <div key={bi} style={{ flex: 1, borderRadius: "2px 2px 0 0", background: bi >= 9 ? s.accent : `${s.accent}35`, height: `${h}%`, minHeight: "3px" }} />)}
             </div>
@@ -317,17 +403,20 @@ function DashboardPage() {
           </div>
         ))}
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: "18px" }}>
-        <div style={{ background: "#fff", borderRadius: "13px", padding: "20px 22px", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
+
+      {/* Charts row */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: "20px" }}>
+        {/* Growth chart */}
+        <div style={{ background: "#fff", borderRadius: "16px", padding: "22px 24px", boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
           <div style={{ marginBottom: "14px" }}>
-            <div style={{ fontSize: "14px", fontWeight: "700", color: "#1e293b" }}>Tenant & User Growth</div>
-            <div style={{ fontSize: "11.5px", color: "#94a3b8", marginTop: "2px" }}>Last 6 months</div>
+            <div style={{ fontSize: "15px", fontWeight: "700", color: "#1e293b" }}>Tenant & User Growth</div>
+            <div style={{ fontSize: "12px", color: "#94a3b8", marginTop: "2px" }}>Last 6 months</div>
           </div>
-          <div style={{ display: "flex", gap: "14px", marginBottom: "14px" }}>
+          <div style={{ display: "flex", gap: "16px", marginBottom: "14px" }}>
             {[{ c: "#3b82f6", l: "New tenants" }, { c: "#10b981", l: "New users" }].map(x => (
-              <div key={x.l} style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+              <div key={x.l} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                 <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: x.c }} />
-                <span style={{ fontSize: "11.5px", color: "#64748b" }}>{x.l}</span>
+                <span style={{ fontSize: "12px", color: "#64748b" }}>{x.l}</span>
               </div>
             ))}
           </div>
@@ -340,15 +429,23 @@ function DashboardPage() {
                   const x = mi * colW + 8;
                   const tH = Math.max(((d.new_tenant ?? 0) / (data.total_tenant || 1)) * chartH, 4);
                   const uH = Math.max(((d.new_user ?? 0) / maxV) * chartH, 4);
-                  return <g key={mi}><rect x={x} y={chartH - tH} width={bw} height={tH} rx="3" fill="#3b82f6" opacity="0.85" /><rect x={x + bw + gap} y={chartH - uH} width={bw} height={uH} rx="3" fill="#10b981" opacity="0.85" /><text x={x + gw / 2} y={chartH + 18} textAnchor="middle" fill="#94a3b8" fontSize="11">{d.month}</text></g>;
+                  return (
+                    <g key={mi}>
+                      <rect x={x} y={chartH - tH} width={bw} height={tH} rx="3" fill="#3b82f6" opacity="0.85" />
+                      <rect x={x + bw + gap} y={chartH - uH} width={bw} height={uH} rx="3" fill="#10b981" opacity="0.85" />
+                      <text x={x + gw / 2} y={chartH + 18} textAnchor="middle" fill="#94a3b8" fontSize="11">{d.month}</text>
+                    </g>
+                  );
                 })}
               </svg>
             )}
         </div>
-        <div style={{ background: "#fff", borderRadius: "13px", padding: "20px 22px", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
+
+        {/* Tenant status donut */}
+        <div style={{ background: "#fff", borderRadius: "16px", padding: "22px 24px", boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
           <div style={{ marginBottom: "18px" }}>
-            <div style={{ fontSize: "14px", fontWeight: "700", color: "#1e293b" }}>Tenant Status</div>
-            <div style={{ fontSize: "11.5px", color: "#94a3b8", marginTop: "2px" }}>From {total} registered tenants</div>
+            <div style={{ fontSize: "15px", fontWeight: "700", color: "#1e293b" }}>Tenant Status</div>
+            <div style={{ fontSize: "12px", color: "#94a3b8", marginTop: "2px" }}>From {total} registered tenants</div>
           </div>
           <div style={{ display: "flex", justifyContent: "center", marginBottom: "18px" }}>
             <div style={{ position: "relative", width: "120px", height: "120px" }}>
@@ -367,22 +464,15 @@ function DashboardPage() {
             </div>
           </div>
           {[{ l: "Active", v: aktif, c: "#3b82f6" }, { l: "Suspended", v: susp, c: "#ef4444" }, { l: "Inactive", v: nonaktif, c: "#94a3b8" }].map(item => (
-            <div key={item.l} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "5px 0", borderBottom: "1px solid #f8fafc" }}>
+            <div key={item.l} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", borderBottom: "1px solid #f8fafc" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "7px" }}>
                 <div style={{ width: "9px", height: "9px", borderRadius: "3px", background: item.c }} />
-                <span style={{ fontSize: "12.5px", color: "#64748b" }}>{item.l}</span>
+                <span style={{ fontSize: "13px", color: "#64748b" }}>{item.l}</span>
               </div>
               <span style={{ fontSize: "13px", fontWeight: "700", color: "#1e293b" }}>{item.v}</span>
             </div>
           ))}
-          <div style={{ display: "flex", justifyContent: "space-between", marginTop: "14px", paddingTop: "10px", borderTop: "1px solid #f1f5f9" }}>
-            {[{ l: "Uptime", v: "99.8%", c: "#16a34a" }, { l: "Avg latency", v: "142ms", c: "#3b82f6" }, { l: "AI calls/day", v: "3.2K", c: "#f59e0b" }].map(m => (
-              <div key={m.l} style={{ textAlign: "center" }}>
-                <div style={{ fontSize: "13px", fontWeight: "800", color: m.c }}>{m.v}</div>
-                <div style={{ fontSize: "10px", color: "#94a3b8" }}>{m.l}</div>
-              </div>
-            ))}
-          </div>
+          {/* Removed: Uptime / Avg latency / AI calls row */}
         </div>
       </div>
     </main>
@@ -413,6 +503,11 @@ function TenantManagementPage() {
     const newStatus = currentStatus === "active" ? "suspended" : "active";
     try {
       await superAdminService.updateTenantStatus(id, newStatus);
+      // Optimistically update local state immediately for instant feedback
+      setTenants(prev =>
+        prev.map(t => t.id === id ? { ...t, status: newStatus } : t)
+      );
+      // Then refetch to sync with server
       fetchTenants();
     } catch {
       alert("Failed to update tenant status");
@@ -424,20 +519,22 @@ function TenantManagementPage() {
   const statusLabel = { active: "Active", suspended: "Suspended", inactive: "Inactive" };
 
   return (
-    <main style={{ flex: 1, padding: "26px 26px 40px", overflowY: "auto", background: "#f1f5f9" }}>
+    <main style={{ flex: 1, padding: "28px 28px 40px", overflowY: "auto", background: "#f8fafc" }}>
       <div style={{ marginBottom: "22px" }}>
-        <div style={{ fontSize: "19px", fontWeight: "800", color: "#0f172a" }}>Tenant Management</div>
-        <div style={{ fontSize: "12.5px", color: "#64748b", marginTop: "2px" }}>All registered companies on the platform.</div>
+        <div style={{ fontSize: "20px", fontWeight: "800", color: "#0f172a" }}>Tenant Management</div>
+        <div style={{ fontSize: "13px", color: "#64748b", marginTop: "3px" }}>All registered companies on the platform.</div>
       </div>
 
-      <div style={{ background: "#fff", borderRadius: "12px", padding: "14px 18px", marginBottom: "16px", display: "flex", gap: "12px", alignItems: "center", boxShadow: "0 1px 3px rgba(0,0,0,0.04)", flexWrap: "wrap" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "7px", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "9px", padding: "7px 12px", flex: "1 1 220px" }}>
+      {/* Filter bar */}
+      <div style={{ background: "#fff", borderRadius: "16px", padding: "14px 18px", marginBottom: "20px", display: "flex", gap: "12px", alignItems: "center", boxShadow: "0 1px 4px rgba(0,0,0,0.05)", flexWrap: "wrap" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "7px", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px", padding: "7px 12px", flex: "1 1 220px" }}>
           <IC.Search />
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search company name or email..." style={{ border: "none", background: "transparent", outline: "none", fontSize: "12.5px", color: "#64748b", width: "100%" }} />
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search company name or email..."
+            style={{ border: "none", background: "transparent", outline: "none", fontSize: "13px", color: "#64748b", width: "100%" }} />
         </div>
         <div style={{ position: "relative" }}>
           <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}
-            style={{ appearance: "none", background: "#fff", border: "1px solid #e2e8f0", borderRadius: "9px", padding: "7px 32px 7px 12px", fontSize: "12.5px", color: "#475569", fontWeight: "500", cursor: "pointer", outline: "none" }}>
+            style={{ appearance: "none", background: "#fff", border: "1px solid #e2e8f0", borderRadius: "10px", padding: "8px 36px 8px 14px", fontSize: "13px", color: "#475569", fontWeight: "500", cursor: "pointer", outline: "none" }}>
             <option value="all">All Status</option>
             <option value="active">Active</option>
             <option value="suspended">Suspended</option>
@@ -447,7 +544,8 @@ function TenantManagementPage() {
         </div>
       </div>
 
-      <div style={{ background: "#fff", borderRadius: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.04)", overflow: "hidden" }}>
+      {/* Table */}
+      <div style={{ background: "#fff", borderRadius: "16px", boxShadow: "0 1px 4px rgba(0,0,0,0.05)", overflow: "hidden" }}>
         {loading ? (
           <div style={{ padding: "60px 0", display: "flex", justifyContent: "center" }}>
             <div style={{ width: "28px", height: "28px", border: "3px solid #e2e8f0", borderTop: "3px solid #3b82f6", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
@@ -459,11 +557,18 @@ function TenantManagementPage() {
             <div style={{ padding: "12px 18px", borderBottom: "1px solid #f1f5f9" }}>
               <span style={{ fontSize: "12px", color: "#64748b" }}>Showing <strong style={{ color: "#1e293b" }}>{tenants.length}</strong> tenants</span>
             </div>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
               <thead>
                 <tr style={{ background: "#f8fafc" }}>
-                  {["COMPANY", "USERS", "VACANCIES", "REGISTERED", "STATUS", "ACTION"].map(h => (
-                    <th key={h} style={TH}>{h}</th>
+                  {[
+                    { label: "COMPANY", width: "30%" },
+                    { label: "USERS", width: "8%" },
+                    { label: "VACANCIES", width: "10%" },
+                    { label: "REGISTERED", width: "14%" },
+                    { label: "STATUS", width: "12%" },
+                    { label: "ACTION", width: "16%" },
+                  ].map(h => (
+                    <th key={h.label} style={{ ...TH, width: h.width }}>{h.label}</th>
                   ))}
                 </tr>
               </thead>
@@ -479,15 +584,15 @@ function TenantManagementPage() {
                       <td style={{ padding: "12px 16px", verticalAlign: "middle" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                           <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: `${ac}18`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", fontWeight: "800", color: ac, flexShrink: 0 }}>{initials(t.name)}</div>
-                          <div>
-                            <div style={{ fontSize: "13px", fontWeight: "600", color: "#1e293b" }}>{t.name}</div>
-                            <div style={{ fontSize: "11px", color: "#94a3b8" }}>{t.email}</div>
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontSize: "13.5px", fontWeight: "600", color: "#1e293b", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.name}</div>
+                            <div style={{ fontSize: "11px", color: "#94a3b8", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.email}</div>
                           </div>
                         </div>
                       </td>
-                      <td style={{ padding: "12px 16px", fontSize: "13px", fontWeight: "600", color: "#1e293b", verticalAlign: "middle" }}>{t.users_count ?? 0}</td>
-                      <td style={{ padding: "12px 16px", fontSize: "13px", fontWeight: "600", color: "#1e293b", verticalAlign: "middle" }}>{t.vacancies_count ?? 0}</td>
-                      <td style={{ padding: "12px 16px", fontSize: "12px", color: "#64748b", verticalAlign: "middle" }}>{t.created_at}</td>
+                      <td style={{ padding: "12px 16px", fontSize: "13.5px", fontWeight: "600", color: "#1e293b", verticalAlign: "middle" }}>{t.users_count ?? 0}</td>
+                      <td style={{ padding: "12px 16px", fontSize: "13.5px", fontWeight: "600", color: "#1e293b", verticalAlign: "middle" }}>{t.vacancies_count ?? 0}</td>
+                      <td style={{ padding: "12px 16px", fontSize: "12.5px", color: "#64748b", verticalAlign: "middle" }}>{t.created_at}</td>
                       <td style={{ padding: "12px 16px", verticalAlign: "middle" }}>
                         <span style={{ background: isActive ? "#f0fdf4" : "#fff1f2", color: isActive ? "#15803d" : "#be123c", border: `1px solid ${isActive ? "#bbf7d0" : "#fecdd3"}`, borderRadius: "6px", fontSize: "11.5px", fontWeight: "700", padding: "3px 9px", display: "inline-flex", alignItems: "center", gap: "4px" }}>
                           <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: isActive ? "#16a34a" : "#e11d48", display: "inline-block" }} />
@@ -497,13 +602,13 @@ function TenantManagementPage() {
                       <td style={{ padding: "12px 16px", verticalAlign: "middle" }}>
                         <div style={{ display: "flex", gap: "6px" }}>
                           <button onClick={() => setSelectedTenant(t)}
-                            style={{ padding: "4px 12px", borderRadius: "7px", border: "1px solid #e2e8f0", background: "#fff", fontSize: "11.5px", fontWeight: "600", color: "#475569", cursor: "pointer" }}
+                            style={{ padding: "5px 12px", borderRadius: "8px", border: "1px solid #e2e8f0", background: "#fff", fontSize: "12px", fontWeight: "600", color: "#475569", cursor: "pointer", whiteSpace: "nowrap" }}
                             onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
                             onMouseLeave={e => e.currentTarget.style.background = "#fff"}>
                             Detail
                           </button>
                           <button onClick={() => toggleStatus(t.id, t.status)}
-                            style={{ padding: "4px 12px", borderRadius: "7px", border: `1px solid ${isActive ? "#fecdd3" : "#bbf7d0"}`, background: isActive ? "#fff1f2" : "#f0fdf4", fontSize: "11.5px", fontWeight: "600", color: isActive ? "#be123c" : "#15803d", cursor: "pointer" }}>
+                            style={{ padding: "5px 12px", borderRadius: "8px", border: `1px solid ${isActive ? "#fecdd3" : "#bbf7d0"}`, background: isActive ? "#fff1f2" : "#f0fdf4", fontSize: "12px", fontWeight: "600", color: isActive ? "#be123c" : "#15803d", cursor: "pointer", whiteSpace: "nowrap" }}>
                             {isActive ? "Suspend" : "Activate"}
                           </button>
                         </div>
@@ -554,22 +659,26 @@ function UserManagementPage() {
   const initials = (name) => name?.split(" ").slice(0, 2).map(w => w[0]).join("").toUpperCase() ?? "?";
   const avatarColors = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#06b6d4", "#84cc16", "#f97316", "#14b8a6"];
 
+  // Fixed column widths for alignment
+  const colWidths = { user: "30%", role: "12%", company: "20%", phone: "16%", registered: "14%" };
+
   return (
-    <main style={{ flex: 1, padding: "26px 26px 40px", overflowY: "auto", background: "#f1f5f9" }}>
+    <main style={{ flex: 1, padding: "28px 28px 40px", overflowY: "auto", background: "#f8fafc" }}>
       <div style={{ marginBottom: "22px" }}>
-        <div style={{ fontSize: "19px", fontWeight: "800", color: "#0f172a" }}>User Management</div>
-        <div style={{ fontSize: "12.5px", color: "#64748b", marginTop: "2px" }}>All registered users across tenants.</div>
+        <div style={{ fontSize: "20px", fontWeight: "800", color: "#0f172a" }}>User Management</div>
+        <div style={{ fontSize: "13px", color: "#64748b", marginTop: "3px" }}>All registered users across tenants.</div>
       </div>
 
-      <div style={{ background: "#fff", borderRadius: "12px", padding: "14px 18px", marginBottom: "16px", display: "flex", gap: "12px", alignItems: "center", boxShadow: "0 1px 3px rgba(0,0,0,0.04)", flexWrap: "wrap" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "7px", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "9px", padding: "7px 12px", flex: "1 1 220px" }}>
+      {/* Filter bar */}
+      <div style={{ background: "#fff", borderRadius: "16px", padding: "14px 18px", marginBottom: "20px", display: "flex", gap: "12px", alignItems: "center", boxShadow: "0 1px 4px rgba(0,0,0,0.05)", flexWrap: "wrap" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "7px", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px", padding: "7px 12px", flex: "1 1 220px" }}>
           <IC.Search />
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search name or email..."
-            style={{ border: "none", background: "transparent", outline: "none", fontSize: "12.5px", color: "#64748b", width: "100%" }} />
+            style={{ border: "none", background: "transparent", outline: "none", fontSize: "13px", color: "#64748b", width: "100%" }} />
         </div>
         <div style={{ position: "relative" }}>
           <select value={roleFilter} onChange={e => setRoleFilter(e.target.value)}
-            style={{ appearance: "none", background: "#fff", border: "1px solid #e2e8f0", borderRadius: "9px", padding: "7px 32px 7px 12px", fontSize: "12.5px", color: "#475569", fontWeight: "500", cursor: "pointer", outline: "none" }}>
+            style={{ appearance: "none", background: "#fff", border: "1px solid #e2e8f0", borderRadius: "10px", padding: "8px 36px 8px 14px", fontSize: "13px", color: "#475569", fontWeight: "500", cursor: "pointer", outline: "none" }}>
             <option value="all">All Roles</option>
             <option value="admin">Admin</option>
             <option value="hr">HR</option>
@@ -580,7 +689,8 @@ function UserManagementPage() {
         </div>
       </div>
 
-      <div style={{ background: "#fff", borderRadius: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.04)", overflow: "hidden" }}>
+      {/* Table */}
+      <div style={{ background: "#fff", borderRadius: "16px", boxShadow: "0 1px 4px rgba(0,0,0,0.05)", overflow: "hidden" }}>
         {loading ? (
           <div style={{ padding: "60px 0", display: "flex", justifyContent: "center" }}>
             <div style={{ width: "28px", height: "28px", border: "3px solid #e2e8f0", borderTop: "3px solid #3b82f6", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
@@ -592,12 +702,15 @@ function UserManagementPage() {
             <div style={{ padding: "12px 18px", borderBottom: "1px solid #f1f5f9" }}>
               <span style={{ fontSize: "12px", color: "#64748b" }}>Showing <strong style={{ color: "#1e293b" }}>{users.length}</strong> users</span>
             </div>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            {/* tableLayout: fixed + defined widths = columns always align */}
+            <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
               <thead>
                 <tr style={{ background: "#f8fafc" }}>
-                  {["USER", "ROLE", "COMPANY", "PHONE", "REGISTERED"].map(h => (
-                    <th key={h} style={TH}>{h}</th>
-                  ))}
+                  <th style={{ ...TH, width: colWidths.user }}>USER</th>
+                  <th style={{ ...TH, width: colWidths.role }}>ROLE</th>
+                  <th style={{ ...TH, width: colWidths.company }}>COMPANY</th>
+                  <th style={{ ...TH, width: colWidths.phone }}>PHONE</th>
+                  <th style={{ ...TH, width: colWidths.registered }}>REGISTERED</th>
                 </tr>
               </thead>
               <tbody>
@@ -606,24 +719,24 @@ function UserManagementPage() {
                   const rs = roleStyle[roleKey] ?? { bg: "#f8fafc", color: "#475569", border: "#e2e8f0", label: u.role };
                   const ac = avatarColors[i % avatarColors.length];
                   return (
-                    <tr key={u.id} style={{ borderBottom: "1px solid #f8fafc", transition: "background 0.15s", cursor: "pointer" }}
+                    <tr key={u.id} style={{ borderBottom: "1px solid #f8fafc", transition: "background 0.15s" }}
                       onMouseEnter={e => e.currentTarget.style.background = "#fafbfc"}
                       onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-                      <td style={{ padding: "11px 16px", verticalAlign: "middle" }}>
+                      <td style={{ padding: "12px 16px", verticalAlign: "middle", width: colWidths.user }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                          <div style={{ width: "30px", height: "30px", borderRadius: "8px", background: `${ac}18`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10.5px", fontWeight: "800", color: ac, flexShrink: 0 }}>{initials(u.name)}</div>
-                          <div>
-                            <div style={{ fontSize: "13px", fontWeight: "600", color: "#1e293b" }}>{u.name}</div>
-                            <div style={{ fontSize: "11px", color: "#94a3b8" }}>{u.email}</div>
+                          <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: `${ac}18`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", fontWeight: "800", color: ac, flexShrink: 0 }}>{initials(u.name)}</div>
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontSize: "13.5px", fontWeight: "600", color: "#1e293b", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{u.name}</div>
+                            <div style={{ fontSize: "11px", color: "#94a3b8", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{u.email}</div>
                           </div>
                         </div>
                       </td>
-                      <td style={{ padding: "11px 16px", verticalAlign: "middle" }}>
+                      <td style={{ padding: "12px 16px", verticalAlign: "middle", width: colWidths.role }}>
                         <span style={{ background: rs.bg, color: rs.color, border: `1px solid ${rs.border}`, borderRadius: "6px", fontSize: "11.5px", fontWeight: "700", padding: "3px 9px" }}>{rs.label}</span>
                       </td>
-                      <td style={{ padding: "11px 16px", fontSize: "12.5px", color: "#475569", verticalAlign: "middle" }}>{u.company ?? "—"}</td>
-                      <td style={{ padding: "11px 16px", fontSize: "12.5px", color: "#475569", fontFamily: "monospace", verticalAlign: "middle" }}>{u.phone ?? "—"}</td>
-                      <td style={{ padding: "11px 16px", fontSize: "12px", color: "#64748b", verticalAlign: "middle" }}>{u.created_at}</td>
+                      <td style={{ padding: "12px 16px", fontSize: "13px", color: "#475569", verticalAlign: "middle", width: colWidths.company, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{u.company ?? "—"}</td>
+                      <td style={{ padding: "12px 16px", fontSize: "13px", color: "#475569", fontFamily: "monospace", verticalAlign: "middle", width: colWidths.phone }}>{u.phone ?? "—"}</td>
+                      <td style={{ padding: "12px 16px", fontSize: "12.5px", color: "#64748b", verticalAlign: "middle", width: colWidths.registered }}>{u.created_at}</td>
                     </tr>
                   );
                 })}
@@ -665,24 +778,28 @@ export default function SuperAdminPages() {
   };
 
   const DashboardLayout = ({ children, pageTitle }) => (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#f1f5f9", fontFamily: "'Poppins','Inter',sans-serif" }}>
+    <div style={{ display: "flex", minHeight: "100vh", background: "#f8fafc", fontFamily: "'Poppins','Inter',sans-serif" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; }
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 99px; }
         @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in { animation: fadeIn 0.35s ease both; }
       `}</style>
-      <Sidebar onLogout={() => setLogoutModal(true)} />
+      <SuperAdminSidebar onLogout={() => setLogoutModal(true)} />
       <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
         <Topbar title={pageTitle.title} sub={pageTitle.sub} />
         {children}
       </div>
+
+      {/* Logout modal */}
       {logoutModal && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(10,22,40,0.5)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div style={{ background: "#fff", borderRadius: "16px", padding: "28px", width: "340px", boxShadow: "0 20px 60px rgba(0,0,0,0.18)" }}>
+          <div style={{ background: "#fff", borderRadius: "16px", padding: "28px", width: "340px", boxShadow: "0 20px 60px rgba(0,0,0,0.18)", textAlign: "left" }}>
             <div style={{ width: "40px", height: "40px", borderRadius: "10px", background: "#fff1f2", display: "flex", alignItems: "center", justifyContent: "center", color: "#ef4444", marginBottom: "14px" }}><IC.Logout /></div>
-            <div style={{ fontSize: "15px", fontWeight: "800", color: "#0f172a", marginBottom: "6px" }}>Sign Out?</div>
+            <div style={{ fontSize: "16px", fontWeight: "800", color: "#0f172a", marginBottom: "6px" }}>Sign Out?</div>
             <div style={{ fontSize: "13px", color: "#64748b", lineHeight: "1.6", marginBottom: "20px" }}>Are you sure you want to sign out of the Super Admin account?</div>
             <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
               <button onClick={() => setLogoutModal(false)} style={{ padding: "9px 18px", borderRadius: "9px", border: "1px solid #e2e8f0", background: "#fff", fontSize: "13px", fontWeight: "700", color: "#64748b", cursor: "pointer" }}>Cancel</button>

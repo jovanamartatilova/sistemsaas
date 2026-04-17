@@ -12,7 +12,6 @@ class Position extends Model
         'id_position',
         'id_company',
         'name',
-        'quota',
     ];
     public function vacancies()
     {

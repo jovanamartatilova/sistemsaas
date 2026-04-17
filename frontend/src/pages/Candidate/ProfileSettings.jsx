@@ -262,7 +262,6 @@ function ProfileContent({ userData, setUserData }) {
           {/* Name + actions */}
           <div className="flex flex-col gap-0.5">
             <p className="text-gray-900 font-bold text-lg text-left">{formData.full_name}</p>
-            <p className="text-gray-500 text-sm text-left">{userData?.role || "Apprentice"}</p>
             <p className="text-gray-400 text-xs mb-3 text-left">
               {formData.university_name || "Universitas belum diisi"}
             </p>
