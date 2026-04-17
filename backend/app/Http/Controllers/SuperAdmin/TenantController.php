@@ -26,7 +26,7 @@ class TenantController extends Controller
             $query->where('status', $request->status);
         }
 
-        $tenants = $query->select('id_company as id', 'name', 'email', 'status', 'created_at')
+        $tenants = $query->select('id_company as id', 'name', 'email', 'address', 'phone', 'description', 'status', 'created_at')
             ->withCount(['users', 'vacancies'])
             ->get()
             ->map(function ($tenant) {
@@ -34,6 +34,9 @@ class TenantController extends Controller
                     'id' => $tenant->id,
                     'name' => $tenant->name,
                     'email' => $tenant->email,
+                    'address' => $tenant->address,
+                    'phone' => $tenant->phone,
+                    'description' => $tenant->description,
                     'status' => $tenant->status,
                     'created_at' => $tenant->created_at->format('Y-m-d'),
                     'users_count' => $tenant->users_count,

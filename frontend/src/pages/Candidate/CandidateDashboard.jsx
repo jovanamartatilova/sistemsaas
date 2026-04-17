@@ -2,51 +2,9 @@ import { useState, useEffect } from "react";
 import { LayoutDashboard, BookOpen, User, Award, LogOut, MapPin } from "lucide-react";
 import { useNavigate, useParams, Link, useLocation } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore";
+import { LoadingSpinner } from "../../components/LoadingSpinner";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
-
-// --- Radar Chart (SVG) ---
-function RadarChart() {
-  const labels = ["HTML/CSS", "JavaScript", "React.js", "TypeScript", "Redux", "UI/UX"];
-  const values = [0.85, 0.78, 0.72, 0.60, 0.55, 0.65];
-  const cx = 120, cy = 120, r = 90;
-  const n = labels.length;
-
-  const toXY = (i, val) => {
-    const angle = (Math.PI * 2 * i) / n - Math.PI / 2;
-    return { x: cx + r * val * Math.cos(angle), y: cy + r * val * Math.sin(angle) };
-  };
-
-  const gridLevels = [0.25, 0.5, 0.75, 1.0];
-  const dataPoints = values.map((v, i) => toXY(i, v));
-  const polygon = dataPoints.map((p) => `${p.x},${p.y}`).join(" ");
-
-  return (
-    <svg viewBox="0 0 240 240" className="w-full max-w-[200px] mx-auto">
-      {gridLevels.map((level, li) => {
-        const pts = Array.from({ length: n }, (_, i) => toXY(i, level));
-        const d = pts.map((p, i) => `${i === 0 ? "M" : "L"}${p.x},${p.y}`).join(" ") + "Z";
-        return <path key={li} d={d} fill="none" stroke="#e2e8f0" strokeWidth="1" />;
-      })}
-      {Array.from({ length: n }, (_, i) => {
-        const outer = toXY(i, 1);
-        return <line key={i} x1={cx} y1={cy} x2={outer.x} y2={outer.y} stroke="#e2e8f0" strokeWidth="1" />;
-      })}
-      <polygon points={polygon} fill="rgba(99,102,241,0.15)" stroke="#6366f1" strokeWidth="2" />
-      {dataPoints.map((p, i) => (
-        <circle key={i} cx={p.x} cy={p.y} r="4" fill="#6366f1" />
-      ))}
-      {labels.map((label, i) => {
-        const pos = toXY(i, 1.25);
-        return (
-          <text key={i} x={pos.x} y={pos.y} textAnchor="middle" dominantBaseline="middle" fill="#64748b" fontSize="8.5">
-            {label}
-          </text>
-        );
-      })}
-    </svg>
-  );
-}
 
 // --- Progress Bar ---
 function ProgressBar({ value, max, color = "bg-indigo-500", height = "h-1.5" }) {
@@ -55,13 +13,6 @@ function ProgressBar({ value, max, color = "bg-indigo-500", height = "h-1.5" }) 
     <div className={`w-full bg-slate-100 rounded-full ${height}`}>
       <div className={`${color} rounded-full ${height} transition-all`} style={{ width: `${pct}%` }} />
     </div>
-  );
-}
-
-// --- Skill Tag ---
-function SkillTag({ label, color = "bg-slate-100 text-slate-600" }) {
-  return (
-    <span className={`px-3 py-1 rounded-full text-xs font-medium ${color}`}>{label}</span>
   );
 }
 
@@ -101,19 +52,6 @@ function CompetencyCard({ title, hours, projects, score, maxScore, status, progr
             <ProgressBar value={progress} max={100} color={barColor} />
           </>
         )}
-      </div>
-    </div>
-  );
-}
-
-// --- Activity Item ---
-function ActivityItem({ color, title, subtitle }) {
-  return (
-    <div className="flex items-start gap-3">
-      <span className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${color}`} />
-      <div className="min-w-0 w-full">
-        <p className="text-sm text-slate-700 font-medium">{title}</p>
-        <p className="text-xs text-slate-400">{subtitle}</p>
       </div>
     </div>
   );
@@ -174,18 +112,21 @@ function Sidebar({ userName, onLogout }) {
         {company?.logo_path ? (
           <img 
             src={`http://localhost:8000/storage/${company.logo_path}`} 
-            alt="Logo" 
-            className="w-8 h-8 rounded-lg object-cover bg-white shadow-sm" 
+            alt="Company" 
+            className="w-8 h-8 rounded-lg object-cover bg-white shadow-sm flex-shrink-0" 
           />
         ) : (
-          <div className="w-8 h-8 rounded-full bg-slate-600 flex items-center justify-center text-xs font-bold">
-            {userName?.charAt(0).toUpperCase() || "R"}
+          <div className="w-8 h-8 rounded-lg bg-slate-600 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
+            {company?.name?.charAt(0).toUpperCase() || "C"}
           </div>
         )}
-        <span className="text-sm text-slate-300 flex-1 truncate">{userName || "Riku"}</span>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs text-slate-300 truncate font-medium">{company?.name || "Company"}</p>
+          <p className="text-xs text-slate-400 truncate">{userName || "User"}</p>
+        </div>
         <button
           onClick={onLogout}
-          className="text-slate-500 hover:text-white cursor-pointer transition-colors"
+          className="text-slate-500 hover:text-white cursor-pointer transition-colors flex-shrink-0"
           title="Logout"
         >
           <LogOut size={14} />
@@ -198,6 +139,7 @@ function Sidebar({ userName, onLogout }) {
 // --- Main Dashboard ---
 export default function EarlyPathDashboard() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [skillFilter, setSkillFilter] = useState("Active");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -205,8 +147,9 @@ export default function EarlyPathDashboard() {
   const { logout: globalLogout } = useAuthStore();
 
   useEffect(() => {
+    setError(null);
     fetchDashboardData();
-  }, []);
+  }, [location.pathname]);
 
   const fetchDashboardData = async () => {
     try {
@@ -230,7 +173,10 @@ export default function EarlyPathDashboard() {
         if (response.status === 401) {
           localStorage.removeItem("auth_token");
           localStorage.removeItem("token");
-          setError("Session expired. Please login again.");
+          localStorage.removeItem("company");
+          localStorage.removeItem("user");
+          localStorage.removeItem("candidate_user");
+          navigate("/");
           return;
         }
         throw new Error("Failed to fetch dashboard data");
@@ -268,47 +214,51 @@ export default function EarlyPathDashboard() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-indigo-600 mx-auto mb-4" />
-          <p className="text-slate-600">Loading dashboard...</p>
-        </div>
-      </div>
-    );
+    // Loading state will be shown inside main with Sidebar visible
   }
+
+  const userData = dashboardData ? {
+    profile: dashboardData.profile,
+    apprentice: dashboardData.apprentice,
+    vacancy: dashboardData.vacancy,
+    learning_progress: dashboardData.learning_progress,
+    competencies: dashboardData.competencies,
+  } : { profile: null, apprentice: null, vacancy: null, learning_progress: null, competencies: [] };
 
   if (error || !dashboardData) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-slate-600 mb-4">{error || "Failed to load dashboard"}</p>
-          <div className="flex gap-3 justify-center">
-            <button
-              onClick={fetchDashboardData}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-            >
-              Retry
-            </button>
-            <button
-              onClick={() => navigate("/")}
-              className="px-4 py-2 bg-slate-300 text-slate-700 rounded-lg hover:bg-slate-400"
-            >
-              Back Home
-            </button>
+      <div className="min-h-screen bg-gray-50 flex" style={{ fontFamily: 'Poppins, sans-serif' }}>
+        <Sidebar userName={userData.profile?.name} onLogout={handleLogout} />
+        <main className="ml-56 flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-slate-600 mb-4">{error || "Failed to load dashboard"}</p>
+            <div className="flex gap-3 justify-center">
+              <button
+                onClick={fetchDashboardData}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+              >
+                Retry
+              </button>
+              <button
+                onClick={() => navigate("/")}
+                className="px-4 py-2 bg-slate-300 text-slate-700 rounded-lg hover:bg-slate-400"
+              >
+                Back Home
+              </button>
+            </div>
           </div>
-        </div>
+        </main>
       </div>
     );
   }
 
-  const { profile, apprentice, learning_progress, competencies, skills } = dashboardData;
+  const { profile, apprentice, vacancy, learning_progress, competencies } = userData;
 
   // Format competencies for display
   const competencyList = competencies.map((comp) => ({
     title: comp.name,
-    hours: `${comp.learning_hours} jam pembelajaran`,
-    projects: "0 proyek",
+    hours: `${comp.learning_hours} learning hours`,
+    projects: "0 projects",
     progress: 0,
     status: "Active",
   }));
@@ -318,11 +268,6 @@ export default function EarlyPathDashboard() {
       ? competencyList
       : competencyList.filter((c) => c.status === skillFilter);
 
-  const skillTags = skills.map((s) => ({
-    label: s.skill_name,
-    color: "bg-slate-100 text-slate-600",
-  }));
-
   return (
     <div className="min-h-screen bg-gray-50 flex" style={{ fontFamily: 'Poppins, sans-serif' }}>
       <Sidebar userName={profile?.name} onLogout={handleLogout} />
@@ -330,8 +275,14 @@ export default function EarlyPathDashboard() {
       <main className="ml-56 flex-1 px-6 py-6 space-y-5 min-w-0">
         <style>{`@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');`}</style>
 
-        {/* Status Alert - Jika submissi masih pending atau apprentice belum ada */}
-        {!apprentice && (
+        {loading && (
+          <LoadingSpinner message="Loading dashboard..." />
+        )}
+
+        {!loading && (
+          <>
+            {/* Status Alert - Jika submissi masih pending atau apprentice belum ada */}
+        {!vacancy && (
           <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 shadow-sm">
             <div className="flex items-start gap-3">
               <div className="flex-shrink-0 w-5 h-5 rounded-full bg-amber-400 flex items-center justify-center mt-0.5">
@@ -358,7 +309,7 @@ export default function EarlyPathDashboard() {
           <div className="flex-1 min-w-0">
             <h1 className="text-xl font-bold text-slate-800 text-left">{profile?.name || "User"}</h1>
             <p className="text-slate-500 text-sm mt-0.5 text-left">
-              {apprentice?.position || "Position"} • {apprentice?.batch || "Batch"} – {apprentice?.company || "Company"}
+              {apprentice?.position || "Position"} • {vacancy?.start_date ? new Date(vacancy.start_date).toLocaleDateString('en-US') : "Date"} – {vacancy?.location || "Location"}
             </p>
             {apprentice?.mentor_name && (
   <p className="text-xs text-slate-400 mt-0.5 text-left flex items-center gap-1">
@@ -387,7 +338,6 @@ export default function EarlyPathDashboard() {
             {[
               { value: `${profile?.overall_progress || 0}%`, label: "Progress", bar: true },
               { value: `${competencies?.length || 0}`, label: "Competencies", sub: "0 Completed", subColor: "text-slate-400" },
-              { value: `${learning_progress?.total_learning_hours || 0}`, label: "Learning Hours", sub: "+12 This Week", subColor: "text-emerald-500" },
             ].map((stat, i) => (
               <div key={i} className="text-center px-6 first:pl-0 last:pr-0">
                 <p className="text-2xl font-bold text-slate-800">{stat.value}</p>
@@ -407,29 +357,31 @@ export default function EarlyPathDashboard() {
         </div>
 
         {/* Main Content Grid */}
-        <div className="grid grid-cols-[1fr_1.6fr] gap-5 items-stretch">
+        <div className="grid grid-cols-[1fr_1.6fr] gap-5 items-start">
 
           {/* Left Column */}
           <div className="flex flex-col gap-5">
             {/* Apprentice Info */}
             <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
               <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Internship Info</h2>
-              {apprentice ? (
+              {apprentice || vacancy ? (
                 <div className="space-y-3">
                   {[
-                    { label: "ID Apprentice", value: apprentice?.id_apprentice || "-" },
-                    { label: "Program", value: apprentice?.position || "-" },
-                    { label: "Batch", value: apprentice?.batch || "-" },
-                    { label: "Period", value: apprentice?.start_date && apprentice?.end_date ? `${new Date(apprentice.start_date).toLocaleDateString('en-US')} – ${new Date(apprentice.end_date).toLocaleDateString('en-US')}` : "-" },
-                    { label: "Status", value: apprentice?.status || "Inactive", badge: true },
+                    { label: "Type", value: vacancy?.type || apprentice?.position || "-" },
+                    { label: "Location", value: vacancy?.location || "-" },
+                    { label: "Start Date", value: vacancy?.start_date ? new Date(vacancy.start_date).toLocaleDateString('en-US') : "-" },
+                    { label: "End Date", value: vacancy?.end_date ? new Date(vacancy.end_date).toLocaleDateString('en-US') : "-" },
+                    { label: "Status", value: apprentice?.status || "Screening", badge: true },
                   ].map((row, i) => (
                     <div key={i} className="flex justify-between items-center text-sm">
                       <span className="text-slate-400">{row.label}</span>
                       {row.badge ? (
                         <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium border ${
-                          row.value === 'active'
+                          row.value === 'accepted' || row.value === 'Accepted'
                             ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
-                            : 'bg-slate-50 text-slate-600 border-slate-200'
+                            : row.value === 'rejected' || row.value === 'Rejected'
+                            ? 'bg-rose-50 text-rose-600 border-rose-200'
+                            : 'bg-amber-50 text-amber-600 border-amber-200'
                         }`}>
                           ● {row.value}
                         </span>
@@ -441,53 +393,19 @@ export default function EarlyPathDashboard() {
                 </div>
               ) : (
                 <div className="space-y-3 text-center py-4">
-                  <p className="text-sm text-slate-500">Waiting for HR selection...</p>
-                  <p className="text-xs text-slate-400">Internship data will appear after HR selection is complete</p>
+                  <p className="text-sm text-slate-500">No apprenticeship selected yet...</p>
+                  <p className="text-xs text-slate-400">Internship data will appear once HR selects you</p>
                 </div>
               )}
-            </div>
-
-            {/* Learning Progress */}
-            <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-              <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Learning Progress</h2>
-              <div className="space-y-4">
-                {[
-                  { label: "Total Learning Hours", value: `${learning_progress?.total_learning_hours || 0} / ${learning_progress?.target_learning_hours || 320} hours`, pct: learning_progress ? Math.round((learning_progress.total_learning_hours / learning_progress.target_learning_hours) * 100) : 0, color: "bg-indigo-500" },
-                  { label: "Completed Modules", value: `${learning_progress?.completed_modules || 0} / ${learning_progress?.total_modules || 24} modules`, pct: learning_progress ? Math.round((learning_progress.completed_modules / learning_progress.total_modules) * 100) : 0, color: "bg-emerald-500" },
-                  { label: "Attendance", value: `${learning_progress?.attendance_percentage || 0}%`, pct: learning_progress?.attendance_percentage || 0, color: "bg-yellow-400" },
-                  { label: "Assignments Submitted", value: `${learning_progress?.submitted_assignments || 0} / ${learning_progress?.total_assignments || 40} assignments`, pct: learning_progress ? Math.round((learning_progress.submitted_assignments / learning_progress.total_assignments) * 100) : 0, color: "bg-slate-400" },
-                ].map((item, i) => (
-                  <div key={i} className="space-y-1.5">
-                    <div className="flex justify-between text-xs">
-                      <span className="text-slate-500">{item.label}</span>
-                      <span className="text-slate-700 font-medium">{item.value}</span>
-                    </div>
-                    <div className="w-full bg-slate-100 rounded-full h-1.5">
-                      <div className={`${item.color} h-1.5 rounded-full`} style={{ width: `${item.pct}%` }} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Recent Activities — grows to fill remaining height */}
-            <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex-1 text-left">
-              <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4 text-center">Recent Activities</h2>
-              <div className="space-y-4">
-                <ActivityItem color="bg-indigo-400" title="Completing Competencies: React Hooks" subtitle="Apr 24, 2025 · 10 hours" />
-                <ActivityItem color="bg-emerald-400" title="Submitted Assignment: Project Portfolio" subtitle="Apr 20, 2025 · Score: 87/100" />
-                <ActivityItem color="bg-yellow-400" title="Mentoring Session: UI/UX Principles" subtitle="Apr 18, 2025 · 2 hours" />
-                <ActivityItem color="bg-purple-400" title="Joined Batch 5 Program" subtitle="Apr 01, 2025 · Kick-off day" />
-              </div>
             </div>
           </div>
 
           {/* Right Column */}
           <div className="flex flex-col gap-5">
-            {/* Competencies & Skills */}
+            {/* Competencies */}
             <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm text-left">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400">Competencies & Skills</h2>
+                <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400">Competencies</h2>
                 <div className="flex gap-1 bg-slate-100 rounded-lg p-1">
                   {["All", "Active", "Completed"].map((f) => (
                     <button
@@ -510,50 +428,16 @@ export default function EarlyPathDashboard() {
                 )}
               </div>
             </div>
-
-            {/* Skill Tags + Radar */}
-            <div className="grid grid-cols-2 gap-5 flex-1">
-              <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-                <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">Skill Tags</h2>
-                <div className="flex flex-wrap gap-2">
-                  {skillTags.length > 0 ? (
-                    skillTags.map((tag, i) => <SkillTag key={i} {...tag} />)
-                  ) : (
-                    <p className="text-slate-500 text-xs">No skills yet</p>
-                  )}
-                </div>
-              </div>
-
-              <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-                <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">Competency Radar</h2>
-                <div className="relative">
-                  <RadarChart />
-                  <div className="absolute top-1/2 right-2 -translate-y-1/2 flex flex-col items-center">
-                    <div className="w-12 h-12 rounded-full border-4 border-indigo-500 flex items-center justify-center bg-white shadow-sm">
-                      <span className="text-sm font-bold text-slate-800">67%</span>
-                    </div>
-                    <div className="mt-2 space-y-1 text-xs">
-                      <div className="flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                        <span className="text-slate-500">Completed (8)</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full bg-indigo-400" />
-                        <span className="text-slate-500">Active (2)</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
 
 
 
         <p className="text-center text-xs text-slate-400 py-2">
-          © 2025 EarlyPath · Platform Magang Modern · All rights reserved
+          © 2025 EarlyPath · All rights reserved
         </p>
+          </>
+        )}
       </main>
     </div>
   );

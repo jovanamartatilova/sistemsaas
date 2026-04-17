@@ -5,11 +5,13 @@ import {
 } from "lucide-react";
 import { useNavigate, useParams, Link, useLocation } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore";
+import { LoadingSpinner } from "../../components/LoadingSpinner";
 
 // --- Sidebar ---
 function Sidebar({ userName, onLogout }) {
   const { slug } = useParams();
   const location = useLocation();
+  const company = JSON.parse(localStorage.getItem("company"));
 
   const navItems = [
     { label: "Dashboard",    icon: <LayoutDashboard size={16} />, to: `/c/${slug}/dashboard` },
@@ -43,13 +45,24 @@ function Sidebar({ userName, onLogout }) {
         })}
       </nav>
       <div className="mt-auto flex items-center gap-3 px-2">
-        <div className="w-8 h-8 rounded-full bg-slate-600 flex items-center justify-center text-xs font-bold">
-          {userName?.charAt(0).toUpperCase() || "R"}
+        {company?.logo_path ? (
+          <img 
+            src={`http://localhost:8000/storage/${company.logo_path}`} 
+            alt="Company" 
+            className="w-8 h-8 rounded-lg object-cover bg-white shadow-sm flex-shrink-0" 
+          />
+        ) : (
+          <div className="w-8 h-8 rounded-lg bg-slate-600 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
+            {company?.name?.charAt(0).toUpperCase() || "C"}
+          </div>
+        )}
+        <div className="flex-1 min-w-0">
+          <p className="text-xs text-slate-300 truncate font-medium">{company?.name || "Company"}</p>
+          <p className="text-xs text-slate-400 truncate">{userName || "User"}</p>
         </div>
-        <span className="text-sm text-slate-300 flex-1">{userName || "User"}</span>
         <button
           onClick={onLogout}
-          className="text-slate-500 hover:text-white cursor-pointer transition-colors"
+          className="text-slate-500 hover:text-white cursor-pointer transition-colors flex-shrink-0"
           title="Logout"
         >
           <LogOut size={14} />
@@ -196,6 +209,17 @@ export default function CertificatesPage() {
             "Authorization": `Bearer ${token}`,
           },
         });
+        
+        if (!userResp.ok && userResp.status === 401) {
+          localStorage.removeItem("auth_token");
+          localStorage.removeItem("token");
+          localStorage.removeItem("company");
+          localStorage.removeItem("user");
+          localStorage.removeItem("candidate_user");
+          navigate("/");
+          return;
+        }
+        
         if (userResp.ok) {
           const data = await userResp.json();
           setUserData(data.data || data);
@@ -208,6 +232,17 @@ export default function CertificatesPage() {
             "Authorization": `Bearer ${token}`,
           },
         });
+        
+        if (!certResp.ok && certResp.status === 401) {
+          localStorage.removeItem("auth_token");
+          localStorage.removeItem("token");
+          localStorage.removeItem("company");
+          localStorage.removeItem("user");
+          localStorage.removeItem("candidate_user");
+          navigate("/");
+          return;
+        }
+        
         if (certResp.ok) {
           const certData = await certResp.json();
           const certs = certData.data || certData || [];
@@ -264,12 +299,7 @@ export default function CertificatesPage() {
 
       <main className="ml-56 flex-1 px-6 py-6 space-y-5 min-w-0">
         {loading && (
-          <div className="flex items-center justify-center min-h-screen">
-            <div className="text-center">
-              <div className="animate-spin h-12 w-12 border-4 border-indigo-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-              <p className="text-slate-600">Loading certificates...</p>
-            </div>
-          </div>
+          <LoadingSpinner message="Loading certificates..." />
         )}
         {error && (
           <div className="bg-red-50 text-red-700 border border-red-200 rounded-lg p-4 mb-4">
@@ -354,7 +384,7 @@ export default function CertificatesPage() {
               )}
 
               <p className="text-center text-xs text-slate-400 py-2">
-                © 2025 EarlyPath · Platform Magang Modern · All rights reserved
+                © 2025 EarlyPath · All rights reserved
               </p>
             </>
           )}
