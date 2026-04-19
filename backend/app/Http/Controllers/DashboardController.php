@@ -52,12 +52,80 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
+        // 1. Status Distribution
+        $statusDistribution = $submissionsQuery->clone()
+            ->select('status', \Illuminate\Support\Facades\DB::raw('count(*) as count'))
+            ->groupBy('status')
+            ->get();
+
+        // 2. Monthly Stats (Last 6 Months)
+        $sixMonthsAgo = now()->subMonths(5)->startOfMonth();
+        $months = [];
+        for ($i = 5; $i >= 0; $i--) {
+            $mName = now()->subMonths($i)->format('M');
+            $months[$mName] = ['applied' => 0, 'accepted' => 0, 'rejected' => 0];
+        }
+
+        $monthlyRaw = $submissionsQuery->clone()
+            ->where('submitted_at', '>=', $sixMonthsAgo)
+            ->select(
+                \Illuminate\Support\Facades\DB::raw("DATE_FORMAT(submitted_at, '%b') as month"),
+                'status',
+                \Illuminate\Support\Facades\DB::raw('count(*) as count')
+            )
+            ->groupBy('month', 'status')
+            ->get();
+
+        foreach ($monthlyRaw as $row) {
+            $m = $row->month; // e.g., 'Jan'
+            if (isset($months[$m])) {
+                $months[$m]['applied'] += $row->count;
+                if ($row->status === 'accepted') $months[$m]['accepted'] += $row->count;
+                if ($row->status === 'rejected') $months[$m]['rejected'] += $row->count;
+            }
+        }
+        
+        $monthlyStats = [];
+        foreach ($months as $name => $data) {
+            $monthlyStats[] = array_merge(['month' => $name], $data);
+        }
+
+        // 3. Popular Programs
+        $popularPrograms = \App\Models\Vacancy::where('id_company', $companyId)
+            ->withCount('submissions')
+            ->orderBy('submissions_count', 'desc')
+            ->limit(5)
+            ->get()
+            ->map(fn($v) => [
+                'title' => $v->title,
+                'count' => $v->submissions_count,
+                'type' => $v->type
+            ]);
+
+        // 4. Recent Activity (Using submissions)
+        $recentActivity = $submissionsQuery->clone()
+            ->with(['user', 'vacancy'])
+            ->orderBy('submitted_at', 'desc')
+            ->limit(10)
+            ->get()
+            ->map(fn($s) => [
+                'type' => 'submission',
+                'user' => $s->user?->name,
+                'program' => $s->vacancy?->title,
+                'status' => $s->status,
+                'time' => $s->submitted_at,
+            ]);
+
         return response()->json([
             'active_programs' => $positionsCount, 
             'active_vacancies' => $vacanciesCount,
             'total_applicants' => $totalApplicants,
             'pending_review' => $pendingReview,
             'recent_applicants' => $recentApplicants,
+            'status_distribution' => $statusDistribution,
+            'monthly_stats' => $monthlyStats,
+            'popular_programs' => $popularPrograms,
+            'recent_activity' => $recentActivity,
         ]);
     }
 }

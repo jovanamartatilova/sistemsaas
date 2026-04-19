@@ -61,10 +61,10 @@ export function SidebarMentor({ mentor, onLogout }) {
       fontFamily: "'Poppins', 'Segoe UI', sans-serif",
     }}>
       {/* Logo */}
-      <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "4px 8px 20px" }}>
+      <Link to="/" style={{ display: "flex", alignItems: "center", gap: "10px", padding: "4px 8px 20px", textDecoration: "none" }}>
         <img src="/assets/images/logo.png" alt="EarlyPath" style={{ height: "44px", objectFit: "contain", flexShrink: 0 }} />
         <span style={{ fontSize: "15px", fontWeight: "800", color: "#fff", letterSpacing: "-0.3px" }}>EarlyPath</span>
-      </div>
+      </Link>
 
       {/* Nav sections */}
       {Object.entries(sections).map(([section, items]) => (

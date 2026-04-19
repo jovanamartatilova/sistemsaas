@@ -33,7 +33,13 @@ class CompanyUserController extends Controller
             $query->where('role', 'candidate');
         }
 
-        $users = $query->orderBy('created_at', 'desc')->get();
+        $users = $query->with('submissions')->orderBy('created_at', 'desc')->get()
+            ->map(function($u) {
+                // Get the status from the latest submission if it exists
+                $latestSub = $u->submissions->sortByDesc('submitted_at')->first();
+                $u->submission_status = $latestSub ? $latestSub->status : 'registered';
+                return $u;
+            });
 
         return response()->json($users);
     }
