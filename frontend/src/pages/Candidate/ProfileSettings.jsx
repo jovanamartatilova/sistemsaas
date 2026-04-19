@@ -4,64 +4,7 @@ import { useState, useEffect } from "react";
 import { useAuthStore } from "../../stores/authStore";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 
-// --- Sidebar ---
-function Sidebar({ userName, onLogout }) {
-  const { slug } = useParams();
-  const location = useLocation();
-  const company = JSON.parse(localStorage.getItem("company"));
-  const navItems = [
-    { label: "Dashboard", icon: <LayoutDashboard size={16} />, to: `/c/${slug}/dashboard` },
-    { label: "Programs", icon: <BookOpen size={16} />, to: `/c/${slug}/programs` },
-    { label: "My Profile", icon: <User size={16} />, to: `/c/${slug}/profile` },
-    { label: "Certificates", icon: <Award size={16} />, to: `/c/${slug}/certificates` },
-  ];
-
-  return (
-    <aside className="w-56 min-h-screen bg-[#0f1e3a] text-white flex flex-col px-4 py-6 fixed top-0 left-0 z-10">
-      <Link to="/" className="flex items-center gap-2 mb-8 hover:opacity-80 transition-opacity cursor-pointer">
-        <img src="/assets/images/logo.png" alt="EarlyPath" className="h-16 w-auto" />
-        <span className="font-bold text-lg tracking-tight">EarlyPath</span>
-      </Link>
-      <nav className="flex flex-col gap-1">
-        {navItems.map((item) => {
-          const isActive = location.pathname === item.to;
-          return (
-            <Link key={item.label} to={item.to}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
-                ${isActive ? "bg-indigo-600 text-white" : "text-slate-400 hover:bg-[#1a2f54] hover:text-white"}`}>
-              {item.icon}
-              {item.label}
-            </Link>
-          );
-        })}
-      </nav>
-      <div className="mt-auto flex items-center gap-3 px-2">
-        {company?.logo_path ? (
-          <img 
-            src={`http://localhost:8000/storage/${company.logo_path}`} 
-            alt="Company" 
-            className="w-8 h-8 rounded-lg object-cover bg-white shadow-sm flex-shrink-0" 
-          />
-        ) : (
-          <div className="w-8 h-8 rounded-lg bg-slate-600 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
-            {company?.name?.charAt(0).toUpperCase() || "C"}
-          </div>
-        )}
-        <div className="flex-1 min-w-0">
-          <p className="text-xs text-slate-300 truncate font-medium">{company?.name || "Company"}</p>
-          <p className="text-xs text-slate-400 truncate">{userName || "User"}</p>
-        </div>
-        <button
-          onClick={onLogout}
-          className="text-slate-500 hover:text-white cursor-pointer transition-colors flex-shrink-0"
-          title="Logout"
-        >
-          <LogOut size={14} />
-        </button>
-      </div>
-    </aside>
-  );
-}
+import SidebarCandidate from "../../components/SidebarCandidate";
 
 // --- Main Content ---
 function ProfileContent({ userData, setUserData }) {
@@ -69,11 +12,11 @@ function ProfileContent({ userData, setUserData }) {
   const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
 
   const [formData, setFormData] = useState({
-    full_name:       userData?.full_name || "",
-    email:           userData?.email || "",
-    phone_number:    userData?.phone_number || "",
+    full_name: userData?.full_name || "",
+    email: userData?.email || "",
+    phone_number: userData?.phone_number || "",
     university_name: userData?.university || "",
-    major_name:      userData?.major || "",
+    major_name: userData?.major || "",
   });
 
   const [loading, setLoading] = useState(false);
@@ -85,11 +28,11 @@ function ProfileContent({ userData, setUserData }) {
   useEffect(() => {
     if (userData) {
       setFormData({
-        full_name:       userData?.full_name || "",
-        email:           userData?.email || "",
-        phone_number:    userData?.phone_number || "",
+        full_name: userData?.full_name || "",
+        email: userData?.email || "",
+        phone_number: userData?.phone_number || "",
         university_name: userData?.university || "",
-        major_name:      userData?.major || "",
+        major_name: userData?.major || "",
       });
       setAvatarPreview(userData?.profile_picture || null);
     }
@@ -175,11 +118,11 @@ function ProfileContent({ userData, setUserData }) {
         localStorage.setItem("candidate_user", JSON.stringify(updatedUser));
 
         setFormData({
-          full_name:       updatedUser?.full_name || "",
-          email:           updatedUser?.email || "",
-          phone_number:    updatedUser?.phone_number || "",
+          full_name: updatedUser?.full_name || "",
+          email: updatedUser?.email || "",
+          phone_number: updatedUser?.phone_number || "",
           university_name: updatedUser?.university || "",
-          major_name:      updatedUser?.major || "",
+          major_name: updatedUser?.major || "",
         });
 
         if (updatedUser?.profile_picture) {
@@ -198,11 +141,11 @@ function ProfileContent({ userData, setUserData }) {
 
   const handleCancel = () => {
     setFormData({
-      full_name:       userData?.full_name || "",
-      email:           userData?.email || "",
-      phone_number:    userData?.phone_number || "",
+      full_name: userData?.full_name || "",
+      email: userData?.email || "",
+      phone_number: userData?.phone_number || "",
       university_name: userData?.university || "",
-      major_name:      userData?.major || "",
+      major_name: userData?.major || "",
     });
     setAvatarFile(null);
     setAvatarPreview(userData?.profile_picture || null);
@@ -225,11 +168,10 @@ function ProfileContent({ userData, setUserData }) {
 
       {/* Message Alert */}
       {message.text && (
-        <div className={`mb-4 p-4 rounded-lg text-sm font-medium ${
-          message.type === "success"
-            ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-            : "bg-red-50 text-red-700 border border-red-200"
-        }`}>
+        <div className={`mb-4 p-4 rounded-lg text-sm font-medium ${message.type === "success"
+          ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+          : "bg-red-50 text-red-700 border border-red-200"
+          }`}>
           {message.text}
         </div>
       )}
@@ -490,7 +432,12 @@ export default function ProfileSettings() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex">
-        <Sidebar userName={userData?.full_name} onLogout={handleLogout} />
+        <SidebarCandidate 
+          userName={userData?.full_name} 
+          userPhoto={userData?.profile_picture}
+          company={JSON.parse(localStorage.getItem("company"))}
+          onLogout={handleLogout} 
+        />
         <main className="ml-56 flex-1 flex items-center justify-center">
           <LoadingSpinner message="Loading profile..." />
         </main>
@@ -516,7 +463,12 @@ export default function ProfileSettings() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      <Sidebar userName={userData?.full_name} onLogout={handleLogout} />
+      <SidebarCandidate 
+        userName={userData?.full_name} 
+        userPhoto={userData?.profile_picture}
+        company={JSON.parse(localStorage.getItem("company"))}
+        onLogout={handleLogout} 
+      />
       <div className="ml-56 flex-1 flex flex-col">
         <main className="p-6">
           <ProfileContent userData={userData} setUserData={setUserData} />

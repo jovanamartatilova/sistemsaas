@@ -7,70 +7,7 @@ import { useNavigate, useParams, Link, useLocation } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 
-// --- Sidebar ---
-function Sidebar({ userName, onLogout }) {
-  const { slug } = useParams();
-  const location = useLocation();
-  const company = JSON.parse(localStorage.getItem("company"));
-
-  const navItems = [
-    { label: "Dashboard",    icon: <LayoutDashboard size={16} />, to: `/c/${slug}/dashboard` },
-    { label: "Programs",     icon: <BookOpen size={16} />,        to: `/c/${slug}/programs` },
-    { label: "My Profile",   icon: <User size={16} />,            to: `/c/${slug}/profile` },
-    { label: "Certificates", icon: <Award size={16} />,           to: `/c/${slug}/certificates` },
-  ];
-
-  return (
-    <aside className="w-56 min-h-screen bg-[#0f1e3a] text-white flex flex-col px-4 py-6 fixed top-0 left-0 z-10">
-      <Link to="/" className="flex items-center gap-2 mb-8 hover:opacity-80 transition-opacity cursor-pointer">
-        <img src="/assets/images/logo.png" alt="EarlyPath" className="h-16 w-auto" />
-        <span className="font-bold text-lg tracking-tight">EarlyPath</span>
-      </Link>
-      <nav className="flex flex-col gap-1">
-        {navItems.map((item) => {
-          const isActive = location.pathname === item.to;
-          return (
-            <Link
-              key={item.label}
-              to={item.to}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
-                ${isActive
-                  ? "bg-indigo-600 text-white"
-                  : "text-slate-400 hover:bg-[#1a2f54] hover:text-white"}`}
-            >
-              {item.icon}
-              {item.label}
-            </Link>
-          );
-        })}
-      </nav>
-      <div className="mt-auto flex items-center gap-3 px-2">
-        {company?.logo_path ? (
-          <img 
-            src={`http://localhost:8000/storage/${company.logo_path}`} 
-            alt="Company" 
-            className="w-8 h-8 rounded-lg object-cover bg-white shadow-sm flex-shrink-0" 
-          />
-        ) : (
-          <div className="w-8 h-8 rounded-lg bg-slate-600 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
-            {company?.name?.charAt(0).toUpperCase() || "C"}
-          </div>
-        )}
-        <div className="flex-1 min-w-0">
-          <p className="text-xs text-slate-300 truncate font-medium">{company?.name || "Company"}</p>
-          <p className="text-xs text-slate-400 truncate">{userName || "User"}</p>
-        </div>
-        <button
-          onClick={onLogout}
-          className="text-slate-500 hover:text-white cursor-pointer transition-colors flex-shrink-0"
-          title="Logout"
-        >
-          <LogOut size={14} />
-        </button>
-      </div>
-    </aside>
-  );
-}
+import SidebarCandidate from "../../components/SidebarCandidate";
 
 // --- Certificate Card (Issued) ---
 function CertificateCard({ id_certificate, certificate_number, file_path, final_score, issued_date, program, position }) {
@@ -210,7 +147,7 @@ export default function CertificatesPage() {
             "Authorization": `Bearer ${token}`,
           },
         });
-        
+
         if (!userResp.ok && userResp.status === 401) {
           localStorage.removeItem("auth_token");
           localStorage.removeItem("token");
@@ -220,7 +157,7 @@ export default function CertificatesPage() {
           navigate("/");
           return;
         }
-        
+
         if (userResp.ok) {
           const data = await userResp.json();
           setUserData(data.data || data);
@@ -233,7 +170,7 @@ export default function CertificatesPage() {
             "Authorization": `Bearer ${token}`,
           },
         });
-        
+
         if (!certResp.ok && certResp.status === 401) {
           localStorage.removeItem("auth_token");
           localStorage.removeItem("token");
@@ -243,7 +180,7 @@ export default function CertificatesPage() {
           navigate("/");
           return;
         }
-        
+
         if (certResp.ok) {
           const certData = await certResp.json();
           const certs = certData.data || certData || [];
@@ -292,7 +229,7 @@ export default function CertificatesPage() {
   const handleLogout = handleLogoutClick;
 
   const filteredIssued = filter === "Locked" ? [] : issued;
-  const filteredLocked  = filter === "Issued" ? [] : locked;
+  const filteredLocked = filter === "Issued" ? [] : locked;
 
   const searchedIssued = filteredIssued.filter((c) =>
     (c.certificate_number || '').toLowerCase().includes(search.toLowerCase()) ||
@@ -303,7 +240,12 @@ export default function CertificatesPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex" style={{ fontFamily: "Poppins, sans-serif" }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');`}</style>
-      <Sidebar userName={userData?.full_name} onLogout={handleLogout} />
+      <SidebarCandidate 
+        userName={userData?.full_name} 
+        userPhoto={userData?.profile_picture || userData?.photo_url || userData?.photo_path}
+        company={JSON.parse(localStorage.getItem("company"))}
+        onLogout={handleLogout} 
+      />
 
       <main className="ml-56 flex-1 px-6 py-6 space-y-5 min-w-0">
         {loading && (
@@ -319,83 +261,83 @@ export default function CertificatesPage() {
             {/* Page Header */}
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Certificates</h1>
-          <p className="text-sm text-slate-400 mt-0.5">Internship certificates that have been issued for you</p>
-        </div>
+              <p className="text-sm text-slate-400 mt-0.5">Internship certificates that have been issued for you</p>
+            </div>
 
-        {/* Filter Tabs + Search — 1 baris, toolbar style */}
-        <div className="flex items-center justify-between bg-white border border-slate-200 rounded-2xl px-4 py-3 shadow-sm">
-          <div className="flex items-center gap-2">
-            {["All", "Issued", "Locked"].map((f) => (
-              <button
-                key={f}
-                onClick={() => setFilter(f)}
-                className={`text-sm px-4 py-2 rounded-lg font-medium transition-colors
+            {/* Filter Tabs + Search — 1 baris, toolbar style */}
+            <div className="flex items-center justify-between bg-white border border-slate-200 rounded-2xl px-4 py-3 shadow-sm">
+              <div className="flex items-center gap-2">
+                {["All", "Issued", "Locked"].map((f) => (
+                  <button
+                    key={f}
+                    onClick={() => setFilter(f)}
+                    className={`text-sm px-4 py-2 rounded-lg font-medium transition-colors
                   ${filter === f
-                    ? "bg-indigo-600 text-white"
-                    : "bg-white border border-slate-200 text-slate-500 hover:text-slate-800 hover:border-slate-300"
-                  }`}
-              >
-                {f}
-                {f === "Issued" && (
-                  <span className="ml-1.5 bg-emerald-100 text-emerald-600 text-xs px-1.5 py-0.5 rounded-full font-semibold">
-                    {issued.length}
-                  </span>
-                )}
-                {f === "Locked" && (
-                  <span className="ml-1.5 bg-slate-100 text-slate-500 text-xs px-1.5 py-0.5 rounded-full font-semibold">
-                    {locked.length}
-                  </span>
-                )}
-              </button>
-            ))}
-          </div>
-          <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 w-80">
-            <Search size={14} className="text-slate-400 flex-shrink-0" />
-            <input
-              className="bg-transparent text-sm text-slate-600 placeholder-slate-400 outline-none w-full"
-              placeholder="Search certificate number or ID..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
-        </div>
-
-        {/* Issued Certificates */}
-        {searchedIssued.length > 0 && (
-        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm space-y-4">
-            <p className="text-xs font-semibold text-gray-400 tracking-widest">ISSUED ({searchedIssued.length})</p>
-            <div className="flex flex-col gap-3">
-            {searchedIssued.map((cert) => (
-                <CertificateCard key={cert.id_certificate} {...cert} />
-            ))}
+                        ? "bg-indigo-600 text-white"
+                        : "bg-white border border-slate-200 text-slate-500 hover:text-slate-800 hover:border-slate-300"
+                      }`}
+                  >
+                    {f}
+                    {f === "Issued" && (
+                      <span className="ml-1.5 bg-emerald-100 text-emerald-600 text-xs px-1.5 py-0.5 rounded-full font-semibold">
+                        {issued.length}
+                      </span>
+                    )}
+                    {f === "Locked" && (
+                      <span className="ml-1.5 bg-slate-100 text-slate-500 text-xs px-1.5 py-0.5 rounded-full font-semibold">
+                        {locked.length}
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 w-80">
+                <Search size={14} className="text-slate-400 flex-shrink-0" />
+                <input
+                  className="bg-transparent text-sm text-slate-600 placeholder-slate-400 outline-none w-full"
+                  placeholder="Search certificate number or ID..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </div>
             </div>
-        </div>
-        )}
 
-        {/* Locked Certificates */}
-        {filteredLocked.length > 0 && (
-        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm space-y-4">
-            <p className="text-xs font-semibold text-gray-400 tracking-widest">INTERNSHIP IN PROGRESS — NOT YET ISSUED ({filteredLocked.length})</p>
-            <div className="flex flex-col gap-3">
-            {filteredLocked.map((cert, i) => (
-                <LockedCertificateCard key={i} {...cert} />
-            ))}
-            </div>
-        </div>
-        )}
-
-              {/* Empty State */}
-              {searchedIssued.length === 0 && filteredLocked.length === 0 && (
-                <div className="text-center py-16 text-slate-400 text-sm">
-                  No certificates found.
+            {/* Issued Certificates */}
+            {searchedIssued.length > 0 && (
+              <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm space-y-4">
+                <p className="text-xs font-semibold text-gray-400 tracking-widest">ISSUED ({searchedIssued.length})</p>
+                <div className="flex flex-col gap-3">
+                  {searchedIssued.map((cert) => (
+                    <CertificateCard key={cert.id_certificate} {...cert} />
+                  ))}
                 </div>
-              )}
+              </div>
+            )}
 
-              <p className="text-center text-xs text-slate-400 py-2">
-                © 2026 EarlyPath · All rights reserved
-              </p>
-            </>
-          )}
+            {/* Locked Certificates */}
+            {filteredLocked.length > 0 && (
+              <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm space-y-4">
+                <p className="text-xs font-semibold text-gray-400 tracking-widest">INTERNSHIP IN PROGRESS — NOT YET ISSUED ({filteredLocked.length})</p>
+                <div className="flex flex-col gap-3">
+                  {filteredLocked.map((cert, i) => (
+                    <LockedCertificateCard key={i} {...cert} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Empty State */}
+            {searchedIssued.length === 0 && filteredLocked.length === 0 && (
+              <div className="text-center py-16 text-slate-400 text-sm">
+                No certificates found.
+              </div>
+            )}
+
+            <p className="text-center text-xs text-slate-400 py-2">
+              © 2026 EarlyPath · All rights reserved
+            </p>
+          </>
+        )}
       </main>
 
       {/* Logout Modal */}

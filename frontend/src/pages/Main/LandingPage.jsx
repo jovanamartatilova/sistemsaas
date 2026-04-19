@@ -102,6 +102,18 @@ const IconDeadline = () => (
 const IconDot = () => (
   <svg width="10" height="10" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5" /></svg>
 );
+const IconMail = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+    <polyline points="22,6 12,13 2,6" />
+  </svg>
+);
+const IconSend = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="22" y1="2" x2="11" y2="13" />
+    <polygon points="22 2 15 22 11 13 2 9 22 2" />
+  </svg>
+);
 
 const IconUser = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -200,7 +212,7 @@ const footerLinks = {
 
 const formatDate = (dateStr) => {
   if (!dateStr) return "-";
-  const MONTHS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+  const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   const parts = String(dateStr).split("-");
   if (parts.length !== 3) return dateStr;
   const [y, m, d] = parts;
@@ -231,14 +243,14 @@ const VacancyDetailModal = ({ vacancy, onClose }) => {
           </div>
 
           <div style={{ marginBottom: "28px" }}>
-            <h4 style={{ fontSize: "15px", fontWeight: "700", color: "rgba(255,255,255,0.9)", margin: "0 0 8px" }}>Posisi yang Dibuka:</h4>
+            <h4 style={{ fontSize: "15px", fontWeight: "700", color: "rgba(255,255,255,0.9)", margin: "0 0 8px" }}>Positions Available:</h4>
             <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
               {(vacancy.positions || []).map((p, idx) => (
                 <div key={idx} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 12px", background: "rgba(255,255,255,0.03)", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.05)" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "15px", color: "rgba(255,255,255,0.8)" }}>
                     <IconDot /> <span>{p.name || p}</span>
                   </div>
-                  <span style={{ fontSize: "12px", fontWeight: "700", color: "#4a9eff", background: "rgba(74,158,255,0.1)", padding: "2px 8px", borderRadius: "6px" }}>{p.pivot?.quota || 0} Kuota</span>
+                  <span style={{ fontSize: "12px", fontWeight: "700", color: "#4a9eff", background: "rgba(74,158,255,0.1)", padding: "2px 8px", borderRadius: "6px" }}>{p.pivot?.quota || 0} Quota</span>
                 </div>
               ))}
             </div>
@@ -248,7 +260,7 @@ const VacancyDetailModal = ({ vacancy, onClose }) => {
             <div style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "14.5px", color: "rgba(255,255,255,0.7)" }}>
               <IconLocation /> <span>{vacancy.location || "Jakarta"}</span>
             </div>
-            <div style={{ display: "flex", alignItems: "flex-start", gap: "12px", fontSize: "14.5px", color: "rgba(255,255,255,0.5)", fontStyle: "italic", textAlign: "left" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "14.5px", color: "rgba(255,255,255,0.5)", fontStyle: "italic", textAlign: "left" }}>
               <IconCal /> <span>{formatDate(vacancy.start_date || vacancy.deadline)} - {formatDate(vacancy.end_date || vacancy.deadline)}</span>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "14.5px", color: "#fb7185", fontWeight: "600" }}>
@@ -259,7 +271,7 @@ const VacancyDetailModal = ({ vacancy, onClose }) => {
           <div style={{ display: "flex", gap: "10px", marginBottom: "40px" }}>
             <span style={{ fontSize: "11px", fontWeight: "700", textTransform: "capitalize", padding: "6px 14px", borderRadius: "8px", background: "rgba(74,158,255,0.1)", color: "#4a9eff" }}>{vacancy.type}</span>
             <span style={{ fontSize: "12px", fontWeight: "700", textTransform: "capitalize", padding: "6px 14px", borderRadius: "8px", background: "rgba(16,185,129,0.1)", color: "#10b981" }}>{vacancy.payment_type}</span>
-            <span style={{ fontSize: "11px", fontWeight: "700", background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.5)", padding: "6px 14px", borderRadius: "8px", marginLeft: "auto" }}>{vacancy.total_quota || 0} Total Kuota</span>
+            <span style={{ fontSize: "11px", fontWeight: "700", background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.5)", padding: "6px 14px", borderRadius: "8px", marginLeft: "auto" }}>{vacancy.total_quota || 0} Total Quota</span>
           </div>
 
           <button
@@ -293,10 +305,21 @@ export default function LandingPage() {
   const [loading, setLoading] = useState(true);
   const [selectedVacancy, setSelectedVacancy] = useState(null);
 
-  const { isAuthenticated, logout, company: authCompany } = useAuthStore();
+  const { isAuthenticated, logout, company: authCompany, user: authUser } = useAuthStore();
   const [showDropdown, setShowDropdown] = useState(false);
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const [emailForm, setEmailForm] = useState({ name: "", email: "", message: "" });
+  const [emailSent, setEmailSent] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
+
+  const handleEmailSubmit = (e) => {
+    e.preventDefault();
+    setEmailSent(true);
+    setTimeout(() => setEmailSent(false), 4000);
+    setEmailForm({ name: "", email: "", message: "" });
+  };
 
   // Dashboard link logic
   const getDashboardPath = () => {
@@ -305,18 +328,18 @@ export default function LandingPage() {
 
     if (user) {
       if (user.role === "candidate" && company?.slug) {
+        // As requested: take candidates back to the company public page
         return `/c/${company.slug}/dashboard`;
       }
-      if ((user.role === "hr" || user.role === "mentor") && company?.slug) {
-        return `/c/${company.slug}/staff/dashboard`;
+      if (user.role === "hr") {
+        return "/hr/dashboard";
       }
-      if (user.role === "super_admin") {
+      if (user.role === "mentor") {
+        return "/mentor/dashboard";
+      }
+      if (user.role === "super_admin" || user.role === "superadmin") {
         return "/superadmin/dashboard";
       }
-    }
-
-    if (company && (company.role === "applicant" || company.role === "student")) {
-      return "/applicant/portal";
     }
 
     // Default to main dashboard (for companies)
@@ -400,7 +423,7 @@ export default function LandingPage() {
 
         {/* Desktop Nav Links */}
         <div style={{ display: "flex", alignItems: "center", gap: "32px" }} className="hidden-mobile">
-          {["Features", "How It Works", "Open Positions", "Pricing"].map((item) => (
+          {["Features", "How It Works", "Open Programs"].map((item) => (
             <a
               key={item}
               href={`#${item.toLowerCase().replace(/\s+/g, "-")}`}
@@ -502,7 +525,7 @@ export default function LandingPage() {
                   position: "absolute",
                   top: "calc(100% + 12px)",
                   right: 0,
-                  width: "200px",
+                  width: "220px",
                   background: "#0d1a28",
                   border: "1px solid rgba(255,255,255,0.08)",
                   borderRadius: "16px",
@@ -510,6 +533,18 @@ export default function LandingPage() {
                   boxShadow: "0 20px 40px rgba(0,0,0,0.4)",
                   zIndex: 1000,
                 }}>
+                  <div style={{
+                    padding: "12px 16px 10px",
+                    borderBottom: "1px solid rgba(255,255,255,0.05)",
+                    marginBottom: "6px"
+                  }}>
+                    <div style={{ fontSize: "13px", fontWeight: "700", color: "#fff", marginBottom: "2px" }}>
+                      {authUser?.name || authUser?.full_name}
+                    </div>
+                    <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {authUser?.email}
+                    </div>
+                  </div>
                   <div
                     onClick={() => {
                       setShowDropdown(false);
@@ -595,7 +630,7 @@ export default function LandingPage() {
             gap: "16px",
           }}
         >
-          {["Features", "How It Works", "Open Positions", "Pricing"].map((item) => (
+          {["Features", "How It Works", "Open Programs"].map((item) => (
             <a
               key={item}
               href={`#${item.toLowerCase().replace(/\s+/g, "-")}`}
@@ -728,7 +763,7 @@ export default function LandingPage() {
               margin: "0 auto 40px",
             }}
           >
-            EarlyPath streamlines your entire internship lifecycle — from posting positions to certifying talent — powered by intelligent automation and real insights.
+            EarlyPath streamlines your entire internship lifecycle — from posting programs to certifying talent — powered by intelligent automation and real insights.
           </p>
 
           {/* Stat badges */}
@@ -1068,7 +1103,7 @@ export default function LandingPage() {
               Live Opportunities
             </p>
             <h2 style={{ fontSize: "clamp(28px, 4vw, 42px)", fontWeight: "800", color: "#fff", letterSpacing: "-1px", margin: 0 }}>
-              Open Positions
+              Open Programs
             </h2>
           </div>
 
@@ -1087,7 +1122,7 @@ export default function LandingPage() {
                 Belum ada lowongan yang dipublish saat ini.
               </div>
             ) : (
-              vacancies.map((pos, i) => (
+              vacancies.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((pos, i) => (
                 <div
                   key={i}
                   onClick={() => setSelectedVacancy(pos)}
@@ -1126,22 +1161,22 @@ export default function LandingPage() {
                     <div style={{ fontSize: "13px", fontWeight: "500", color: "rgba(255,255,255,0.5)", fontStyle: "italic", marginBottom: "6px" }}>
                       Positions:
                     </div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: "2px", marginBottom: "18px" }}>
-                      {(pos.positions || []).slice(0, 4).map((p, idx) => (
-                        <div key={idx} style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "14px", color: "rgba(255,255,255,0.6)" }}>
-                          <IconDot /> <span>{p.name || p}</span>
-                        </div>
-                      ))}
-                      {(pos.positions || []).length > 4 && (
-                        <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "14px", color: "rgba(255,255,255,0.6)" }}>
-                          <IconDot /> <span>etc.</span>
-                        </div>
-                      )}
-                    </div>
+                     <div style={{ display: "flex", flexDirection: "column", gap: "2px", marginBottom: "18px" }}>
+                       {(pos.positions || []).slice(0, 3).map((p, idx) => (
+                         <div key={idx} style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "14px", color: "rgba(255,255,255,0.6)" }}>
+                           <IconDot /> <span>{p.name || p}</span>
+                         </div>
+                       ))}
+                       {(pos.positions || []).length > 3 && (
+                         <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "14px", color: "rgba(255,255,255,0.6)" }}>
+                           <IconDot /> <span>etc.</span>
+                         </div>
+                       )}
+                     </div>
 
                     <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: "8px" }}>
-                      <div style={{ display: "flex", alignItems: "flex-start", gap: "8px", fontSize: "14.5px", color: "rgba(255,255,255,0.4)", fontStyle: "italic", textAlign: "left" }}>
-                        <IconCal /> <span>Periode: {formatDate(pos.start_date || pos.deadline)} - {formatDate(pos.end_date || pos.deadline)}</span>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "14.5px", color: "rgba(255,255,255,0.4)", fontStyle: "italic", textAlign: "left" }}>
+                        <IconCal /> <span>Period: {formatDate(pos.start_date || pos.deadline)} - {formatDate(pos.end_date || pos.deadline)}</span>
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "14.5px", color: "rgba(255,255,255,0.5)" }}>
                         <IconLocation /> <span>{pos.location?.split(",")[0]}</span>
@@ -1154,7 +1189,7 @@ export default function LandingPage() {
                     <div style={{ display: "flex", gap: "8px", marginTop: "18px", paddingTop: "16px", borderTop: "1px solid rgba(255,255,255,0.08)" }}>
                       <span style={{ fontSize: "10px", fontWeight: "700", textTransform: "uppercase", padding: "4px 10px", borderRadius: "6px", background: "rgba(74,158,255,0.1)", color: "#4a9eff" }}>{pos.type}</span>
                       <span style={{ fontSize: "10px", fontWeight: "700", textTransform: "uppercase", padding: "4px 10px", borderRadius: "6px", background: "rgba(16,185,129,0.1)", color: "#10b981" }}>{pos.payment_type}</span>
-                      <span style={{ fontSize: "10px", fontWeight: "700", marginLeft: "auto", color: "rgba(255,255,255,0.4)" }}>Pelamar · {pos.total_quota || 0} Kuota</span>
+                      <span style={{ fontSize: "10px", fontWeight: "700", marginLeft: "auto", color: "rgba(255,255,255,0.4)" }}>{pos.total_quota || 0} Quota</span>
                     </div>
                   </div>
                 </div>
@@ -1162,26 +1197,52 @@ export default function LandingPage() {
             )}
           </div>
 
-          <div style={{ textAlign: "center", marginTop: "44px" }}>
-            <button
-              onClick={() => navigate("/register")}
-              style={{
-                background: "rgba(167,139,250,0.1)",
-                border: "1px solid rgba(167,139,250,0.3)",
-                color: "#a78bfa",
-                padding: "12px 32px",
-                borderRadius: "10px",
-                fontSize: "14px",
-                fontWeight: "600",
-                cursor: "pointer",
-                transition: "all 0.25s",
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(167,139,250,0.2)"; e.currentTarget.style.transform = "translateY(-2px)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(167,139,250,0.1)"; e.currentTarget.style.transform = "translateY(0)"; }}
-            >
-              View All Positions →
-            </button>
-          </div>
+          {/* Pagination */}
+          {!loading && vacancies.length > 0 && (
+            <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "10px", marginTop: "48px" }}>
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                style={{ 
+                  width: "40px", height: "40px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.03)", color: currentPage === 1 ? "rgba(255,255,255,0.2)" : "#fff", cursor: currentPage === 1 ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "0.2s" 
+                }}
+                onMouseEnter={e => currentPage !== 1 && (e.currentTarget.style.background = "rgba(255,255,255,0.08)")}
+                onMouseLeave={e => currentPage !== 1 && (e.currentTarget.style.background = "rgba(255,255,255,0.03)")}
+              >
+                ←
+              </button>
+              
+              {Array.from({ length: Math.ceil(vacancies.length / itemsPerPage) }).map((_, idx) => {
+                const pageNum = idx + 1;
+                const isActive = currentPage === pageNum;
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => setCurrentPage(pageNum)}
+                    style={{ 
+                      width: "40px", height: "40px", borderRadius: "12px", border: "none", background: isActive ? "linear-gradient(135deg, #1e40af, #3b82f6)" : "rgba(255,255,255,0.03)", color: "#fff", fontWeight: "700", cursor: "pointer", transition: "0.2s", boxShadow: isActive ? "0 4px 12px rgba(30,64,175,0.3)" : "none" 
+                    }}
+                    onMouseEnter={e => !isActive && (e.currentTarget.style.background = "rgba(255,255,255,0.08)")}
+                    onMouseLeave={e => !isActive && (e.currentTarget.style.background = "rgba(255,255,255,0.03)")}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(vacancies.length / itemsPerPage)))}
+                disabled={currentPage === Math.ceil(vacancies.length / itemsPerPage)}
+                style={{ 
+                  width: "40px", height: "40px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.03)", color: currentPage === Math.ceil(vacancies.length / itemsPerPage) ? "rgba(255,255,255,0.2)" : "#fff", cursor: currentPage === Math.ceil(vacancies.length / itemsPerPage) ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "0.2s" 
+                }}
+                onMouseEnter={e => currentPage !== Math.ceil(vacancies.length / itemsPerPage) && (e.currentTarget.style.background = "rgba(255,255,255,0.08)")}
+                onMouseLeave={e => currentPage !== Math.ceil(vacancies.length / itemsPerPage) && (e.currentTarget.style.background = "rgba(255,255,255,0.03)")}
+              >
+                →
+              </button>
+            </div>
+          )}
         </div>
       </section>
 
@@ -1282,52 +1343,148 @@ export default function LandingPage() {
       )}
 
       {/* ── FOOTER ──────────────────────────────────────────────────────── */}
-      <footer style={{ borderTop: "1px solid rgba(255,255,255,0.06)", padding: "60px 24px 40px" }}>
+      <footer style={{ 
+        background: "linear-gradient(160deg,#0a1628 0%,#0d1a2f 55%,#081424 100%)", 
+        borderTop: "1px solid rgba(255,255,255,0.06)", 
+        padding: "80px 24px 40px" 
+      }}>
         <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "2fr repeat(3, 1fr)", gap: "40px", marginBottom: "48px", flexWrap: "wrap" }}>
-            {/* Brand */}
-            <div>
-              <img src="/assets/images/logo.png" alt="EarlyPath" style={{ height: "46px", objectFit: "contain", marginBottom: "16px" }} />
-              <p style={{ fontSize: "14px", color: "rgba(255,255,255,0.4)", lineHeight: "1.7", maxWidth: "240px" }}>
-                Empowering talent and organizations to connect, collaborate, and grow together.
+          <div style={{ display: "grid", gridTemplateColumns: "1.5fr 2fr", gap: "64px", marginBottom: "64px" }} className="footer-grid">
+            {/* Brand & Info */}
+            <div className="fadein" style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "14px", marginBottom: "24px" }}>
+                <img src="/assets/images/logo.png" alt="EarlyPath" style={{ height: "48px", objectFit: "contain" }} />
+                <span style={{ fontSize: "18px", fontWeight: "800", color: "#fff", letterSpacing: "-0.5px" }}>EarlyPath</span>
+              </div>
+              <p style={{ fontSize: "14px", color: "rgba(255,255,255,0.45)", lineHeight: "1.8", margin: "0 0 32px", maxWidth: "320px" }}>
+                Empowering talent and organizations to connect, collaborate, and grow together through AI-driven internship management.
               </p>
-            </div>
-
-            {/* Footer link columns */}
-            {Object.entries(footerLinks).map(([section, links]) => (
-              <div key={section}>
-                <p style={{ fontSize: "13px", fontWeight: "700", color: "#fff", marginBottom: "16px", letterSpacing: "0.3px" }}>{section}</p>
-                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                  {links.map((link) => (
-                    <a
-                      key={link}
-                      href="#"
-                      style={{ fontSize: "13px", color: "rgba(255,255,255,0.45)", textDecoration: "none", transition: "color 0.2s" }}
-                      onMouseEnter={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.8)")}
-                      onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.45)")}
-                    >
-                      {link}
-                    </a>
-                  ))}
+              
+              <div style={{ display: "flex", flexDirection: "column", gap: "16px", alignItems: "center" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "13px", color: "rgba(255,255,255,0.6)" }}>
+                  <span style={{ color: "#4a9eff" }}><IconLocation /></span>
+                  Surabaya, Indonesia
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "13px", color: "rgba(255,255,255,0.6)" }}>
+                  <span style={{ color: "#4a9eff" }}><IconMail /></span>
+                  support@earlypath.com
                 </div>
               </div>
-            ))}
+            </div>
+
+            {/* Contact Form */}
+            <div className="fadein">
+              <p style={{ fontSize: "11px", fontWeight: "700", letterSpacing: "0.1em", color: "#4a9eff", textTransform: "uppercase", margin: "0 0 24px" }}>Send us a Message</p>
+              {emailSent ? (
+                <div style={{ 
+                  padding: "24px", 
+                  background: "rgba(74,158,255,0.08)", 
+                  border: "1px solid rgba(74,158,255,0.2)", 
+                  borderRadius: "16px", 
+                  fontSize: "14px", 
+                  color: "#4a9eff", 
+                  fontWeight: "600", 
+                  textAlign: "center",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "10px"
+                }}>
+                  <IconCheck color="#4a9eff" />
+                  Thank you! Your message has been sent.
+                </div>
+              ) : (
+                <form onSubmit={handleEmailSubmit} style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+                  <input
+                    placeholder="Your Name"
+                    value={emailForm.name}
+                    onChange={e => setEmailForm(f => ({ ...f, name: e.target.value }))}
+                    className="footer-input"
+                    required
+                    style={{ padding: "14px 18px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.04)", color: "#fff", fontSize: "13px", fontFamily: "inherit", outline: "none", transition: "0.2s" }}
+                  />
+                  <input
+                    type="email"
+                    placeholder="Your Email"
+                    value={emailForm.email}
+                    onChange={e => setEmailForm(f => ({ ...f, email: e.target.value }))}
+                    className="footer-input"
+                    required
+                    style={{ padding: "14px 18px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.04)", color: "#fff", fontSize: "13px", fontFamily: "inherit", outline: "none", transition: "0.2s" }}
+                  />
+                  <textarea
+                    placeholder="How can we help you?"
+                    value={emailForm.message}
+                    onChange={e => setEmailForm(f => ({ ...f, message: e.target.value }))}
+                    className="footer-input"
+                    required
+                    rows={4}
+                    style={{ 
+                      padding: "14px 18px", 
+                      borderRadius: "12px", 
+                      border: "1px solid rgba(255,255,255,0.1)", 
+                      background: "rgba(255,255,255,0.04)", 
+                      color: "#fff", 
+                      fontSize: "13px", 
+                      fontFamily: "inherit", 
+                      resize: "none", 
+                      gridColumn: "1 / -1",
+                      outline: "none",
+                      transition: "0.2s"
+                    }}
+                  />
+                  <button
+                    type="submit"
+                    style={{ 
+                      gridColumn: "1 / -1", 
+                      padding: "16px", 
+                      borderRadius: "12px", 
+                      background: "linear-gradient(135deg,#1e40af,#3b82f6)", 
+                      border: "none", 
+                      color: "#fff", 
+                      fontSize: "14px", 
+                      fontWeight: "700", 
+                      cursor: "pointer", 
+                      display: "flex", 
+                      alignItems: "center", 
+                      justifyContent: "center", 
+                      gap: "10px",
+                      boxShadow: "0 8px 24px rgba(30,64,175,0.3)",
+                      transition: "0.2s"
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 12px 32px rgba(30,64,175,0.4)"; }}
+                    onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 8px 24px rgba(30,64,175,0.3)"; }}
+                  >
+                    <IconSend />
+                    Send Message
+                  </button>
+                </form>
+              )}
+            </div>
           </div>
 
-          <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: "28px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
-            <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.3)", margin: 0 }}>
-              © 2025 EarlyPath. All rights reserved.
-            </p>
-            <div style={{ display: "flex", gap: "20px" }}>
-              {["Privacy Policy", "Terms of Service", "Cookie Policy"].map((l) => (
-                <a key={l} href="#" style={{ fontSize: "13px", color: "rgba(255,255,255,0.35)", textDecoration: "none", transition: "color 0.2s" }}
-                  onMouseEnter={(e) => (e.currentTarget.style.color = "#fff")}
-                  onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.35)")}
-                >
-                  {l}
-                </a>
-              ))}
+          {/* Bottom Bar */}
+          <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: "32px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "24px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "24px" }}>
+              <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.35)", margin: 0 }}>
+                © 2026 EarlyPath. All rights reserved.
+              </p>
+              <div style={{ width: "1px", height: "14px", background: "rgba(255,255,255,0.1)", display: "flex" }} className="hidden-mobile" />
+              <div style={{ display: "flex", gap: "20px" }} className="hidden-mobile">
+                {["Privacy Policy", "Terms of Service", "Cookie Policy"].map((l) => (
+                  <a key={l} href="#" style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)", textDecoration: "none", transition: "color 0.2s" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = "#fff")}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.35)")}
+                  >
+                    {l}
+                  </a>
+                ))}
+              </div>
             </div>
+            
+            <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)", margin: 0 }}>
+              Built with <span style={{ color: "rgba(248,113,113,0.8)" }}>♥</span> in Indonesia
+            </p>
           </div>
         </div>
       </footer>
@@ -1359,8 +1516,8 @@ export default function LandingPage() {
             <div style={{ width: 64, height: 64, borderRadius: 20, background: "rgba(251,113,133,0.1)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fb7185", margin: "0 auto 20px" }}>
               <IconLogOut size={32} />
             </div>
-            <h3 style={{ fontSize: 20, fontWeight: 800, marginBottom: 8, color: "#fff" }}>Yakin Keluar?</h3>
-            <p style={{ fontSize: 14, color: "rgba(255,255,255,0.5)", lineHeight: 1.6, marginBottom: 28 }}>Anda harus login kembali untuk mengakses dashboard Anda.</p>
+            <h3 style={{ fontSize: 20, fontWeight: 800, marginBottom: 8, color: "#fff" }}>Logout?</h3>
+            <p style={{ fontSize: 14, color: "rgba(255,255,255,0.5)", lineHeight: 1.6, marginBottom: 28 }}>You will need to sign in again to access your dashboard.</p>
             <div style={{ display: "flex", gap: 12 }}>
               <button
                 onClick={() => setLogoutModalOpen(false)}
@@ -1368,7 +1525,7 @@ export default function LandingPage() {
                 onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.05)"}
                 onMouseLeave={e => e.currentTarget.style.background = "transparent"}
               >
-                Batal
+                Cancel
               </button>
               <button
                 onClick={() => { logout(); setLogoutModalOpen(false); navigate("/"); }}
@@ -1376,7 +1533,7 @@ export default function LandingPage() {
                 onMouseEnter={e => e.currentTarget.style.transform = "translateY(-1px)"}
                 onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}
               >
-                Ya, Keluar
+                Yes, Logout
               </button>
             </div>
           </div>
