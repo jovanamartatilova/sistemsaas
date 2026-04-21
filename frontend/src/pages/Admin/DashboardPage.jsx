@@ -264,33 +264,49 @@ export default function DashboardPage() {
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [logoutModalOpen, setLogoutModalOpen] = useState(false);
     const [liveStats, setLiveStats] = useState({ active_programs: 0, active_vacancies: 0, total_applicants: 0, pending_review: 0, recent_applicants: [] });
+    const [search, setSearch] = useState("");          
+    const [tableLoading, setTableLoading] = useState(false);
+
+    const fetchStats = async (isSearch = false) => {
+        if (isSearch) {
+            setTableLoading(true);
+        }
+        if (!token) return;
+        try {
+            const params = new URLSearchParams();
+            if (search) params.set("search", search);
+            const res = await axios.get(`http://localhost:8000/api/dashboard/stats?${params}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setLiveStats(res.data);
+        } catch (err) {
+            console.error("Failed to fetch dashboard stats:", err);
+        } finally {
+            setTableLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const fetchStats = async () => {
-            if (!token) return;
-            try {
-                const res = await axios.get("http://localhost:8000/api/dashboard/stats", {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                setLiveStats(res.data);
-            } catch (err) {
-                console.error("Failed to fetch dashboard stats:", err);
-            }
-        };
-        fetchStats();
-
-        const stored = localStorage.getItem("company");
-        if (stored) {
-            try { setCompany(JSON.parse(stored)); } catch (_) { }
+    fetchStats();
+    
+    const stored = localStorage.getItem("company");
+    if (stored) {
+        try { setCompany(JSON.parse(stored)); } catch (_) { }
+    }
+    authService.getProfile().then((res) => {
+        if (res?.company) {
+        setCompany(res.company);
+        localStorage.setItem("company", JSON.stringify(res.company));
         }
-        // Also fetch fresh from API
-        authService.getProfile().then((res) => {
-            if (res?.company) {
-                setCompany(res.company);
-                localStorage.setItem("company", JSON.stringify(res.company));
-            }
-        }).catch(() => { });
+    }).catch(() => { });
     }, [token]);
+
+    useEffect(() => {
+    const timer = setTimeout(() => {
+        fetchStats(true);  // ← true = search mode (tableLoading)
+    }, 500);
+    return () => clearTimeout(timer);
+    }, [search]);
 
     const handleLogout = () => {
         setLogoutModalOpen(true);
@@ -519,15 +535,6 @@ export default function DashboardPage() {
                         <span style={{ fontSize: "13px", color: "#94a3b8" }}>Overview</span>
                     </div>
 
-                    {/* Search */}
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px", padding: "7px 14px", width: "220px" }}>
-                        <IC.Search />
-                        <input
-                            placeholder="Search programs, positions, candidates..."
-                            style={{ border: "none", background: "transparent", outline: "none", fontSize: "13px", color: "#64748b", width: "100%" }}
-                        />
-                    </div>
-
                     {/* Export */}
                     <button 
                         onClick={exportToCSV}
@@ -632,23 +639,55 @@ export default function DashboardPage() {
 
                         {/* Pelamar Terbaru table */}
                         <div style={{ background: "#fff", borderRadius: "16px", padding: "22px 24px", boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-                                <div>
-                                    <p style={{ fontSize: "15px", fontWeight: "700", color: "#1e293b" }}>Recent Candidates</p>
-                                    <p style={{ fontSize: "12px", color: "#94a3b8" }}>Candidates in the last 24 hours</p>
-                                </div>
-                                <button style={{ fontSize: "12.5px", color: "#4a9eff", background: "none", border: "none", cursor: "pointer", fontWeight: "600" }}>View All →</button>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "12px" }}>
+                            <div>
+                            <p style={{ fontSize: "15px", fontWeight: "700", color: "#1e293b" }}>Recent Candidates</p>
+                            <p style={{ fontSize: "12px", color: "#94a3b8" }}>Candidates in the last 24 hours</p>
                             </div>
+                            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                            <div style={{
+                                display: "flex", alignItems: "center", gap: "8px",
+                                background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px",
+                                padding: "7px 14px", width: "240px",
+                            }}>
+                                <IC.Search />
+                                <input
+                                placeholder="Search by name or email..."
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                style={{
+                                    border: "none", background: "transparent", outline: "none",
+                                    fontSize: "13px", color: "#64748b", width: "100%", fontFamily: "inherit",
+                                }}
+                                />
+                            </div>
+                            
+                            <button style={{ fontSize: "12.5px", color: "#4a9eff", background: "none", border: "none", cursor: "pointer", fontWeight: "600" }}>View All →</button>
+                            </div>
+                        </div>
 
-                            {/* Table header */}
-                            <div style={{ display: "grid", gridTemplateColumns: "2fr 2fr 1fr 1fr", gap: "12px", padding: "8px 12px", borderRadius: "8px", background: "#f8fafc", marginBottom: "4px" }}>
-                                {["NAME", "PROGRAM", "STATUS", "SUBMISSION DATE"].map((h) => (
-                                    <span key={h} style={{ fontSize: "11px", fontWeight: "700", color: "#94a3b8", letterSpacing: "0.5px" }}>{h}</span>
-                                ))}
-                            </div>
+                        {/* Table header */}
+                        <div style={{ display: "grid", gridTemplateColumns: "2fr 2fr 1fr 1fr", gap: "12px", padding: "8px 12px", borderRadius: "8px", background: "#f8fafc", marginBottom: "4px" }}>
+                            {["NAME", "PROGRAM", "STATUS", "SUBMISSION DATE"].map((h) => (
+                            <span key={h} style={{ fontSize: "11px", fontWeight: "700", color: "#94a3b8", letterSpacing: "0.5px" }}>{h}</span>
+                            ))}
+                        </div>
 
                             {/* Recent candidates list */}
-                            {liveStats.recent_applicants?.length > 0 ? (
+                            {tableLoading ? (
+                            <div style={{ padding: "48px 0", textAlign: "center", color: "#94a3b8", fontSize: "13px" }}>
+                            <div style={{ 
+                                display: "inline-block", 
+                                width: "20px", 
+                                height: "20px", 
+                                border: "2px solid #e2e8f0", 
+                                borderTopColor: "#3b82f6", 
+                                borderRadius: "50%", 
+                                animation: "spin 0.6s linear infinite" 
+                            }} />
+                            <div style={{ marginTop: "10px" }}>Searching...</div>
+                            </div>
+                        ) : liveStats.recent_applicants?.length > 0 ? (
                                 <div style={{ display: "flex", flexDirection: "column" }}>
                                     {liveStats.recent_applicants.map((app, idx) => (
                                         <div key={idx} style={{

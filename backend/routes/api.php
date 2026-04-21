@@ -52,6 +52,7 @@ Route::post('/auth/login',           [AuthController::class, 'login']);
 Route::post('/auth/login-superadmin', [AuthController::class, 'loginSuperAdmin']);
 Route::post('/auth/forgot-password', [AuthController::class, 'forgotPassword']);
 Route::post('/auth/reset-password',  [AuthController::class, 'resetPassword']);
+Route::post('/auth/reset-password-no-auto', [AuthController::class, 'resetPasswordNoAutoLogin']);
 
 // Auth — candidate
 Route::post('/auth/register-candidate/{slug}', [AuthController::class, 'registerCandidate']);
@@ -63,6 +64,8 @@ Route::post('/auth/reset-password-candidate',  [AuthController::class, 'resetPas
 // Auth — staff
 Route::post('/auth/activate-account',             [AuthController::class, 'activateAccount']);
 Route::post('/auth/login-staff',                  [AuthController::class, 'loginStaff']);
+Route::post('/auth/forgot-password-staff',        [AuthController::class, 'forgotPasswordStaff']);
+Route::post('/auth/reset-password-staff',         [AuthController::class, 'resetPasswordStaff']);
 Route::get('/auth/check-activation-token/{token}', [AuthController::class, 'checkActivationToken']);
 
 // Test

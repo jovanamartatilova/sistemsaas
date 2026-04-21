@@ -581,8 +581,14 @@ class AuthController extends Controller
             // Delete the used token
             \DB::table('password_resets')->where('email', $validated['email'])->delete();
 
+            // Refresh company dan buat token untuk auto-login
+            $company = $company->fresh();
+            $token = $company->createToken('auth_token')->plainTextToken;
+
             return response()->json([
                 'message' => 'Password successfully changed',
+                'company' => $company,
+                'token' => $token,
             ], 200);
         } catch (ValidationException $e) {
             return response()->json([
@@ -699,7 +705,22 @@ public function forgotPasswordCandidate(Request $request)
 
             \DB::table('password_resets')->where('email', $validated['email'])->delete();
 
-            return response()->json(['message' => 'Password successfully changed'], 200);
+            // Refresh user dan buat token untuk auto-login
+            $user = $user->fresh();
+            $token = $user->createToken('candidate_token')->plainTextToken;
+
+            // Get company jika ada
+            $company = null;
+            if ($user->id_company) {
+                $company = Company::find($user->id_company);
+            }
+
+            return response()->json([
+                'message' => 'Password successfully changed',
+                'user' => $user,
+                'company' => $company,
+                'token' => $token,
+            ], 200);
 
         } catch (ValidationException $e) {
             return response()->json(['message' => 'Validation failed', 'errors' => $e->errors()], 422);
@@ -707,6 +728,79 @@ public function forgotPasswordCandidate(Request $request)
             return response()->json(['message' => 'An error occurred', 'error' => $e->getMessage()], 500);
         }
     }
+
+    /**
+ * Reset password for company WITHOUT auto-login
+ * (Untuk kasus user lupa password dan ingin kembali ke halaman login)
+ */
+public function resetPasswordNoAutoLogin(Request $request)
+{
+    try {
+        $validated = $request->validate([
+            'token' => 'required|string',
+            'email' => 'required|string|email',
+            'password' => 'required|string|min:6|confirmed',
+        ]);
+
+        // Check if reset token exists and is not expired (1 hour)
+        $passwordReset = \DB::table('password_resets')
+            ->where('email', $validated['email'])
+            ->where('token', $validated['token'])
+            ->first();
+
+        if (!$passwordReset) {
+            return response()->json([
+                'message' => 'Token is not valid or has expired',
+            ], 400);
+        }
+
+        // Check if token is not older than 1 hour
+        if (now()->diffInMinutes($passwordReset->created_at) > 60) {
+            \DB::table('password_resets')->where('email', $validated['email'])->delete();
+            return response()->json([
+                'message' => 'Token has expired. Please request a new password reset.',
+            ], 400);
+        }
+
+        // Find company and update password
+        $company = Company::where('email', $validated['email'])->first();
+
+        if (!$company) {
+            return response()->json([
+                'message' => 'Email not found',
+            ], 404);
+        }
+
+        // Update password
+        \DB::table('companies')
+            ->where('id_company', $company->id_company)
+            ->update([
+                'password' => Hash::make($validated['password']),
+                'updated_at' => now(),
+            ]);
+
+        // Delete the used token
+        \DB::table('password_resets')->where('email', $validated['email'])->delete();
+
+        // KEMBALIKAN RESPONSE TANPA TOKEN (tidak auto-login)
+        return response()->json([
+            'message' => 'Password successfully changed. Please login with your new password.',
+            'redirect_to' => '/login',
+        ], 200);
+        
+    } catch (ValidationException $e) {
+        return response()->json([
+            'message' => 'Validation failed',
+            'errors' => $e->errors(),
+        ], 422);
+    } catch (\Exception $e) {
+        \Log::error('Reset password error: ' . $e->getMessage());
+        return response()->json([
+            'message' => 'An error occurred',
+            'error' => $e->getMessage(),
+        ], 500);
+    }
+}
 
     /**
      * Generate unique company ID
@@ -843,5 +937,167 @@ public function forgotPasswordCandidate(Request $request)
             'user' => ['name' => $user->name, 'email' => $user->email, 'role' => $user->role],
             'company' => $company,
         ], 200);
+    }
+
+    /**
+     * Forgot password for staff (HR/Mentor) - send reset email
+     */
+    public function forgotPasswordStaff(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'email' => 'required|string|email',
+                'slug'  => 'required|string',
+            ]);
+
+            // Find company by slug
+            $company = Company::where('slug', $validated['slug'])->first();
+            if (!$company) {
+                return response()->json(['message' => 'Company not found'], 404);
+            }
+
+            // Find user by email and company, must be HR or Mentor
+            $user = User::where('email', $validated['email'])
+                ->where('id_company', $company->id_company)
+                ->whereIn('role', ['hr', 'mentor'])
+                ->first();
+
+            if (!$user) {
+                return response()->json(['message' => 'Email not found or user is not staff'], 404);
+            }
+
+            // Generate reset token
+            $resetToken = \Str::random(32);
+
+            // Store reset token in database
+            \DB::table('password_resets')->where('email', $validated['email'])->delete();
+            \DB::table('password_resets')->insert([
+                'email' => $validated['email'],
+                'token' => $resetToken,
+                'created_at' => now(),
+            ]);
+
+            // Create reset URL (frontend URL)
+            $resetUrl = env('FRONTEND_URL', 'http://localhost:5173') . '/c/' . $validated['slug'] . '/staff/reset-password?token=' . $resetToken . '&email=' . urlencode($validated['email']);
+
+            // Send email using Laravel's Mail facade
+            try {
+                \Mail::raw(
+                    "Hello {$user->name},\n\n" .
+                    "You are receiving this email because there was a request to reset the password for your staff account.\n\n" .
+                    "Password reset link: {$resetUrl}\n\n" .
+                    "This link will expire in 1 hour.\n\n" .
+                    "If you did not request a password reset, please ignore this email.\n\n" .
+                    "Regards,\nEarlyPath Team",
+                    function ($message) use ($validated, $user) {
+                        $message->to($validated['email'])
+                            ->subject('Reset Password - EarlyPath Staff Portal');
+                    }
+                );
+            } catch (\Exception $e) {
+                \Log::warning('Email send failed: ' . $e->getMessage());
+                // Continue anyway - show success to user
+            }
+
+            return response()->json([
+                'message' => 'Password reset link has been sent to your email. Please check your email.',
+            ], 200);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'An error occurred',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Reset password for staff (HR/Mentor) with token
+     */
+    public function resetPasswordStaff(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'token' => 'required|string',
+                'email' => 'required|string|email',
+                'slug' => 'required|string',
+                'password' => 'required|string|min:6|confirmed',
+            ]);
+
+            // Check if reset token exists and is not expired (1 hour)
+            $passwordReset = \DB::table('password_resets')
+                ->where('email', $validated['email'])
+                ->where('token', $validated['token'])
+                ->first();
+
+            if (!$passwordReset) {
+                return response()->json([
+                    'message' => 'Token is not valid or has expired',
+                ], 400);
+            }
+
+            // Check if token is not older than 1 hour
+            if (now()->diffInMinutes($passwordReset->created_at) > 60) {
+                \DB::table('password_resets')->where('email', $validated['email'])->delete();
+                return response()->json([
+                    'message' => 'Token has expired. Please request a new password reset.',
+                ], 400);
+            }
+
+            // Find company by slug
+            $company = Company::where('slug', $validated['slug'])->first();
+            if (!$company) {
+                return response()->json(['message' => 'Company not found'], 404);
+            }
+
+            // Find user and verify they belong to this company and are staff
+            $user = User::where('email', $validated['email'])
+                ->where('id_company', $company->id_company)
+                ->whereIn('role', ['hr', 'mentor'])
+                ->first();
+
+            if (!$user) {
+                return response()->json([
+                    'message' => 'Email not found or user is not staff',
+                ], 404);
+            }
+
+            // Update password
+            \DB::table('users')
+                ->where('id_user', $user->id_user)
+                ->update([
+                    'password' => Hash::make($validated['password']),
+                    'updated_at' => now(),
+                ]);
+
+            // Delete the used token
+            \DB::table('password_resets')->where('email', $validated['email'])->delete();
+
+            // Refresh user dan buat token untuk auto-login
+            $user = $user->fresh();
+            $token = $user->createToken('staff_token')->plainTextToken;
+
+            return response()->json([
+                'message' => 'Password successfully changed',
+                'user' => $user,
+                'company' => $company,
+                'token' => $token,
+            ], 200);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            \Log::error('Reset password staff error: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'An error occurred',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 }

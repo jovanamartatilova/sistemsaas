@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Vacancy;
 use App\Models\Position;
+use App\Models\Submission;
 use Illuminate\Support\Facades\Log;
 
 class DashboardController extends Controller
@@ -27,6 +28,8 @@ class DashboardController extends Controller
             ]);
         }
 
+        $search = $request->get('search');
+
         $vacanciesQuery = Vacancy::where('status', 'published')->where('id_company', $companyId);
         
         // Program Aktif = Total POSISI yang dibuka
@@ -38,17 +41,27 @@ class DashboardController extends Controller
         // Lowongan Aktif = Total VACANCIES yang dipublish
         $vacanciesCount = $vacanciesQuery->clone()->count();
 
-        // Submissions Query
-        $submissionsQuery = \App\Models\Submission::whereHas('vacancy', function ($q) use ($companyId) {
+        // Submissions Query untuk stats
+        $statsSubmissionsQuery = Submission::whereHas('vacancy', function ($q) use ($companyId) {
             $q->where('id_company', $companyId);
         });
 
-        $totalApplicants = $submissionsQuery->clone()->count();
-        $pendingReview = $submissionsQuery->clone()->where('status', 'pending')->count();
+        $totalApplicants = $statsSubmissionsQuery->clone()->count();
+        $pendingReview = $statsSubmissionsQuery->clone()->where('status', 'pending')->count();
         
-        $recentApplicants = $submissionsQuery->clone()
-            ->with(['user', 'position', 'vacancy'])
-            ->orderBy('submitted_at', 'desc')
+        // Recent Applicants Query
+        $recentQuery = Submission::whereHas('vacancy', function ($q) use ($companyId) {
+            $q->where('id_company', $companyId);
+        })->with(['user', 'position', 'vacancy']);
+        
+        if ($search) {
+            $recentQuery->whereHas('user', function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+        
+        $recentApplicants = $recentQuery->orderBy('submitted_at', 'desc')
             ->limit(5)
             ->get();
 

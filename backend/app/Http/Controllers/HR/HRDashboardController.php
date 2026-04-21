@@ -34,8 +34,16 @@ class HRDashboardController extends Controller
         $pendingReview = (clone $base)->where('status', 'pending')->count();
 
         // ── RECENT CANDIDATES ────────────────────────────────
+        $search = $request->query('search');
+
         $recentCandidates = (clone $base)
             ->with(['user', 'position', 'vacancy'])
+            ->when($search, fn($q) =>
+                $q->whereHas('user', fn($u) =>
+                    $u->where('name', 'like', "%$search%")
+                    ->orWhere('email', 'like', "%$search%")
+                )
+            )
             ->orderByDesc('submitted_at')
             ->limit(10)
             ->get()

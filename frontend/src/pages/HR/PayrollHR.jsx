@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { api } from "../../api";
 import { useAuthStore } from "../../stores/authStore";
 import SidebarHR from "../../components/SidebarHR";
+import { LoadingSpinner } from "../../components/LoadingSpinner";
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
 const IC = {
@@ -487,6 +488,8 @@ export default function PayrollHR() {
   const [detailModal, setDetailModal] = useState(null);
   const [confirmModal, setConfirmModal] = useState(null);
   const [toasts, setToasts] = useState([]);
+  const [search, setSearch] = useState("");      
+  const [tableLoading, setTableLoading] = useState(false); 
 
   const showToast = (message, type = "success") => {
     const id = Date.now();
@@ -496,14 +499,39 @@ export default function PayrollHR() {
 
   const showConfirm = (config) => setConfirmModal(config);
 
-  const fetchPayroll = () => {
-    setLoading(true);
-    api(`/hr/payroll?period=${period}`)
-      .then(res => setData(res.data))
-      .finally(() => setLoading(false));
-  };
+  const fetchPayroll = (isSearch = false) => {
+  if (isSearch) {
+    setTableLoading(true);   // Loading hanya untuk tabel
+  } else {
+    setLoading(true);        // Loading untuk seluruh halaman
+  }
+  
+  const params = new URLSearchParams();
+  params.set("period", period);
+  if (search) params.set("search", search);
+  
+  api(`/hr/payroll?${params}`)
+    .then(res => setData(res.data))
+    .finally(() => {
+      setLoading(false);
+      setTableLoading(false);
+    });
+};
 
-  useEffect(() => { fetchPayroll(); }, [period]);
+  // Initial load (saat pertama kali buka halaman)
+useEffect(() => { 
+  fetchPayroll(); 
+}, [period]);
+
+// Search debounce (hanya loading tabel)
+useEffect(() => {
+  if (!loading) { 
+    const timer = setTimeout(() => {
+      fetchPayroll(true);  // ← true = search mode
+    }, 500);
+    return () => clearTimeout(timer);
+  }
+}, [search, period]); 
 
   const handlePay = (id) => {
     const intern = data.payrolls.find(p => p.id_payroll === id);
@@ -615,6 +643,9 @@ export default function PayrollHR() {
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 99px; }
+        @keyframes spin { 
+          to { transform: rotate(360deg); } 
+        }
         @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
         .pr-fadein { animation: fadeIn 0.3s ease both; }
         .row-hover:hover { background: #f8fafc; }
@@ -643,17 +674,6 @@ export default function PayrollHR() {
             <span style={{ fontSize: "13px", color: "#94a3b8", margin: "0 4px" }}>/</span>
             <span style={{ fontSize: "13px", color: "#94a3b8" }}>Overview</span>
           </div>
-          <div style={{
-            display: "flex", alignItems: "center", gap: "8px",
-            background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px",
-            padding: "7px 14px", width: "220px",
-          }}>
-            <IC.Search />
-            <input
-              placeholder="Search payroll..."
-              style={{ border: "none", background: "transparent", outline: "none", fontSize: "13px", color: "#64748b", width: "100%", fontFamily: "inherit" }}
-            />
-          </div>
           <span style={{ fontSize: "12px", color: "#94a3b8", whiteSpace: "nowrap" }}>{todayStr()}</span>
         </header>
 
@@ -681,10 +701,12 @@ export default function PayrollHR() {
             background: "#fff", borderRadius: "16px", overflow: "hidden",
             boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
           }}>
+
             {/* Card Header */}
             <div style={{
               display: "flex", alignItems: "center", justifyContent: "space-between",
               padding: "20px 24px", borderBottom: "1px solid #f1f5f9",
+              flexWrap: "wrap", gap: "12px",  
             }}>
               <div>
                 <p style={{ fontSize: "15px", fontWeight: "700", color: "#1e293b", margin: 0, textAlign: "left" }}>Payroll List</p>
@@ -692,7 +714,25 @@ export default function PayrollHR() {
                   Paid internship participants — {period}
                 </p>
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              
+              <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+                <div style={{
+                  display: "flex", alignItems: "center", gap: "8px",
+                  background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px",
+                  padding: "7px 14px", width: "240px",
+                }}>
+                  <IC.Search />
+                  <input
+                    placeholder="Search by name or email..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    style={{
+                      border: "none", background: "transparent", outline: "none",
+                      fontSize: "13px", color: "#64748b", width: "100%", fontFamily: "inherit",
+                    }}
+                  />
+                </div>
+                
                 <input
                   type="month"
                   value={period}
@@ -741,10 +781,21 @@ export default function PayrollHR() {
             </div>
 
             {/* Rows */}
-            {loading ? (
+            {tableLoading ? (
               <div style={{ padding: "48px 0", textAlign: "center", color: "#94a3b8", fontSize: "13px" }}>
-                Loading...
+                <div style={{ 
+                  display: "inline-block", 
+                  width: "20px", 
+                  height: "20px", 
+                  border: "2px solid #e2e8f0", 
+                  borderTopColor: "#3b82f6", 
+                  borderRadius: "50%", 
+                  animation: "spin 0.6s linear infinite" 
+                }} />
+                <div style={{ marginTop: "10px" }}>Searching...</div>
               </div>
+            ) : loading ? (
+              <LoadingSpinner fullScreen={false} message="Loading payroll data..." />
             ) : data.payrolls.length === 0 ? (
               <div style={{ padding: "48px 0", textAlign: "center", color: "#94a3b8", fontSize: "13px" }}>
                 No payroll data for this period.

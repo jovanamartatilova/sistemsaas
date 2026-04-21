@@ -14,34 +14,49 @@ class HRPayrollController extends Controller
      * GET /hr/payroll
      */
     public function index(Request $request)
-    {
-        $companyId = $request->user()->id_company;
-        $period    = $request->get('period', now()->format('Y-m'));
+{
+    $companyId = $request->user()->id_company;
+    $period    = $request->get('period', now()->format('Y-m'));
+    $search    = $request->get('search');
 
-        $payrolls = Payroll::where('period', $period)
-            ->whereHas('submission.vacancy', fn($q) =>
-                $q->where('id_company', $companyId)
-            )
-            ->with(['submission.user', 'submission.position', 'submission.vacancy'])
-            ->get();
-
-        $totalDisbursed = $payrolls->where('status', 'paid')->sum('stipend_amount');
-
-        return response()->json([
-            'success' => true,
-            'data'    => [
-                'stats' => [
-                    'paid_interns'     => $payrolls->count(),
-                    'paid_this_month'  => $payrolls->where('status', 'paid')->count(),
-                    'pending_payment'  => $payrolls->where('status', 'pending')->count(),
-                    'total_disbursed'  => $totalDisbursed,
-                    'total_disbursed_formatted' => 'Rp ' . number_format($totalDisbursed / 1000000, 1) . 'M',
-                ],
-                'period'   => $period,
-                'payrolls' => $payrolls->map(fn($p) => $this->formatPayroll($p)),
-            ],
-        ]);
+    $payrollsQuery = Payroll::where('period', $period)
+        ->whereHas('submission.vacancy', fn($q) =>
+            $q->where('id_company', $companyId)
+        )
+        ->with(['submission.user', 'submission.position', 'submission.vacancy']);
+    
+    if ($search) {
+        $payrollsQuery->whereHas('submission.user', function($q) use ($search) {
+            $q->where('name', 'like', "%{$search}%")
+              ->orWhere('email', 'like', "%{$search}%");
+        });
     }
+    
+    $payrolls = $payrollsQuery->get();
+
+    $allPayrolls = Payroll::where('period', $period)
+        ->whereHas('submission.vacancy', fn($q) =>
+            $q->where('id_company', $companyId)
+        )
+        ->get();
+    
+    $totalDisbursed = $allPayrolls->where('status', 'paid')->sum('stipend_amount');
+
+    return response()->json([
+        'success' => true,
+        'data'    => [
+            'stats' => [
+                'paid_interns'     => $allPayrolls->count(),
+                'paid_this_month'  => $allPayrolls->where('status', 'paid')->count(),
+                'pending_payment'  => $allPayrolls->where('status', 'pending')->count(),
+                'total_disbursed'  => $totalDisbursed,
+                'total_disbursed_formatted' => 'Rp ' . number_format($totalDisbursed / 1000000, 1) . 'M',
+            ],
+            'period'   => $period,
+            'payrolls' => $payrolls->map(fn($p) => $this->formatPayroll($p)),
+        ],
+    ]);
+}
 
     /**
      * POST /hr/payroll

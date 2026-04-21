@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { api } from "../../api";
 import { useAuthStore } from "../../stores/authStore";
 import SidebarHR from "../../components/SidebarHR";
+import { LoadingSpinner } from "../../components/LoadingSpinner";
 
 // ── Icons ──────────────────────────────────────────────────────────────────────
 const IC = {
@@ -203,24 +204,52 @@ export default function GenerateLoAHR() {
 
   const [showLogout, setShowLogout]               = useState(false);
   const [data, setData]                           = useState({ user: {}, stats: {}, candidates: [] });
+  const [pageLoading, setPageLoading]             = useState(true);
   const [loading, setLoading]                     = useState(null);
   const [bulkLoading, setBulkLoading]             = useState(false);
   const [error, setError]                         = useState("");
   const [sending, setSending]                     = useState({});
   const [regenerateSuccess, setRegenerateSuccess] = useState({});
+  const [search, setSearch] = useState("");           
+  const [tableLoading, setTableLoading] = useState(false); 
 
   // ── Fetch ────────────────────────────────────────────────────────────────────
-  const fetchLoa = async () => {
-    try {
-      setError("");
-      const res = await api("/hr/loa");
-      setData(res.data);
-    } catch (err) {
-      setError(err.message || "Failed to load data.");
-    }
-  };
+  const fetchLoa = async (isSearch = false) => {
+  if (isSearch) {
+    setTableLoading(true);   // Loading hanya untuk tabel
+  } else {
+    setPageLoading(true);    // Loading untuk seluruh halaman
+  }
+  
+  try {
+    setError("");
+    const params = new URLSearchParams();
+    if (search) params.set("search", search);
+    
+    const res = await api(`/hr/loa?${params}`);
+    setData(res.data);
+  } catch (err) {
+    setError(err.message || "Failed to load data.");
+  } finally {
+    setPageLoading(false);
+    setTableLoading(false);
+  }
+};
 
-  useEffect(() => { fetchLoa(); }, []);
+  // Initial load (saat pertama kali buka halaman)
+  useEffect(() => { 
+    fetchLoa(); 
+  }, []);
+
+  // Search debounce (hanya loading tabel)
+  useEffect(() => {
+    if (!pageLoading) { 
+      const timer = setTimeout(() => {
+        fetchLoa(true);  // ← true = search mode
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [search]);
 
   // ── Handlers ─────────────────────────────────────────────────────────────────
   const handleLogout = () => {
@@ -315,6 +344,8 @@ export default function GenerateLoAHR() {
     },
   ];
 
+  if (pageLoading) return <LoadingSpinner message="Loading generate LoA..." />;
+
   return (
     <div style={{
       display: "flex", minHeight: "100vh", background: "#f8fafc",
@@ -325,6 +356,9 @@ export default function GenerateLoAHR() {
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 99px; }
+        @keyframes spin { 
+          to { transform: rotate(360deg); } 
+        }
         @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
         .loa-fadein { animation: fadeIn 0.3s ease both; }
         .row-hover:hover { background: #f8fafc; }
@@ -346,20 +380,6 @@ export default function GenerateLoAHR() {
             <span style={{ fontSize: "15px", fontWeight: "700", color: "#1e293b" }}>Administration</span>
             <span style={{ fontSize: "13px", color: "#94a3b8", margin: "0 6px" }}>/</span>
             <span style={{ fontSize: "13px", color: "#94a3b8" }}>Generate LoA</span>
-          </div>
-          <div style={{
-            display: "flex", alignItems: "center", gap: "8px",
-            background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px",
-            padding: "7px 14px", width: "220px",
-          }}>
-            <IC.Search />
-            <input
-              placeholder="Search candidates..."
-              style={{
-                border: "none", background: "transparent", outline: "none",
-                fontSize: "13px", color: "#64748b", width: "100%", fontFamily: "inherit",
-              }}
-            />
           </div>
           <span style={{ fontSize: "12px", color: "#94a3b8", whiteSpace: "nowrap" }}>{todayStr()}</span>
         </header>
@@ -406,6 +426,7 @@ export default function GenerateLoAHR() {
             <div style={{
               display: "flex", alignItems: "center", justifyContent: "space-between",
               padding: "20px 24px", borderBottom: "1px solid #f1f5f9",
+              flexWrap: "wrap", gap: "12px",
             }}>
               <div>
                 <p style={{ fontSize: "15px", fontWeight: "700", color: "#1e293b", margin: 0, textAlign: "left" }}>
@@ -415,20 +436,40 @@ export default function GenerateLoAHR() {
                   Select candidate to generate LoA
                 </p>
               </div>
-              <button
-                onClick={handleBulkGenerate}
-                disabled={bulkLoading}
-                style={{
-                  display: "flex", alignItems: "center", gap: "6px",
-                  padding: "8px 18px", background: bulkLoading ? "#94a3b8" : "#1e293b",
-                  color: "#fff", border: "none", borderRadius: "10px",
-                  fontSize: "13px", fontWeight: "700", cursor: bulkLoading ? "not-allowed" : "pointer",
-                  fontFamily: "'Poppins','Segoe UI',sans-serif", transition: "background 0.15s",
-                }}
-              >
-                <IC.FilePlus />
-                {bulkLoading ? "Generating…" : "Bulk Generate"}
-              </button>
+              
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <div style={{
+                  display: "flex", alignItems: "center", gap: "8px",
+                  background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px",
+                  padding: "7px 14px", width: "240px",
+                }}>
+                  <IC.Search />
+                  <input
+                    placeholder="Search by name or email..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    style={{
+                      border: "none", background: "transparent", outline: "none",
+                      fontSize: "13px", color: "#64748b", width: "100%", fontFamily: "inherit",
+                    }}
+                  />
+                </div>
+                
+                <button
+                  onClick={handleBulkGenerate}
+                  disabled={bulkLoading}
+                  style={{
+                    display: "flex", alignItems: "center", gap: "6px",
+                    padding: "8px 18px", background: bulkLoading ? "#94a3b8" : "#1e293b",
+                    color: "#fff", border: "none", borderRadius: "10px",
+                    fontSize: "13px", fontWeight: "700", cursor: bulkLoading ? "not-allowed" : "pointer",
+                    fontFamily: "'Poppins','Segoe UI',sans-serif", transition: "background 0.15s",
+                  }}
+                >
+                  <IC.FilePlus />
+                  {bulkLoading ? "Generating…" : "Bulk Generate"}
+                </button>
+              </div>
             </div>
 
             {/* Table header */}
@@ -449,7 +490,20 @@ export default function GenerateLoAHR() {
             </div>
 
             {/* Rows */}
-            {!data.candidates || data.candidates.length === 0 ? (
+            {tableLoading ? (
+              <div style={{ padding: "48px 0", textAlign: "center", color: "#94a3b8", fontSize: "13px" }}>
+                <div style={{ 
+                  display: "inline-block", 
+                  width: "20px", 
+                  height: "20px", 
+                  border: "2px solid #e2e8f0", 
+                  borderTopColor: "#3b82f6", 
+                  borderRadius: "50%", 
+                  animation: "spin 0.6s linear infinite" 
+                }} />
+                <div style={{ marginTop: "10px" }}>Searching...</div>
+              </div>
+            ) : !data.candidates || data.candidates.length === 0 ? (
               <div style={{ padding: "48px 0", textAlign: "center", color: "#94a3b8", fontSize: "13px" }}>
                 <div style={{ marginBottom: "8px", fontSize: "13px" }}>No accepted candidates yet.</div>
                 <div style={{ fontSize: "12px" }}>

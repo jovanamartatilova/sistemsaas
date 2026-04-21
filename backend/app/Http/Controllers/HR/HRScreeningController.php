@@ -170,13 +170,6 @@ class HRScreeningController extends Controller
             ->first();
     }
 
-    /**
-     * POST /hr/screening/{id}/ai-check
-     * Gunakan Google Gemini untuk analisis kandidat (GRATIS!)
-     */
-    /**
- * POST /hr/screening/{id}/ai-check
- */
 public function aiCheck(Request $request, string $id)
 {
     $submission = $this->findSubmission($id, $request->user()->id_company);
@@ -185,13 +178,12 @@ public function aiCheck(Request $request, string $id)
         return response()->json(['success' => false, 'message' => 'Candidate not found'], 404);
     }
 
-    $apiKey = env('GEMINI_API_KEY');
-    if (!$apiKey) {
-        return response()->json([
-            'success' => false,
-            'message' => 'AI service not configured. Set GEMINI_API_KEY in .env'
-        ], 500);
-    }
+    if (!env('GROQ_API_KEY')) {
+    return response()->json([
+        'success' => false,
+        'message' => 'AI service not configured. Set GROQ_API_KEY in .env'
+    ], 500);
+}
 
     // ── Ekstrak teks CV ──────────────────────────────────────────
     $cvText = 'CV tidak tersedia.';
@@ -239,28 +231,26 @@ PROMPT;
 try {
     $client = new \GuzzleHttp\Client(['verify' => false, 'timeout' => 30]);
 
-    $response = $client->post('https://openrouter.ai/api/v1/chat/completions', [
-        'headers' => [
-            'Authorization' => 'Bearer ' . env('OPENROUTER_API_KEY'),
-            'Content-Type'  => 'application/json',
-            'HTTP-Referer'  => env('APP_URL', 'http://localhost'),
-            'X-Title'       => 'EarlyPath HR System',
+    $response = $client->post('https://api.groq.com/openai/v1/chat/completions', [
+    'headers' => [
+        'Authorization' => 'Bearer ' . env('GROQ_API_KEY'),
+        'Content-Type'  => 'application/json',
+    ],
+    'json' => [
+        'model'    => 'llama-3.3-70b-versatile',
+        'messages' => [
+            ['role' => 'user', 'content' => $prompt],
         ],
-        'json' => [
-            'model'    => 'google/gemma-3-27b-it:free',
-            'messages' => [
-                ['role' => 'user', 'content' => $prompt],
-            ],
-            'temperature' => 0.3,
-            'max_tokens'  => 512,
-        ],
-    ]);
+        'temperature' => 0.3,
+        'max_tokens'  => 512,
+    ],
+]);
 
     $body = json_decode($response->getBody(), true);
     $text = $body['choices'][0]['message']['content'] ?? null;
 
     if (!$text) {
-        throw new \Exception('Model tidak merespons.');
+        throw new \Exception('Model not responding.');
     }
 
     // ── Parse JSON ───────────────────────────────────────────
@@ -325,7 +315,7 @@ public function aiRank(Request $request)
         return response()->json(['success' => true, 'rankings' => []]);
     }
 
-    if (!env('OPENROUTER_API_KEY')) {
+    if (!env('GROQ_API_KEY')) {
         return response()->json(['success' => false, 'message' => 'AI not configured'], 500);
     }
 
@@ -363,15 +353,15 @@ PROMPT;
 
     try {
         $client   = new \GuzzleHttp\Client(['verify' => false, 'timeout' => 30]);
-        $response = $client->post('https://openrouter.ai/api/v1/chat/completions', [
+        $response = $client->post('https://api.groq.com/openai/v1/chat/completions', [
             'headers' => [
-                'Authorization' => 'Bearer ' . env('OPENROUTER_API_KEY'),
+                'Authorization' => 'Bearer ' . env('GROQ_API_KEY'),
                 'Content-Type'  => 'application/json',
                 'HTTP-Referer'  => env('APP_URL', 'http://localhost'),
                 'X-Title'       => 'EarlyPath HR System',
             ],
             'json' => [
-                'model'       => 'google/gemma-3-27b-it:free',
+                'model'       => 'llama-3.3-70b-versatile',
                 'messages'    => [['role' => 'user', 'content' => $prompt]],
                 'temperature' => 0.1,
                 'max_tokens'  => 1024,

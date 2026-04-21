@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { api } from "../../api";
 import { useAuthStore } from "../../stores/authStore";
 import SidebarHR from "../../components/SidebarHR"; // ← import sidebar
+import { LoadingSpinner } from "../../components/LoadingSpinner";
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
 const IC = {
@@ -205,6 +206,10 @@ export default function DashboardHR() {
 
   const [showLogout, setShowLogout]       = useState(false);
   const [confirmAction, setConfirmAction] = useState(null);
+  const [loading, setLoading]             = useState(true);
+  const [search, setSearch]               = useState("");
+  const [tableLoading, setTableLoading]   = useState(false);
+
   const [data, setData] = useState({
     user: {},
     stats: { total_candidates: 0, accepted: 0, interview_scheduled: 0, pending_review: 0 },
@@ -213,13 +218,34 @@ export default function DashboardHR() {
   });
 
   // ── Fetch ────────────────────────────────────────────────────────────────────
-  const fetchDashboard = () => {
-    api("/hr/dashboard").then((res) => setData(res.data));
+  const fetchDashboard = (isSearch = false) => {
+    if (isSearch) {
+      setTableLoading(true);
+    } else {
+      setLoading(true);
+    }
+    const params = new URLSearchParams();
+    if (search) params.set("search", search);
+
+    api(`/hr/dashboard?${params}`)
+      .then((res) => setData(res.data))
+      .catch((err) => console.error("Fetch error:", err))
+      .finally(() => {
+        setLoading(false);
+        setTableLoading(false);
+      });
   };
 
   useEffect(() => {
     fetchDashboard();
   }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchDashboard(true);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   // ── Handlers ─────────────────────────────────────────────────────────────────
   const handleLogout = () => {
@@ -272,6 +298,7 @@ export default function DashboardHR() {
       barColors: ["#fb923c","#fdba74","#fb923c","#fdba74","#fb923c","#fed7aa","#fb923c"],
     },
   ];
+  if (loading) return <LoadingSpinner message="Loading dashboard..." />;
 
   return (
     <div style={{
@@ -283,6 +310,7 @@ export default function DashboardHR() {
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 99px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
         .hr-fadein { animation: fadeIn 0.3s ease both; }
         .row-hover:hover { background: #f8fafc; }
@@ -304,17 +332,6 @@ export default function DashboardHR() {
             <span style={{ fontSize: "15px", fontWeight: "700", color: "#1e293b" }}>Dashboard</span>
             <span style={{ fontSize: "13px", color: "#94a3b8", margin: "0 6px" }}>/</span>
             <span style={{ fontSize: "13px", color: "#94a3b8" }}>Overview</span>
-          </div>
-          <div style={{
-            display: "flex", alignItems: "center", gap: "8px",
-            background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px",
-            padding: "7px 14px", width: "220px",
-          }}>
-            <IC.Search />
-            <input
-              placeholder="Search candidates..."
-              style={{ border: "none", background: "transparent", outline: "none", fontSize: "13px", color: "#64748b", width: "100%", fontFamily: "inherit" }}
-            />
           </div>
           <span style={{ fontSize: "12px", color: "#94a3b8", whiteSpace: "nowrap" }}>{todayStr()}</span>
         </header>
@@ -356,6 +373,20 @@ export default function DashboardHR() {
                   <p style={{ fontSize: "15px", fontWeight: "700", color: "#1e293b", margin: 0, textAlign: "left" }}>Recent Candidates</p>
                   <p style={{ fontSize: "12px", color: "#94a3b8", marginTop: "2px" }}>Latest applicants requiring action</p>
                 </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <div style={{
+                  display: "flex", alignItems: "center", gap: "8px",
+                  background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px",
+                  padding: "7px 14px", width: "220px",
+                }}>
+                  <IC.Search />
+                  <input
+                    placeholder="Search candidates..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                    style={{ border: "none", background: "transparent", outline: "none", fontSize: "13px", color: "#64748b", width: "100%", fontFamily: "inherit" }}
+                  />
+                </div>
                 <button
                   onClick={() => navigate("/hr/kandidate")}
                   style={{
@@ -366,6 +397,7 @@ export default function DashboardHR() {
                 >
                   View All <IC.ArrowRight />
                 </button>
+              </div>
               </div>
 
               {/* Table header */}
@@ -382,7 +414,12 @@ export default function DashboardHR() {
               </div>
 
               {/* Rows */}
-              {data.recent_candidates.length === 0 ? (
+              {tableLoading ? (
+                <div style={{ padding: "48px 0", textAlign: "center", color: "#94a3b8", fontSize: "13px" }}>
+                  <div style={{ display: "inline-block", width: "20px", height: "20px", border: "2px solid #e2e8f0", borderTopColor: "#3b82f6", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
+                  <div style={{ marginTop: "10px" }}>Searching...</div>
+                </div>
+              ) : data.recent_candidates.length === 0 ? (
                 <div style={{ padding: "48px 0", textAlign: "center", color: "#94a3b8", fontSize: "13px" }}>
                   No candidates yet.
                 </div>
