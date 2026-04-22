@@ -81,7 +81,7 @@ export default function CompetenciesMentor() {
       setLoading(true);
       const [profileRes, internsRes] = await Promise.all([
         mentorApi.getProfile(),
-        mentorApi.getInterns(),
+        mentorApi.getInterns(''),
       ]);
       setMentor(profileRes.data);
       setInterns(internsRes.data);

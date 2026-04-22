@@ -66,13 +66,13 @@ class Submission extends Model
         return $this->hasOne(Payroll::class, 'id_submission', 'id_submission');
     }
 
-public function mentor()
-{
-    return $this->belongsTo(User::class, 'id_user_mentor', 'id_user');
-}
+    public function mentor()
+    {
+        return $this->belongsTo(User::class, 'id_user_mentor', 'id_user');
+    }
 
-public function certificate()
-{
-    return $this->hasOne(Certificate::class, 'id_submission', 'id_submission');
-}
+    public function certificate()
+    {
+        return $this->hasOne(Certificate::class, 'id_submission', 'id_submission');
+    }
 }

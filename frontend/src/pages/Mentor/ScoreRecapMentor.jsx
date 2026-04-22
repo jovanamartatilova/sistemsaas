@@ -16,20 +16,9 @@ const s = {
   content: { padding: "28px", flex: 1, overflowY: "auto" },
   h1: { fontSize: "22px", fontWeight: 700, color: "#0f172a", margin: 0 },
   subtitle: { fontSize: "13px", color: "#64748b", marginTop: "4px", marginBottom: "20px" },
-  grid3: { display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "16px", marginBottom: "24px" },
-  stat: { background: "#fff", borderRadius: "12px", padding: "18px 20px", border: "1px solid #e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" },
-  statTop: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px" },
-  statLabel: { fontSize: "13px", fontWeight: 600, color: "#64748b" },
-  statBadge: (bg, color) => ({ fontSize: "10px", fontWeight: 600, padding: "2px 7px", borderRadius: "10px", background: bg, color }),
-  statVal: { fontSize: "28px", fontWeight: 800, color: "#0f172a", lineHeight: 1, marginBottom: "4px" },
-  statBar: { height: "3px", background: "#f1f5f9", borderRadius: "10px", overflow: "hidden", margin: "8px 0" },
-  statFill: (w, c) => ({ height: "100%", borderRadius: "10px", width: w, background: c }),
-  statSub: { fontSize: "11px", color: "#94a3b8" },
   card: { background: "#fff", borderRadius: "12px", border: "1px solid #e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,0.04)", overflow: "hidden" },
   ch: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 24px", borderBottom: "1px solid #f1f5f9" },
   ct: { fontSize: "15px", fontWeight: 700, color: "#0f172a" },
-  cs: { fontSize: "12px", color: "#94a3b8", marginTop: "1px" },
-  hdrActs: { display: "flex", gap: "8px" },
   table: { width: "100%", borderCollapse: "collapse", tableLayout: "fixed" },
   thead: { background: "#f8fafc", borderBottom: "1px solid #e2e8f0" },
   th: { padding: "10px 16px", textAlign: "left", fontSize: "10px", fontWeight: 700, color: "#94a3b8", letterSpacing: "0.06em", textTransform: "uppercase", whiteSpace: "nowrap" },
@@ -40,94 +29,89 @@ const s = {
   btnOutline: { padding: "7px 14px", background: "#fff", color: "#334155", border: "1px solid #e2e8f0", borderRadius: "8px", fontSize: "13px", fontWeight: 500, cursor: "pointer", fontFamily: "inherit" },
 };
 
-// Removed hardcoded statCards and recapData - now loaded from API in component
-
 export default function ScoreRecapMentor() {
   const navigate = useNavigate();
   const [mentor, setMentor] = useState(null);
   const [statCards, setStatCards] = useState([]);
   const [recapData, setRecapData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [tableLoading, setTableLoading] = useState(false);
   const [error, setError] = useState(null);
   const [logoutModal, setLogoutModal] = useState(false);
+  const [search, setSearch] = useState("");
 
+  // ─── INITIAL LOAD ─────────────────────────────────────────────────────────
   useEffect(() => {
     fetchData();
-  }, []);
 
-  useEffect(() => {
-    // Listen for data refresh events and refetch data
+    const handleFocus = () => fetchData();
+    window.addEventListener('focus', handleFocus);
+
     const cleanup = onDataRefresh(() => {
       console.log('ScoreRecapMentor: Data refresh event received, refetching...');
       fetchData();
     });
-    
-    // Also refetch when window gains focus
-    const handleFocus = () => {
-      console.log('ScoreRecapMentor: Window focused, refetching data...');
-      fetchData();
-    };
-    window.addEventListener('focus', handleFocus);
-    
+
     return () => {
       window.removeEventListener('focus', handleFocus);
       cleanup();
     };
   }, []);
 
+  // ─── SEARCH DEBOUNCE ──────────────────────────────────────────────────────
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!loading) fetchRecap(search);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  // ─── FETCH FUNCTIONS ──────────────────────────────────────────────────────
   const fetchData = async () => {
     try {
       setLoading(true);
       setError(null);
       const [profileRes, recapRes] = await Promise.all([
         mentorApi.getProfile(),
-        mentorApi.getScoreRecap(),
+        mentorApi.getScoreRecap(''),
       ]);
-      
       setMentor(profileRes.data);
-      console.log('Score recap data:', recapRes.data);
-      console.log('Stats:', recapRes.data.stats);
-      console.log('Recap:', recapRes.data.recap);
       setStatCards(recapRes.data.stats || []);
       setRecapData(recapRes.data.recap || []);
     } catch (error) {
       console.error('Error fetching score recap:', error);
-      console.error('Error response:', error.response?.data);
-      console.error('Error status:', error.response?.status);
       setError('Failed to load score recap: ' + (error.response?.data?.message || error.message));
     } finally {
       setLoading(false);
     }
   };
 
+  const fetchRecap = async (searchVal) => {
+    setTableLoading(true);
+    try {
+      const res = await mentorApi.getScoreRecap(searchVal);
+      setStatCards(res.data.stats || []);
+      setRecapData(res.data.recap || []);
+    } catch (err) {
+      console.error('Error fetching recap:', err);
+    } finally {
+      setTableLoading(false);
+    }
+  };
+
+  // ─── EXPORT CSV ───────────────────────────────────────────────────────────
   const handleExportCSV = () => {
     try {
-      // Create CSV header
       const headers = ['Intern', 'Position', 'Program', 'Type', 'Competencies Scored', 'Total Hours', 'Average Score', 'Status'];
-      
-      // Create CSV rows from recapData
       const rows = recapData.map(row => [
-        row.name,
-        row.position,
-        row.program,
-        row.type,
-        row.scored,
-        row.hours,
-        row.avg !== null ? row.avg.toFixed(1) : '',
-        row.status
+        row.name, row.position, row.program, row.type, row.scored, row.hours,
+        row.avg != null ? row.avg.toFixed(1) : '',
+        row.status,
       ]);
-      
-      // Combine headers and rows
-      const csvContent = [
-        headers.join(','),
-        ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
-      ].join('\n');
-      
-      // Create blob and download
+      const csvContent = [headers.join(','), ...rows.map(r => r.map(c => `"${c}"`).join(','))].join('\n');
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement('a');
-      const url = URL.createObjectURL(blob);
-      link.setAttribute('href', url);
+      link.setAttribute('href', URL.createObjectURL(blob));
       link.setAttribute('download', `score-recap-${new Date().toISOString().slice(0,10)}.csv`);
       link.style.visibility = 'hidden';
       document.body.appendChild(link);
@@ -139,9 +123,7 @@ export default function ScoreRecapMentor() {
     }
   };
 
-  const handleLogoutClick = () => {
-    setLogoutModal(true);
-  };
+  const handleLogoutClick = () => setLogoutModal(true);
 
   const confirmLogout = async () => {
     try {
@@ -162,12 +144,10 @@ export default function ScoreRecapMentor() {
     }
   };
 
-  const handleLogout = handleLogoutClick;
-
   if (loading) {
     return (
       <div style={s.app}>
-        <SidebarMentor mentor={mentor} onLogout={handleLogout} />
+        <SidebarMentor mentor={mentor} onLogout={handleLogoutClick} />
         <main style={s.main}>
           <div style={s.topbar}>
             <div style={s.bc}>
@@ -181,10 +161,11 @@ export default function ScoreRecapMentor() {
       </div>
     );
   }
+
   return (
     <div style={s.app}>
-      <style>{`* { box-sizing: border-box; margin: 0; padding: 0; } ::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 99px; } tr:last-child td { border-bottom: none; }`}</style>
-      <SidebarMentor mentor={mentor} onLogout={handleLogout} />
+      <style>{`* { box-sizing: border-box; margin: 0; padding: 0; } ::-webkit-scrollbar { width: 5px; } @keyframes spin { to { transform: rotate(360deg); } } ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 99px; } tr:last-child td { border-bottom: none; }`}</style>
+      <SidebarMentor mentor={mentor} onLogout={handleLogoutClick} />
       <main style={s.main}>
         <div style={s.topbar}>
           <div style={s.bc}>
@@ -204,17 +185,35 @@ export default function ScoreRecapMentor() {
             </div>
           )}
 
-          {recapData.length === 0 && !error && (
-            <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#166534', padding: '12px 16px', borderRadius: '8px', marginBottom: '16px', fontSize: '13px' }}>
-              ℹ️ No scores recorded yet. Go to Input Score to add scores for interns.
-            </div>
-          )}
-
           <div style={s.card}>
-            <div style={{...s.ch, flexDirection: "column", alignItems: "center", textAlign: "center", gap: "8px", justifyContent: "center"}}>
+            {/* Card Header */}
+            <div style={{ ...s.ch, flexDirection: "column", alignItems: "center", textAlign: "center", gap: "8px", justifyContent: "center" }}>
               <div style={s.ct}>Intern Score Recap</div>
-              <button onClick={handleExportCSV} style={s.btnOutline}>Export CSV</button>
+              <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                {/* Search Bar */}
+                <div style={{
+                  display: "flex", alignItems: "center", gap: "8px",
+                  background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px",
+                  padding: "7px 14px", width: "260px",
+                }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+                  </svg>
+                  <input
+                    placeholder="Search by name..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    style={{ border: "none", background: "transparent", outline: "none", fontSize: "13px", color: "#64748b", width: "100%", fontFamily: "inherit" }}
+                  />
+                  {search && (
+                    <span onClick={() => setSearch("")} style={{ cursor: "pointer", color: "#94a3b8", fontSize: "16px", lineHeight: 1 }}>×</span>
+                  )}
+                </div>
+                <button onClick={handleExportCSV} style={s.btnOutline}>Export CSV</button>
+              </div>
             </div>
+
+            {/* Table */}
             <table style={s.table}>
               <colgroup>
                 <col style={{ width: "17%" }} /><col style={{ width: "13%" }} /><col style={{ width: "17%" }} />
@@ -229,25 +228,44 @@ export default function ScoreRecapMentor() {
                 </tr>
               </thead>
               <tbody>
-                {recapData.map((row, i) => (
-                  <tr key={i}>
-                    <td style={s.td}><span style={s.cname}>{row.name}</span></td>
-                    <td style={s.td}>{row.position}</td>
-                    <td style={s.td}>{row.program}</td>
-                    <td style={s.td}><span style={s.typeBadge(row.type === "Team")}>{row.type}</span></td>
-                    <td style={s.td}>{row.scored}</td>
-                    <td style={s.td}>{row.hours}</td>
-                    <td style={s.td}>{row.avg !== null ? <span style={{ fontWeight: 700, color: "#8b5cf6" }}>{row.avg.toFixed(1)}</span> : <span style={{ color: "#94a3b8" }}>—</span>}</td>
-                    <td style={s.td}><span style={s.badge(row.statusBg, row.statusColor)}>{row.status}</span></td>
+                {tableLoading ? (
+                  <tr>
+                    <td colSpan={8} style={{ padding: "48px 0", textAlign: "center", color: "#94a3b8", fontSize: "13px" }}>
+                      <div style={{ display: "inline-block", width: "20px", height: "20px", border: "2px solid #e2e8f0", borderTopColor: "#8b5cf6", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
+                      <div style={{ marginTop: "10px" }}>Searching...</div>
+                    </td>
                   </tr>
-                ))}
+                ) : recapData.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} style={{ padding: "48px 0", textAlign: "center", color: "#94a3b8", fontSize: "13px" }}>
+                      {search ? `No results for "${search}"` : "No scores recorded yet."}
+                    </td>
+                  </tr>
+                ) : (
+                  recapData.map((row, i) => (
+                    <tr key={i}>
+                      <td style={s.td}><span style={s.cname}>{row.name}</span></td>
+                      <td style={s.td}>{row.position}</td>
+                      <td style={s.td}>{row.program}</td>
+                      <td style={s.td}><span style={s.typeBadge(row.type === "Team")}>{row.type}</span></td>
+                      <td style={s.td}>{row.scored}</td>
+                      <td style={s.td}>{row.hours}</td>
+                      <td style={s.td}>
+                        {row.avg != null
+                          ? <span style={{ fontWeight: 700, color: "#8b5cf6" }}>{row.avg.toFixed(1)}</span>
+                          : <span style={{ color: "#94a3b8" }}>—</span>}
+                      </td>
+                      <td style={s.td}><span style={s.badge(row.statusBg, row.statusColor)}>{row.status}</span></td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
         </div>
       </main>
 
-{/* Logout Modal */}
+      {/* Logout Modal */}
       {logoutModal && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(10,22,40,0.5)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center" }}>
           <div style={{ background: "#fff", borderRadius: "16px", padding: "28px", width: "340px", boxShadow: "0 20px 60px rgba(0,0,0,0.18)", textAlign: "left" }}>

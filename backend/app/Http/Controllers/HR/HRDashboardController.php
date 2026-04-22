@@ -9,64 +9,64 @@ use Illuminate\Http\Request;
 
 class HRDashboardController extends Controller
 {
-    /**
-     * GET /hr/dashboard
-     * Stats + recent candidates + selection pipeline
-     */
     public function index(Request $request)
     {
         $companyId = $request->user()->id_company;
 
-        // Base query — semua submission milik company ini
+        // Base query
         $base = Submission::whereHas('vacancy', fn($q) =>
             $q->where('id_company', $companyId)
         );
 
+        $statusFilter = $request->query('status');
+        if ($statusFilter && in_array($statusFilter, ['pending', 'screening', 'interview', 'accepted', 'rejected'])) {
+            $base = (clone $base)->where('status', $statusFilter);
+        }
+
+        // ── FILTER SEARCH ────────────────────────────────────
+        $search = $request->query('search');
+
         // ── STAT CARDS ──────────────────────────────────────
-        $totalCandidates = (clone $base)->count();
-
-        $accepted = (clone $base)->where('status', 'accepted')->count();
-
+        $totalBase = Submission::whereHas('vacancy', fn($q) =>
+            $q->where('id_company', $companyId)
+        );
+        
+        $totalCandidates = (clone $totalBase)->count();
+        $accepted = (clone $totalBase)->where('status', 'accepted')->count();
+        $pendingReview = (clone $totalBase)->where('status', 'pending')->count();
+        
         $interviewScheduled = Interview::whereHas('submission.vacancy', fn($q) =>
             $q->where('id_company', $companyId)
         )->whereIn('result', ['pending', 'continue'])->count();
 
-        $pendingReview = (clone $base)->where('status', 'pending')->count();
-
-        // ── RECENT CANDIDATES ────────────────────────────────
-        $search = $request->query('search');
-
-        $recentCandidates = (clone $base)
+        $recentQuery = (clone $base) 
             ->with(['user', 'position', 'vacancy'])
             ->when($search, fn($q) =>
                 $q->whereHas('user', fn($u) =>
                     $u->where('name', 'like', "%$search%")
-                    ->orWhere('email', 'like', "%$search%")
+                        ->orWhere('email', 'like', "%$search%")
                 )
             )
             ->orderByDesc('submitted_at')
-            ->limit(10)
-            ->get()
-            ->map(fn($s) => [
-                'id_submission' => $s->id_submission,
-                'name'          => $s->user?->name,
-                'email'         => $s->user?->email,
-                'position'      => $s->position?->name,
-                'status'        => $s->status,
-                'submitted_at'  => $s->submitted_at,
-                // dokumen
-                'has_cv'            => !empty($s->cv_file),
-                'has_cover_letter'  => !empty($s->cover_letter_file),
-                'has_portfolio'     => !empty($s->portfolio_file),
-                'has_institution_letter' => !empty($s->institution_letter_file),
-                // screening
-                'screening_status' => $s->screening_status,
-                'hr_notes'         => $s->hr_notes,
-            ]);
+            ->limit(10);
 
-        // ── SELECTION PIPELINE ───────────────────────────────
-        $statuses   = ['pending', 'screening', 'interview', 'accepted', 'rejected'];
-        $counts     = (clone $base)
+        $recentCandidates = $recentQuery->get()->map(fn($s) => [
+            'id_submission' => $s->id_submission,
+            'name'          => $s->user?->name,
+            'email'         => $s->user?->email,
+            'position'      => $s->position?->name,
+            'status'        => $s->status,
+            'submitted_at'  => $s->submitted_at,
+            'has_cv'            => !empty($s->cv_file),
+            'has_cover_letter'  => !empty($s->cover_letter_file),
+            'has_portfolio'     => !empty($s->portfolio_file),
+            'has_institution_letter' => !empty($s->institution_letter_file),
+            'screening_status' => $s->screening_status,
+            'hr_notes'         => $s->hr_notes,
+        ]);
+
+        $statuses = ['pending', 'screening', 'interview', 'accepted', 'rejected'];
+        $counts = (clone $totalBase)
             ->selectRaw('status, count(*) as total')
             ->groupBy('status')
             ->pluck('total', 'status');
@@ -82,11 +82,11 @@ class HRDashboardController extends Controller
         return response()->json([
             'success' => true,
             'data'    => [
-            'user' => [                        
-            'name'  => $request->user()->name,
-            'email' => $request->user()->email,
-            'photo' => $request->user()->photo_path,
-        ],
+                'user' => [
+                    'name'  => $request->user()->name,
+                    'email' => $request->user()->email,
+                    'photo' => $request->user()->photo_path,
+                ],
                 'stats' => [
                     'total_candidates'    => $totalCandidates,
                     'accepted'            => $accepted,

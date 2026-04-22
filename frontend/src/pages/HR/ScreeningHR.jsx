@@ -329,6 +329,10 @@ export default function ScreeningHR() {
   const [filterPosition, setFilterPosition] = useState("All Positions");
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const filterRef = useRef(null);
+  const [semanticSearchQuery, setSemanticSearchQuery] = useState("");
+  const [semanticResults, setSemanticResults] = useState([]);
+  const [isSemanticSearching, setIsSemanticSearching] = useState(false);
+  const [searchMode, setSearchMode] = useState("keyword");
 
   // ── helpers ───────────────────────────────────────────────────────────────
   const showToast = (message, type = "success") => {
@@ -359,12 +363,24 @@ export default function ScreeningHR() {
 
   useEffect(() => { fetchScreening(); }, []);
 
+  // Debounce search berdasarkan mode
   useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchScreening(true);
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [search]);
+    if (searchMode === "semantic") {
+      const timer = setTimeout(() => {
+        if (semanticSearchQuery.trim()) {
+          handleSemanticSearch(semanticSearchQuery);
+        } else {
+          setSemanticResults([]);
+        }
+      }, 800);
+      return () => clearTimeout(timer);
+    } else {
+      const timer = setTimeout(() => {
+        fetchScreening(true);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [searchMode === "semantic" ? semanticSearchQuery : search, searchMode]);
 
   useEffect(() => {
     const handler = (e) => {
@@ -465,6 +481,37 @@ export default function ScreeningHR() {
     }
   };
 
+  // Semantic search handler
+  const handleSemanticSearch = async (query) => {
+    if (!query.trim()) {
+      setSemanticResults([]);
+      return;
+    }
+    
+    setIsSemanticSearching(true);
+    try {
+      const res = await api(`/hr/screening/semantic-search?q=${encodeURIComponent(query)}`);
+      if (res.success && res.results && res.results.length > 0) {
+        setSemanticResults(res.results);
+        showToast(`✨ Found ${res.results.length} relevant candidates`, "info");
+      } else if (res.success && (!res.results || res.results.length === 0)) {
+        setSemanticResults([]);
+        showToast("No matching candidates found", "info");
+      } else {
+        // Error response - stay on semantic tab
+        const errorMsg = res.error || 'AI search failed';
+        showToast(errorMsg, "error");
+        setSemanticResults([]);
+      }
+    } catch (err) {
+      console.error("Semantic search error:", err);
+      showToast("AI search error. Try keyword search instead.", "error");
+      setSemanticResults([]);
+    } finally {
+      setIsSemanticSearching(false);
+    }
+  };
+
   // ── derived ───────────────────────────────────────────────────────────────
   const allPositions = ["All Positions", ...new Set(data.candidates.map(c => c.position))];
 
@@ -550,7 +597,7 @@ export default function ScreeningHR() {
             </div>
           </div>
 
-          {/* Stat Cards — same grid as Dashboard */}
+          {/* Stat Cards */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "20px", marginBottom: "24px" }}>
             {statCards.map((card, i) => <StatCard key={i} {...card} />)}
           </div>
@@ -561,66 +608,121 @@ export default function ScreeningHR() {
             {/* ── Screening Table ── */}
             <div style={{ background: "#fff", borderRadius: "16px", overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
               {/* Card header */}
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 24px", borderBottom: "1px solid #f1f5f9" }}>
-                <div>
-                  <p style={{ fontSize: "15px", fontWeight: "700", color: "#1e293b", margin: 0, textAlign: "left" }}>Screening Queue</p>
-                  <p style={{ fontSize: "12px", color: "#94a3b8", marginTop: "2px" }}>{filtered.length} candidates need review</p>
+              <div style={{ 
+                display: "flex", 
+                alignItems: "center", 
+                justifyContent: "space-between", 
+                padding: "16px 24px", 
+                borderBottom: "1px solid #f1f5f9",
+                gap: "20px"
+              }}>
+                {/* Kiri - Title */}
+                <div style={{ flexShrink: 0 }}>
+                  <p style={{ fontSize: "15px", fontWeight: "700", color: "#1e293b", margin: 0, textAlign: "left" }}>
+                    Screening Queue
+                  </p>
+                  <p style={{ fontSize: "12px", color: "#94a3b8", marginTop: "2px" }}>
+                    {filtered.length} candidates need review
+                  </p>
                 </div>
 
-                <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px", padding: "7px 14px", width: "200px" }}>
-                  <IC.Search />
-                  <input
-                    placeholder="Search candidates..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    style={{ border: "none", background: "transparent", outline: "none", fontSize: "13px", color: "#64748b", width: "100%", fontFamily: "inherit" }}
-                  />
-                </div>
-                  {/* AI Rank */}
+                {/* Kanan - Search, AI Rank, Filter */}
+                <div style={{ 
+                  display: "flex", 
+                  alignItems: "center", 
+                  gap: "12px", 
+                  flex: 1,
+                  maxWidth: "70%"
+                }}>
+                  {/* Search Bar */}
+                  <div style={{
+                    display: "flex", alignItems: "center",
+                    background: "#f8fafc", border: "1px solid #e2e8f0",
+                    borderRadius: "10px", padding: "4px 4px 4px 8px",
+                    flex: 2,
+                  }}>
+                    {/* Mode Toggle Icons */}
+                    <div style={{ display: "flex", gap: "2px", background: "#f1f5f9", borderRadius: "6px", padding: "2px" }}>
+                      <button
+                        onClick={() => { setSearchMode("keyword"); setSemanticResults([]); setSemanticSearchQuery(""); }}
+                        title="Keyword Search"
+                        style={{
+                          padding: "4px 6px", borderRadius: "4px",
+                          background: searchMode === "keyword" ? "#fff" : "transparent",
+                          color: searchMode === "keyword" ? "#3b82f6" : "#64748b",
+                          border: "none", cursor: "pointer",
+                          display: "flex", alignItems: "center",
+                        }}
+                      >
+                        <IC.Search />
+                      </button>
+                      <button
+                        onClick={() => { setSearchMode("semantic"); setSearch(""); }}
+                        title="AI Semantic Search"
+                        style={{
+                          padding: "4px 6px", borderRadius: "4px",
+                          background: searchMode === "semantic" ? "#fff" : "transparent",
+                          color: searchMode === "semantic" ? "#7c3aed" : "#64748b",
+                          border: "none", cursor: "pointer",
+                          display: "flex", alignItems: "center",
+                        }}
+                      >
+                        <IC.Sparkles />
+                      </button>
+                    </div>
+                    
+                    <input
+                      placeholder={searchMode === "semantic" ? "Contoh: backend laravel..." : "Cari nama, email, posisi..."}
+                      value={searchMode === "semantic" ? semanticSearchQuery : search}
+                      onChange={(e) => searchMode === "semantic" ? setSemanticSearchQuery(e.target.value) : setSearch(e.target.value)}
+                      style={{
+                        border: "none", background: "transparent", outline: "none",
+                        fontSize: "12px", padding: "6px 8px", flex: 1,
+                        fontFamily: "inherit",
+                      }}
+                    />
+                  </div>
+
+                  {/* AI Rank Button */}
                   <button
                     onClick={handleAiRank}
                     disabled={rankLoading}
                     style={{
-                      display: "inline-flex", alignItems: "center", gap: "5px",
+                      display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "5px",
                       padding: "7px 14px", borderRadius: "10px", border: "1px solid #ddd6fe",
-                      background: "#f5f3ff", color: "#7c3aed", fontSize: "12.5px", fontWeight: "600",
+                      background: "#f5f3ff", color: "#7c3aed", fontSize: "12px", fontWeight: "600",
                       cursor: rankLoading ? "not-allowed" : "pointer", opacity: rankLoading ? 0.6 : 1,
-                      fontFamily: "inherit",
+                      fontFamily: "inherit", whiteSpace: "nowrap", flex: 1,
                     }}
                   >
                     <IC.Sparkles />
-                    {rankLoading ? "Ranking..." : aiRanking ? "Re-Rank" : "Rank by AI"}
+                    {rankLoading ? "..." : aiRanking ? "Re-Rank" : "AI Rank"}
                   </button>
 
-                  {/* Reset ranking */}
-                  {aiRanking && (
-                    <button
-                      onClick={() => { setAiRanking(null); showToast("Ranking reset", "info"); }}
-                      style={{ display: "inline-flex", alignItems: "center", gap: "5px", padding: "7px 12px", borderRadius: "10px", border: "1px solid #e2e8f0", background: "#fff", color: "#94a3b8", fontSize: "12px", fontWeight: "500", cursor: "pointer", fontFamily: "inherit" }}
-                    >
-                      <IC.RefreshCw /> Reset
-                    </button>
-                  )}
-
-                  {/* Filter dropdown */}
-                  <div ref={filterRef} style={{ position: "relative" }}>
+                  {/* Filter Dropdown */}
+                  <div ref={filterRef} style={{ position: "relative", flex: 1 }}>
                     <button
                       onClick={() => setShowFilterDropdown(v => !v)}
-                      style={{ display: "inline-flex", alignItems: "center", gap: "5px", padding: "7px 14px", borderRadius: "10px", border: "1px solid #e2e8f0", background: "#fff", color: "#475569", fontSize: "12.5px", fontWeight: "500", cursor: "pointer", fontFamily: "inherit" }}
+                      style={{
+                        display: "flex", alignItems: "center", justifyContent: "space-between", gap: "5px",
+                        padding: "7px 14px", borderRadius: "10px", border: "1px solid #e2e8f0",
+                        background: "#fff", color: "#475569", fontSize: "12px", fontWeight: "500",
+                        cursor: "pointer", fontFamily: "inherit", width: "100%",
+                      }}
                     >
-                      {filterPosition} <IC.ChevronDown />
+                      <span>{filterPosition === "All Positions" ? "Position" : filterPosition}</span>
+                      <IC.ChevronDown />
                     </button>
                     {showFilterDropdown && (
-                      <div style={{ position: "absolute", top: "calc(100% + 6px)", right: 0, background: "#fff", border: "1px solid #e2e8f0", borderRadius: "12px", boxShadow: "0 8px 24px rgba(0,0,0,0.1)", minWidth: "170px", zIndex: 100, padding: "6px 0" }}>
+                      <div style={{ position: "absolute", top: "calc(100% + 6px)", right: 0, background: "#fff", border: "1px solid #e2e8f0", borderRadius: "12px", boxShadow: "0 8px 24px rgba(0,0,0,0.1)", minWidth: "160px", zIndex: 100, padding: "6px 0" }}>
                         {allPositions.map(pos => (
                           <button key={pos}
                             onClick={() => { setFilterPosition(pos); setShowFilterDropdown(false); }}
                             style={{
-                              display: "block", width: "100%", padding: "8px 16px", fontSize: "13px",
+                              display: "block", width: "100%", padding: "8px 16px", fontSize: "12px",
                               color: filterPosition === pos ? "#2563eb" : "#334155",
                               background: filterPosition === pos ? "#eff6ff" : "transparent",
-                              border: "none", cursor: "pointer", textAlign: "left", fontFamily: "inherit",
+                              border: "none", cursor: "pointer", textAlign: "left",
                               fontWeight: filterPosition === pos ? "600" : "400",
                             }}
                           >
@@ -632,6 +734,33 @@ export default function ScreeningHR() {
                   </div>
                 </div>
               </div>
+
+              {/* Semantic Search Loading Indicator */}
+              {searchMode === "semantic" && isSemanticSearching && (
+                <div style={{
+                  marginTop: "12px", marginBottom: "12px", padding: "10px 16px",
+                  background: "#f5f3ff", borderRadius: "10px", fontSize: "12px",
+                  color: "#7c3aed", display: "flex", alignItems: "center", gap: "10px",
+                }}>
+                  <div style={{
+                    width: "16px", height: "16px", border: "2px solid #ddd6fe",
+                    borderTopColor: "#7c3aed", borderRadius: "50%",
+                    animation: "spin 0.6s linear infinite",
+                  }} />
+                  AI is analyzing candidate documents...
+                </div>
+              )}
+
+              {/* Semantic Search Result Info */}
+              {searchMode === "semantic" && semanticResults.length > 0 && !isSemanticSearching && (
+                <div style={{
+                  marginTop: "8px", marginBottom: "12px", padding: "6px 12px",
+                  background: "#f5f3ff", borderRadius: "8px", fontSize: "11px",
+                  color: "#7c3aed", display: "inline-block",
+                }}>
+                Found {semanticResults.length} relevant candidates
+                </div>
+              )}
 
               {/* Table */}
               <div style={{ overflowX: "auto" }}>
@@ -671,7 +800,7 @@ export default function ScreeningHR() {
                         No candidates found.
                       </td>
                     </tr>
-                  ) : filtered.map((k) => (
+                  ) : (searchMode === "semantic" && semanticSearchQuery ? semanticResults : filtered).map((k) => (
                       <tr key={k.id_submission} className="trow">
                         {/* CANDIDATE */}
                         <td style={{ padding: "13px 14px", fontSize: "12px", color: "#334155", borderBottom: "1px solid #f8fafc", verticalAlign: "middle" }}>
