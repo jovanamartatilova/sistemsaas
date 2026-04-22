@@ -36,65 +36,59 @@ class MentorController extends Controller
     {
         $mentorId = $request->user()->id_user;
 
-        // Get all submissions where this user is mentor
         $submissions = Submission::where('id_user_mentor', $mentorId)
-            ->with(['user', 'position'])
+            ->with(['user', 'position', 'assessment'])
             ->get();
 
         $totalInterns = $submissions->count();
-
-        // Calculate detailed metrics from Assessment table
-        $needsInput = 0;  // No assessment exists
-        $passedCount = 0; // Assessment exists = evaluated/passed
-        $avgScores = [];
+        $needsInput   = 0;
+        $passedCount  = 0;
+        $avgScores    = [];
         $recentInterns = [];
 
         foreach ($submissions as $sub) {
-            // Get assessment data
-            $assessment = Assessment::where('id_submission', $sub->id_submission)->first();
+            $assessment = $sub->assessment;
 
-            // Status is determined by Assessment existence
             if (!$assessment) {
-                // No Assessment = Needs Input
                 $needsInput++;
                 continue;
             }
 
-            // Assessment exists = Passed/Evaluated
             $passedCount++;
 
-            $scoresData = $assessment->scores_data ?? [];
+            $scoresData   = $assessment->scores_data ?? [];
             $scoredScores = array_filter($scoresData, fn($s) => $s['score'] !== null);
 
-            // Calculate avg score for this intern
-            $avgScore = count($scoredScores) > 0 ? round(array_sum(array_column($scoredScores, 'score')) / count($scoredScores), 1) : null;
+            $avgScore = count($scoredScores) > 0
+                ? round(array_sum(array_column($scoredScores, 'score')) / count($scoredScores), 1)
+                : null;
+
             if ($avgScore !== null) {
                 $avgScores[] = $avgScore;
             }
 
-            // Collect for recent interns
             $recentInterns[] = [
                 'id_submission' => $sub->id_submission,
-                'name' => $sub->user->name,
-                'email' => $sub->user->email,
-                'position' => $sub->position->name ?? 'N/A',
-                'avg_score' => $avgScore,
+                'name'          => $sub->user->name,
+                'email'         => $sub->user->email,
+                'position'      => $sub->position->name ?? 'N/A',
+                'avg_score'     => $avgScore,
             ];
         }
 
-        // Ready for Certificate: Same as passed
         $readyForCert = $passedCount;
 
-        // Calculate overall average score
-        $avgScore = count($avgScores) > 0 ? round(array_sum($avgScores) / count($avgScores), 1) : 0;
+        $avgScore = count($avgScores) > 0
+            ? round(array_sum($avgScores) / count($avgScores), 1)
+            : 0;
 
         return response()->json([
-            'total_interns' => $totalInterns,
-            'needs_input' => $needsInput,
-            'interns_passed' => $passedCount,
+            'total_interns'        => $totalInterns,
+            'needs_input'          => $needsInput,
+            'interns_passed'       => $passedCount,
             'ready_for_certificate' => $readyForCert,
-            'average_score' => $avgScore,
-            'recent_interns' => collect($recentInterns)->take(5)->toArray(),
+            'average_score'        => $avgScore,
+            'recent_interns'       => collect($recentInterns)->take(5)->toArray(),
         ]);
     }
 
@@ -104,14 +98,27 @@ class MentorController extends Controller
     public function getInterns(Request $request)
     {
         $mentorId = $request->user()->id_user;
+        $search = $request->get('search');
 
-        $submissions = Submission::where('id_user_mentor', $mentorId)
-            ->with(['user', 'position', 'vacancy'])
-            ->get();
+        $submissionsQuery = Submission::where('id_user_mentor', $mentorId)
+            ->with([
+                'user', 
+                'position', 
+                'vacancy',
+                'assessment'
+            ]);
+
+        if ($search) {
+            $submissionsQuery->whereHas('user', function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        $submissions = $submissionsQuery->get();
 
         $interns = $submissions->map(function ($sub) {
-            // Get scores from Assessment (not Submission)
-            $assessment = Assessment::where('id_submission', $sub->id_submission)->first();
+            $assessment = $sub->assessment;
             $scoresData = $assessment->scores_data ?? [];
             $completedComps = 0;
             $totalComps = count($scoresData);
@@ -137,22 +144,17 @@ class MentorController extends Controller
             }
 
             // Determine status based on Assessment existence
-            // Passed: Assessment exists
-            // In Progress: No assessment but assignment ongoing
-            // Just Started: No assessment and no progress
             $status = 'Just Started';
             $statusBg = '#f1f5f9';
             $statusColor = '#64748b';
             $dot = '#94a3b8';
 
-            // If assessment exists, always show as Passed (evaluated)
             if ($assessment) {
                 $status = 'Passed';
                 $statusBg = '#dcfce7';
                 $statusColor = '#166534';
                 $dot = '#22c55e';
             } elseif ($totalComps === 0 || $avgScore === null) {
-                // No assessment yet
                 $status = 'Just Started';
                 $statusBg = '#f1f5f9';
                 $statusColor = '#64748b';
@@ -161,7 +163,7 @@ class MentorController extends Controller
 
             // Get program and period from vacancy
             $program = $sub->vacancy ? ($sub->vacancy->title ?? 'Regular Batch') : 'Regular Batch';
-            $period = 'Jan - Apr 2026'; // Default, can be updated from vacancy if date fields exist
+            $period = 'Jan - Apr 2026';
             if ($sub->vacancy) {
                 if ($sub->vacancy->start_date && $sub->vacancy->end_date) {
                     $start = \Carbon\Carbon::parse($sub->vacancy->start_date)->format('M');
@@ -390,19 +392,26 @@ class MentorController extends Controller
     public function getScoreRecap(Request $request)
     {
         $mentorId = $request->user()->id_user;
+        $search = $request->get('search');
 
-        $submissions = Submission::where('id_user_mentor', $mentorId)
-            ->with(['user', 'position'])
-            ->get();
+        $submissionsQuery = Submission::where('id_user_mentor', $mentorId)
+            ->with(['user', 'position', 'assessment']);
 
-        // Create stat cards
+        if ($search) {
+            $submissionsQuery->whereHas('user', function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        $submissions = $submissionsQuery->get();
+
         $allScores = [];
         $passedCount = 0;
         $incompleteCount = 0;
 
         foreach ($submissions as $sub) {
-            // Get scores from Assessment (not Submission)
-            $assessment = Assessment::where('id_submission', $sub->id_submission)->first();
+            $assessment = $sub->assessment;
             $scoresData = $assessment->scores_data ?? [];
 
             foreach ($scoresData as $score) {
@@ -427,17 +436,16 @@ class MentorController extends Controller
             ['value' => $incompleteCount, 'label' => 'Incomplete', 'barColor' => '#f59e0b', 'barWidth' => min(100, $incompleteCount * 20) . '%'],
         ];
 
-        // Create recap data
         $recap = $submissions->map(function ($sub) {
-            // Get scores from Assessment (not Submission)
-            $assessment = Assessment::where('id_submission', $sub->id_submission)->first();
+            $assessment = $sub->assessment; // ✅ eager load, no N+1
             $scoresData = $assessment->scores_data ?? [];
             $completedScores = array_filter($scoresData, fn($s) => $s['score'] !== null);
-            $avgScore = count($completedScores) > 0 ? round(array_sum(array_column($completedScores, 'score')) / count($completedScores), 1) : null;
+            $avgScore = count($completedScores) > 0
+                ? round(array_sum(array_column($completedScores, 'score')) / count($completedScores), 1)
+                : null;
             $scoredCount = count($completedScores);
             $totalComps = count($scoresData);
 
-            // Calculate total hours from learning_hours of evaluated competencies (passed or failed)
             $totalHours = 0;
             foreach ($scoresData as $score) {
                 if ($score['status'] === 'passed' || $score['status'] === 'failed') {
@@ -445,19 +453,15 @@ class MentorController extends Controller
                 }
             }
 
-            // Determine status based on Assessment existence
             if ($assessment) {
-                // Assessment exists = Passed/Evaluated
                 $status = 'Passed';
                 $statusBg = '#dcfce7';
                 $statusColor = '#166534';
             } elseif ($avgScore === null) {
-                // No assessment and no scores
                 $status = 'Just Started';
                 $statusBg = '#f1f5f9';
                 $statusColor = '#64748b';
             } else {
-                // Has scores but no assessment yet
                 $status = 'In Progress';
                 $statusBg = '#fef9c3';
                 $statusColor = '#92400e';
@@ -557,27 +561,31 @@ class MentorController extends Controller
     public function getCertificates(Request $request)
     {
         $mentorId = $request->user()->id_user;
+        $search = $request->get('search');
 
-        $submissions = Submission::where('id_user_mentor', $mentorId)
-            ->with(['user', 'position'])
-            ->get();
+        $submissionsQuery = Submission::where('id_user_mentor', $mentorId)
+            ->with(['user', 'position', 'vacancy', 'assessment', 'certificate']);
 
-        // Create stat cards
+        if ($search) {
+            $submissionsQuery->whereHas('user', function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        $submissions = $submissionsQuery->get();
+
         $passed = 0;
         $notPassed = 0;
 
         foreach ($submissions as $sub) {
-            // Get scores from Assessment (not Submission)
-            $assessment = Assessment::where('id_submission', $sub->id_submission)->first();
+            $assessment = $sub->assessment;
             $scoresData = $assessment->scores_data ?? [];
             $scores = array_filter($scoresData, fn($s) => $s['score'] !== null);
             $avgScore = count($scores) > 0 ? round(array_sum(array_column($scores, 'score')) / count($scores), 1) : null;
 
-            if ($avgScore !== null && $avgScore >= 75) {
-                $passed++;
-            } else {
-                $notPassed++;
-            }
+            if ($avgScore !== null && $avgScore >= 75) $passed++;
+            else $notPassed++;
         }
 
         $stats = [
@@ -585,10 +593,8 @@ class MentorController extends Controller
             ['value' => $notPassed, 'label' => 'Not Passed', 'barColor' => '#ef4444', 'barWidth' => min(100, $notPassed * 20) . '%'],
         ];
 
-        // Create certificates list
         $certificates = $submissions->map(function ($sub) {
-            // Get scores from Assessment (not Submission)
-            $assessment = Assessment::where('id_submission', $sub->id_submission)->first();
+            $assessment = $sub->assessment;
             $scoresData = $assessment->scores_data ?? [];
             $scores = array_filter($scoresData, fn($s) => $s['score'] !== null);
             $avgScore = count($scores) > 0 ? round(array_sum(array_column($scores, 'score')) / count($scores), 1) : null;
@@ -598,7 +604,7 @@ class MentorController extends Controller
             $statusColor = $status === 'Passed' ? '#166534' : '#991b1b';
             $fileUrl = null;
 
-            $cert = Certificate::where('id_submission', $sub->id_submission)->first();
+            $cert = $sub->certificate;
             if ($cert) {
                 $status = 'Generated';
                 $statusBg = '#ccfbf1';

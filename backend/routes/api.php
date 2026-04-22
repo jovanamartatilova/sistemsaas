@@ -193,6 +193,7 @@ Route::middleware(['auth:sanctum'])->prefix('hr')->group(function () {
     Route::post('/screening/{id}/notes',            [HRScreeningController::class, 'saveNotes']);
     Route::post('/screening/{id}/ai-check',         [HRScreeningController::class, 'aiCheck']);
     Route::get('/screening/{id}/document/{type}',   [HRScreeningController::class, 'viewDocument']);
+    Route::get('/screening/semantic-search', [\App\Http\Controllers\HR\SemanticSearchController::class, 'search']);
 
     // Interviews
     Route::get('/interviews',            [HRInterviewController::class, 'index']);

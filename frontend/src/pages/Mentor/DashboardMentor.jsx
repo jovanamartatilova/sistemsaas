@@ -54,69 +54,80 @@ export default function DashboardMentor() {
   const [dashData, setDashData] = useState(null);
   const [interns, setInterns] = useState([]);
   const [logoutModal, setLogoutModal] = useState(false);
+  const [search, setSearch] = useState("");              // ← TAMBAHKAN
+  const [tableLoading, setTableLoading] = useState(false); // ← TAMBAHKAN
 
-  useEffect(() => {
-    fetchDashboardData();
-    
-    // Refetch data when page gains focus
-    const handleFocus = () => {
-      fetchDashboardData();
-    };
-    window.addEventListener('focus', handleFocus);
-    
-    // Setup listener for data refresh events from other pages
-    const cleanup = onDataRefresh(() => {
-      console.log('Dashboard: Data refresh event received, refetching...');
-      fetchDashboardData();
-    });
-    
-    return () => {
-      window.removeEventListener('focus', handleFocus);
-      cleanup();
-    };
-  }, []);
+// ─── FETCH FUNCTIONS ──────────────────────────────────────────────────────────
+const fetchDashboardData = async () => {
+  try {
+    setLoading(true);
+    setError(null);
 
-  const fetchDashboardData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      console.log('Starting dashboard data fetch...');
-      
-      const [profileRes, dashRes, internsRes] = await Promise.all([
-        mentorApi.getProfile(),
-        mentorApi.getDashboard(),
-        mentorApi.getInterns(),
-      ]);
-      
-      console.log('Profile Response:', profileRes);
-      console.log('Dashboard Response:', dashRes);
-      console.log('Interns Response:', internsRes);
-      
-      console.log('Setting mentor data:', profileRes.data);
-      setMentor(profileRes.data);
-      setDashData(dashRes.data);
-      setInterns(internsRes.data);
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-      console.error('Error response:', error.response?.data);
-      console.error('Error status:', error.response?.status);
-      
-      let errorMsg = 'Failed to load dashboard';
-      if (error.response?.status === 403) {
-        errorMsg = 'Unauthorized - You must be a mentor to access this page';
-      } else if (error.response?.status === 401) {
-        errorMsg = 'Session expired - Please login again';
-        localStorage.clear();
-        navigate('/login');
-        return;
-      } else if (error.response?.data?.error) {
-        errorMsg = error.response.data.error;
-      }
-      setError(errorMsg);
-    } finally {
-      setLoading(false);
+    const [profileRes, dashRes, internsRes] = await Promise.all([
+      mentorApi.getProfile(),
+      mentorApi.getDashboard(),
+      mentorApi.getInterns(''),
+    ]);
+
+    setMentor(profileRes.data);
+    setDashData(dashRes.data);
+    setInterns(internsRes.data);
+  } catch (error) {
+    console.error('Error fetching dashboard data:', error);
+
+    let errorMsg = 'Failed to load dashboard';
+    if (error.response?.status === 403) {
+      errorMsg = 'Unauthorized - You must be a mentor to access this page';
+    } else if (error.response?.status === 401) {
+      errorMsg = 'Session expired - Please login again';
+      localStorage.clear();
+      navigate('/login');
+      return;
+    } else if (error.response?.data?.error) {
+      errorMsg = error.response.data.error;
     }
+    setError(errorMsg);
+  } finally {
+    setLoading(false);
+  }
+};
+
+const fetchInterns = async (searchVal) => {
+  setTableLoading(true);
+  try {
+    const res = await mentorApi.getInterns(searchVal);
+    setInterns(res.data);
+  } catch (err) {
+    console.error(err);
+  } finally {
+    setTableLoading(false);
+  }
+};
+
+// ─── EFFECTS ─────────────────────────────────────────────────────────────────
+useEffect(() => {
+  fetchDashboardData();
+
+  const handleFocus = () => fetchDashboardData();
+  window.addEventListener('focus', handleFocus);
+
+  const cleanup = onDataRefresh(() => {
+    console.log('Dashboard: Data refresh event received, refetching...');
+    fetchDashboardData();
+  });
+
+  return () => {
+    window.removeEventListener('focus', handleFocus);
+    cleanup();
   };
+}, []);
+
+useEffect(() => {
+  const timer = setTimeout(() => {
+    if (!loading) fetchInterns(search);
+  }, 400);
+  return () => clearTimeout(timer);
+}, [search]);
 
   const handleLogoutClick = () => {
     setLogoutModal(true);
@@ -199,7 +210,7 @@ export default function DashboardMentor() {
 
   return (
     <div style={s.app}>
-      <style>{`* { box-sizing: border-box; margin: 0; padding: 0; } ::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 99px; } tr:last-child td { border-bottom: none; }`}</style>
+      <style>{`* { box-sizing: border-box; margin: 0; padding: 0; } ::-webkit-scrollbar { width: 5px; } @keyframes spin { to { transform: rotate(360deg); } } ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 99px; } tr:last-child td { border-bottom: none; }`}</style>
       <SidebarMentor mentor={mentor} onLogout={handleLogout} />
       <main style={s.main}>
         <div style={s.topbar}>
@@ -231,6 +242,24 @@ export default function DashboardMentor() {
             <div style={{...s.ch, flexDirection: "column", alignItems: "center", textAlign: "center", gap: "8px"}}>
               <div style={s.ct}>Active Interns</div>
               <div style={s.cs}>Each intern is scored individually regardless of team enrollment</div>
+              <div style={{
+                display: "flex", alignItems: "center", gap: "8px",
+                background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px",
+                padding: "7px 14px", width: "260px", marginTop: "12px",
+              }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                <input
+                  placeholder="Search by name or email..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  style={{
+                    border: "none", background: "transparent", outline: "none",
+                    fontSize: "13px", color: "#64748b", width: "100%", fontFamily: "inherit",
+                  }}
+                />
+              </div>
             </div>
             <div style={s.tableWrap}>
               <table style={s.table}>
@@ -245,7 +274,29 @@ export default function DashboardMentor() {
                   </tr>
                 </thead>
                 <tbody>
-                  {interns.slice(0, 4).map((intern, i) => (
+                  {tableLoading ? (
+                    <tr>
+                      <td colSpan={5} style={{ padding: "48px 0", textAlign: "center", color: "#94a3b8", fontSize: "13px" }}>
+                        <div style={{ 
+                          display: "inline-block", 
+                          width: "20px", 
+                          height: "20px", 
+                          border: "2px solid #e2e8f0", 
+                          borderTopColor: "#3b82f6", 
+                          borderRadius: "50%", 
+                          animation: "spin 0.6s linear infinite" 
+                        }} />
+                        <div style={{ marginTop: "10px" }}>Searching interns...</div>
+                      </td>
+                    </tr>
+                  ) : interns.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} style={{ padding: "48px 0", textAlign: "center", color: "#94a3b8", fontSize: "13px" }}>
+                        No interns assigned yet.
+                      </td>
+                    </tr>
+                  ) : (
+                    interns.slice(0, 4).map((intern, i) => (
                     <tr key={i}>
                       <td style={s.td}><span style={s.cname}>{intern.name}</span><span style={s.cemail}>{intern.email}</span></td>
                       <td style={s.td}>{intern.position}</td>
@@ -253,7 +304,7 @@ export default function DashboardMentor() {
                       <td style={s.td}><span style={{ fontSize: "12px", color: intern.type === "Team" ? "#1e40af" : "#334155", background: intern.type === "Team" ? "#dbeafe" : "#f1f5f9", padding: "2px 8px", borderRadius: "5px" }}>{intern.type}</span></td>
                       <td style={s.td}>{intern.avg_score !== null ? <span style={{ fontWeight: 700, color: "#8b5cf6" }}>{Number(intern.avg_score).toFixed(1)}</span> : <span style={{ color: "#94a3b8" }}>—</span>}</td>
                     </tr>
-                  ))}
+                  )))}
                 </tbody>
               </table>
             </div>

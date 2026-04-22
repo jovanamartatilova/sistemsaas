@@ -39,7 +39,9 @@ export const mentorApi = {
   getDashboard: () => api.get('/mentor/dashboard'),
 
   // Interns
-  getInterns: () => api.get('/mentor/interns'),
+  getInterns: (search = '') => api.get('/mentor/interns', {
+  params: search ? { search } : {}
+}),
 
   // Competencies
   getCompetencies: (idSubmission) => 
@@ -49,14 +51,21 @@ export const mentorApi = {
   inputScores: (idSubmission, scores) =>
     api.post(`/mentor/interns/${idSubmission}/scores`, { scores }),
 
-  getScoreRecap: () => api.get('/mentor/score-recap'),
+  getScoreRecap: (search = '') => api.get('/mentor/score-recap', {
+  params: search ? { search } : {}
+  }),
 
   // Evaluation
   getEvaluation: (idSubmission) =>
     api.get(`/mentor/interns/${idSubmission}/evaluation`),
 
   saveEvaluation: (idSubmission, data) => api.post(`/mentor/interns/${idSubmission}/evaluation`, data),
-  getCertificates: () => api.get('/mentor/certificates'),
+
+  // Certificates
+  getCertificates: (search = '') => api.get('/mentor/certificates', {
+  params: search ? { search } : {}
+  }),
+
   generateCertificate: (idSubmission) => api.post(`/mentor/interns/${idSubmission}/generate-certificate`),
   sendCertificate: (idSubmission) => api.post(`/mentor/interns/${idSubmission}/send-certificate`),
   previewCertificate: async (idSubmission) => {

@@ -28,7 +28,6 @@ const s = {
   ch: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 24px", borderBottom: "1px solid #f1f5f9" },
   ct: { fontSize: "15px", fontWeight: 700, color: "#0f172a" },
   cs: { fontSize: "12px", color: "#94a3b8", marginTop: "1px" },
-  // No overflowX so table fills width naturally; tableLayout fixed ensures column alignment
   table: { width: "100%", borderCollapse: "collapse", tableLayout: "fixed" },
   thead: { background: "#f8fafc", borderBottom: "1px solid #e2e8f0" },
   th: { padding: "10px 16px", textAlign: "left", fontSize: "10px", fontWeight: 700, color: "#94a3b8", letterSpacing: "0.06em", textTransform: "uppercase", whiteSpace: "nowrap" },
@@ -49,56 +48,23 @@ const s = {
 export default function InternsMentor() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [tableLoading, setTableLoading] = useState(false);
   const [mentor, setMentor] = useState(null);
   const [interns, setInterns] = useState([]);
   const [stats, setStats] = useState(null);
   const [logoutModal, setLogoutModal] = useState(false);
+  const [search, setSearch] = useState("");
 
-  useEffect(() => {
-    fetchInterns();
-  }, []);
-
-  useEffect(() => {
-    // Listen for data refresh events and refetch interns
-    const cleanup = onDataRefresh(() => {
-      console.log('InternsMentor: Data refresh event received, refetching...');
-      fetchInterns();
-    });
-    
-    // Also refetch when window gains focus
-    const handleFocus = () => {
-      console.log('InternsMentor: Window focused, refetching data...');
-      fetchInterns();
-    };
-    window.addEventListener('focus', handleFocus);
-    
-    return () => {
-      window.removeEventListener('focus', handleFocus);
-      cleanup();
-    };
-  }, []);
-
-  const fetchInterns = async () => {
+  // ─── FETCH ALL (initial load) ────────────────────────────────────────────────
+  const fetchAll = async () => {
     try {
       setLoading(true);
       const [profileRes, internsRes] = await Promise.all([
         mentorApi.getProfile(),
-        mentorApi.getInterns(),
+        mentorApi.getInterns(''),
       ]);
       setMentor(profileRes.data);
-      const internsList = internsRes.data;
-      setInterns(internsList);
-
-      // Calculate stats
-      const total = internsList.length;
-      const passed = internsList.filter(i => i.status === 'Passed').length;
-      const inProgress = total - passed;
-
-      setStats([
-        { value: total, label: "Total Interns", sub: "From 2 programs", barColor: "#8b5cf6", barWidth: "100%" },
-        { value: passed, label: "Passed", sub: "Ready for certificate", barColor: "#22c55e", barWidth: Math.round((passed / total) * 100) + "%" },
-        { value: inProgress, label: "In Progress", sub: "Still being assessed", barColor: "#f59e0b", barWidth: Math.round((inProgress / total) * 100) + "%" },
-      ]);
+      applyInterns(internsRes.data);
     } catch (error) {
       console.error('Error fetching interns:', error);
     } finally {
@@ -106,9 +72,59 @@ export default function InternsMentor() {
     }
   };
 
-  const handleLogoutClick = () => {
-    setLogoutModal(true);
+  // ─── FETCH INTERNS ONLY (search) ────────────────────────────────────────────
+  const fetchInterns = async (searchVal) => {
+    setTableLoading(true);
+    try {
+      const res = await mentorApi.getInterns(searchVal);
+      applyInterns(res.data);
+    } catch (err) {
+      console.error('Error fetching interns:', err);
+    } finally {
+      setTableLoading(false);
+    }
   };
+
+  // ─── HITUNG STATS DARI DATA INTERNS ─────────────────────────────────────────
+  const applyInterns = (internsList) => {
+    setInterns(internsList);
+    const total = internsList.length;
+    const passed = internsList.filter(i => i.status === 'Passed').length;
+    const inProgress = total - passed;
+    setStats([
+      { value: total, label: "Total Interns", sub: "From 2 programs", barColor: "#8b5cf6", barWidth: "100%" },
+      { value: passed, label: "Passed", sub: "Ready for certificate", barColor: "#22c55e", barWidth: (total > 0 ? Math.round((passed / total) * 100) : 0) + "%" },
+      { value: inProgress, label: "In Progress", sub: "Still being assessed", barColor: "#f59e0b", barWidth: (total > 0 ? Math.round((inProgress / total) * 100) : 0) + "%" },
+    ]);
+  };
+
+  // ─── EFFECTS ─────────────────────────────────────────────────────────────────
+  useEffect(() => {
+    fetchAll();
+
+    const handleFocus = () => fetchAll();
+    window.addEventListener('focus', handleFocus);
+
+    const cleanup = onDataRefresh(() => {
+      console.log('InternsMentor: Data refresh event received, refetching...');
+      fetchAll();
+    });
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      cleanup();
+    };
+  }, []);
+
+  // Search debounce — hanya refetch tabel
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!loading) fetchInterns(search);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  const handleLogoutClick = () => setLogoutModal(true);
 
   const confirmLogout = async () => {
     try {
@@ -143,9 +159,7 @@ export default function InternsMentor() {
               <span style={s.bcActive}>My Interns</span>
             </div>
           </div>
-          <div style={s.content}>
-            <p>Loading...</p>
-          </div>
+          <div style={s.content}><p>Loading...</p></div>
         </main>
       </div>
     );
@@ -153,7 +167,7 @@ export default function InternsMentor() {
 
   return (
     <div style={s.app}>
-      <style>{`* { box-sizing: border-box; margin: 0; padding: 0; } ::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 99px; } tr:last-child td { border-bottom: none; }`}</style>
+      <style>{`* { box-sizing: border-box; margin: 0; padding: 0; } ::-webkit-scrollbar { width: 5px; } @keyframes spin { to { transform: rotate(360deg); } } ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 99px; } tr:last-child td { border-bottom: none; }`}</style>
       <SidebarMentor mentor={mentor} onLogout={handleLogout} />
       <main style={s.main}>
         <div style={s.topbar}>
@@ -168,10 +182,51 @@ export default function InternsMentor() {
           <h1 style={s.h1}>My Interns</h1>
           <p style={s.subtitle}>All interns assigned to you. Scores are always recorded per individual — team enrollment only affects how they applied.</p>
 
-          <div style={s.card}>
-            <div style={{...s.ch, flexDirection: "column", alignItems: "center", textAlign: "center", gap: "8px", justifyContent: "center"}}>
-              <div style={s.ct}>All Assigned Interns</div>
+          {/* Stat Cards */}
+          {stats && (
+            <div style={s.grid3}>
+              {stats.map((c, i) => (
+                <div key={i} style={s.stat}>
+                  <div style={s.statTop}><span style={s.statLabel}>{c.label}</span></div>
+                  <div style={s.statVal}>{c.value}</div>
+                  <div style={s.statBar}><div style={s.statFill(c.barWidth, c.barColor)} /></div>
+                  <div style={s.statSub}>{c.sub}</div>
+                </div>
+              ))}
             </div>
+          )}
+
+          <div style={s.card}>
+            <div style={{ ...s.ch, flexDirection: "column", alignItems: "center", textAlign: "center", gap: "8px" }}>
+              <div style={s.ct}>All Assigned Interns</div>
+
+              {/* Search Bar */}
+              <div style={{
+                display: "flex", alignItems: "center", gap: "8px",
+                background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px",
+                padding: "7px 14px", width: "260px", marginTop: "12px",
+              }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                <input
+                  placeholder="Search by name or email..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  style={{
+                    border: "none", background: "transparent", outline: "none",
+                    fontSize: "13px", color: "#64748b", width: "100%", fontFamily: "inherit",
+                  }}
+                />
+                {search && (
+                  <span
+                    onClick={() => setSearch("")}
+                    style={{ cursor: "pointer", color: "#94a3b8", fontSize: "16px", lineHeight: 1 }}
+                  >×</span>
+                )}
+              </div>
+            </div>
+
             <table style={s.table}>
               <colgroup>
                 <col style={{ width: "22%" }} /><col style={{ width: "14%" }} /><col style={{ width: "18%" }} />
@@ -186,23 +241,42 @@ export default function InternsMentor() {
                 </tr>
               </thead>
               <tbody>
-                {interns.map((intern, i) => (
-                  <tr key={i}>
-                    <td style={s.td}><span style={s.cname}>{intern.name}</span><span style={s.cemail}>{intern.email}</span></td>
-                    <td style={s.td}>{intern.position}</td>
-                    <td style={s.td}>{intern.program || 'Regular Batch'}</td>
-                    <td style={s.td}><span style={s.typeBadge(intern.type === "Team")}>{intern.type}</span></td>
-                    <td style={s.td}>{intern.period || 'Jan - Apr 2026'}</td>
-                    <td style={s.td}>
-                      <div style={s.progWrap}><div style={s.progFill(intern.progress + '%', intern.progColor)} /></div>
-                    </td>
-                    <td style={s.td}>
-                      <span style={s.statusBadge(intern.statusBg, intern.statusColor)}>
-                        <span style={s.dot(intern.dot)} />{intern.status}
-                      </span>
+                {tableLoading ? (
+                  <tr>
+                    <td colSpan={7} style={{ padding: "48px 0", textAlign: "center", color: "#94a3b8", fontSize: "13px" }}>
+                      <div style={{
+                        display: "inline-block", width: "20px", height: "20px",
+                        border: "2px solid #e2e8f0", borderTopColor: "#8b5cf6",
+                        borderRadius: "50%", animation: "spin 0.6s linear infinite"
+                      }} />
+                      <div style={{ marginTop: "10px" }}>Searching interns...</div>
                     </td>
                   </tr>
-                ))}
+                ) : interns.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} style={{ padding: "48px 0", textAlign: "center", color: "#94a3b8", fontSize: "13px" }}>
+                      {search ? `No interns found for "${search}"` : "No interns assigned yet."}
+                    </td>
+                  </tr>
+                ) : (
+                  interns.map((intern, i) => (
+                    <tr key={i}>
+                      <td style={s.td}><span style={s.cname}>{intern.name}</span><span style={s.cemail}>{intern.email}</span></td>
+                      <td style={s.td}>{intern.position}</td>
+                      <td style={s.td}>{intern.program || 'Regular Batch'}</td>
+                      <td style={s.td}><span style={s.typeBadge(intern.type === "Team")}>{intern.type}</span></td>
+                      <td style={s.td}>{intern.period || 'Jan - Apr 2026'}</td>
+                      <td style={s.td}>
+                        <div style={s.progWrap}><div style={s.progFill(intern.progress + '%', intern.progColor)} /></div>
+                      </td>
+                      <td style={s.td}>
+                        <span style={s.statusBadge(intern.statusBg, intern.statusColor)}>
+                          <span style={s.dot(intern.dot)} />{intern.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

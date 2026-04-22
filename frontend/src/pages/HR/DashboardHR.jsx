@@ -208,6 +208,7 @@ export default function DashboardHR() {
   const [confirmAction, setConfirmAction] = useState(null);
   const [loading, setLoading]             = useState(true);
   const [search, setSearch]               = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
   const [tableLoading, setTableLoading]   = useState(false);
 
   const [data, setData] = useState({
@@ -226,6 +227,7 @@ export default function DashboardHR() {
     }
     const params = new URLSearchParams();
     if (search) params.set("search", search);
+    if (statusFilter) params.set("status", statusFilter);
 
     api(`/hr/dashboard?${params}`)
       .then((res) => setData(res.data))
@@ -245,7 +247,7 @@ export default function DashboardHR() {
       fetchDashboard(true);
     }, 500);
     return () => clearTimeout(timer);
-  }, [search]);
+  }, [search, statusFilter]);
 
   // ── Handlers ─────────────────────────────────────────────────────────────────
   const handleLogout = () => {
@@ -306,15 +308,48 @@ export default function DashboardHR() {
       fontFamily: "'Poppins', 'Segoe UI', sans-serif",
     }}>
       <style>{`
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 99px; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
-        .hr-fadein { animation: fadeIn 0.3s ease both; }
-        .row-hover:hover { background: #f8fafc; }
-      `}</style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      ::-webkit-scrollbar { width: 5px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 99px; }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+      .hr-fadein { animation: fadeIn 0.3s ease both; }
+      .row-hover:hover { background: #f8fafc; }
+      
+      /* Style untuk dropdown filter status dengan warna */
+      .status-filter {
+        padding: 7px 14px;
+        border-radius: 10px;
+        border: 1px solid #e2e8f0;
+        background: #f8fafc;
+        font-size: 13px;
+        font-family: inherit;
+        cursor: pointer;
+        outline: none;
+        min-width: 140px;
+      }
+      
+      /* Warna text berdasarkan value yang dipilih */
+      .status-filter[value=""] { color: #64748b; }
+      .status-filter[value="pending"] { color: #1d4ed8; background: #eff6ff; border-color: #bfdbfe; }
+      .status-filter[value="screening"] { color: #92400e; background: #fefce8; border-color: #fde68a; }
+      .status-filter[value="interview"] { color: #6d28d9; background: #f5f3ff; border-color: #ddd6fe; }
+      .status-filter[value="accepted"] { color: #15803d; background: #f0fdf4; border-color: #bbf7d0; }
+      .status-filter[value="rejected"] { color: #be123c; background: #fff1f2; border-color: #fecdd3; }
+      
+      /* Warna option di dropdown */
+      .status-filter option {
+        background: white;
+        color: #1e293b;
+        padding: 8px;
+      }
+      .status-filter option[value="pending"] { color: #1d4ed8; }
+      .status-filter option[value="screening"] { color: #92400e; }
+      .status-filter option[value="interview"] { color: #6d28d9; }
+      .status-filter option[value="accepted"] { color: #15803d; }
+      .status-filter option[value="rejected"] { color: #be123c; }
+    `}</style>
 
       {/* Sidebar */}
       <SidebarHR user={user} onLogout={() => setShowLogout(true)} />
@@ -373,7 +408,48 @@ export default function DashboardHR() {
                   <p style={{ fontSize: "15px", fontWeight: "700", color: "#1e293b", margin: 0, textAlign: "left" }}>Recent Candidates</p>
                   <p style={{ fontSize: "12px", color: "#94a3b8", marginTop: "2px" }}>Latest applicants requiring action</p>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+                {/* Filter Status Dropdown */}
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  style={{
+                    padding: "7px 14px",
+                    borderRadius: "10px",
+                    border: "1px solid",
+                    fontSize: "13px",
+                    fontFamily: "inherit",
+                    cursor: "pointer",
+                    outline: "none",
+                    minWidth: "140px",
+                    // Warna background & border berdasarkan status yang dipilih
+                    background: statusFilter === "pending" ? "#eff6ff" :
+                                statusFilter === "screening" ? "#fefce8" :
+                                statusFilter === "interview" ? "#f5f3ff" :
+                                statusFilter === "accepted" ? "#f0fdf4" :
+                                statusFilter === "rejected" ? "#fff1f2" : "#f8fafc",
+                    color: statusFilter === "pending" ? "#1d4ed8" :
+                          statusFilter === "screening" ? "#92400e" :
+                          statusFilter === "interview" ? "#6d28d9" :
+                          statusFilter === "accepted" ? "#15803d" :
+                          statusFilter === "rejected" ? "#be123c" : "#64748b",
+                    borderColor: statusFilter === "pending" ? "#bfdbfe" :
+                                statusFilter === "screening" ? "#fde68a" :
+                                statusFilter === "interview" ? "#ddd6fe" :
+                                statusFilter === "accepted" ? "#bbf7d0" :
+                                statusFilter === "rejected" ? "#fecdd3" : "#e2e8f0",
+                    fontWeight: statusFilter ? "600" : "400",
+                  }}
+                >
+                  <option value="">All Status</option>
+                  <option value="pending" style={{ background: "#eff6ff", color: "#1d4ed8" }}>Pending</option>
+                  <option value="screening" style={{ background: "#fefce8", color: "#92400e" }}>Screening</option>
+                  <option value="interview" style={{ background: "#f5f3ff", color: "#6d28d9" }}>Interview</option>
+                  <option value="accepted" style={{ background: "#f0fdf4", color: "#15803d" }}>Accepted</option>
+                  <option value="rejected" style={{ background: "#fff1f2", color: "#be123c" }}>Rejected</option>
+                </select>
+
+                {/* Search Box */}
                 <div style={{
                   display: "flex", alignItems: "center", gap: "8px",
                   background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px",
@@ -382,11 +458,12 @@ export default function DashboardHR() {
                   <IC.Search />
                   <input
                     placeholder="Search candidates..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
                     style={{ border: "none", background: "transparent", outline: "none", fontSize: "13px", color: "#64748b", width: "100%", fontFamily: "inherit" }}
                   />
                 </div>
+
                 <button
                   onClick={() => navigate("/hr/kandidate")}
                   style={{

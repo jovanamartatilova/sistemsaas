@@ -26,13 +26,25 @@ class HRScreeningController extends Controller
             $query->where('id_position', $request->id_position);
         }
 
-        // Search
+        // Search - mencari di user, position, dan vacancy
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->whereHas('user', fn($q) =>
-                $q->where('name', 'like', "%$search%")
-                  ->orWhere('email', 'like', "%$search%")
-            );
+            $query->where(function($q) use ($search) {
+                $q->whereHas('user', fn($sq) =>
+                    $sq->where('name', 'like', "%$search%")
+                      ->orWhere('email', 'like', "%$search%")
+                  )
+                  ->orWhereHas('position', fn($sq) =>
+                    $sq->where('name', 'like', "%$search%")
+                      ->orWhere('description', 'like', "%$search%")
+                  )
+                  ->orWhereHas('vacancy', fn($sq) =>
+                    $sq->where('title', 'like', "%$search%")
+                      ->orWhere('description', 'like', "%$search%")
+                      ->orWhere('requirements', 'like', "%$search%")
+                  )
+                  ->orWhere('hr_notes', 'like', "%$search%");
+            });
         }
 
         $list = $query->orderByDesc('submitted_at')->get()
