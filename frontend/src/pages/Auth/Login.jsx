@@ -471,15 +471,33 @@ export default function Login() {
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="block text-sm font-medium" style={{ color: "rgba(255,255,255,0.8)" }}>Password</label>
-                <Link
-                  to={activeTab === "company" ? "/forgot-password" : "/forgot-password-candidate"}
-                  className="text-xs transition-colors duration-200"
-                  style={{ color: "#4a9eff", textDecoration: "none" }}
-                  onMouseEnter={(e) => (e.currentTarget.style.color = "#7bb8ff")}
-                  onMouseLeave={(e) => (e.currentTarget.style.color = "#4a9eff")}
-                >
-                  Forgot password?
-                </Link>
+                {activeTab === "company" && companyType === "staff" && !staffForm.slug ? (
+                  <button
+                    type="button"
+                    disabled
+                    className="text-xs transition-colors duration-200"
+                    style={{ color: "rgba(255,255,255,0.3)", background: "none", border: "none", cursor: "not-allowed" }}
+                    title="Masukkan nama perusahaan terlebih dahulu"
+                  >
+                    Forgot password?
+                  </button>
+                ) : (
+                  <Link
+                    to={
+                      activeTab === "company"
+                        ? companyType === "staff"
+                          ? `/c/${staffForm.slug}/staff/forgot-password`
+                          : "/forgot-password"
+                        : "/forgot-password-candidate"
+                    }
+                    className="text-xs transition-colors duration-200"
+                    style={{ color: "#4a9eff", textDecoration: "none" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = "#7bb8ff")}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = "#4a9eff")}
+                  >
+                    Forgot password?
+                  </Link>
+                )}
               </div>
               <div className="relative">
                 <input

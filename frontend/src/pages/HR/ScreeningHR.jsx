@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { api } from "../../api.js";
 import { useAuthStore } from "../../stores/authStore";
 import SidebarHR from "../../components/SidebarHR";
+import { LoadingSpinner } from "../../components/LoadingSpinner";
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
 const IC = {
@@ -314,6 +315,7 @@ export default function ScreeningHR() {
 
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [data, setData] = useState({ stats: {}, candidates: [], user: {} });
+  const [loading, setLoading]                 = useState(true);
   const [selectedId, setSelectedId] = useState(null);
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
@@ -322,6 +324,8 @@ export default function ScreeningHR() {
   const [aiModal, setAiModal] = useState(null);
   const [aiRanking, setAiRanking] = useState(null);
   const [rankLoading, setRankLoading] = useState(false);
+  const [search, setSearch]           = useState("");
+  const [tableLoading, setTableLoading] = useState(false);
   const [filterPosition, setFilterPosition] = useState("All Positions");
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const filterRef = useRef(null);
@@ -335,11 +339,32 @@ export default function ScreeningHR() {
 
   const showConfirm = (config) => setConfirmModal(config);
 
-  const fetchScreening = () => {
-    api("/hr/screening").then(res => setData(res.data));
+  const fetchScreening = (isSearch = false) => {
+    if (isSearch) {
+      setTableLoading(true);
+    } else {
+      setLoading(true);
+    }
+    const params = new URLSearchParams();
+    if (search) params.set("search", search);
+
+    api(`/hr/screening?${params}`)
+      .then(res => setData(res.data))
+      .catch(err => console.error("Fetch error:", err))
+      .finally(() => {
+        setLoading(false);
+        setTableLoading(false);
+      });
   };
 
   useEffect(() => { fetchScreening(); }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchScreening(true);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   useEffect(() => {
     const handler = (e) => {
@@ -473,6 +498,8 @@ export default function ScreeningHR() {
     },
   ];
 
+  if (loading) return <LoadingSpinner message="Loading screening data..." />;
+
   // ── render ────────────────────────────────────────────────────────────────
   return (
     <div style={{ display: "flex", minHeight: "100vh", background: "#f8fafc", fontFamily: "'Poppins', 'Segoe UI', sans-serif" }}>
@@ -481,6 +508,7 @@ export default function ScreeningHR() {
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 99px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
         @keyframes fadeInToast { from { opacity:0; transform:translateX(20px); } to { opacity:1; transform:translateX(0); } }
         .screening-fadein { animation: fadeIn 0.3s ease both; }
@@ -505,10 +533,6 @@ export default function ScreeningHR() {
             <span style={{ fontSize: "15px", fontWeight: "700", color: "#1e293b" }}>Screening</span>
             <span style={{ fontSize: "13px", color: "#94a3b8", margin: "0 6px" }}>/</span>
             <span style={{ fontSize: "13px", color: "#94a3b8" }}>Candidate Review</span>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px", padding: "7px 14px", width: "220px" }}>
-            <IC.Search />
-            <input placeholder="Search candidates..." style={{ border: "none", background: "transparent", outline: "none", fontSize: "13px", color: "#64748b", width: "100%", fontFamily: "inherit" }} />
           </div>
           <span style={{ fontSize: "12px", color: "#94a3b8", whiteSpace: "nowrap" }}>{todayStr()}</span>
         </header>
@@ -544,6 +568,15 @@ export default function ScreeningHR() {
                 </div>
 
                 <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px", padding: "7px 14px", width: "200px" }}>
+                  <IC.Search />
+                  <input
+                    placeholder="Search candidates..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    style={{ border: "none", background: "transparent", outline: "none", fontSize: "13px", color: "#64748b", width: "100%", fontFamily: "inherit" }}
+                  />
+                </div>
                   {/* AI Rank */}
                   <button
                     onClick={handleAiRank}
@@ -625,7 +658,20 @@ export default function ScreeningHR() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filtered.map((k) => (
+                    {tableLoading ? (
+                    <tr>
+                      <td colSpan={10} style={{ padding: "48px 0", textAlign: "center", color: "#94a3b8", fontSize: "13px" }}>
+                        <div style={{ display: "inline-block", width: "20px", height: "20px", border: "2px solid #e2e8f0", borderTopColor: "#3b82f6", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
+                        <div style={{ marginTop: "10px" }}>Searching...</div>
+                      </td>
+                    </tr>
+                  ) : filtered.length === 0 ? (
+                    <tr>
+                      <td colSpan={10} style={{ padding: "48px 0", textAlign: "center", color: "#94a3b8", fontSize: "13px" }}>
+                        No candidates found.
+                      </td>
+                    </tr>
+                  ) : filtered.map((k) => (
                       <tr key={k.id_submission} className="trow">
                         {/* CANDIDATE */}
                         <td style={{ padding: "13px 14px", fontSize: "12px", color: "#334155", borderBottom: "1px solid #f8fafc", verticalAlign: "middle" }}>

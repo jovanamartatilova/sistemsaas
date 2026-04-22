@@ -14,25 +14,43 @@ class HRInterviewController extends Controller
      * GET /hr/interviews
      */
     public function index(Request $request)
-    {
-        $companyId = $request->user()->id_company;
+{
+    $companyId = $request->user()->id_company;
 
-        // Get scheduled interviews
-        $interviews = Interview::whereHas('submission.vacancy', fn($q) =>
-            $q->where('id_company', $companyId)
-        )->with(['submission.user', 'submission.position', 'interviewer'])
-         ->orderBy('interview_date')
+    $search = $request->get('search');
+    
+    // Get scheduled interviews
+    $interviewsQuery = Interview::whereHas('submission.vacancy', fn($q) =>
+        $q->where('id_company', $companyId)
+    )->with(['submission.user', 'submission.position', 'interviewer']);
+    
+    if ($search) {
+        $interviewsQuery->whereHas('submission.user', function($q) use ($search) {
+            $q->where('name', 'like', "%{$search}%")
+              ->orWhere('email', 'like', "%{$search}%");
+        });
+    }
+    
+    $interviews = $interviewsQuery->orderBy('interview_date')
          ->orderBy('interview_time')
          ->get()
          ->map(fn($i) => $this->formatInterview($i));
 
-        // Get submissions ready for interview (status='interview' but no Interview record yet)
-        $readyForInterview = Submission::whereHas('vacancy', fn($q) =>
-            $q->where('id_company', $companyId)
-        )->where('status', 'interview')
-         ->with(['user', 'position', 'vacancy'])
-         ->whereDoesntHave('interview')
-         ->orderByDesc('submitted_at')
+    // Get submissions ready for interview
+    $readyQuery = Submission::whereHas('vacancy', fn($q) =>
+        $q->where('id_company', $companyId)
+    )->where('status', 'interview')
+     ->with(['user', 'position', 'vacancy'])
+     ->whereDoesntHave('interview');
+     
+    if ($search) {
+        $readyQuery->whereHas('user', function($q) use ($search) {
+            $q->where('name', 'like', "%{$search}%")
+              ->orWhere('email', 'like', "%{$search}%");
+        });
+    }
+     
+    $readyForInterview = $readyQuery->orderByDesc('submitted_at')
          ->get()
          ->map(fn($s) => [
              'id_submission'  => $s->id_submission,

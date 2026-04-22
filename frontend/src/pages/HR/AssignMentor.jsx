@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { api } from "../../api";
 import { useAuthStore } from "../../stores/authStore";
 import SidebarHR from "../../components/SidebarHR";
+import { LoadingSpinner } from "../../components/LoadingSpinner";
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
 const IC = {
@@ -44,6 +45,11 @@ const IC = {
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
       <polyline points="20 6 9 17 4 12" />
     </svg>
+  ),
+  Search: () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+  </svg>
   ),
 };
 
@@ -189,10 +195,22 @@ export default function AssignMentorHR() {
   const [showAutoConfirm, setShowAutoConfirm] = useState(false);
   const [autoLoading, setAutoLoading]         = useState(false);
   const [selectedMentor, setSelectedMentor]   = useState(null);
+  const [search, setSearch] = useState("");           
+  const [tableLoading, setTableLoading] = useState(false);
 
   // ── Fetch ─────────────────────────────────────────────────────────────────────
-  const fetchData = () => {
-    api("/hr/assign-mentor").then((res) => {
+  const fetchData = (isSearch = false) => {
+  if (isSearch) {
+    setTableLoading(true);   // Loading hanya untuk tabel
+  } else {
+    setLoading(true);        // Loading untuk seluruh halaman
+  }
+  
+  const params = new URLSearchParams();
+  if (search) params.set("search", search);
+  
+  api(`/hr/assign-mentor?${params}`) 
+    .then((res) => {
       setData(res.data);
       const initDraft = {};
       const initSaved = {};
@@ -204,10 +222,27 @@ export default function AssignMentorHR() {
       });
       setDraft(initDraft);
       setSaved(initSaved);
-    }).finally(() => setLoading(false));
-  };
+    })
+    .finally(() => {
+      setLoading(false);
+      setTableLoading(false);
+    });
+};
 
-  useEffect(() => { fetchData(); }, []);
+  // Initial load (saat pertama kali buka halaman)
+useEffect(() => { 
+  fetchData(); 
+}, []);
+
+// Search debounce (hanya loading tabel)
+useEffect(() => {
+  if (!loading) {  
+    const timer = setTimeout(() => {
+      fetchData(true);  // ← true = search mode
+    }, 500);
+    return () => clearTimeout(timer);
+  }
+}, [search]);
 
   // ── Helpers ───────────────────────────────────────────────────────────────────
   const getMentor  = (id) => data.mentors.find((m) => m.id_mentor === id);
@@ -283,11 +318,7 @@ export default function AssignMentorHR() {
     },
   ];
 
-  if (loading) return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: "#f8fafc", fontFamily: "'Poppins','Segoe UI',sans-serif", fontSize: "13px", color: "#94a3b8" }}>
-      Loading...
-    </div>
-  );
+  if (loading) return <LoadingSpinner message="Loading assignment..." />;
 
   return (
     <div style={{
@@ -299,6 +330,9 @@ export default function AssignMentorHR() {
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 99px; }
+        @keyframes spin { 
+          to { transform: rotate(360deg); } 
+        }
         @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
         .hr-fadein { animation: fadeIn 0.3s ease both; }
         .row-hover:hover { background: #f8fafc !important; }
@@ -357,18 +391,39 @@ export default function AssignMentorHR() {
               <div style={{
                 display: "flex", alignItems: "center", justifyContent: "space-between",
                 padding: "20px 24px", borderBottom: "1px solid #f1f5f9",
+                flexWrap: "wrap", gap: "12px", 
               }}>
                 <div>
                   <p style={{ fontSize: "15px", fontWeight: "700", color: "#1e293b", margin: 0, textAlign: "left" }}>Accepted Interns</p>
                   <p style={{ fontSize: "12px", color: "#94a3b8", marginTop: "2px" }}>Select a mentor for each intern, then click Assign</p>
                 </div>
-                <ActionBtn
-                  label={autoLoading ? "Assigning..." : "Auto-assign Unassigned"}
-                  variant="blue"
-                  icon={<IC.Zap />}
-                  disabled={unassigned === 0 || autoLoading}
-                  onClick={() => setShowAutoConfirm(true)}
-                />
+                
+                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                  <div style={{
+                    display: "flex", alignItems: "center", gap: "8px",
+                    background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px",
+                    padding: "7px 14px", width: "240px",
+                  }}>
+                    <IC.Search /> 
+                    <input
+                      placeholder="Search by name or email..."
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      style={{
+                        border: "none", background: "transparent", outline: "none",
+                        fontSize: "13px", color: "#64748b", width: "100%", fontFamily: "inherit",
+                      }}
+                    />
+                  </div>
+                  
+                  <ActionBtn
+                    label={autoLoading ? "Assigning..." : "Auto-assign Unassigned"}
+                    variant="blue"
+                    icon={<IC.Zap />}
+                    disabled={unassigned === 0 || autoLoading}
+                    onClick={() => setShowAutoConfirm(true)}
+                  />
+                </div>
               </div>
 
               {/* Table header */}
@@ -385,7 +440,20 @@ export default function AssignMentorHR() {
               </div>
 
               {/* Rows */}
-              {data.interns.length === 0 ? (
+              {tableLoading ? (
+                <div style={{ padding: "48px 0", textAlign: "center", color: "#94a3b8", fontSize: "13px" }}>
+                  <div style={{ 
+                    display: "inline-block", 
+                    width: "20px", 
+                    height: "20px", 
+                    border: "2px solid #e2e8f0", 
+                    borderTopColor: "#3b82f6", 
+                    borderRadius: "50%", 
+                    animation: "spin 0.6s linear infinite" 
+                  }} />
+                  <div style={{ marginTop: "10px" }}>Searching...</div>
+                </div>
+              ) : data.interns.length === 0 ? (
                 <div style={{ padding: "48px 0", textAlign: "center", color: "#94a3b8", fontSize: "13px" }}>
                   No accepted interns yet.
                 </div>

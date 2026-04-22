@@ -1,37 +1,42 @@
 import { useState, useEffect } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
-export default function ForgotPasswordCandidate() {
-  const { slug: slugFromUrl } = useParams();
-  const [slug, setSlug] = useState(slugFromUrl || "");
-
-  const [company, setCompany] = useState(null);
-  const [companyLoading, setCompanyLoading] = useState(!!slugFromUrl);
-  const [companyError, setCompanyError] = useState("");
+export default function ForgotPasswordStaff() {
+  const { slug } = useParams();
+  const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
+  const [company, setCompany] = useState(null);
+  const [companyLoading, setCompanyLoading] = useState(true);
+  const [companyError, setCompanyError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [successMsg, setSuccessMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const [sent, setSent] = useState(false);
 
-useEffect(() => {
-  if (!slugFromUrl) return; // kalau tidak ada slug di URL, skip
-  const fetchCompany = async () => {
-    try {
-      const response = await fetch(`http://localhost:8000/api/c/${slugFromUrl}`, {
-        headers: { "Accept": "application/json" },
-      });
-      if (!response.ok) throw new Error("Perusahaan tidak ditemukan");
-      const data = await response.json();
-      setCompany(data.company);
-    } catch (err) {
-      setCompanyError(err.message);
-    } finally {
-      setCompanyLoading(false);
-    }
+  const navigate_back = (e) => {
+    e?.preventDefault();
+    navigate("/login");
   };
-  fetchCompany();
-}, [slugFromUrl]); // ← slugFromUrl, bukan slug
+
+  // Fetch company data
+  useEffect(() => {
+    const fetchCompany = async () => {
+      try {
+        const response = await fetch(`http://localhost:8000/api/c/${slug}`, {
+          headers: { "Accept": "application/json" },
+        });
+        if (!response.ok) throw new Error("Perusahaan tidak ditemukan");
+        const data = await response.json();
+        setCompany(data.company);
+      } catch (err) {
+        setCompanyError(err.message);
+      } finally {
+        setCompanyLoading(false);
+      }
+    };
+    if (slug) fetchCompany();
+  }, [slug]);
 
   const inputBase = {
     background: "rgba(255,255,255,0.07)",
@@ -45,11 +50,12 @@ useEffect(() => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setErrorMsg("");
     setLoading(true);
+    setErrorMsg("");
+    setSuccessMsg("");
 
     try {
-      const response = await fetch("http://localhost:8000/api/auth/forgot-password-candidate", {
+      const response = await fetch("http://localhost:8000/api/auth/forgot-password-staff", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -61,14 +67,10 @@ useEffect(() => {
       const data = await response.json();
 
       if (!response.ok) {
-        // Show validation errors if available
-        if (data.errors) {
-          const errorDetails = Object.values(data.errors).flat().join(", ");
-          throw new Error(`${data.message}: ${errorDetails}`);
-        }
-        throw new Error(data.message || "Gagal mengirim email");
+        throw new Error(data.message || "Gagal mengirim email reset password");
       }
 
+      setSuccessMsg("Link reset password telah dikirim ke email Anda.");
       setSent(true);
     } catch (err) {
       setErrorMsg(err.message);
@@ -96,10 +98,13 @@ useEffect(() => {
           </div>
           <h1 className="text-2xl font-bold text-white mb-2">Halaman Tidak Ditemukan</h1>
           <p className="text-sm mb-8" style={{ color: "rgba(255,255,255,0.4)" }}>{companyError}</p>
-          <Link to="/" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold text-white"
-            style={{ background: "linear-gradient(135deg, #2d7dd2 0%, #4a9eff 100%)" }}>
+          <button
+            onClick={() => navigate("/")}
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold text-white"
+            style={{ background: "linear-gradient(135deg, #2d7dd2 0%, #4a9eff 100%)", border: "none", cursor: "pointer" }}
+          >
             Back to Home
-          </Link>
+          </button>
         </div>
       </div>
     );
@@ -120,19 +125,21 @@ useEffect(() => {
         <div className="absolute bottom-32 right-10 w-48 h-48 rounded-full blur-3xl opacity-10" style={{ background: "#1a6bb5" }} />
 
         {/* Back to login */}
-        <Link to="/login"
+        <button
+          onClick={navigate_back}
           className="absolute top-8 left-8 flex items-center gap-2 group z-10"
-          style={{ color: "rgba(255,255,255,0.6)", textDecoration: "none" }}
+          style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.6)", textDecoration: "none", padding: 0 }}
         >
-          <span className="flex items-center justify-center w-9 h-9 rounded-full border border-white/20 group-hover:border-blue-400/60 group-hover:bg-blue-400/10 transition-all duration-300">
+          <span className="flex items-center justify-center w-9 h-9 rounded-full border border-white/20 group-hover:border-blue-400/60 group-hover:bg-blue-400/10 transition-all duration-300"
+            style={{ border: "1px solid rgba(255,255,255,0.2)" }}>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="group-hover:-translate-x-0.5 transition-transform duration-300">
               <path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </span>
-          <span className="text-sm font-medium group-hover:text-blue-300 transition-colors duration-300">
-            Back to <span className="text-blue-400 group-hover:underline">Login</span>
+          <span className="text-sm font-medium" style={{ color: "rgba(255,255,255,0.6)" }}>
+            Back to <span style={{ color: "#4a9eff" }}>Login</span>
           </span>
-        </Link>
+        </button>
 
         <div className="relative z-10 flex flex-col justify-end p-12 pb-32">
           {company && (
@@ -149,17 +156,15 @@ useEffect(() => {
           )}
           <div>
             <div className="inline-flex items-center px-3 py-1 rounded-full mb-2"
-  style={{ background: "rgba(93,216,216,0.1)", border: "1px solid rgba(93,216,216,0.2)" }}>
-  <p className="text-xs font-medium" style={{ color: "#5dd8d8" }}>
-    ✦ Start your internship journey today
-  </p>
-</div>
+              style={{ background: "rgba(93,216,216,0.1)", border: "1px solid rgba(93,216,216,0.2)" }}>
+              <p className="text-xs font-medium" style={{ color: "#5dd8d8" }}>✦ Staff Portal</p>
+            </div>
             <h2 className="text-4xl font-bold text-white mb-4 leading-tight"
               style={{ fontFamily: "'Poppins', sans-serif", letterSpacing: "-0.5px" }}>
-              One Step Closer
+              Forgot Password?
             </h2>
             <p className="text-base leading-relaxed text-left" style={{ color: "rgba(255,255,255,0.65)", maxWidth: "340px" }}>
-              Discover internship opportunities, build real-world experience, and grow your career with EarlyPath.
+              We'll help you reset your password and get back into your account safely.
             </p>
             <div className="flex gap-8 mt-10">
               {[{ value: "10K+", label: "Companies" }, { value: "250K+", label: "Candidates" }, { value: "98%", label: "Satisfaction" }].map((stat) => (
@@ -178,14 +183,16 @@ useEffect(() => {
         className="flex-1 flex flex-col items-center justify-center px-6 py-12 relative overflow-hidden"
         style={{ background: "linear-gradient(160deg, #0d1f3c 0%, #0a1628 40%, #071220 100%)" }}
       >
-        <Link to="/login"
+        <button
+          onClick={navigate_back}
           className="lg:hidden absolute top-6 left-6 flex items-center gap-1.5 text-sm"
-          style={{ color: "rgba(255,255,255,0.55)", textDecoration: "none" }}>
+          style={{ background: "none", border: "none", cursor: "pointer", padding: 0, color: "rgba(255,255,255,0.55)" }}
+        >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
             <path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
           Back to Login
-        </Link>
+        </button>
 
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full blur-3xl opacity-5 pointer-events-none"
           style={{ background: "#4a9eff" }} />
@@ -218,12 +225,12 @@ useEffect(() => {
             <h1 className="text-2xl font-bold text-white mb-1" style={{ letterSpacing: "-0.3px" }}>Forgot Password?</h1>
             <p className="text-sm" style={{ color: "rgba(255,255,255,0.4)", maxWidth: "320px", margin: "0 auto" }}>
               Enter email that is registered in{" "}
-{companyLoading 
-  ? "..." 
-  : company 
-    ? <span style={{ color: "#4a9eff" }}>{company.name}</span>
-    : <span style={{ color: "rgba(255,255,255,0.6)" }}>your company</span>
-}
+              {companyLoading
+                ? "..."
+                : company
+                  ? <span style={{ color: "#4a9eff" }}>{company.name}</span>
+                  : <span style={{ color: "rgba(255,255,255,0.6)" }}>your company</span>
+              }
             </p>
           </div>
 
@@ -245,9 +252,9 @@ useEffect(() => {
                 </div>
               </div>
               <button
-                onClick={() => { setSent(false); setEmail(""); }}
+                onClick={() => { setSent(false); setEmail(""); setSuccessMsg(""); }}
                 className="text-sm transition-colors duration-200"
-                style={{ color: "rgba(255,255,255,0.4)" }}
+                style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.4)" }}
                 onMouseEnter={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.7)")}
                 onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.4)")}
               >
@@ -256,28 +263,6 @@ useEffect(() => {
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Tambah ini sebelum input email */}
-{!slugFromUrl && (
-  <div>
-    <label className="block text-sm font-medium mb-1.5" style={{ color: "rgba(255,255,255,0.8)" }}>
-      Company Slug
-    </label>
-    <input
-      type="text"
-      value={slug}
-      onChange={(e) => setSlug(e.target.value)}
-      placeholder="contoh: pt-maju-jaya"
-      required
-      className="w-full px-4 py-3 rounded-xl text-white placeholder-gray-500 outline-none transition-all duration-200"
-      style={inputBase}
-      onFocus={(e) => Object.assign(e.target.style, inputFocus)}
-      onBlur={(e) => Object.assign(e.target.style, inputBase)}
-    />
-    <p className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.3)" }}>
-      You can find the slug in your company’s URL or ask your administrator
-    </p>
-  </div>
-)}
               {errorMsg && (
                 <div className="px-4 py-3 rounded-lg text-sm border"
                   style={{ background: "rgba(255,59,48,0.1)", borderColor: "rgba(255,59,48,0.3)", color: "#ff6b6b" }}>
@@ -291,7 +276,7 @@ useEffect(() => {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="john@email.com"
+                  placeholder="your@email.com"
                   required
                   className="w-full px-4 py-3 rounded-xl text-white placeholder-gray-500 outline-none transition-all duration-200"
                   style={inputBase}
@@ -326,14 +311,15 @@ useEffect(() => {
 
           <p className="text-center mt-6 text-sm" style={{ color: "rgba(255,255,255,0.4)" }}>
             Remember your password?{" "}
-            <Link to="/login"
+            <button
+              onClick={navigate_back}
               className="font-semibold transition-colors duration-200"
-              style={{ color: "#4a9eff", textDecoration: "none" }}
+              style={{ background: "none", border: "none", cursor: "pointer", color: "#4a9eff", padding: 0 }}
               onMouseEnter={(e) => (e.currentTarget.style.color = "#7bb8ff")}
               onMouseLeave={(e) => (e.currentTarget.style.color = "#4a9eff")}
             >
               Login here
-            </Link>
+            </button>
           </p>
         </div>
       </div>

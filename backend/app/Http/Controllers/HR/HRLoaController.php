@@ -16,43 +16,53 @@ class HRLoaController extends Controller
      * List kandidat accepted beserta status LoA
      */
     public function index(Request $request)
-    {
-        try {
-            $user = $request->user();
-            if (!$user) {
-                return response()->json(['success' => false, 'message' => 'User not authenticated'], 401);
-            }
-            
-            $companyId = $user->id_company;
-            if (!$companyId) {
-                return response()->json(['success' => false, 'message' => 'User does not have company'], 403);
-            }
-
-            $submissions = Submission::where('status', 'accepted')
-                ->whereHas('vacancy', fn($q) => $q->where('id_company', $companyId))
-                ->with(['user', 'position', 'vacancy', 'loa'])
-                ->get()
-                ->map(fn($s) => $this->formatLoa($s));
-
-            $base = Submission::where('status', 'accepted')
-                ->whereHas('vacancy', fn($q) => $q->where('id_company', $companyId));
-
-            return response()->json([
-                'success' => true,
-                'data'    => [
-                    'stats' => [
-                        'accepted'    => (clone $base)->count(),
-                        'generated'   => (clone $base)->whereHas('loa')->count(),
-                        'pending'     => (clone $base)->whereDoesntHave('loa')->count(),
-                    ],
-                    'candidates' => $submissions,
-                ],
-            ]);
-        } catch (\Exception $e) {
-            \Log::error('HRLoaController@index error: ' . $e->getMessage());
-            return response()->json(['success' => false, 'message' => 'Server error: ' . $e->getMessage()], 500);
+{
+    try {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'User not authenticated'], 401);
         }
+        
+        $companyId = $user->id_company;
+        if (!$companyId) {
+            return response()->json(['success' => false, 'message' => 'User does not have company'], 403);
+        }
+
+        $search = $request->get('search');
+
+        $submissionsQuery = Submission::where('status', 'accepted')
+            ->whereHas('vacancy', fn($q) => $q->where('id_company', $companyId))
+            ->with(['user', 'position', 'vacancy', 'loa']);
+        
+        if ($search) {
+            $submissionsQuery->whereHas('user', function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+        
+        $submissions = $submissionsQuery->get()
+            ->map(fn($s) => $this->formatLoa($s));
+
+        $base = Submission::where('status', 'accepted')
+            ->whereHas('vacancy', fn($q) => $q->where('id_company', $companyId));
+
+        return response()->json([
+            'success' => true,
+            'data'    => [
+                'stats' => [
+                    'accepted'    => (clone $base)->count(),
+                    'generated'   => (clone $base)->whereHas('loa')->count(),
+                    'pending'     => (clone $base)->whereDoesntHave('loa')->count(),
+                ],
+                'candidates' => $submissions,
+            ],
+        ]);
+    } catch (\Exception $e) {
+        \Log::error('HRLoaController@index error: ' . $e->getMessage());
+        return response()->json(['success' => false, 'message' => 'Server error: ' . $e->getMessage()], 500);
     }
+}
 
     /**
      * POST /hr/loa/{id_submission}/generate

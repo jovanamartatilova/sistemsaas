@@ -28,6 +28,9 @@ import ProgramManagement    from './pages/Admin/ProgramManagement';
 import PositionsManagement  from './pages/Admin/PositionsManagement';
 import UserManagement       from './pages/Admin/UserManagement';
 import SettingsAdmin        from './pages/Admin/SettingsAdmin';
+import LoginStaff           from './pages/Admin/LoginStaff';
+import ForgotPasswordStaff  from './pages/Admin/ForgotPasswordStaff';
+import ResetPasswordStaff   from './pages/Admin/ResetPasswordStaff';
 
 // Main
 import LandingPage  from './pages/Main/LandingPage';
@@ -88,7 +91,9 @@ export default function App() {
                 <Route path="/c/:slug/login"             element={<LoginCandidate />} />
                 <Route path="/c/:slug/forgot-password"   element={<ForgotPasswordCandidate />} />
                 <Route path="/c/:slug/reset-password"    element={<ResetPasswordCandidate />} />
-                <Route path="/c/:slug/staff/login"       element={<Navigate to="/login" replace />} />
+                <Route path="/c/:slug/staff/login"       element={<LoginStaff />} />
+                <Route path="/c/:slug/staff/forgot-password"   element={<ForgotPasswordStaff />} />
+                <Route path="/c/:slug/staff/reset-password"    element={<ResetPasswordStaff />} />
 
                 {/* Candidate — Private */}
                 <Route path="/candidate/dashboard"                   element={<Private><CandidateDashboard /></Private>} />

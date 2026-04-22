@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { api } from "../../api";
 import { useAuthStore } from "../../stores/authStore";
 import SidebarHR from "../../components/SidebarHR";
+import { LoadingSpinner } from "../../components/LoadingSpinner";
 
 // ── Icons ──────────────────────────────────────────────────────────────────────
 const IC = {
@@ -224,22 +225,45 @@ export default function CandidatesHR() {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
 
-  const [showLogoutModal, setShowLogoutModal] = useState(false);
-  const [showExportModal, setShowExportModal] = useState(false);
-  const [confirmAction, setConfirmAction]     = useState(null);
-  const [data, setData]                       = useState({ stats: {}, candidates: [] });
-  const [search, setSearch]                   = useState("");
-  const [loading, setLoading]                 = useState(true);
+  // State
+const [showLogoutModal, setShowLogoutModal] = useState(false);
+const [showExportModal, setShowExportModal] = useState(false);
+const [confirmAction, setConfirmAction] = useState(null);
+const [data, setData] = useState({ stats: {}, candidates: [] });
+const [search, setSearch] = useState("");
+const [loading, setLoading] = useState(true);
+const [tableLoading, setTableLoading] = useState(false);
 
-  useEffect(() => { fetchCandidates(); }, []);
+// Fetch function
+const fetchCandidates = (isSearch = false) => {
+  if (isSearch) {
+    setTableLoading(true);
+  } else {
+    setLoading(true);
+  }
+  const params = new URLSearchParams();
+  if (search) params.set("search", search);
+  
+  api(`/hr/candidates?${params}`)
+    .then((res) => setData(res.data))
+    .catch((err) => console.error("Fetch error:", err))
+    .finally(() => {
+    setLoading(false);
+    setTableLoading(false);
+  });
+};
 
-  const fetchCandidates = () => {
-    const params = new URLSearchParams();
-    if (search) params.set("search", search);
-    api(`/hr/candidates?${params}`)
-      .then((res) => setData(res.data))
-      .finally(() => setLoading(false));
-  };
+// Initial load (saat mount)
+useEffect(() => {
+  fetchCandidates();
+}, []);  // Kosong = jalan sekali
+
+useEffect(() => {
+  const timer = setTimeout(() => {
+    fetchCandidates(true);
+  }, 500);
+  return () => clearTimeout(timer);
+}, [search]);
 
   const executeAction = async () => {
     const { type, candidate } = confirmAction;
@@ -318,11 +342,7 @@ export default function CandidatesHR() {
     },
   ];
 
-  if (loading) return (
-    <div style={{ padding: "40px", textAlign: "center", color: "#64748b", fontFamily: "'Poppins','Segoe UI',sans-serif" }}>
-      Loading...
-    </div>
-  );
+  if (loading) return <LoadingSpinner message="Loading candidates..." />;
 
   return (
     <div style={{
@@ -334,6 +354,7 @@ export default function CandidatesHR() {
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 99px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
         .hr-fadein { animation: fadeIn 0.3s ease both; }
         .row-hover:hover { background: #f8fafc; }
@@ -355,24 +376,7 @@ export default function CandidatesHR() {
             <span style={{ fontSize: "15px", fontWeight: "700", color: "#1e293b" }}>Candidate</span>
             <span style={{ fontSize: "13px", color: "#94a3b8", margin: "0 6px" }}>/</span>
             <span style={{ fontSize: "13px", color: "#94a3b8" }}>All Applicants</span>
-          </div>
-          <div style={{
-            display: "flex", alignItems: "center", gap: "8px",
-            background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px",
-            padding: "7px 14px", width: "220px",
-          }}>
-            <IC.Search />
-            <input
-              placeholder="Search candidates..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && fetchCandidates()}
-              style={{
-                border: "none", background: "transparent", outline: "none",
-                fontSize: "13px", color: "#64748b", width: "100%", fontFamily: "inherit",
-              }}
-            />
-          </div>
+          </div>     
           <span style={{ fontSize: "12px", color: "#94a3b8", whiteSpace: "nowrap" }}>{todayStr()}</span>
         </header>
 
@@ -402,10 +406,12 @@ export default function CandidatesHR() {
             background: "#fff", borderRadius: "16px", overflow: "hidden",
             boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
           }}>
+
             {/* Card header */}
             <div style={{
               display: "flex", alignItems: "center", justifyContent: "space-between",
               padding: "20px 24px", borderBottom: "1px solid #f1f5f9",
+              flexWrap: "wrap", gap: "12px",
             }}>
               <div>
                 <p style={{ fontSize: "15px", fontWeight: "700", color: "#1e293b", margin: 0, textAlign: "left" }}>
@@ -415,22 +421,42 @@ export default function CandidatesHR() {
                   Click View CV to see details and documents
                 </p>
               </div>
-              <button
-                onClick={() => setShowExportModal(true)}
-                style={{
-                  display: "flex", alignItems: "center", gap: "6px",
-                  padding: "8px 16px", borderRadius: "10px",
-                  border: "1px solid #e2e8f0", background: "#fff",
-                  fontSize: "13px", fontWeight: "600", color: "#334155",
-                  cursor: "pointer", fontFamily: "inherit",
-                  transition: "background 0.15s",
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.background = "#f8fafc"}
-                onMouseLeave={(e) => e.currentTarget.style.background = "#fff"}
-              >
-                <IC.Download />
-                Export CSV
-              </button>
+              
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <div style={{
+                  display: "flex", alignItems: "center", gap: "8px",
+                  background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px",
+                  padding: "7px 14px", width: "240px",
+                }}>
+                  <IC.Search />
+                  <input
+                    placeholder="Search by name or email..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    style={{
+                      border: "none", background: "transparent", outline: "none",
+                      fontSize: "13px", color: "#64748b", width: "100%", fontFamily: "inherit",
+                    }}
+                  />
+                </div>
+                
+                <button
+                  onClick={() => setShowExportModal(true)}
+                  style={{
+                    display: "flex", alignItems: "center", gap: "6px",
+                    padding: "8px 16px", borderRadius: "10px",
+                    border: "1px solid #e2e8f0", background: "#fff",
+                    fontSize: "13px", fontWeight: "600", color: "#334155",
+                    cursor: "pointer", fontFamily: "inherit",
+                    transition: "background 0.15s",
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = "#f8fafc"}
+                  onMouseLeave={(e) => e.currentTarget.style.background = "#fff"}
+                >
+                  <IC.Download />
+                  Export CSV
+                </button>
+              </div>
             </div>
 
             {/* Table header */}
@@ -451,7 +477,12 @@ export default function CandidatesHR() {
             </div>
 
             {/* Rows */}
-            {data.candidates.length === 0 ? (
+            {tableLoading ? (
+              <div style={{ padding: "48px 0", textAlign: "center", color: "#94a3b8", fontSize: "13px" }}>
+                <div style={{ display: "inline-block", width: "20px", height: "20px", border: "2px solid #e2e8f0", borderTopColor: "#3b82f6", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
+                <div style={{ marginTop: "10px" }}>Searching...</div>
+              </div>
+            ) : data.candidates.length === 0 ? (
               <div style={{ padding: "48px 0", textAlign: "center", color: "#94a3b8", fontSize: "13px" }}>
                 No candidates found.
               </div>

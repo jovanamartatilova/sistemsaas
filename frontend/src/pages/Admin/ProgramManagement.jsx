@@ -354,6 +354,8 @@ function Modal({ open, editingJob, onClose, onSubmit, catalog }) {
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
     const [posisi, setPosisi] = useState([{ id_position: "", name: "", quota: "" }]);
+    const [search, setSearch] = useState("");
+    const [tableLoading, setTableLoading] = useState(false);
 
     useEffect(() => {
         if (open) {
@@ -761,6 +763,7 @@ export default function ProgramManagement() {
     const [catalog, setCatalog] = useState([]);
     const [toast, setToast] = useState({ msg: "", type: "success", visible: false });
 
+    // Initial load
     useEffect(() => {
         fetchJobs();
         fetchCatalog();
@@ -1058,16 +1061,6 @@ export default function ProgramManagement() {
                         <span style={{ fontSize: "13px", color: "#94a3b8" }}>Management</span>
                     </div>
 
-                    {/* Search */}
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px", padding: "7px 14px", width: "220px" }}>
-                        <Icon.Search />
-                        <input
-                            value={search} onChange={e => setSearch(e.target.value)}
-                            placeholder="Search programs..."
-                            style={{ border: "none", background: "transparent", outline: "none", fontSize: "13px", color: "#64748b", width: "100%" }}
-                        />
-                    </div>
-
                     {/* Bell */}
                     <button style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px", width: "38px", height: "38px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#64748b", position: "relative" }}>
                         <Icon.Bell />
@@ -1078,17 +1071,40 @@ export default function ProgramManagement() {
                 <main style={{ padding: 28, flex: 1, textAlign: "left" }} className="fade-in">
                     {/* Page header */}
                     <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 24, gap: 12, flexWrap: "wrap" }}>
-                        <div>
-                            <div style={{ fontSize: 20, fontWeight: 800, color: "#0f172a", lineHeight: 1.2 }}>Program Management</div>
-                            <div style={{ fontSize: 13, color: "#64748b", marginTop: 3 }}>Manage all internship programs available on the platform.</div>
-                        </div>
-                        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                            <button onClick={() => { setEditingJob(null); setModalOpen(true); }}
-                                style={{ display: "flex", alignItems: "center", gap: 7, background: "#2563c4", color: "#fff", border: "none", borderRadius: 8, padding: "10px 18px", fontFamily: "inherit", fontSize: 13, fontWeight: 600, cursor: "pointer", boxShadow: "0 2px 8px rgba(37,99,235,.3)" }}>
-                                <Icon.Plus /> Add Program
-                            </button>
-                        </div>
+                    <div>
+                        <div style={{ fontSize: 20, fontWeight: 800, color: "#0f172a", lineHeight: 1.2 }}>Program Management</div>
+                        <div style={{ fontSize: 13, color: "#64748b", marginTop: 3 }}>Manage all internship programs available on the platform.</div>
                     </div>
+                    
+                    <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                        <div style={{
+                            display: "flex", alignItems: "center", gap: "8px",
+                            background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px",
+                            padding: "7px 14px", width: "240px",
+                        }}>
+                            <Icon.Search />
+                            <input
+                                placeholder="Search by program name or city..."
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                style={{
+                                    border: "none", background: "transparent", outline: "none",
+                                    fontSize: "13px", color: "#64748b", width: "100%", fontFamily: "inherit",
+                                }}
+                            />
+                        </div>
+                        
+                        <button onClick={() => { setEditingJob(null); setModalOpen(true); }}
+                            style={{
+                                display: "flex", alignItems: "center", gap: 7,
+                                background: "#2563c4", color: "#fff", border: "none", borderRadius: 8,
+                                padding: "10px 18px", fontFamily: "inherit", fontSize: 13, fontWeight: 600,
+                                cursor: "pointer", boxShadow: "0 2px 8px rgba(37,99,235,.3)"
+                            }}>
+                            <Icon.Plus /> Add Program
+                        </button>
+                    </div>
+                </div>
 
                     {/* Filter tabs */}
                     <div style={{ display: "flex", gap: 8, marginBottom: 22, flexWrap: "wrap" }}>

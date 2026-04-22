@@ -444,9 +444,6 @@ export default function PositionsManagement() {
                         <span style={{ fontSize: "13px", color: "#94a3b8", margin: "0 6px" }}>/</span>
                         <span style={{ fontSize: "13px", color: "#94a3b8" }}>Management</span>
                     </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 10, padding: "7px 14px", width: 220 }}>
-                        <Icon.Search /><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search..." style={{ border: "none", background: "none", outline: "none", fontSize: 13, width: "100%" }} />
-                    </div>
                 </header>
 
                 <main style={{ padding: 28, flex: 1, textAlign: "left" }} className="fade-in">
@@ -456,10 +453,33 @@ export default function PositionsManagement() {
                             <div style={{ fontSize: 20, fontWeight: 800, color: "#0f172a", lineHeight: 1.2 }}>Positions Management</div>
                             <div style={{ fontSize: 13, color: "#64748b", marginTop: 3 }}>Manage position catalog and program linkages.</div>
                         </div>
-                        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                        
+                        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                            <div style={{
+                                display: "flex", alignItems: "center", gap: "8px",
+                                background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px",
+                                padding: "7px 14px", width: "240px",
+                            }}>
+                                <Icon.Search />
+                                <input
+                                    placeholder="Search by position or program..."
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    style={{
+                                        border: "none", background: "transparent", outline: "none",
+                                        fontSize: "13px", color: "#64748b", width: "100%", fontFamily: "inherit",
+                                    }}
+                                />
+                            </div>
+                            
                             {isCatalogVisible && (
                                 <button onClick={() => { setEditingCatalogItem(null); setPosModalOpen(true); }}
-                                    style={{ display: "flex", alignItems: "center", gap: 7, background: "#2563c4", color: "#fff", border: "none", borderRadius: 8, padding: "10px 18px", fontFamily: "inherit", fontSize: 13, fontWeight: 600, cursor: "pointer", boxShadow: "0 2px 8px rgba(37,99,235,.3)" }}>
+                                    style={{
+                                        display: "flex", alignItems: "center", gap: 7,
+                                        background: "#2563c4", color: "#fff", border: "none", borderRadius: 8,
+                                        padding: "10px 18px", fontFamily: "inherit", fontSize: 13, fontWeight: 600,
+                                        cursor: "pointer", boxShadow: "0 2px 8px rgba(37,99,235,.3)"
+                                    }}>
                                     <Icon.Plus /> Add Position
                                 </button>
                             )}

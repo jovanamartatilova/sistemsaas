@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { api } from "../../api";
 import { useAuthStore } from "../../stores/authStore";
 import SidebarHR from "../../components/SidebarHR";
+import { LoadingSpinner } from "../../components/LoadingSpinner";
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
 const IC = {
@@ -185,13 +186,14 @@ function LogoutModal({ onConfirm, onCancel }) {
 }
 
 // ── Result Select ─────────────────────────────────────────────────────────────
-function ResultSelect({ value, onChange }) {
+function ResultSelect({ value, onChange, disabled, isLoading }) {
   const opt = resultOptions.find(o => o.value === value) || resultOptions[0];
   return (
     <div style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
       <select
         value={value}
         onChange={e => onChange(e.target.value)}
+        disabled={disabled || isLoading}
         style={{
           appearance: "none",
           WebkitAppearance: "none",
@@ -200,17 +202,29 @@ function ResultSelect({ value, onChange }) {
           fontSize: "11.5px",
           fontWeight: 600,
           border: `1px solid ${opt.dot}33`,
-          background: opt.bg,
-          color: opt.color,
-          cursor: "pointer",
+          background: isLoading ? "#f1f5f9" : opt.bg,
+          color: isLoading ? "#94a3b8" : opt.color,
+          cursor: (disabled || isLoading) ? "not-allowed" : "pointer",
           outline: "none",
           fontFamily: "'Poppins','Segoe UI',sans-serif",
+          opacity: isLoading ? 0.6 : 1,
         }}
       >
         {resultOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
       </select>
       <span style={{ position: "absolute", right: "8px", pointerEvents: "none", color: opt.color, display: "flex" }}>
-        <IC.ChevronDown />
+        {isLoading ? (
+          <div style={{
+            width: "12px",
+            height: "12px",
+            border: "2px solid #e2e8f0",
+            borderTopColor: opt.color,
+            borderRadius: "50%",
+            animation: "spin 0.6s linear infinite"
+          }} />
+        ) : (
+          <IC.ChevronDown />
+        )}
       </span>
     </div>
   );
@@ -409,6 +423,9 @@ export default function InterviewHR() {
   const [addError, setAddError]     = useState("");
   const [saving, setSaving]         = useState(false);
   const [toasts, setToasts]         = useState([]);
+  const [search, setSearch]         = useState("");
+  const [tableLoading, setTableLoading] = useState(false);
+  const [resultLoading, setResultLoading] = useState(null);
 
   const showToast = (message, type = "success") => {
     const id = Date.now();
@@ -416,13 +433,40 @@ export default function InterviewHR() {
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3500);
   };
 
-  const fetchInterviews = () => {
-    api("/hr/interviews")
-      .then(res => setData(res.data))
-      .finally(() => setLoading(false));
-  };
+const fetchInterviews = async (isSearch = false) => {
+  if (isSearch) {
+    setTableLoading(true);
+  } else {
+    setLoading(true);
+  }
+  
+  const params = new URLSearchParams();
+  if (search) params.set("search", search);
+  
+  try {
+    const res = await api(`/hr/interviews?${params}`);
+    setData(res.data);
+  } catch (err) {
+    console.error("Fetch error:", err);
+  } finally {
+    setLoading(false);
+    setTableLoading(false);
+  }
+};
 
-  useEffect(() => { fetchInterviews(); }, []);
+  // Initial load (saat pertama kali buka halaman)
+  useEffect(() => { 
+    fetchInterviews(); 
+  }, []);
+
+  useEffect(() => {
+    if (!loading && search !== undefined) {
+      const timer = setTimeout(() => {
+        fetchInterviews(true);  // ← true = search mode (tableLoading)
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [search]);
 
   const openEdit = (row) => { setForm({ ...row }); setEditModal(row.id_interview); };
 
@@ -448,14 +492,29 @@ export default function InterviewHR() {
   };
 
   const handleResultChange = async (id, value) => {
+  setResultLoading(id);
+  
+  try {
     await api(`/hr/interviews/${id}/result`, {
       method: "PATCH",
       body: JSON.stringify({ result: value }),
     });
+    
+    const params = new URLSearchParams();
+    if (search) params.set("search", search);
+    
+    const res = await api(`/hr/interviews?${params}`);
+    setData(res.data);
+    
     const label = resultOptions.find(o => o.value === value)?.label || value;
     showToast(`Interview result updated to "${label}"`);
-    fetchInterviews();
-  };
+    
+  } catch (err) {
+    showToast("Failed to update result", "error");
+  } finally {
+    setResultLoading(null);
+  }
+};
 
   const handleAddSchedule = async () => {
     setAddError("");
@@ -521,25 +580,24 @@ export default function InterviewHR() {
     },
   ];
 
-  if (loading) return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#f8fafc", alignItems: "center", justifyContent: "center", fontFamily: "'Poppins','Segoe UI',sans-serif", color: "#94a3b8", fontSize: "14px" }}>
-      Loading...
-    </div>
-  );
+  if (loading) return <LoadingSpinner message="Loading interview data..." />;
 
   return (
     <div style={{ display: "flex", minHeight: "100vh", background: "#f8fafc", fontFamily: "'Poppins','Segoe UI',sans-serif" }}>
       <style>{`
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 99px; }
-        @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
-        @keyframes toastIn { from { opacity:0; transform:translateX(20px); } to { opacity:1; transform:translateX(0); } }
-        .interview-fadein { animation: fadeIn 0.3s ease both; }
-        .row-hover:hover { background: #f8fafc !important; }
-        .btn-action:hover { background: #f1f5f9 !important; }
-      `}</style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      ::-webkit-scrollbar { width: 5px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 99px; }
+      @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+      @keyframes toastIn { from { opacity:0; transform:translateX(20px); } to { opacity:1; transform:translateX(0); } }
+      @keyframes spin { 
+        to { transform: rotate(360deg); } 
+      }
+      .interview-fadein { animation: fadeIn 0.3s ease both; }
+      .row-hover:hover { background: #f8fafc !important; }
+      .btn-action:hover { background: #f1f5f9 !important; }
+    `}</style>
 
       <ToastContainer toasts={toasts} />
 
@@ -559,17 +617,6 @@ export default function InterviewHR() {
             <span style={{ fontSize: "15px", fontWeight: "700", color: "#1e293b" }}>Interview</span>
             <span style={{ fontSize: "13px", color: "#94a3b8", margin: "0 6px" }}>/</span>
             <span style={{ fontSize: "13px", color: "#94a3b8" }}>Schedule & Results</span>
-          </div>
-          <div style={{
-            display: "flex", alignItems: "center", gap: "8px",
-            background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px",
-            padding: "7px 14px", width: "220px",
-          }}>
-            <IC.Search />
-            <input
-              placeholder="Search candidates..."
-              style={{ border: "none", background: "transparent", outline: "none", fontSize: "13px", color: "#64748b", width: "100%", fontFamily: "inherit" }}
-            />
           </div>
           <span style={{ fontSize: "12px", color: "#94a3b8", whiteSpace: "nowrap" }}>{todayStr()}</span>
         </header>
@@ -678,6 +725,7 @@ export default function InterviewHR() {
             <div style={{
               display: "flex", alignItems: "center", justifyContent: "space-between",
               padding: "20px 24px", borderBottom: "1px solid #f1f5f9",
+              flexWrap: "wrap", gap: "12px",
             }}>
               <div>
                 <p style={{ fontSize: "15px", fontWeight: "700", color: "#1e293b", margin: 0, textAlign: "left" }}>
@@ -685,18 +733,38 @@ export default function InterviewHR() {
                 </p>
                 <p style={{ fontSize: "12px", color: "#94a3b8", marginTop: "2px" }}>All scheduled interview sessions</p>
               </div>
-              <button
-                onClick={() => { setAddForm({ media: "Google Meet" }); setAddError(""); setAddModal(true); }}
-                style={{
-                  display: "inline-flex", alignItems: "center", gap: "6px",
-                  padding: "8px 16px", borderRadius: "10px", border: "none",
-                  background: "#2563eb", color: "#fff", fontSize: "13px", fontWeight: 600,
-                  cursor: "pointer", fontFamily: "inherit",
-                }}
-              >
-                <IC.Plus />
-                Add Schedule
-              </button>
+              
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <div style={{
+                  display: "flex", alignItems: "center", gap: "8px",
+                  background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px",
+                  padding: "7px 14px", width: "240px",
+                }}>
+                  <IC.Search />
+                  <input
+                    placeholder="Search by name or email..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    style={{
+                      border: "none", background: "transparent", outline: "none",
+                      fontSize: "13px", color: "#64748b", width: "100%", fontFamily: "inherit",
+                    }}
+                  />
+                </div>
+                
+                <button
+                  onClick={() => { setAddForm({ media: "Google Meet" }); setAddError(""); setAddModal(true); }}
+                  style={{
+                    display: "inline-flex", alignItems: "center", gap: "6px",
+                    padding: "8px 16px", borderRadius: "10px", border: "none",
+                    background: "#2563eb", color: "#fff", fontSize: "13px", fontWeight: 600,
+                    cursor: "pointer", fontFamily: "inherit",
+                  }}
+                >
+                  <IC.Plus />
+                  Add Schedule
+                </button>
+              </div>
             </div>
 
             {/* Table header */}
@@ -710,7 +778,21 @@ export default function InterviewHR() {
               ))}
             </div>
 
-            {data.interviews.length === 0 ? (
+            {/* Loading indicator untuk search */}
+            {tableLoading ? (
+              <div style={{ padding: "48px 0", textAlign: "center", color: "#94a3b8", fontSize: "13px" }}>
+                <div style={{ 
+                  display: "inline-block", 
+                  width: "20px", 
+                  height: "20px", 
+                  border: "2px solid #e2e8f0", 
+                  borderTopColor: "#3b82f6", 
+                  borderRadius: "50%", 
+                  animation: "spin 0.6s linear infinite" 
+                }} />
+                <div style={{ marginTop: "10px" }}>Searching...</div>
+              </div>
+            ) : data.interviews.length === 0 ? (
               <div style={{ padding: "48px 0", textAlign: "center", color: "#94a3b8", fontSize: "13px" }}>
                 No interviews scheduled yet.
               </div>
@@ -766,10 +848,14 @@ export default function InterviewHR() {
                     </span>
                   </div>
 
-                  {/* Result */}
-                  <div>
-                    <ResultSelect value={j.result} onChange={val => handleResultChange(j.id_interview, val)} />
-                  </div>
+                 <div>
+                <ResultSelect 
+                  value={j.result} 
+                  onChange={val => handleResultChange(j.id_interview, val)}
+                  disabled={resultLoading !== null}
+                  isLoading={resultLoading === j.id_interview}
+                />
+              </div>
 
                   {/* Action */}
                   <div>

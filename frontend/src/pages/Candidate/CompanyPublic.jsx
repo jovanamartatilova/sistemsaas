@@ -621,16 +621,62 @@ export default function CompanyPublicPage() {
         {/* ── Open Positions ────────────────────────────────────── */}
         <section style={{ padding: "70px 64px" }}>
           <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-            <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 36 }}>
-              <div>
-                <p style={{ fontSize: 12, fontWeight: 700, color: "#2d7ff3", textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 8px" }}>Now Hiring</p>
-                <h2 style={{ fontSize: 30, fontWeight: 800, color: "#0f172a", margin: "0 0 6px", letterSpacing: "-0.7px" }}>Open Positions</h2>
-                <p style={{ fontSize: 13, color: "#94a3b8", margin: 0 }}>
+            <div style={{ 
+              display: "flex", 
+              alignItems: "center", 
+              justifyContent: "space-between", 
+              marginBottom: 36,
+              textAlign: "center",  
+              flexDirection: "column",  
+            }}>
+              <div style={{ 
+                textAlign: "center",  
+                width: "100%"        
+              }}>
+                <p style={{ 
+                  fontSize: 12, 
+                  fontWeight: 700, 
+                  color: "#2d7ff3", 
+                  textTransform: "uppercase", 
+                  letterSpacing: "0.1em", 
+                  margin: "0 0 8px", 
+                  justifyContent: "center"  
+                }}>
+                  Now Hiring
+                </p>
+                <h2 style={{ 
+                  fontSize: 30, 
+                  fontWeight: 800, 
+                  color: "#0f172a", 
+                  margin: "0 0 6px", 
+                  letterSpacing: "-0.7px" 
+                }}>
+                  Open Positions
+                </h2>
+                <p style={{ 
+                  fontSize: 13, 
+                  color: "#94a3b8", 
+                  margin: 0 
+                }}>
                   {positions.length > 0 ? `${positions.length} position${positions.length > 1 ? "s" : ""} available` : "No open positions at this time"}
                 </p>
               </div>
               {!isAuthenticated && (
-                <button onClick={() => navigate(`/c/${slug}/register`)} style={{ padding: "10px 22px", borderRadius: 10, fontSize: 13, fontWeight: 700, background: "linear-gradient(135deg,#1a5fc4,#2d7ff3)", border: "none", color: "#fff", cursor: "pointer", fontFamily: "inherit" }}>
+                <button 
+                  onClick={() => navigate(`/c/${slug}/register`)} 
+                  style={{ 
+                    padding: "10px 22px", 
+                    borderRadius: 10, 
+                    fontSize: 13, 
+                    fontWeight: 700, 
+                    background: "linear-gradient(135deg,#1a5fc4,#2d7ff3)", 
+                    border: "none", 
+                    color: "#fff", 
+                    cursor: "pointer", 
+                    fontFamily: "inherit",
+                    marginTop: 20  
+                  }}
+                >
                   Register to Apply
                 </button>
               )}
