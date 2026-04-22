@@ -389,7 +389,7 @@ export default function DashboardPage() {
     const [activeNav, setActiveNav] = useState("Dashboard");
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [logoutModalOpen, setLogoutModalOpen] = useState(false);
-    const [liveStats, setLiveStats] = useState({ active_programs: 0, active_vacancies: 0, total_applicants: 0, pending_review: 0, recent_applicants: [] });
+    const [liveStats, setLiveStats] = useState({ active_programs: 0, active_vacancies: 0, total_applicants: 0, pending_review: 0, recent_applicants: [], status_distribution: [], monthly_stats: [], popular_programs: [], recent_activity: [] });
     const [search, setSearch] = useState("");          
     const [tableLoading, setTableLoading] = useState(false);
 
@@ -498,7 +498,7 @@ export default function DashboardPage() {
         interview: "#c084fc",
     };
 
-    const finalDistrib = liveStats.status_distribution.map(d => ({
+    const finalDistrib = (liveStats.status_distribution || []).map(d => ({
         label: d.status === 'pending' ? 'Applied' : d.status,
         count: d.count,
         color: distribColors[d.status] || "#94a3b8"
