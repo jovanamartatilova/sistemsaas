@@ -373,16 +373,14 @@ function DashboardPage() {
   const total = data.total_tenant ?? 0;
   const aktif = data.tenant_status?.active ?? 0;
   const susp = data.tenant_status?.suspended ?? 0;
-  const nonaktif = data.tenant_status?.inactive ?? 0;
   const C = 2 * Math.PI * 34;
   const aD = total > 0 ? (aktif / total) * C : 0;
   const sD = total > 0 ? (susp / total) * C : 0;
-  const nD = total > 0 ? (nonaktif / total) * C : 0;
 
   return (
     <main style={{ flex: 1, padding: "28px 28px 40px", overflowY: "auto", background: "#f8fafc" }}>
       <div style={{ marginBottom: "28px" }}>
-        <div style={{ fontSize: "20px", fontWeight: "800", color: "#0f172a" }}>Good morning, Super Admin 👋</div>
+        <div style={{ fontSize: "20px", fontWeight: "800", color: "#0f172a" }}>Good morning, Super Admin !</div>
         <div style={{ fontSize: "13px", color: "#64748b", marginTop: "3px" }}>Here's a summary of today's platform activity.</div>
       </div>
 
@@ -454,7 +452,6 @@ function DashboardPage() {
                 {total > 0 && <>
                   <circle cx="40" cy="40" r="34" fill="none" stroke="#3b82f6" strokeWidth="12" strokeDasharray={`${aD} ${C - aD}`} strokeDashoffset="0" style={{ transform: "rotate(-90deg)", transformOrigin: "50% 50%" }} />
                   <circle cx="40" cy="40" r="34" fill="none" stroke="#ef4444" strokeWidth="12" strokeDasharray={`${sD} ${C - sD}`} strokeDashoffset={-aD} style={{ transform: "rotate(-90deg)", transformOrigin: "50% 50%" }} />
-                  <circle cx="40" cy="40" r="34" fill="none" stroke="#94a3b8" strokeWidth="12" strokeDasharray={`${nD} ${C - nD}`} strokeDashoffset={-(aD + sD)} style={{ transform: "rotate(-90deg)", transformOrigin: "50% 50%" }} />
                 </>}
               </svg>
               <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
@@ -463,7 +460,7 @@ function DashboardPage() {
               </div>
             </div>
           </div>
-          {[{ l: "Active", v: aktif, c: "#3b82f6" }, { l: "Suspended", v: susp, c: "#ef4444" }, { l: "Inactive", v: nonaktif, c: "#94a3b8" }].map(item => (
+          {[{ l: "Active", v: aktif, c: "#3b82f6" }, { l: "Suspended", v: susp, c: "#ef4444" }].map(item => (
             <div key={item.l} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", borderBottom: "1px solid #f8fafc" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "7px" }}>
                 <div style={{ width: "9px", height: "9px", borderRadius: "3px", background: item.c }} />
@@ -538,7 +535,6 @@ function TenantManagementPage() {
             <option value="all">All Status</option>
             <option value="active">Active</option>
             <option value="suspended">Suspended</option>
-            <option value="inactive">Inactive</option>
           </select>
           <span style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: "#94a3b8" }}><IC.ChevDown /></span>
         </div>
@@ -561,15 +557,15 @@ function TenantManagementPage() {
               <thead>
                 <tr style={{ background: "#f8fafc" }}>
                   {[
-                    { label: "COMPANY", width: "30%" },
-                    { label: "USERS", width: "8%" },
-                    { label: "VACANCIES", width: "10%" },
-                    { label: "REGISTERED", width: "14%" },
-                    { label: "STATUS", width: "12%" },
-                    { label: "ACTION", width: "16%" },
-                  ].map(h => (
-                    <th key={h.label} style={{ ...TH, width: h.width }}>{h.label}</th>
-                  ))}
+              { label: "COMPANY", width: "30%", align: "center" },
+              { label: "USERS", width: "8%", align: "center" },
+              { label: "VACANCIES", width: "10%", align: "center" },
+              { label: "REGISTERED", width: "14%", align: "center" },
+              { label: "STATUS", width: "12%", align: "center" },
+              { label: "ACTION", width: "16%", align: "center" },
+            ].map(h => (
+              <th key={h.label} style={{ ...TH, width: h.width, textAlign: h.align }}>{h.label}</th>
+            ))}
                 </tr>
               </thead>
               <tbody>
@@ -581,32 +577,32 @@ function TenantManagementPage() {
                     <tr key={t.id} style={{ borderBottom: "1px solid #f8fafc", transition: "background 0.15s" }}
                       onMouseEnter={e => e.currentTarget.style.background = "#fafbfc"}
                       onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-                      <td style={{ padding: "12px 16px", verticalAlign: "middle" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                          <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: `${ac}18`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", fontWeight: "800", color: ac, flexShrink: 0 }}>{initials(t.name)}</div>
-                          <div style={{ minWidth: 0 }}>
-                            <div style={{ fontSize: "13.5px", fontWeight: "600", color: "#1e293b", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.name}</div>
-                            <div style={{ fontSize: "11px", color: "#94a3b8", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.email}</div>
-                          </div>
+                      <td style={{ padding: "12px 16px", verticalAlign: "middle", textAlign: "left" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                        <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: `${ac}18`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", fontWeight: "800", color: ac, flexShrink: 0 }}>{initials(t.name)}</div>
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ fontSize: "13.5px", fontWeight: "600", color: "#1e293b", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.name}</div>
+                          <div style={{ fontSize: "11px", color: "#94a3b8", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.email}</div>
                         </div>
-                      </td>
-                      <td style={{ padding: "12px 16px", fontSize: "13.5px", fontWeight: "600", color: "#1e293b", verticalAlign: "middle" }}>{t.users_count ?? 0}</td>
-                      <td style={{ padding: "12px 16px", fontSize: "13.5px", fontWeight: "600", color: "#1e293b", verticalAlign: "middle" }}>{t.vacancies_count ?? 0}</td>
-                      <td style={{ padding: "12px 16px", fontSize: "12.5px", color: "#64748b", verticalAlign: "middle" }}>{t.created_at}</td>
-                      <td style={{ padding: "12px 16px", verticalAlign: "middle" }}>
-                        <span style={{ background: isActive ? "#f0fdf4" : "#fff1f2", color: isActive ? "#15803d" : "#be123c", border: `1px solid ${isActive ? "#bbf7d0" : "#fecdd3"}`, borderRadius: "6px", fontSize: "11.5px", fontWeight: "700", padding: "3px 9px", display: "inline-flex", alignItems: "center", gap: "4px" }}>
-                          <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: isActive ? "#16a34a" : "#e11d48", display: "inline-block" }} />
-                          {label}
-                        </span>
-                      </td>
-                      <td style={{ padding: "12px 16px", verticalAlign: "middle" }}>
-                        <div style={{ display: "flex", gap: "6px" }}>
-                          <button onClick={() => setSelectedTenant(t)}
-                            style={{ padding: "5px 12px", borderRadius: "8px", border: "1px solid #e2e8f0", background: "#fff", fontSize: "12px", fontWeight: "600", color: "#475569", cursor: "pointer", whiteSpace: "nowrap" }}
-                            onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
-                            onMouseLeave={e => e.currentTarget.style.background = "#fff"}>
-                            Detail
-                          </button>
+                      </div>
+                    </td>
+                    <td style={{ padding: "12px 16px", fontSize: "13.5px", fontWeight: "600", color: "#1e293b", verticalAlign: "middle", textAlign: "center" }}>{t.users_count ?? 0}</td>
+                    <td style={{ padding: "12px 16px", fontSize: "13.5px", fontWeight: "600", color: "#1e293b", verticalAlign: "middle", textAlign: "center" }}>{t.vacancies_count ?? 0}</td>
+                    <td style={{ padding: "12px 16px", fontSize: "12.5px", color: "#64748b", verticalAlign: "middle", textAlign: "center" }}>{t.created_at}</td>
+                    <td style={{ padding: "12px 16px", verticalAlign: "middle", textAlign: "center" }}>
+                      <span style={{ background: isActive ? "#f0fdf4" : "#fff1f2", color: isActive ? "#15803d" : "#be123c", border: `1px solid ${isActive ? "#bbf7d0" : "#fecdd3"}`, borderRadius: "6px", fontSize: "11.5px", fontWeight: "700", padding: "3px 9px", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                        <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: isActive ? "#16a34a" : "#e11d48", display: "inline-block" }} />
+                        {label}
+                      </span>
+                    </td>
+                    <td style={{ padding: "12px 16px", verticalAlign: "middle", textAlign: "center" }}>
+                      <div style={{ display: "flex", gap: "6px", justifyContent: "center" }}>
+                        <button onClick={() => setSelectedTenant(t)}
+                          style={{ padding: "5px 12px", borderRadius: "8px", border: "1px solid #e2e8f0", background: "#fff", fontSize: "12px", fontWeight: "600", color: "#475569", cursor: "pointer", whiteSpace: "nowrap" }}
+                          onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
+                          onMouseLeave={e => e.currentTarget.style.background = "#fff"}>
+                          Detail
+                        </button>
                           <button onClick={() => toggleStatus(t.id, t.status)}
                             style={{ padding: "5px 12px", borderRadius: "8px", border: `1px solid ${isActive ? "#fecdd3" : "#bbf7d0"}`, background: isActive ? "#fff1f2" : "#f0fdf4", fontSize: "12px", fontWeight: "600", color: isActive ? "#be123c" : "#15803d", cursor: "pointer", whiteSpace: "nowrap" }}>
                             {isActive ? "Suspend" : "Activate"}
@@ -660,7 +656,7 @@ function UserManagementPage() {
   const avatarColors = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#06b6d4", "#84cc16", "#f97316", "#14b8a6"];
 
   // Fixed column widths for alignment
-  const colWidths = { user: "30%", role: "12%", company: "20%", phone: "16%", registered: "14%" };
+const colWidths = { user: "30%", role: "12%", company: "20%", phone: "16%", registered: "14%", align: { user: "left", role: "center", company: "center", phone: "center", registered: "center" } };
 
   return (
     <main style={{ flex: 1, padding: "28px 28px 40px", overflowY: "auto", background: "#f8fafc" }}>
@@ -679,11 +675,10 @@ function UserManagementPage() {
         <div style={{ position: "relative" }}>
           <select value={roleFilter} onChange={e => setRoleFilter(e.target.value)}
             style={{ appearance: "none", background: "#fff", border: "1px solid #e2e8f0", borderRadius: "10px", padding: "8px 36px 8px 14px", fontSize: "13px", color: "#475569", fontWeight: "500", cursor: "pointer", outline: "none" }}>
-            <option value="all">All Roles</option>
-            <option value="admin">Admin</option>
-            <option value="hr">HR</option>
-            <option value="mentor">Mentor</option>
-            <option value="peserta">Participant</option>
+              <option value="all">All Roles</option>
+              <option value="hr">HR</option>
+              <option value="mentor">Mentor</option>
+              <option value="candidate">Candidate</option>
           </select>
           <span style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: "#94a3b8" }}><IC.ChevDown /></span>
         </div>
@@ -706,11 +701,11 @@ function UserManagementPage() {
             <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
               <thead>
                 <tr style={{ background: "#f8fafc" }}>
-                  <th style={{ ...TH, width: colWidths.user }}>USER</th>
-                  <th style={{ ...TH, width: colWidths.role }}>ROLE</th>
-                  <th style={{ ...TH, width: colWidths.company }}>COMPANY</th>
-                  <th style={{ ...TH, width: colWidths.phone }}>PHONE</th>
-                  <th style={{ ...TH, width: colWidths.registered }}>REGISTERED</th>
+                  <th style={{ ...TH, width: colWidths.user, textAlign: "center" }}>USER</th>
+                  <th style={{ ...TH, width: colWidths.role, textAlign: "center" }}>ROLE</th>
+                  <th style={{ ...TH, width: colWidths.company, textAlign: "center" }}>COMPANY</th>
+                  <th style={{ ...TH, width: colWidths.phone, textAlign: "center" }}>PHONE</th>
+                  <th style={{ ...TH, width: colWidths.registered, textAlign: "center" }}>REGISTERED</th>
                 </tr>
               </thead>
               <tbody>
@@ -722,7 +717,7 @@ function UserManagementPage() {
                     <tr key={u.id} style={{ borderBottom: "1px solid #f8fafc", transition: "background 0.15s" }}
                       onMouseEnter={e => e.currentTarget.style.background = "#fafbfc"}
                       onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-                      <td style={{ padding: "12px 16px", verticalAlign: "middle", width: colWidths.user }}>
+                      <td style={{ padding: "12px 16px", verticalAlign: "middle", width: colWidths.user, textAlign: "left" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                           <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: `${ac}18`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", fontWeight: "800", color: ac, flexShrink: 0 }}>{initials(u.name)}</div>
                           <div style={{ minWidth: 0 }}>
@@ -731,12 +726,12 @@ function UserManagementPage() {
                           </div>
                         </div>
                       </td>
-                      <td style={{ padding: "12px 16px", verticalAlign: "middle", width: colWidths.role }}>
-                        <span style={{ background: rs.bg, color: rs.color, border: `1px solid ${rs.border}`, borderRadius: "6px", fontSize: "11.5px", fontWeight: "700", padding: "3px 9px" }}>{rs.label}</span>
-                      </td>
-                      <td style={{ padding: "12px 16px", fontSize: "13px", color: "#475569", verticalAlign: "middle", width: colWidths.company, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{u.company ?? "—"}</td>
-                      <td style={{ padding: "12px 16px", fontSize: "13px", color: "#475569", fontFamily: "monospace", verticalAlign: "middle", width: colWidths.phone }}>{u.phone ?? "—"}</td>
-                      <td style={{ padding: "12px 16px", fontSize: "12.5px", color: "#64748b", verticalAlign: "middle", width: colWidths.registered }}>{u.created_at}</td>
+                      <td style={{ padding: "12px 16px", verticalAlign: "middle", width: colWidths.role, textAlign: "center" }}>
+                            <span style={{ background: rs.bg, color: rs.color, border: `1px solid ${rs.border}`, borderRadius: "6px", fontSize: "11.5px", fontWeight: "700", padding: "3px 9px" }}>{rs.label}</span>
+                          </td>
+                          <td style={{ padding: "12px 16px", fontSize: "13px", color: "#475569", verticalAlign: "middle", width: colWidths.company, textAlign: "center", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{u.company ?? "—"}</td>
+                          <td style={{ padding: "12px 16px", fontSize: "13px", color: "#475569", fontFamily: "monospace", verticalAlign: "middle", width: colWidths.phone, textAlign: "center" }}>{u.phone ?? "—"}</td>
+                          <td style={{ padding: "12px 16px", fontSize: "12.5px", color: "#64748b", verticalAlign: "middle", width: colWidths.registered, textAlign: "center" }}>{u.created_at}</td>
                     </tr>
                   );
                 })}
