@@ -287,7 +287,7 @@ class AuthController extends Controller
      * Works both with or without slug:
      * - With slug: login to specific company portal
      * - Without slug: login to general candidate dashboard
-     * 
+     *
      * If candidate has previous submissions, returns list of companies they've registered to
      */
     public function loginCandidate(Request $request)
@@ -330,9 +330,13 @@ class AuthController extends Controller
             // Get latest company for default redirect (from submissions)
             $latestSubmission = $submissionsWithCompanies->sortByDesc('submitted_at')->first();
 
+            // Add scoped_role to user data
+            $userData = $user->toArray();
+            $userData['scoped_role'] = $user->getScopedRole();
+
             $response = [
                 'message' => 'Login successful',
-                'user' => $user,
+                'user' => $userData,
                 'token' => $token,
                 'has_registrations' => $hasRegistrations,
                 'companies_applied' => $companiesApplied,
@@ -787,7 +791,7 @@ public function resetPasswordNoAutoLogin(Request $request)
             'message' => 'Password successfully changed. Please login with your new password.',
             'redirect_to' => '/login',
         ], 200);
-        
+
     } catch (ValidationException $e) {
         return response()->json([
             'message' => 'Validation failed',
