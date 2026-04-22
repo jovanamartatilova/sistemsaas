@@ -164,32 +164,32 @@ function StatCard({ icon, iconBg, iconColor, title, value, sub, trend, trendUp, 
 }
 
 // ── Distribution donut (pure CSS/div) ─────────────────────────────────────────
-function DonutChart({ data }) {
-    // data = [{label, pct, color}]
-    // Since all 0 we just show empty ring
-    const total = data.reduce((s, d) => s + d.pct, 0);
-    const isEmpty = total === 0;
+function DonutChart({ data, total }) {
+    const totalCount = total || data.reduce((s, d) => s + d.count, 0);
+    const isEmpty = totalCount === 0;
+    const size = 110; // Restored size slightly
 
     return (
-        <div style={{ display: "flex", alignItems: "center", gap: "24px", flexWrap: "wrap" }}>
-            {/* Circle */}
-            <div style={{ position: "relative", width: "96px", height: "96px", flexShrink: 0 }}>
-                <svg width="96" height="96" viewBox="0 0 96 96">
+        <div style={{ display: "flex", alignItems: "center", gap: "32px", flexWrap: "wrap", justifyContent: "center", padding: "10px 0" }}>
+            <div style={{ position: "relative", width: `${size}px`, height: `${size}px`, flexShrink: 0 }}>
+                <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
                     {isEmpty ? (
-                        <circle cx="48" cy="48" r="36" fill="none" stroke="#e2e8f0" strokeWidth="14" />
+                        <circle cx={size/2} cy={size/2} r={size/2 - 10} fill="none" stroke="#e2e8f0" strokeWidth="20" />
                     ) : (
                         (() => {
                             let offset = 0;
-                            const circum = 2 * Math.PI * 36;
+                            const r = size/2 - 10;
+                            const circum = 2 * Math.PI * r;
                             return data.map((d, i) => {
-                                const dash = (d.pct / 100) * circum;
+                                const pct = (d.count / totalCount);
+                                const dash = pct * circum;
                                 const el = (
                                     <circle
                                         key={i}
-                                        cx="48" cy="48" r="36"
+                                        cx={size/2} cy={size/2} r={r}
                                         fill="none"
-                                        stroke={d.color}
-                                        strokeWidth="14"
+                                        stroke={d.color || "#e2e8f0"}
+                                        strokeWidth="16"
                                         strokeDasharray={`${dash} ${circum - dash}`}
                                         strokeDashoffset={-offset}
                                         style={{ transform: "rotate(-90deg)", transformOrigin: "50% 50%" }}
@@ -202,55 +202,181 @@ function DonutChart({ data }) {
                     )}
                 </svg>
                 <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-                    <div style={{ fontSize: "16px", fontWeight: "800", color: "#1e293b" }}>0</div>
-                    <div style={{ fontSize: "10px", color: "#94a3b8", fontWeight: "500" }}>Total</div>
+                    <div style={{ fontSize: "18px", fontWeight: "800", color: "#1e293b" }}>{totalCount}</div>
+                    <div style={{ fontSize: "10px", color: "#94a3b8", fontWeight: "600" }}>Total</div>
                 </div>
             </div>
 
-            {/* Legend */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "8px", flex: 1 }}>
-                {data.map((d, i) => (
-                    <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                            <div style={{ width: "10px", height: "10px", borderRadius: "50%", background: d.color, flexShrink: 0 }} />
-                            <span style={{ fontSize: "13px", color: "#64748b" }}>{d.label}</span>
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px", flex: 1, minWidth: "120px" }}>
+                {data.map((d, i) => {
+                    const pct = totalCount > 0 ? Math.round((d.count / totalCount) * 100) : 0;
+                    return (
+                        <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "6px" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: d.color, flexShrink: 0 }} />
+                                <span style={{ fontSize: "12px", color: "#64748b", textTransform: "capitalize", fontWeight: "500" }}>{d.label}</span>
+                            </div>
+                            <span style={{ fontSize: "12px", fontWeight: "800", color: "#1e293b" }}>{pct}%</span>
                         </div>
-                        <span style={{ fontSize: "13px", fontWeight: "700", color: "#1e293b" }}>0%</span>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
         </div>
     );
 }
 
 // ── Mini bar sparkline ─────────────────────────────────────────────────────────
-function BarSparkline({ months }) {
+function LineChart({ data }) {
+    if (!data || data.length === 0) return null;
+    const [hIdx, setHIdx] = useState(null);
+
+    const width = 800;
+    const height = 180;
+    const paddingX = 40;
+    const paddingY = 5; // Reduced from 25 to close gap to legend
+    const chartHeight = height - 40;
+    
+    // Calculate max value with some headroom
+    const maxVal = Math.max(...data.map(d => Math.max(d.applied, d.accepted, d.rejected, 10)), 2);
+    
+    const getX = (index) => (index / (data.length - 1)) * (width - paddingX * 2) + paddingX;
+    const getY = (val) => chartHeight - (val / maxVal) * (chartHeight - paddingY) + paddingY;
+
+    const categories = [
+        { key: "applied", color: "#3b82f6", label: "Applied" },
+        { key: "accepted", color: "#22c55e", label: "Accepted" },
+        { key: "rejected", color: "#ef4444", label: "Rejected" }
+    ];
+
+    const generatePath = (key) => {
+        return data.reduce((path, d, i) => {
+            return path + (i === 0 ? "M" : " L") + ` ${getX(i)} ${getY(d[key])}`;
+        }, "");
+    };
+
+    const generateAreaPath = (key) => {
+        const baseline = chartHeight + paddingY;
+        let path = `M ${getX(0)} ${baseline}`;
+        data.forEach((d, i) => {
+            path += ` L ${getX(i)} ${getY(d[key])}`;
+        });
+        path += ` L ${getX(data.length - 1)} ${baseline} Z`;
+        return path;
+    };
+
     return (
-        <div style={{ display: "flex", alignItems: "flex-end", gap: "6px", height: "80px", padding: "0 4px" }}>
-            {months.map((m, i) => (
-                <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: "4px" }}>
-                    <div style={{ display: "flex", gap: "2px", alignItems: "flex-end", height: "60px" }}>
-                        {/* 3 bars per month: mendaftar, diterima, ditolak */}
-                        {[
-                            { h: 0, c: "#60a5fa" },
-                            { h: 0, c: "#4ade80" },
-                            { h: 0, c: "#f87171" },
-                        ].map((b, j) => (
-                            <div
-                                key={j}
-                                style={{
-                                    width: "6px",
-                                    height: `${Math.max(b.h, 4)}px`,
-                                    background: b.c,
-                                    borderRadius: "3px 3px 0 0",
-                                    opacity: 0.5,
-                                }}
+        <div style={{ width: "100%", height: "220px", marginTop: "0px", position: "relative" }}>
+            <svg 
+                viewBox={`0 0 ${width} ${height}`} 
+                style={{ width: "100%", height: "100%", overflow: "visible" }}
+                onMouseLeave={() => setHIdx(null)}
+            >
+                <defs>
+                    {categories.map(cat => (
+                        <linearGradient key={cat.key} id={`grad-${cat.key}`} x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor={cat.color} stopOpacity="0.25" />
+                            <stop offset="100%" stopColor={cat.color} stopOpacity="0" />
+                        </linearGradient>
+                    ))}
+                </defs>
+
+                {/* Grid Lines */}
+                {[0, 0.25, 0.5, 0.75, 1].map(p => (
+                    <line 
+                        key={p} 
+                        x1={paddingX} y1={getY(p * maxVal)} 
+                        x2={width - paddingX} y2={getY(p * maxVal)} 
+                        stroke="#f1f5f9" strokeWidth="1" 
+                    />
+                ))}
+
+                {/* Vertical Guide Line */}
+                {hIdx !== null && (
+                    <line 
+                        x1={getX(hIdx)} y1={paddingY} 
+                        x2={getX(hIdx)} y2={chartHeight + paddingY + 10} 
+                        stroke="#cbd5e1" strokeWidth="1.5" strokeDasharray="4 4" 
+                    />
+                )}
+
+                {/* Areas and Lines */}
+                {categories.map(cat => (
+                    <g key={cat.key}>
+                        <path d={generateAreaPath(cat.key)} fill={`url(#grad-${cat.key})`} style={{ transition: "all 0.4s ease" }} />
+                        <path 
+                            d={generatePath(cat.key)} 
+                            fill="none" 
+                            stroke={cat.color} 
+                            strokeWidth="3" 
+                            strokeLinecap="round" 
+                            strokeLinejoin="round"
+                            style={{ transition: "all 0.4s ease" }}
+                        />
+                        {data.map((d, i) => (
+                            <circle 
+                                key={i} 
+                                cx={getX(i)} cy={getY(d[cat.key])} r={hIdx === i ? "6" : "4.5"} 
+                                fill="#fff" stroke={cat.color} strokeWidth={hIdx === i ? "3" : "2.5"}
+                                style={{ transition: "all 0.2s ease" }}
                             />
                         ))}
+                    </g>
+                ))}
+
+                {/* Interaction Regions */}
+                {data.map((_, i) => (
+                    <rect 
+                        key={i}
+                        x={getX(i) - 20} y={0} width="40" height={height}
+                        fill="transparent"
+                        style={{ cursor: "pointer" }}
+                        onPointerMove={() => setHIdx(i)}
+                    />
+                ))}
+
+                {/* X-Axis Labels */}
+                {data.map((d, i) => (
+                    <text 
+                        key={i} 
+                        x={getX(i)} y={chartHeight + paddingY + 20} 
+                        textAnchor="middle" 
+                        style={{ fontSize: "11.5px", fill: hIdx === i ? "#1e293b" : "#94a3b8", fontWeight: "700", transition: "all 0.2s" }}
+                    >
+                        {d.month}
+                    </text>
+                ))}
+            </svg>
+
+            {/* Tooltip Box */}
+            {hIdx !== null && (
+                <div style={{
+                    position: "absolute",
+                    left: `${(getX(hIdx) / width) * 100}%`,
+                    top: "10%",
+                    transform: "translateX(-50%)",
+                    background: "#fff",
+                    borderRadius: "12px",
+                    padding: "12px 16px",
+                    boxShadow: "0 10px 25px rgba(0,0,0,0.12), 0 4px 8px rgba(0,0,0,0.06)",
+                    border: "1px solid #e2e8f0",
+                    pointerEvents: "none",
+                    zIndex: 100,
+                    minWidth: "140px",
+                }}>
+                    <div style={{ fontSize: "13px", fontWeight: "800", color: "#1e293b", marginBottom: "8px", borderBottom: "1px solid #f1f5f9", paddingBottom: "6px" }}>
+                        {data[hIdx].month} 2026
                     </div>
-                    <span style={{ fontSize: "9px", color: "#94a3b8" }}>{m}</span>
+                    {categories.map(cat => (
+                        <div key={cat.key} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px", marginBottom: "4px" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: cat.color }} />
+                                <span style={{ fontSize: "12px", color: "#64748b", fontWeight: "500" }}>{cat.label}</span>
+                            </div>
+                            <span style={{ fontSize: "12px", fontWeight: "800", color: "#1e293b" }}>{data[hIdx][cat.key]}</span>
+                        </div>
+                    ))}
                 </div>
-            ))}
+            )}
         </div>
     );
 }
@@ -285,7 +411,6 @@ export default function DashboardPage() {
             setTableLoading(false);
         }
     };
-
     useEffect(() => {
     fetchStats();
     
@@ -365,12 +490,19 @@ export default function DashboardPage() {
         { label: "Settings", icon: <IC.Pengaturan />, path: "/settings" },
     ];
 
-    const distrib = [
-        { label: "Applied", pct: 0, color: "#60a5fa" },
-        { label: "Accepted", pct: 0, color: "#4ade80" },
-        { label: "Rejected", pct: 0, color: "#f87171" },
-        { label: "Under Review", pct: 0, color: "#fbbf24" },
-    ];
+    const distribColors = {
+        pending: "#60a5fa",
+        accepted: "#4ade80",
+        rejected: "#f87171",
+        screening: "#818cf8",
+        interview: "#c084fc",
+    };
+
+    const finalDistrib = liveStats.status_distribution.map(d => ({
+        label: d.status === 'pending' ? 'Applied' : d.status,
+        count: d.count,
+        color: distribColors[d.status] || "#94a3b8"
+    }));
 
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"];
 
@@ -592,8 +724,8 @@ export default function DashboardPage() {
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: "20px", marginBottom: "20px" }}>
 
                         {/* Bar chart: Statistik Pendaftar */}
-                        <div style={{ background: "#fff", borderRadius: "16px", padding: "22px 24px", boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "4px" }}>
+                        <div style={{ background: "#fff", borderRadius: "12px", padding: "14px 18px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
                                 <div>
                                     <p style={{ fontSize: "15px", fontWeight: "700", color: "#1e293b" }}>Candidate Statistics</p>
                                     <p style={{ fontSize: "12px", color: "#94a3b8" }}>Last 6 months (Jan – Jun 2026)</p>
@@ -604,7 +736,7 @@ export default function DashboardPage() {
                             </div>
 
                             {/* Legend */}
-                            <div style={{ display: "flex", gap: "16px", marginBottom: "16px", marginTop: "8px" }}>
+                            <div style={{ display: "flex", gap: "16px", marginBottom: "4px", marginTop: "4px" }}>
                                 {[{ c: "#60a5fa", l: "Applied" }, { c: "#4ade80", l: "Accepted" }, { c: "#f87171", l: "Rejected" }].map((x) => (
                                     <div key={x.l} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                                         <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: x.c }} />
@@ -613,24 +745,31 @@ export default function DashboardPage() {
                                 ))}
                             </div>
 
-                            {/* Empty state notice */}
-                            <div style={{ height: "100px", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: "8px", border: "1px dashed #e2e8f0", borderRadius: "12px" }}>
-                                <IC.Laporan />
-                                <p style={{ fontSize: "13px", color: "#94a3b8" }}>No statistical data yet</p>
-                                <BarSparkline months={months} />
+                            {/* Statistics Chart */}
+                            <div style={{ marginTop: "0px" }}>
+                                {liveStats.monthly_stats?.length > 0 ? (
+                                    <LineChart data={liveStats.monthly_stats} />
+                                ) : (
+                                    <div style={{ height: "100px", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: "8px", border: "1px dashed #e2e8f0", borderRadius: "12px" }}>
+                                        <IC.Laporan />
+                                        <p style={{ fontSize: "13px", color: "#94a3b8" }}>No statistical data yet</p>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
                         {/* Donut: Distribusi Status */}
-                        <div style={{ background: "#fff", borderRadius: "16px", padding: "22px 24px", boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "14px" }}>
+                        <div style={{ background: "#fff", borderRadius: "12px", padding: "14px 18px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)", display: "flex", flexDirection: "column" }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
                                 <div>
-                                    <p style={{ fontSize: "15px", fontWeight: "700", color: "#1e293b" }}>Candidate Status Distribution</p>
-                                    <p style={{ fontSize: "12px", color: "#94a3b8" }}>From total 0 active candidates</p>
+                                    <p style={{ fontSize: "15px", fontWeight: "700", color: "#1e293b" }}>Status Distribution</p>
+                                    <p style={{ fontSize: "12px", color: "#94a3b8" }}>From total {liveStats.total_applicants} active candidates</p>
                                 </div>
-                                <button style={{ fontSize: "12.5px", color: "#4a9eff", background: "none", border: "none", cursor: "pointer", fontWeight: "600" }}>Details →</button>
+                                <button onClick={() => navigate("/users")} style={{ fontSize: "12.5px", color: "#4a9eff", background: "none", border: "none", cursor: "pointer", fontWeight: "600" }}>Details →</button>
                             </div>
-                            <DonutChart data={distrib} />
+                            <div style={{ flex: 1, display: "flex", alignItems: "center" }}>
+                                <DonutChart data={finalDistrib} total={liveStats.total_applicants} />
+                            </div>
                         </div>
                     </div>
 
@@ -748,25 +887,59 @@ export default function DashboardPage() {
                                         <p style={{ fontSize: "11.5px", color: "#94a3b8" }}>Based on number of candidates</p>
                                     </div>
                                 </div>
-                                <div style={{ padding: "28px 0", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" }}>
-                                    <div style={{ color: "#cbd5e1", width: "28px", height: "28px" }}>
-                                        <IC.Laporan />
-                                    </div>
-                                    <p style={{ fontSize: "13px", color: "#94a3b8" }}>No programs yet</p>
+                                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                                    {liveStats.popular_programs?.length > 0 ? (
+                                        liveStats.popular_programs.map((p, i) => (
+                                            <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 0" }}>
+                                                <div style={{ display: "flex", flexDirection: "column" }}>
+                                                    <span style={{ fontSize: "13px", fontWeight: "600", color: "#1e293b" }}>{p.title}</span>
+                                                    <span style={{ fontSize: "11px", color: "#94a3b8" }}>{p.type}</span>
+                                                </div>
+                                                <div style={{ background: "#eff6ff", color: "#3b82f6", padding: "2px 8px", borderRadius: "6px", fontSize: "11px", fontWeight: "700" }}>{p.count} Applicants</div>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div style={{ padding: "28px 0", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" }}>
+                                            <div style={{ color: "#cbd5e1", width: "28px", height: "28px" }}>
+                                                <IC.Laporan />
+                                            </div>
+                                            <p style={{ fontSize: "13px", color: "#94a3b8" }}>No programs yet</p>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
                             {/* Recent Activity */}
                             <div style={{ background: "#fff", borderRadius: "16px", padding: "20px 22px", boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
                                 <p style={{ fontSize: "14px", fontWeight: "700", color: "#1e293b", marginBottom: "14px" }}>Recent Activity</p>
-                                <div style={{ padding: "24px 0", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" }}>
-                                    <div style={{ color: "#cbd5e1", width: "28px", height: "28px" }}>
-                                        <IC.Bell />
-                                    </div>
-                                    <div>
-                                        <p style={{ fontSize: "13px", color: "#94a3b8" }}>No activity yet</p>
-                                        <p style={{ fontSize: "11.5px", color: "#cbd5e1", marginTop: "2px" }}>System activity will appear here</p>
-                                    </div>
+                                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                                    {liveStats.recent_activity?.length > 0 ? (
+                                        liveStats.recent_activity.map((act, i) => (
+                                            <div key={i} style={{ display: "flex", gap: "10px", position: "relative" }}>
+                                                {/* Line connection */}
+                                                {i < liveStats.recent_activity.length - 1 && <div style={{ position: "absolute", left: "11px", top: "24px", bottom: "-12px", width: "1px", background: "#f1f5f9" }} />}
+                                                <div style={{ width: "22px", height: "22px", borderRadius: "50%", background: "#f8fafc", border: "1px solid #e2e8f0", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1 }}>
+                                                    <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: act.status === 'accepted' ? '#22c55e' : '#3b82f6' }} />
+                                                </div>
+                                                <div style={{ flex: 1 }}>
+                                                    <p style={{ fontSize: "12.5px", color: "#1e293b", fontWeight: "500", lineHeight: 1.4 }}>
+                                                        <strong>{act.user}</strong> applied to <strong>{act.program}</strong>
+                                                    </p>
+                                                    <p style={{ fontSize: "10.5px", color: "#94a3b8", marginTop: "2px" }}>{new Date(act.time).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+                                                </div>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div style={{ padding: "24px 0", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" }}>
+                                            <div style={{ color: "#cbd5e1", width: "28px", height: "28px" }}>
+                                                <IC.Bell />
+                                            </div>
+                                            <div>
+                                                <p style={{ fontSize: "13px", color: "#94a3b8" }}>No activity yet</p>
+                                                <p style={{ fontSize: "11.5px", color: "#cbd5e1", marginTop: "2px" }}>System activity will appear here</p>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>

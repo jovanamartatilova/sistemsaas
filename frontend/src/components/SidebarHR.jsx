@@ -143,7 +143,7 @@ export default function SidebarHR({ user, onLogout }) {
       }}
     >
       {/* Logo */}
-      <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "4px 8px 20px" }}>
+      <Link to="/" style={{ display: "flex", alignItems: "center", gap: "10px", padding: "4px 8px 20px", textDecoration: "none" }}>
         <img
           src="/assets/images/logo.png"
           alt="EarlyPath"
@@ -152,7 +152,7 @@ export default function SidebarHR({ user, onLogout }) {
         <span style={{ fontSize: "15px", fontWeight: "800", color: "#fff", letterSpacing: "-0.3px" }}>
           EarlyPath
         </span>
-      </div>
+      </Link>
 
       {/* Nav sections */}
       {NAV_SECTIONS.map((section) => (

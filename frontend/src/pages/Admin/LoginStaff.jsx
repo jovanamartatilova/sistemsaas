@@ -69,7 +69,12 @@ export default function LoginStaff() {
       });
 
       setSuccessMsg("✓ Login berhasil!");
-      setTimeout(() => navigate(`/c/${slug}/staff/dashboard`), 1500);
+      setTimeout(() => {
+        const user = data.user;
+        if (user.role === 'hr') navigate('/hr/dashboard');
+        else if (user.role === 'mentor') navigate('/mentor/dashboard');
+        else navigate('/dashboard');
+      }, 1500);
     } catch (err) {
       setErrorMsg(err.message);
       setLoading(false);

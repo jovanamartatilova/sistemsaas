@@ -62,10 +62,13 @@ const Private = ({ children }) => <PrivateRoute>{children}</PrivateRoute>;
 
 /** Redirect ke mentor dashboard jika role === 'mentor', selain itu tampilkan DashboardPage */
 const DashboardRouter = () => {
-    const { company } = useAuthStore();
-    return company?.role === 'mentor'
-        ? <Navigate to="/mentor/dashboard" replace />
-        : <DashboardPage />;
+    const { user, company } = useAuthStore();
+    const role = user?.role || company?.role;
+    
+    if (role === 'mentor') return <Navigate to="/mentor/dashboard" replace />;
+    if (role === 'hr') return <Navigate to="/hr/dashboard" replace />;
+    
+    return <DashboardPage />;
 };
 
 // App

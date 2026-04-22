@@ -358,10 +358,33 @@ export default function UserManagement() {
                                             </div>
                                         </td>
                                         <td style={{ padding: "16px 24px" }}>
-                                            <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: u.is_active ? "#f0fdf4" : "#fff7ed", color: u.is_active ? "#16a34a" : "#d97706", padding: "4px 10px", borderRadius: "6px", fontSize: "12px", fontWeight: "700", border: `1px solid ${u.is_active ? "#bbf7d0" : "#fed7aa"}` }}>
-                                                <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: "currentColor" }} />
-                                                {u.is_active ? "Active" : "Invited"}
-                                            </div>
+                                            {u.role === 'candidate' ? (
+                                                (() => {
+                                                    // Use submission_status from API or fallback to registered
+                                                    const stat = u.submission_status || 'registered';
+                                                    
+                                                    const config = {
+                                                        pending:   { bg: "#fff7ed", col: "#d97706", brd: "#fed7aa", lbl: "Pending" },
+                                                        screening: { bg: "#eff6ff", col: "#3b82f6", brd: "#bfdbfe", lbl: "Screening" },
+                                                        interview: { bg: "#f5f3ff", col: "#7c3aed", brd: "#ddd6fe", lbl: "Interview" },
+                                                        accepted:  { bg: "#f0fdf4", col: "#16a34a", brd: "#bbf7d0", lbl: "Accepted" },
+                                                        rejected:  { bg: "#fef2f2", col: "#dc2626", brd: "#fecaca", lbl: "Rejected" },
+                                                        registered: { bg: "#f8fafc", col: "#64748b", brd: "#e2e8f0", lbl: "Registered" },
+                                                    }[stat] || { bg: "#f8fafc", col: "#64748b", brd: "#e2e8f0", lbl: stat };
+
+                                                    return (
+                                                        <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: config.bg, color: config.col, padding: "4px 10px", borderRadius: "6px", fontSize: "12px", fontWeight: "700", border: `1px solid ${config.brd}`, textTransform: "capitalize" }}>
+                                                            <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: "currentColor" }} />
+                                                            {config.lbl}
+                                                        </div>
+                                                    );
+                                                })()
+                                            ) : (
+                                                <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: u.is_active ? "#f0fdf4" : "#fff7ed", color: u.is_active ? "#16a34a" : "#d97706", padding: "4px 10px", borderRadius: "6px", fontSize: "12px", fontWeight: "700", border: `1px solid ${u.is_active ? "#bbf7d0" : "#fed7aa"}` }}>
+                                                    <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: "currentColor" }} />
+                                                    {u.is_active ? "Active" : "Invited"}
+                                                </div>
+                                            )}
                                         </td>
                                         <td style={{ padding: "16px 24px", textAlign: "right" }}>
                                             <button onClick={() => handleDelete(u.id_user)} style={{ background: "none", border: "none", color: "#cbd5e1", cursor: "pointer", padding: "6px", transition: "0.2s" }} onMouseEnter={e => e.currentTarget.style.color = "#ef4444"} onMouseLeave={e => e.currentTarget.style.color = "#cbd5e1"}><IC.Trash /></button>
@@ -414,7 +437,7 @@ export default function UserManagement() {
                                             onChange={e => setFormData({ ...formData, name: e.target.value })} 
                                             placeholder="Enter name" 
                                             disabled={inviteLoading}
-                                            style={{ width: "100%", padding: "10px 14px", borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "14px", outline: "none", opacity: inviteLoading ? 0.6 : 1, cursor: inviteLoading ? "not-allowed" : "text" }} 
+                                            style={{ width: "100%", padding: "10px 14px", borderRadius: "8px", border: "1px solid #e2e8f0", background: "#fff", color: "#1e293b", fontSize: "14px", outline: "none", opacity: inviteLoading ? 0.6 : 1, cursor: inviteLoading ? "not-allowed" : "text" }} 
                                         />
                                     </div>
                                     <div>
@@ -426,7 +449,7 @@ export default function UserManagement() {
                                             onChange={e => setFormData({ ...formData, email: e.target.value })} 
                                             placeholder="Enter email" 
                                             disabled={inviteLoading}
-                                            style={{ width: "100%", padding: "10px 14px", borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "14px", outline: "none", opacity: inviteLoading ? 0.6 : 1, cursor: inviteLoading ? "not-allowed" : "text" }} 
+                                            style={{ width: "100%", padding: "10px 14px", borderRadius: "8px", border: "1px solid #e2e8f0", background: "#fff", color: "#1e293b", fontSize: "14px", outline: "none", opacity: inviteLoading ? 0.6 : 1, cursor: inviteLoading ? "not-allowed" : "text" }} 
                                         />
                                     </div>
                                     <div>
@@ -435,7 +458,7 @@ export default function UserManagement() {
                                             value={formData.role} 
                                             onChange={e => setFormData({ ...formData, role: e.target.value })} 
                                             disabled={inviteLoading}
-                                            style={{ width: "100%", padding: "10px 14px", borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "14px", outline: "none", opacity: inviteLoading ? 0.6 : 1, cursor: inviteLoading ? "not-allowed" : "pointer" }}
+                                            style={{ width: "100%", padding: "10px 14px", borderRadius: "8px", border: "1px solid #e2e8f0", background: "#fff", color: "#1e293b", fontSize: "14px", outline: "none", opacity: inviteLoading ? 0.6 : 1, cursor: inviteLoading ? "not-allowed" : "pointer" }}
                                         >
                                             <option value="staff">Staff</option>
                                             <option value="hr">HR Specialist</option>
