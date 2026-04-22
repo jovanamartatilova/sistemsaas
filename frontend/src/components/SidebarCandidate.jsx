@@ -1,17 +1,40 @@
-import { LayoutDashboard, BookOpen, User, Award, LogOut } from "lucide-react";
+import { LayoutDashboard, BookOpen, User, Award, LogOut, Users, CheckSquare } from "lucide-react";
 import { Link, useLocation, useParams } from "react-router-dom";
+import { useAuthStore } from "../stores/authStore";
+import { getScopedRole } from "../utils/roleUtils";
 
 export default function SidebarCandidate({ userName, userPhoto, company, onLogout }) {
   const { slug } = useParams();
   const location = useLocation();
+  const { user } = useAuthStore();
   const resolvedSlug = slug || company?.slug;
 
-  const navItems = [
+  // Get scoped role from user object using utility function
+  const scopedRole = getScopedRole(user) || "member";
+  
+  console.log("SidebarCandidate - resolved scopedRole:", scopedRole);
+
+  // Base navigation items (common for all)
+  const baseNavItems = [
     { label: "Dashboard", icon: <LayoutDashboard size={16} />, to: `/c/${resolvedSlug}/dashboard` },
     { label: "Programs", icon: <BookOpen size={16} />, to: `/c/${resolvedSlug}/programs` },
     { label: "My Profile", icon: <User size={16} />, to: `/c/${resolvedSlug}/profile` },
     { label: "Certificates", icon: <Award size={16} />, to: `/c/${resolvedSlug}/certificates` },
   ];
+
+  // Role-specific items
+  const roleSpecificItems = scopedRole === "leader" 
+    ? [
+        { label: "My Tasks", icon: <CheckSquare size={16} />, to: `/c/${resolvedSlug}/leader/tasks` },
+        { label: "Team Management", icon: <Users size={16} />, to: `/c/${resolvedSlug}/leader/team` },
+      ]
+    : scopedRole === "member"
+    ? [
+        { label: "My Tasks", icon: <CheckSquare size={16} />, to: `/c/${resolvedSlug}/member/tasks` },
+      ]
+    : [];
+
+  const navItems = [...baseNavItems, ...roleSpecificItems];
 
   return (
     <aside className="w-56 min-h-screen bg-[#0f1e3a] text-white flex flex-col px-4 py-6 fixed top-0 left-0 z-10" style={{ fontFamily: 'Poppins, sans-serif' }}>
@@ -49,29 +72,34 @@ export default function SidebarCandidate({ userName, userPhoto, company, onLogou
         })}
       </nav>
 
-      {/* 3. Footer: Profile Picture instead of Company Logo (Revised) */}
-      <div className="mt-auto flex items-center gap-3 px-2">
+      {/* 3. Footer: Profile Picture with info (horizontal layout) */}
+      <div className="mt-auto flex items-center gap-3 px-2 py-3 border-t border-[#1a2f54]">
+        {/* Photo */}
         {userPhoto ? (
           <img
             src={userPhoto.startsWith('http') ? userPhoto : `http://localhost:8000/storage/${userPhoto}`}
             alt="Candidate"
-            className="w-9 h-9 rounded-full object-cover border-2 border-[#1a2f54] shadow-sm flex-shrink-0"
+            className="w-10 h-10 rounded-full object-cover border border-indigo-500 flex-shrink-0"
           />
         ) : (
-          <div className="w-9 h-9 rounded-full bg-slate-600 flex items-center justify-center text-xs font-bold text-white flex-shrink-0 border-2 border-[#1a2f54]">
+          <div className="w-10 h-10 rounded-full bg-slate-600 flex items-center justify-center text-xs font-bold text-white border border-indigo-500 flex-shrink-0">
             {userName?.charAt(0).toUpperCase() || "U"}
           </div>
         )}
+
+        {/* Name and Company */}
         <div className="flex-1 min-w-0">
-          <p className="text-xs text-slate-300 truncate font-semibold leading-tight">{userName || "User"}</p>
-          <p className="text-[10px] text-slate-500 truncate mt-0.5">{company?.name || "Candidate"}</p>
+          <p className="text-xs text-slate-300 font-semibold truncate">{userName || "User"}</p>
+          <p className="text-[10px] text-slate-500 truncate">{company?.name || "Candidate"}</p>
         </div>
+
+        {/* Logout button */}
         <button
           onClick={onLogout}
-          className="text-slate-500 hover:text-white cursor-pointer transition-colors flex-shrink-0"
+          className="text-slate-500 hover:text-red-400 cursor-pointer transition-colors flex-shrink-0"
           title="Logout"
         >
-          <LogOut size={14} />
+          <LogOut size={16} />
         </button>
       </div>
     </aside>

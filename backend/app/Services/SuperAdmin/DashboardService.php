@@ -20,7 +20,7 @@ class DashboardService
             'new_user_7days'    => User::where('role', '!=', 'super_admin')
                                        ->where('created_at', '>=', now()->subDays(7))
                                        ->count(),
-            'active_vacancies'  => Vacancy::where('status', 'publish')->count(),
+            'active_vacancies'  => Vacancy::where('status', 'published')->count(),
             'total_certificate' => Certificate::count(),
             'growth_chart'      => $this->getGrowthChart(),
             'tenant_status'     => [

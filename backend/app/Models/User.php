@@ -53,6 +53,7 @@ class User extends Authenticatable
     'is_active',
     'activation_token',
     'photo_path',
+    'id_team',
     ];
 
     /**
@@ -98,8 +99,40 @@ class User extends Authenticatable
         return $this->belongsTo(Team::class, 'id_team', 'id_team');
     }
 
+    public function teamMembership()
+    {
+        return $this->hasOne(TeamMember::class, 'id_user', 'id_user');
+    }
+
     public function submissions()
     {
         return $this->hasMany(Submission::class, 'id_user', 'id_user');
+    }
+
+    /**
+     * Get scoped role (leader or member) based on team membership
+     * Returns: 'leader', 'member', or null if not in a team
+     */
+    public function getScopedRole()
+    {
+        if (!$this->id_team) {
+            return null; // Independent, no team
+        }
+
+        // Check if user is team leader in team_members table
+        $teamMember = \App\Models\TeamMember::where('id_user', $this->id_user)
+            ->where('id_team', $this->id_team)
+            ->first();
+
+        if ($teamMember && $teamMember->role === 'leader') {
+            return 'leader';
+        }
+
+        // If in team but not leader role, they're a member
+        if ($this->id_team) {
+            return 'member';
+        }
+
+        return null;
     }
 }

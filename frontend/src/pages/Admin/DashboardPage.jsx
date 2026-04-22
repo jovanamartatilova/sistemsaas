@@ -508,7 +508,7 @@ export default function DashboardPage() {
         interview: "#c084fc",
     };
 
-    const finalDistrib = liveStats.status_distribution.map(d => ({
+    const finalDistrib = (liveStats.status_distribution || []).map(d => ({
         label: d.status === 'pending' ? 'Applied' : d.status,
         count: d.count,
         color: distribColors[d.status] || "#94a3b8"

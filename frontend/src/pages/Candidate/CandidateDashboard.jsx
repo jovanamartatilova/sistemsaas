@@ -3,6 +3,7 @@ import { LayoutDashboard, BookOpen, User, Award, LogOut, MapPin } from "lucide-r
 import { useNavigate, useParams, Link, useLocation } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
+import { getScopedRole, debugUserRole } from "../../utils/roleUtils";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
 
@@ -68,8 +69,23 @@ function CertificateCard({ subject, date }) {
 
 import SidebarCandidate from "../../components/SidebarCandidate";
 
+// --- Role-based Redirect Component ---
+// TODO: This will work once backend provides scoped_role field and creates
+// /member/tasks, /member/dashboard, /leader/dashboard, /leader/team endpoints
+function CandidateDashboardWithRedirect() {
+  const navigate = useNavigate();
+  const { slug } = useParams();
+  const { user } = useAuthStore();
+
+  // FOR NOW: Just show base dashboard
+  // Backend doesn't have scoped_role field or member/leader endpoints yet
+  console.log("DEBUG: Backend role detection pending - showing base dashboard");
+  
+  return <EarlyPathDashboard />;
+}
+
 // --- Main Dashboard ---
-export default function EarlyPathDashboard() {
+function EarlyPathDashboard() {
   const navigate = useNavigate();
   const location = useLocation();
   const [skillFilter, setSkillFilter] = useState("Active");
@@ -472,3 +488,6 @@ export default function EarlyPathDashboard() {
     </div>
   );
 }
+
+// Export the wrapper component with redirect logic
+export default CandidateDashboardWithRedirect;

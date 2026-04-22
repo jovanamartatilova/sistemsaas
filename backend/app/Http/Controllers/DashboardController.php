@@ -35,7 +35,7 @@ class DashboardController extends Controller
 
             // Lowongan Aktif = Total VACANCIES yang dipublish
             $vacanciesCount = $vacanciesQuery->clone()->count();
-
+          
             // Submissions Query untuk stats
             $statsSubmissionsQuery = Submission::whereHas('vacancy', function ($q) use ($companyId) {
                 $q->where('id_company', $companyId);
@@ -150,7 +150,6 @@ class DashboardController extends Controller
                     'status' => $s->status ?? 'pending',
                     'time' => $s->submitted_at ?? now(),
                 ]);
-
             return response()->json([
                 'active_programs' => $positionsCount, 
                 'active_vacancies' => $vacanciesCount,

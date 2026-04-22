@@ -17,6 +17,9 @@ import ForgotPasswordCandidate  from './pages/Candidate/ForgotPasswordCandidate'
 import ResetPasswordCandidate   from './pages/Candidate/ResetPasswordCandidate';
 import CompanyPublicPage        from './pages/Candidate/CompanyPublic';
 import CandidateDashboard       from './pages/Candidate/CandidateDashboard';
+import LeaderDashboard          from './pages/Candidate/LeaderDashboard';
+import LeaderTeamManagement     from './pages/Candidate/LeaderTeamManagement';
+import MemberDashboard          from './pages/Candidate/MemberDashboard';
 import SubmissionForm           from './pages/Candidate/SubmissionForm';
 import ProfileSettings          from './pages/Candidate/ProfileSettings';
 import CertificateCandidate     from './pages/Candidate/CertificateCandidate';
@@ -98,6 +101,11 @@ export default function App() {
                 {/* Candidate — Private */}
                 <Route path="/candidate/dashboard"                   element={<Private><CandidateDashboard /></Private>} />
                 <Route path="/c/:slug/dashboard"                     element={<Private><CandidateDashboard /></Private>} />
+                <Route path="/c/:slug/leader/dashboard"              element={<Private><LeaderDashboard /></Private>} />
+                <Route path="/c/:slug/leader/team"                   element={<Private><LeaderTeamManagement /></Private>} />
+                <Route path="/c/:slug/leader/tasks"                  element={<Private><MemberDashboard /></Private>} />
+                <Route path="/c/:slug/member/dashboard"              element={<Private><MemberDashboard /></Private>} />
+                <Route path="/c/:slug/member/tasks"                  element={<Private><MemberDashboard /></Private>} />
                 <Route path="/c/:slug/programs"                      element={<Private><ProgramsPage /></Private>} />
                 <Route path="/c/:slug/certificates"                  element={<Private><CertificateCandidate /></Private>} />
                 <Route path="/c/:slug/profile"                       element={<Private><ProfileSettings /></Private>} />
