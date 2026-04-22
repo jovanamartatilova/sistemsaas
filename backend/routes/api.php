@@ -21,6 +21,8 @@ use App\Http\Controllers\VacancyController;
 // Controllers — Users
 use App\Http\Controllers\CandidateController;
 use App\Http\Controllers\MentorController;
+use App\Http\Controllers\MemberTaskController;
+use App\Http\Controllers\LeaderController;
 
 // Controllers — HR
 use App\Http\Controllers\HR\HRCandidateController;
@@ -148,6 +150,25 @@ Route::prefix('candidate')->middleware(['auth:sanctum', 'ensureCandidate'])->gro
     Route::get('/skills',              [CandidateController::class, 'getSkills']);
     Route::post('/skills',             [CandidateController::class, 'addSkill']);
     Route::delete('/skills/{id_skill}', [CandidateController::class, 'deleteSkill']);
+});
+
+// Member Routes (Team Member Tasks)
+
+Route::prefix('member')->middleware(['auth:sanctum', 'ensureCandidate'])->group(function () {
+    Route::get('/dashboard',      [MemberTaskController::class, 'getDashboard']);
+    Route::get('/tasks',          [MemberTaskController::class, 'getTasks']);
+    Route::put('/tasks/{taskId}', [MemberTaskController::class, 'updateTaskStatus']);
+});
+
+// Leader Routes (Team Leader Management)
+
+Route::prefix('leader')->middleware(['auth:sanctum', 'ensureCandidate'])->group(function () {
+    Route::get('/dashboard',                [LeaderController::class, 'getDashboard']);
+    Route::get('/tasks',                    [LeaderController::class, 'getTasks']);
+    Route::put('/tasks/{taskId}',           [LeaderController::class, 'updateTaskStatus']);
+    Route::get('/team-members',             [LeaderController::class, 'getTeamMembers']);
+    Route::post('/tasks',                   [LeaderController::class, 'assignTask']);
+    Route::delete('/team-members/{memberId}', [LeaderController::class, 'removeTeamMember']);
 });
 
 // Mentor Routes
