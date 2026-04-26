@@ -35,23 +35,77 @@ export default function ScoreRecapMentor() {
   const [statCards, setStatCards] = useState([]);
   const [recapData, setRecapData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [tableLoading, setTableLoading] = useState(false);
   const [error, setError] = useState(null);
   const [logoutModal, setLogoutModal] = useState(false);
   const [search, setSearch] = useState("");
 
+  // ─── FETCH FUNCTIONS ──────────────────────────────────────────────────────
+  const fetchProfile = async () => {
+    try {
+      const profileRes = await mentorApi.getProfile();
+      setMentor(profileRes.data);
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+    }
+  };
+
+  const fetchRecap = async (searchVal = '') => {
+    try {
+      setError(null);
+      const recapRes = await mentorApi.getScoreRecap(searchVal);
+      setStatCards(recapRes.data.stats || []);
+      setRecapData(recapRes.data.recap || []);
+    } catch (error) {
+      console.error('Error fetching score recap:', error);
+      setError('Failed to load score recap: ' + (error.response?.data?.message || error.message));
+    }
+  };
+
+  const fetchData = async (searchVal = '') => {
+    try {
+      setLoading(true);
+      await Promise.all([
+        fetchProfile(),
+        fetchRecap(searchVal),
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // ─── INITIAL LOAD ─────────────────────────────────────────────────────────
   useEffect(() => {
-    fetchData();
-
-    const handleFocus = () => fetchData();
-    window.addEventListener('focus', handleFocus);
-
+    fetchData('');
+    
+    // Setup background sync
+    const cacheRef = { lastFetchTime: null };
+    const cacheDuration = 5 * 60 * 1000;
+    
+    const handleFocus = async () => {
+      if (!cacheRef.lastFetchTime) return;
+      const elapsed = Date.now() - cacheRef.lastFetchTime;
+      if (elapsed < cacheDuration) return;
+      try {
+        setLoading(true);
+        await fetchRecap(search);
+        cacheRef.lastFetchTime = Date.now();
+      } catch (error) {
+        console.error('[ScoreRecapMentor] Background sync error:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
     const cleanup = onDataRefresh(() => {
-      console.log('ScoreRecapMentor: Data refresh event received, refetching...');
-      fetchData();
+      setLoading(true);
+      fetchRecap(search).then(() => { 
+        cacheRef.lastFetchTime = Date.now(); 
+      }).finally(() => setLoading(false));
     });
-
+    
+    window.addEventListener('focus', handleFocus);
+    cacheRef.lastFetchTime = Date.now();
+    
     return () => {
       window.removeEventListener('focus', handleFocus);
       cleanup();
@@ -61,43 +115,13 @@ export default function ScoreRecapMentor() {
   // ─── SEARCH DEBOUNCE ──────────────────────────────────────────────────────
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (!loading) fetchRecap(search);
+      if (search !== '') {
+        setLoading(true);
+        fetchRecap(search).finally(() => setLoading(false));
+      }
     }, 400);
     return () => clearTimeout(timer);
   }, [search]);
-
-  // ─── FETCH FUNCTIONS ──────────────────────────────────────────────────────
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const [profileRes, recapRes] = await Promise.all([
-        mentorApi.getProfile(),
-        mentorApi.getScoreRecap(''),
-      ]);
-      setMentor(profileRes.data);
-      setStatCards(recapRes.data.stats || []);
-      setRecapData(recapRes.data.recap || []);
-    } catch (error) {
-      console.error('Error fetching score recap:', error);
-      setError('Failed to load score recap: ' + (error.response?.data?.message || error.message));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchRecap = async (searchVal) => {
-    setTableLoading(true);
-    try {
-      const res = await mentorApi.getScoreRecap(searchVal);
-      setStatCards(res.data.stats || []);
-      setRecapData(res.data.recap || []);
-    } catch (err) {
-      console.error('Error fetching recap:', err);
-    } finally {
-      setTableLoading(false);
-    }
-  };
 
   // ─── EXPORT CSV ───────────────────────────────────────────────────────────
   const handleExportCSV = () => {
@@ -228,11 +252,11 @@ export default function ScoreRecapMentor() {
                 </tr>
               </thead>
               <tbody>
-                {tableLoading ? (
+                {loading ? (
                   <tr>
                     <td colSpan={8} style={{ padding: "48px 0", textAlign: "center", color: "#94a3b8", fontSize: "13px" }}>
                       <div style={{ display: "inline-block", width: "20px", height: "20px", border: "2px solid #e2e8f0", borderTopColor: "#8b5cf6", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
-                      <div style={{ marginTop: "10px" }}>Searching...</div>
+                      <div style={{ marginTop: "10px" }}>Loading...</div>
                     </td>
                   </tr>
                 ) : recapData.length === 0 ? (

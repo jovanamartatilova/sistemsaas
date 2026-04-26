@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { mentorApi } from "../../api/mentorApi";
 import { useAuthStore } from "../../stores/authStore";
+import { useMentorStore } from "../../stores/mentorStore";
 import { SidebarMentor, MentorLoadingSpinner } from "../../components/SidebarMentor";
 import { onDataRefresh } from "../../utils/dataRefresh";
 
@@ -48,72 +49,31 @@ const s = {
 
 export default function DashboardMentor() {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [mentor, setMentor] = useState(null);
-  const [dashData, setDashData] = useState(null);
-  const [interns, setInterns] = useState([]);
   const [logoutModal, setLogoutModal] = useState(false);
-  const [search, setSearch] = useState("");              // ← TAMBAHKAN
-  const [tableLoading, setTableLoading] = useState(false); // ← TAMBAHKAN
+  const [search, setSearch] = useState("");
+  const [tableLoading, setTableLoading] = useState(false);
 
-// ─── FETCH FUNCTIONS ──────────────────────────────────────────────────────────
-const fetchDashboardData = async () => {
-  try {
-    setLoading(true);
-    setError(null);
-
-    const [profileRes, dashRes, internsRes] = await Promise.all([
-      mentorApi.getProfile(),
-      mentorApi.getDashboard(),
-      mentorApi.getInterns(''),
-    ]);
-
-    setMentor(profileRes.data);
-    setDashData(dashRes.data);
-    setInterns(internsRes.data);
-  } catch (error) {
-    console.error('Error fetching dashboard data:', error);
-
-    let errorMsg = 'Failed to load dashboard';
-    if (error.response?.status === 403) {
-      errorMsg = 'Unauthorized - You must be a mentor to access this page';
-    } else if (error.response?.status === 401) {
-      errorMsg = 'Session expired - Please login again';
-      localStorage.clear();
-      navigate('/login');
-      return;
-    } else if (error.response?.data?.error) {
-      errorMsg = error.response.data.error;
-    }
-    setError(errorMsg);
-  } finally {
-    setLoading(false);
-  }
-};
-
-const fetchInterns = async (searchVal) => {
-  setTableLoading(true);
-  try {
-    const res = await mentorApi.getInterns(searchVal);
-    setInterns(res.data);
-  } catch (err) {
-    console.error(err);
-  } finally {
-    setTableLoading(false);
-  }
-};
+  // ─── USE MENTOR STORE (caching + smart fetching) ──────────────────────────
+  const { mentor, dashData, interns, loading, error, fetchDashboard, fetchInterns, backgroundFetchDashboard } = useMentorStore();
 
 // ─── EFFECTS ─────────────────────────────────────────────────────────────────
 useEffect(() => {
-  fetchDashboardData();
+  // Fetch data dengan caching otomatis
+  // Jika cache masih valid, pakai cache. Jika tidak, fetch baru.
+  fetchDashboard();
 
-  const handleFocus = () => fetchDashboardData();
+  // Background sync saat window fokus (misal, user switch tab)
+  // Jika cache masih valid: skip fetch (no loading)
+  // Jika cache invalid: fetch in background tanpa trigger loading state
+  const handleFocus = () => {
+    console.log('[Dashboard] Window focused - checking cache validity...');
+    backgroundFetchDashboard(); // ← Use background fetch, tidak trigger loading
+  };
   window.addEventListener('focus', handleFocus);
 
   const cleanup = onDataRefresh(() => {
-    console.log('Dashboard: Data refresh event received, refetching...');
-    fetchDashboardData();
+    console.log('Dashboard: Data refresh event received, force refetching...');
+    fetchDashboard(true); // force refresh
   });
 
   return () => {
@@ -146,6 +106,7 @@ useEffect(() => {
       console.error("Logout error:", err);
     } finally {
       localStorage.clear();
+      useMentorStore.setState({ mentor: null, dashData: null, interns: [], stats: null });
       useAuthStore.setState({ isAuthenticated: false, token: null, user: null, company: null });
       setLogoutModal(false);
       navigate("/login");
@@ -199,7 +160,7 @@ useEffect(() => {
             <div style={{ background: "#fee2e2", border: "1px solid #fecaca", color: "#991b1b", padding: "16px", borderRadius: "8px", marginTop: "16px", fontSize: "14px" }}>
               <strong>Error:</strong> {error}
             </div>
-            <button onClick={fetchDashboardData} style={{ marginTop: "16px", padding: "10px 20px", background: "#8b5cf6", color: "#fff", border: "none", borderRadius: "8px", cursor: "pointer", fontFamily: "inherit", fontSize: "14px", fontWeight: 600 }}>
+            <button onClick={() => fetchDashboard(true)} style={{ marginTop: "16px", padding: "10px 20px", background: "#8b5cf6", color: "#fff", border: "none", borderRadius: "8px", cursor: "pointer", fontFamily: "inherit", fontSize: "14px", fontWeight: 600 }}>
               Try Again
             </button>
           </div>

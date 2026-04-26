@@ -65,21 +65,31 @@ export default function InputScoreMentor() {
 
   useEffect(() => {
     fetchData();
-  }, []);
-
-  useEffect(() => {
-    // Listen for data refresh events and refetch data
-    const cleanup = onDataRefresh(() => {
-      console.log('InputScoreMentor: Data refresh event received, refetching...');
-      fetchData();
+    
+    // Setup background sync
+    const cacheRef = { lastFetchTime: null };
+    const cacheDuration = 5 * 60 * 1000;
+    
+    const handleFocus = async () => {
+      if (!cacheRef.lastFetchTime) return;
+      const elapsed = Date.now() - cacheRef.lastFetchTime;
+      if (elapsed < cacheDuration) return;
+      try {
+        await fetchData();
+        cacheRef.lastFetchTime = Date.now();
+      } catch (error) {
+        console.error('[InputScoreMentor] Background sync error:', error);
+      }
+    };
+    
+    const cleanup = onDataRefresh((eventName) => {
+      if (eventName === 'scores') {
+        fetchData().then(() => { cacheRef.lastFetchTime = Date.now(); });
+      }
     });
     
-    // Also refetch when window gains focus
-    const handleFocus = () => {
-      console.log('InputScoreMentor: Window focused, refetching data...');
-      fetchData();
-    };
     window.addEventListener('focus', handleFocus);
+    cacheRef.lastFetchTime = Date.now();
     
     return () => {
       window.removeEventListener('focus', handleFocus);
