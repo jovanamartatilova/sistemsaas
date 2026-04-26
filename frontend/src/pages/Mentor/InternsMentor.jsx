@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { SidebarMentor } from "../../components/SidebarMentor";
 import { mentorApi } from "../../api/mentorApi";
 import { useAuthStore } from "../../stores/authStore";
+import { useMentorStore } from "../../stores/mentorStore";
 import { onDataRefresh } from "../../utils/dataRefresh";
 
 const s = {
@@ -47,67 +48,33 @@ const s = {
 
 export default function InternsMentor() {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
-  const [tableLoading, setTableLoading] = useState(false);
-  const [mentor, setMentor] = useState(null);
-  const [interns, setInterns] = useState([]);
-  const [stats, setStats] = useState(null);
   const [logoutModal, setLogoutModal] = useState(false);
   const [search, setSearch] = useState("");
+  const [tableLoading, setTableLoading] = useState(false);
 
-  // ─── FETCH ALL (initial load) ────────────────────────────────────────────────
-  const fetchAll = async () => {
-    try {
-      setLoading(true);
-      const [profileRes, internsRes] = await Promise.all([
-        mentorApi.getProfile(),
-        mentorApi.getInterns(''),
-      ]);
-      setMentor(profileRes.data);
-      applyInterns(internsRes.data);
-    } catch (error) {
-      console.error('Error fetching interns:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // ─── FETCH INTERNS ONLY (search) ────────────────────────────────────────────
-  const fetchInterns = async (searchVal) => {
-    setTableLoading(true);
-    try {
-      const res = await mentorApi.getInterns(searchVal);
-      applyInterns(res.data);
-    } catch (err) {
-      console.error('Error fetching interns:', err);
-    } finally {
-      setTableLoading(false);
-    }
-  };
-
-  // ─── HITUNG STATS DARI DATA INTERNS ─────────────────────────────────────────
-  const applyInterns = (internsList) => {
-    setInterns(internsList);
-    const total = internsList.length;
-    const passed = internsList.filter(i => i.status === 'Passed').length;
-    const inProgress = total - passed;
-    setStats([
-      { value: total, label: "Total Interns", sub: "From 2 programs", barColor: "#8b5cf6", barWidth: "100%" },
-      { value: passed, label: "Passed", sub: "Ready for certificate", barColor: "#22c55e", barWidth: (total > 0 ? Math.round((passed / total) * 100) : 0) + "%" },
-      { value: inProgress, label: "In Progress", sub: "Still being assessed", barColor: "#f59e0b", barWidth: (total > 0 ? Math.round((inProgress / total) * 100) : 0) + "%" },
-    ]);
-  };
+  // ─── USE MENTOR STORE (caching + smart fetching) ──────────────────────────
+  const { mentor, interns, loading, calculateStats, fetchDashboard, fetchInterns, backgroundFetchDashboard } = useMentorStore();
+  
+  // Calculate stats dari interns
+  const stats = interns.length > 0 ? calculateStats(interns) : null;
 
   // ─── EFFECTS ─────────────────────────────────────────────────────────────────
   useEffect(() => {
-    fetchAll();
+    // Fetch data dengan caching otomatis
+    fetchDashboard();
 
-    const handleFocus = () => fetchAll();
+    // Background sync saat window fokus (misal, user switch tab)
+    // Jika cache masih valid: skip fetch (no loading)
+    // Jika cache invalid: fetch in background tanpa trigger loading state
+    const handleFocus = () => {
+      console.log('[InternsMentor] Window focused - checking cache validity...');
+      backgroundFetchDashboard(); // ← Use background fetch, tidak trigger loading
+    };
     window.addEventListener('focus', handleFocus);
 
     const cleanup = onDataRefresh(() => {
-      console.log('InternsMentor: Data refresh event received, refetching...');
-      fetchAll();
+      console.log('InternsMentor: Data refresh event received, force refetching...');
+      fetchDashboard(true); // force refresh
     });
 
     return () => {
@@ -139,6 +106,7 @@ export default function InternsMentor() {
       console.error("Logout error:", err);
     } finally {
       localStorage.clear();
+      useMentorStore.setState({ mentor: null, dashData: null, interns: [], stats: null });
       useAuthStore.setState({ isAuthenticated: false, token: null, user: null, company: null });
       setLogoutModal(false);
       navigate("/login");

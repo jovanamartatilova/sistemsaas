@@ -5,6 +5,7 @@ import { mentorApi } from "../../api/mentorApi";
 import { useAuthStore } from "../../stores/authStore";
 import { broadcastDataRefresh, onDataRefresh } from "../../utils/dataRefresh";
 
+
 const s = {
   app: { display: "flex", minHeight: "100vh", background: "#f1f5f9", fontFamily: "'Poppins', 'Segoe UI', sans-serif", fontSize: "14px", color: "#1e293b", gap: 0 },
   main: { flex: 1, display: "flex", flexDirection: "column", minHeight: "100vh", gap: 0, overflow: "hidden" },
@@ -54,29 +55,18 @@ export default function EvaluationMentor() {
   const [logoutModal, setLogoutModal] = useState(false);
   const [successModal, setSuccessModal] = useState(false);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  useEffect(() => {
-    // Listen for data refresh events and refetch data
-    const cleanup = onDataRefresh(() => {
-      console.log('EvaluationMentor: Data refresh event received, refetching...');
-      fetchData();
-    });
-    
-    // Also refetch when window gains focus
-    const handleFocus = () => {
-      console.log('EvaluationMentor: Window focused, refetching data...');
-      fetchData();
-    };
-    window.addEventListener('focus', handleFocus);
-    
-    return () => {
-      window.removeEventListener('focus', handleFocus);
-      cleanup();
-    };
-  }, []);
+  // ─── FETCH FUNCTIONS ──────────────────────────────────────────────────────
+  const fetchEvaluation = async (idSubmission) => {
+    try {
+      const res = await mentorApi.getEvaluation(idSubmission);
+      if (res.data) {
+        setNarrative(res.data.narrative || "");
+        setRecommendation(res.data.recommendation || "Recommended to Pass");
+      }
+    } catch (error) {
+      console.error('Error fetching evaluation:', error);
+    }
+  };
 
   const fetchData = async () => {
     try {
@@ -105,17 +95,40 @@ export default function EvaluationMentor() {
     }
   };
 
-  const fetchEvaluation = async (idSubmission) => {
-    try {
-      const res = await mentorApi.getEvaluation(idSubmission);
-      if (res.data) {
-        setNarrative(res.data.narrative || "");
-        setRecommendation(res.data.recommendation || "Recommended to Pass");
+  // ─── EFFECTS ──────────────────────────────────────────────────────────────
+  useEffect(() => {
+    fetchData();
+    
+    // Setup background sync
+    const cacheRef = { lastFetchTime: null };
+    const cacheDuration = 5 * 60 * 1000;
+    
+    const handleFocus = async () => {
+      if (!cacheRef.lastFetchTime) return;
+      const elapsed = Date.now() - cacheRef.lastFetchTime;
+      if (elapsed < cacheDuration) return;
+      try {
+        await fetchData();
+        cacheRef.lastFetchTime = Date.now();
+      } catch (error) {
+        console.error('[EvaluationMentor] Background sync error:', error);
       }
-    } catch (error) {
-      console.error('Error fetching evaluation:', error);
-    }
-  };
+    };
+    
+    const cleanup = onDataRefresh((eventName) => {
+      if (eventName === 'evaluation') {
+        fetchData().then(() => { cacheRef.lastFetchTime = Date.now(); });
+      }
+    });
+    
+    window.addEventListener('focus', handleFocus);
+    cacheRef.lastFetchTime = Date.now();
+    
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      cleanup();
+    };
+  }, []);
 
   const handleInternChange = (idSubmission, name) => {
     setSelectedSubmissionId(idSubmission);

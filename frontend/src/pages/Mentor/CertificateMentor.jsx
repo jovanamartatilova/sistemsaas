@@ -40,35 +40,12 @@ export default function CertificateMentor() {
   const [statCards, setStatCards] = useState([]);
   const [certList, setCertList] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [tableLoading, setTableLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [generating, setGenerating] = useState({});
   const [previewing, setPreviewing] = useState({});
   const [sending, setSending] = useState({});
   const [regenerateSuccess, setRegenerateSuccess] = useState({});
   const [logoutModal, setLogoutModal] = useState(false);
-
-  // ─── EFFECTS ─────────────────────────────────────────────────────────────
-  useEffect(() => {
-    fetchAll();
-
-    const handleFocus = () => fetchAll();
-    window.addEventListener('focus', handleFocus);
-
-    const cleanup = onDataRefresh(() => fetchAll());
-
-    return () => {
-      window.removeEventListener('focus', handleFocus);
-      cleanup();
-    };
-  }, []);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (!loading) fetchCerts(search);
-    }, 400);
-    return () => clearTimeout(timer);
-  }, [search]);
 
   // ─── FETCH ───────────────────────────────────────────────────────────────
   const applyCerts = (data) => {
@@ -80,33 +57,93 @@ export default function CertificateMentor() {
     setCertList(transformed);
   };
 
-  const fetchAll = async () => {
+  const fetchProfile = async () => {
     try {
-      setLoading(true);
-      const [profileRes, certRes] = await Promise.all([
-        mentorApi.getProfile(),
-        mentorApi.getCertificates(''),
-      ]);
+      const profileRes = await mentorApi.getProfile();
       setMentor(profileRes.data);
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+    }
+  };
+
+  const fetchCerts = async (searchVal = '') => {
+    try {
+      const certRes = await mentorApi.getCertificates(searchVal);
       applyCerts(certRes.data);
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error('Error fetching certificates:', error);
+    }
+  };
+
+  const fetchAll = async (searchVal = '') => {
+    try {
+      setLoading(true);
+      await Promise.all([
+        fetchProfile(),
+        fetchCerts(searchVal),
+      ]);
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchCerts = async (searchVal) => {
-    setTableLoading(true);
-    try {
-      const res = await mentorApi.getCertificates(searchVal);
-      applyCerts(res.data);
-    } catch (err) {
-      console.error('Error fetching certs:', err);
-    } finally {
-      setTableLoading(false);
-    }
-  };
+  // ─── EFFECTS ─────────────────────────────────────────────────────────────
+  // Initial load
+  useEffect(() => {
+    fetchAll('');
+    
+    // Setup background sync AFTER fetchAll is defined
+    const cacheRef = { lastFetchTime: null };
+    const cacheDuration = 5 * 60 * 1000;
+    
+    const handleFocus = async () => {
+      if (!cacheRef.lastFetchTime) return;
+      const elapsed = Date.now() - cacheRef.lastFetchTime;
+      if (elapsed < cacheDuration) {
+        console.log('[CertificateMentor] Cache still valid, skipping background sync');
+        return;
+      }
+      console.log('[CertificateMentor] Cache invalid, doing background sync');
+      try {
+        setLoading(true);
+        await fetchCerts(search);
+        cacheRef.lastFetchTime = Date.now();
+      } catch (error) {
+        console.error('[CertificateMentor] Background sync error:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    const cleanup = onDataRefresh((eventName) => {
+      if (eventName === 'certificate') {
+        console.log('[CertificateMentor] Certificate event received, force syncing...');
+        setLoading(true);
+        fetchCerts(search).then(() => {
+          cacheRef.lastFetchTime = Date.now();
+        }).finally(() => setLoading(false));
+      }
+    });
+    
+    window.addEventListener('focus', handleFocus);
+    cacheRef.lastFetchTime = Date.now();
+    
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      cleanup();
+    };
+  }, []);
+
+  // ─── SEARCH DEBOUNCE ──────────────────────────────────────────────────────
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (search !== '') {
+        setLoading(true);
+        fetchCerts(search).finally(() => setLoading(false));
+      }
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   // ─── ACTIONS ─────────────────────────────────────────────────────────────
   const handleGenerateCertificate = async (idSubmission) => {
@@ -116,7 +153,9 @@ export default function CertificateMentor() {
       broadcastDataRefresh('certificate');
       setRegenerateSuccess(prev => ({ ...prev, [idSubmission]: true }));
       setTimeout(() => setRegenerateSuccess(prev => ({ ...prev, [idSubmission]: false })), 3000);
-      fetchAll();
+      setLoading(true);
+      await fetchCerts(search);
+      setLoading(false);
     } catch (error) {
       console.error('Error generating certificate:', error);
       alert('Failed to generate certificate');
@@ -130,7 +169,9 @@ export default function CertificateMentor() {
       setSending(prev => ({ ...prev, [idSubmission]: true }));
       await mentorApi.sendCertificate(idSubmission);
       broadcastDataRefresh('certificate');
-      fetchAll();
+      setLoading(true);
+      await fetchCerts(search);
+      setLoading(false);
     } catch (error) {
       console.error('Error sending certificate:', error);
       alert('Failed to send certificate');
@@ -250,11 +291,11 @@ export default function CertificateMentor() {
                   </tr>
                 </thead>
                 <tbody>
-                  {tableLoading ? (
+                  {loading ? (
                     <tr>
                       <td colSpan={6} style={{ padding: "48px 0", textAlign: "center", color: "#94a3b8", fontSize: "13px" }}>
                         <div style={{ display: "inline-block", width: "20px", height: "20px", border: "2px solid #e2e8f0", borderTopColor: "#8b5cf6", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
-                        <div style={{ marginTop: "10px" }}>Searching...</div>
+                        <div style={{ marginTop: "10px" }}>Loading...</div>
                       </td>
                     </tr>
                   ) : certList.length === 0 ? (

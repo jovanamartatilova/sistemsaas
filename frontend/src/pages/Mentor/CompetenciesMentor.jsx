@@ -52,29 +52,15 @@ export default function CompetenciesMentor() {
   const [loading, setLoading] = useState(true);
   const [logoutModal, setLogoutModal] = useState(false);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  useEffect(() => {
-    // Listen for data refresh events and refetch data
-    const cleanup = onDataRefresh(() => {
-      console.log('CompetenciesMentor: Data refresh event received, refetching...');
-      fetchData();
-    });
-    
-    // Also refetch when window gains focus
-    const handleFocus = () => {
-      console.log('CompetenciesMentor: Window focused, refetching data...');
-      fetchData();
-    };
-    window.addEventListener('focus', handleFocus);
-    
-    return () => {
-      window.removeEventListener('focus', handleFocus);
-      cleanup();
-    };
-  }, []);
+  // ─── FETCH FUNCTIONS ──────────────────────────────────────────────────────
+  const fetchCompetencies = async (idSubmission) => {
+    try {
+      const res = await mentorApi.getCompetencies(idSubmission);
+      setCompetencies(res.data);
+    } catch (error) {
+      console.error('Error fetching competencies:', error);
+    }
+  };
 
   const fetchData = async () => {
     try {
@@ -111,14 +97,38 @@ export default function CompetenciesMentor() {
     }
   };
 
-  const fetchCompetencies = async (idSubmission) => {
-    try {
-      const res = await mentorApi.getCompetencies(idSubmission);
-      setCompetencies(res.data);
-    } catch (error) {
-      console.error('Error fetching competencies:', error);
-    }
-  };
+  // ─── EFFECTS ──────────────────────────────────────────────────────────────
+  useEffect(() => {
+    fetchData();
+    
+    // Setup background sync
+    const cacheRef = { lastFetchTime: null };
+    const cacheDuration = 5 * 60 * 1000;
+    
+    const handleFocus = async () => {
+      if (!cacheRef.lastFetchTime) return;
+      const elapsed = Date.now() - cacheRef.lastFetchTime;
+      if (elapsed < cacheDuration) return;
+      try {
+        await fetchData();
+        cacheRef.lastFetchTime = Date.now();
+      } catch (error) {
+        console.error('[CompetenciesMentor] Background sync error:', error);
+      }
+    };
+    
+    const cleanup = onDataRefresh(() => {
+      fetchData().then(() => { cacheRef.lastFetchTime = Date.now(); });
+    });
+    
+    window.addEventListener('focus', handleFocus);
+    cacheRef.lastFetchTime = Date.now();
+    
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      cleanup();
+    };
+  }, []);
 
   const handleSelectIntern = (idSubmission, name) => {
     setSelectedSubmissionId(idSubmission);
