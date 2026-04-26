@@ -68,6 +68,33 @@ function CertificateCard({ subject, date }) {
 }
 
 import SidebarCandidate from "../../components/SidebarCandidate";
+// --- Task Card ---
+function TaskItem({ title, status, deadline }) {
+  const statusStyles = {
+    "Done": "bg-emerald-50 text-emerald-600 border-emerald-200",
+    "In Progress": "bg-blue-50 text-blue-600 border-blue-200",
+    "Pending": "bg-amber-50 text-amber-600 border-amber-200",
+  };
+  const dotColors = {
+    "Done": "bg-emerald-500",
+    "In Progress": "bg-blue-500",
+    "Pending": "bg-amber-400",
+  };
+  return (
+    <div className="flex items-center justify-between py-3 border-b border-slate-100 last:border-0">
+      <div className="flex items-start gap-3">
+        <span className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${dotColors[status]}`} />
+        <div>
+          <p className="text-sm font-medium text-slate-700">{title}</p>
+          {deadline && <p className="text-xs text-slate-400 mt-0.5">Due: {deadline}</p>}
+        </div>
+      </div>
+      <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium border whitespace-nowrap ${statusStyles[status]}`}>
+        {status}
+      </span>
+    </div>
+  );
+}
 
 // --- Role-based Redirect Component ---
 // TODO: This will work once backend provides scoped_role field and creates
@@ -329,24 +356,7 @@ function EarlyPathDashboard() {
                   </span>
                 </div>
               </div>
-              <div className="flex gap-6 flex-shrink-0 divide-x divide-slate-100">
-                {[
-                  { value: `${competencies?.length || 0}`, label: "Competencies" },
-                ].map((stat, i) => (
-                  <div key={i} className="text-center px-6 first:pl-0 last:pr-0">
-                    <p className="text-2xl font-bold text-slate-800">{stat.value}</p>
-                    <p className="text-xs text-slate-400 mt-0.5">{stat.label}</p>
-                    {stat.bar && (
-                      <div className="mt-1.5 w-full h-1.5 bg-slate-100 rounded-full">
-                        <div
-                          className="h-1.5 bg-indigo-500 rounded-full"
-                          style={{ width: `${profile?.overall_progress || 0}%` }}
-                        />
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
+        
             </div>
 
             {/* Main Content Grid */}
@@ -366,8 +376,8 @@ function EarlyPathDashboard() {
                         { label: "End Date", value: vacancy?.end_date ? new Date(vacancy.end_date).toLocaleDateString('en-US') : "-" },
                         { label: "Status", value: formatStatus(apprentice?.status), badge: true, isStatus: true },
                       ].map((row, i) => (
-                        <div key={i} className="flex justify-between items-center text-sm">
-                          <span className="text-slate-400">{row.label}</span>
+                        <div key={i} className="flex justify-between items-center text-sm py-1.5 border-b border-slate-50 last:border-0">
+                        <span className="text-slate-400 font-medium">{row.label}</span>
                           {row.badge ? (
                             <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium border ${getStatusColor(apprentice?.status)}`}>
                               ● {row.value}
@@ -397,13 +407,12 @@ function EarlyPathDashboard() {
                           : 'TBD';
 
                         return (
-                          <div key={idx} className="border border-slate-100 rounded-lg p-3 space-y-2">
-                            <div className="flex justify-between items-start">
-                              <div>
-                                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Interview {idx + 1}</p>
-                                <p className="text-sm font-medium text-slate-700 mt-1">Date & Time</p>
-                                <p className="text-sm text-slate-600">{interviewDateTime}</p>
-                              </div>
+                        <div key={idx} className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <p className="text-xs font-bold text-indigo-500 uppercase tracking-widest">Interview {idx + 1}</p>
+                              <p className="text-sm font-semibold text-slate-700 mt-1">{interviewDateTime}</p>
+                            </div>
                               <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium border whitespace-nowrap ${interview.status === 'passed' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' :
                                 interview.status === 'failed' ? 'bg-rose-50 text-rose-600 border-rose-200' :
                                   'bg-blue-50 text-blue-600 border-blue-200'
@@ -432,8 +441,21 @@ function EarlyPathDashboard() {
 
               {/* Right Column */}
               <div className="flex flex-col gap-5">
+                  {/* My Tasks — Dummy UI */}
+                <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+                  <div className="flex items-center justify-between mb-1">
+                    <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400">My Tasks</h2>
+                    <span className="text-xs bg-indigo-50 text-indigo-600 border border-indigo-200 px-2.5 py-0.5 rounded-full font-medium">3 Active</span>
+                  </div>
+                  <div className="mt-3">
+                    <TaskItem title="Setup React Project Structure" status="Done" deadline="May 5, 2026" />
+                    <TaskItem title="Complete Onboarding Documentation" status="In Progress" deadline="May 10, 2026" />
+                    <TaskItem title="Build Landing Page Component" status="Pending" deadline="May 20, 2026" />
+                  </div>
+                  <p className="text-xs text-slate-400 mt-3 italic">* Task management feature coming soon</p>
+                </div>
                 {/* Competencies */}
-                <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm text-left">
+                 <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm text-left">
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400">Competencies</h2>
                     <div className="flex gap-1 bg-slate-100 rounded-lg p-1">
