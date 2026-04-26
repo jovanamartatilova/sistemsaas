@@ -31,8 +31,8 @@ const s = {
   cs: { fontSize: "12px", color: "#94a3b8", marginTop: "2px" },
   table: { width: "100%", borderCollapse: "collapse", tableLayout: "fixed" },
   thead: { background: "#f8fafc", borderBottom: "1px solid #e2e8f0" },
-  th: { padding: "10px 16px", textAlign: "left", fontSize: "10px", fontWeight: 700, color: "#94a3b8", letterSpacing: "0.06em", textTransform: "uppercase", whiteSpace: "nowrap" },
-  td: { padding: "13px 16px", fontSize: "13px", color: "#334155", borderBottom: "1px solid #f8fafc", verticalAlign: "middle" },
+  th: { padding: "10px 16px", textAlign: "center", fontSize: "10px", fontWeight: 700, color: "#94a3b8", letterSpacing: "0.06em", textTransform: "uppercase", whiteSpace: "nowrap" },
+  td: { padding: "13px 16px", fontSize: "13px", color: "#334155", borderBottom: "1px solid #f8fafc", verticalAlign: "middle", textAlign: "center" },
   compName: { fontWeight: 600, color: "#0f172a", fontSize: "13px" },
   levelBadge: (lvl) => ({ fontSize: "10px", fontWeight: 600, padding: "2px 8px", borderRadius: "20px", background: levelColorMap[lvl]?.bg, color: levelColorMap[lvl]?.color }),
   statusBadge: (status) => ({

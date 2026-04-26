@@ -21,8 +21,8 @@ const s = {
   ct: { fontSize: "15px", fontWeight: 700, color: "#0f172a" },
   table: { width: "100%", borderCollapse: "collapse", tableLayout: "fixed" },
   thead: { background: "#f8fafc", borderBottom: "1px solid #e2e8f0" },
-  th: { padding: "10px 16px", textAlign: "left", fontSize: "10px", fontWeight: 700, color: "#94a3b8", letterSpacing: "0.06em", textTransform: "uppercase", whiteSpace: "nowrap" },
-  td: { padding: "13px 16px", fontSize: "13px", color: "#334155", borderBottom: "1px solid #f8fafc", verticalAlign: "middle" },
+  th: { padding: "10px 16px", textAlign: "center", fontSize: "10px", fontWeight: 700, color: "#94a3b8", letterSpacing: "0.06em", textTransform: "uppercase", whiteSpace: "nowrap" },
+  td: { padding: "13px 16px", fontSize: "13px", color: "#334155", borderBottom: "1px solid #f8fafc", verticalAlign: "middle", textAlign: "center" },
   cname: { fontWeight: 600, color: "#0f172a", fontSize: "13px", display: "block" },
   badge: (bg, color) => ({ display: "inline-flex", padding: "3px 9px", borderRadius: "6px", fontSize: "12px", fontWeight: 500, background: bg, color }),
   typeBadge: (isTeam) => ({ fontSize: "12px", color: isTeam ? "#1e40af" : "#334155", background: isTeam ? "#dbeafe" : "#f1f5f9", padding: "2px 8px", borderRadius: "5px", display: "inline-block" }),
@@ -244,7 +244,7 @@ export default function ScoreRecapMentor() {
                 ) : (
                   recapData.map((row, i) => (
                     <tr key={i}>
-                      <td style={s.td}><span style={s.cname}>{row.name}</span></td>
+                      <td style={{...s.td, textAlign: "left"}}><span style={s.cname}>{row.name}</span></td>
                       <td style={s.td}>{row.position}</td>
                       <td style={s.td}>{row.program}</td>
                       <td style={s.td}><span style={s.typeBadge(row.type === "Team")}>{row.type}</span></td>

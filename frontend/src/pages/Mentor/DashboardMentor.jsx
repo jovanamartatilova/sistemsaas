@@ -34,8 +34,8 @@ const s = {
   tableWrap: { overflowX: "auto" },
   table: { width: "100%", borderCollapse: "collapse", tableLayout: "fixed" },
   thead: { background: "#f8fafc", borderBottom: "1px solid #e2e8f0" },
-  th: { padding: "10px 16px", textAlign: "left", fontSize: "10px", fontWeight: 700, color: "#94a3b8", letterSpacing: "0.06em", textTransform: "uppercase", whiteSpace: "nowrap" },
-  td: { padding: "13px 16px", fontSize: "13px", color: "#334155", borderBottom: "1px solid #f8fafc", verticalAlign: "middle" },
+  th: { padding: "10px 16px", textAlign: "center", fontSize: "10px", fontWeight: 700, color: "#94a3b8", letterSpacing: "0.06em", textTransform: "uppercase", whiteSpace: "nowrap" },
+  td: { padding: "13px 16px", fontSize: "13px", color: "#334155", borderBottom: "1px solid #f8fafc", verticalAlign: "middle", textAlign: "center" },
   cname: { fontWeight: 600, color: "#0f172a", fontSize: "13px", display: "block" },
   cemail: { fontSize: "11px", color: "#94a3b8", display: "block", marginTop: "1px" },
   progWrap: { width: "80px", height: "6px", background: "#f1f5f9", borderRadius: "10px", overflow: "hidden" },
@@ -269,7 +269,10 @@ useEffect(() => {
                 </colgroup>
                 <thead style={s.thead}>
                   <tr>
-                    <th style={s.th}>INTERN</th><th style={s.th}>POSITION</th><th style={s.th}>PROGRAM</th><th style={s.th}>TYPE</th>
+                    <th style={s.th}>INTERN</th>
+                    <th style={s.th}>POSITION</th>
+                    <th style={s.th}>PROGRAM</th>
+                    <th style={s.th}>TYPE</th>
                     <th style={s.th}>AVG SCORE</th>
                   </tr>
                 </thead>
@@ -298,7 +301,7 @@ useEffect(() => {
                   ) : (
                     interns.slice(0, 4).map((intern, i) => (
                     <tr key={i}>
-                      <td style={s.td}><span style={s.cname}>{intern.name}</span><span style={s.cemail}>{intern.email}</span></td>
+                    <td style={{...s.td, textAlign: "left"}}><span style={s.cname}>{intern.name}</span><span style={s.cemail}>{intern.email}</span></td>
                       <td style={s.td}>{intern.position}</td>
                       <td style={s.td}><span style={{ fontSize: "12px", color: "#64748b" }}>{intern.program || 'Regular'}</span></td>
                       <td style={s.td}><span style={{ fontSize: "12px", color: intern.type === "Team" ? "#1e40af" : "#334155", background: intern.type === "Team" ? "#dbeafe" : "#f1f5f9", padding: "2px 8px", borderRadius: "5px" }}>{intern.type}</span></td>
