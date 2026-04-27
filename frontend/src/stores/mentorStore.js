@@ -35,19 +35,21 @@ export const useMentorStore = create((set, get) => ({
     try {
       set({ loading: true, error: null });
       
-      const [profileRes, dashRes, internsRes] = await Promise.all([
-        mentorApi.getProfile(),
-        mentorApi.getDashboard(),
-        mentorApi.getInterns(''),
-      ]);
+        const [profileRes, dashRes, internsRes, recapRes] = await Promise.all([
+          mentorApi.getProfile(),
+          mentorApi.getDashboard(),
+          mentorApi.getInterns(''),
+          mentorApi.getScoreRecap(''),
+        ]);
 
-      set({
-        mentor: profileRes.data,
-        dashData: dashRes.data,
-        interns: internsRes.data,
-        lastFetchTime: Date.now(),
-        loading: false,
-      });
+        set({
+          mentor: profileRes.data,
+          dashData: dashRes.data,
+          interns: internsRes.data,
+          recapInterns: recapRes.data.recap || [],
+          lastFetchTime: Date.now(),
+          loading: false,
+        });
     } catch (error) {
       console.error('Error fetching dashboard:', error);
       
@@ -79,21 +81,21 @@ export const useMentorStore = create((set, get) => ({
     console.log('[MentorStore] Cache invalid, doing background fetch without loading state');
     
     try {
-      const [profileRes, dashRes, internsRes] = await Promise.all([
-        mentorApi.getProfile(),
-        mentorApi.getDashboard(),
-        mentorApi.getInterns(''),
-      ]);
+      const [profileRes, dashRes, internsRes, recapRes] = await Promise.all([
+      mentorApi.getProfile(),
+      mentorApi.getDashboard(),
+      mentorApi.getInterns(''),
+      mentorApi.getScoreRecap(''),
+    ]);
 
-      // Update data tapi JANGAN set loading state (tetap background)
-      set({
-        mentor: profileRes.data,
-        dashData: dashRes.data,
-        interns: internsRes.data,
-        lastFetchTime: Date.now(),
-        error: null,
-        // Intentionally NOT updating loading state
-      });
+    set({
+      mentor: profileRes.data,
+      dashData: dashRes.data,
+      interns: internsRes.data,
+      recapInterns: recapRes.data.recap || [],
+      lastFetchTime: Date.now(),
+      loading: false,
+    });
       console.log('[MentorStore] Background fetch completed');
     } catch (error) {
       console.error('Background fetch error:', error);
@@ -160,4 +162,16 @@ export const useMentorStore = create((set, get) => ({
   invalidateCache: () => {
     set({ lastFetchTime: null });
   },
+
+  recapInterns: [],
+  // ─── FETCH RECAP INTERNS (for dashboard table) ────────────────────────────
+fetchRecapInterns: async (search = '') => {
+  try {
+    const res = await mentorApi.getScoreRecap(search);
+    set({ recapInterns: res.data.recap || [] });
+  } catch (error) {
+    console.error('Error fetching recap interns:', error);
+    throw error;
+  }
+},
 }));
