@@ -19,36 +19,63 @@ class HRScreeningController extends Controller
         $query = Submission::whereHas('vacancy', fn($q) =>
             $q->where('id_company', $companyId)
         )->whereIn('status', ['pending', 'screening'])
-         ->with(['user', 'position', 'vacancy']);
+        ->with(['user', 'position', 'vacancy']);
 
         // Filter by position
         if ($request->filled('id_position')) {
             $query->where('id_position', $request->id_position);
         }
 
-        // Search - mencari di user, position, dan vacancy
+        // Search
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->whereHas('user', fn($sq) =>
-                    $sq->where('name', 'like', "%$search%")
-                      ->orWhere('email', 'like', "%$search%")
-                  )
-                  ->orWhereHas('position', fn($sq) =>
-                    $sq->where('name', 'like', "%$search%")
-                      ->orWhere('description', 'like', "%$search%")
-                  )
-                  ->orWhereHas('vacancy', fn($sq) =>
-                    $sq->where('title', 'like', "%$search%")
-                      ->orWhere('description', 'like', "%$search%")
-                      ->orWhere('requirements', 'like', "%$search%")
-                  )
-                  ->orWhere('hr_notes', 'like', "%$search%");
-            });
-        }
 
-        $list = $query->orderByDesc('submitted_at')->get()
-            ->map(fn($s) => $this->formatScreening($s));
+            try {
+                $embeddingService = new \App\Services\HR\EmbeddingService();
+                $queryEmbedding   = $embeddingService->generateEmbedding($search);
+
+                $list = $query->get()
+                    ->map(function ($s) use ($queryEmbedding) {
+                        $stored = $s->embedding;
+                        if (is_string($stored)) {
+                            $stored = json_decode($stored, true);
+                        }
+                        return [
+                            'submission' => $s,
+                            'score'      => !empty($stored)
+                                ? $this->cosineSimilarity($queryEmbedding, $stored)
+                                : 0.0,
+                        ];
+                    })
+                    ->sortByDesc('score')
+                    ->map(fn($r) => array_merge(
+                        $this->formatScreening($r['submission']),
+                        ['similarity_score' => round($r['score'], 3)]
+                    ))
+                    ->values();
+
+            } catch (\Exception $e) {
+                \Log::error('Semantic search failed: ' . $e->getMessage());
+
+                // Fallback ke LIKE kalau Ollama mati
+                $query->where(function($q) use ($search) {
+                    $q->whereHas('user', fn($sq) =>
+                        $sq->where('name', 'like', "%$search%")
+                        ->orWhere('email', 'like', "%$search%")
+                    )->orWhereHas('position', fn($sq) =>
+                        $sq->where('name', 'like', "%$search%")
+                    )->orWhere('hr_notes', 'like', "%$search%")
+                    ->orWhere('motivation_message', 'like', "%$search%");
+                });
+
+                $list = $query->orderByDesc('submitted_at')->get()
+                    ->map(fn($s) => $this->formatScreening($s));
+            }
+
+        } else {
+            $list = $query->orderByDesc('submitted_at')->get()
+                ->map(fn($s) => $this->formatScreening($s));
+        }
 
         // Stats
         $base = Submission::whereHas('vacancy', fn($q) =>
@@ -117,23 +144,49 @@ class HRScreeningController extends Controller
         ]);
     }
 
+    private function extractCvText(Submission $s): string
+{
+    if (empty($s->cv_file)) return '';
+    $path = storage_path('app/public/' . $s->cv_file);
+    if (!file_exists($path)) return '';
+
+    try {
+        $parser = new \Smalot\PdfParser\Parser();
+        $raw    = $parser->parseFile($path)->getText();
+        return mb_substr(preg_replace('/\s+/', ' ', trim($raw)), 0, 4000);
+    } catch (\Exception $e) {
+        return '';
+    }
+}
+
     /**
      * POST /hr/screening/{id}/notes
      * Simpan HR notes untuk kandidat
      */
     public function saveNotes(Request $request, string $id)
     {
-        $request->validate([
-            'notes' => 'required|string|max:1000',
-        ]);
+        $request->validate(['notes' => 'required|string|max:1000']);
 
         $submission = $this->findSubmission($id, $request->user()->id_company);
-
         if (!$submission) {
             return response()->json(['success' => false, 'message' => 'Candidate not found'], 404);
         }
 
         $submission->update(['hr_notes' => $request->notes]);
+
+        // ── TAMBAHAN: refresh embedding karena hr_notes masuk ke teks ──
+        try {
+            $service   = new \App\Services\HR\EmbeddingService();
+            $text      = $service->prepareCandidateText($submission->fresh(['user', 'position', 'vacancy']));
+            $embedding = $service->generateEmbedding($text);
+
+            \DB::table('submissions')
+                ->where('id_submission', $id)
+                ->update(['embedding' => json_encode($embedding)]);
+        } catch (\Exception $e) {
+            // Log saja, jangan gagalkan response
+            \Log::warning("Embedding refresh failed for $id: " . $e->getMessage());
+        }
 
         return response()->json([
             'success' => true,
@@ -290,6 +343,24 @@ try {
 private function yesNo($value): string
 {
     return !empty($value) ? 'Yes' : 'No';
+}
+
+private function cosineSimilarity(array $a, array $b): float
+{
+    if (count($a) !== count($b)) return 0.0;
+
+    $dot  = 0.0;
+    $magA = 0.0;
+    $magB = 0.0;
+
+    foreach ($a as $i => $val) {
+        $dot  += $val * $b[$i];
+        $magA += $val * $val;
+        $magB += $b[$i] * $b[$i];
+    }
+
+    $denom = sqrt($magA) * sqrt($magB);
+    return $denom > 0 ? $dot / $denom : 0.0;
 }
 
     private function formatScreening(Submission $s): array

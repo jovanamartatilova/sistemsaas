@@ -20,12 +20,14 @@ class Submission extends Model
         'status', 'submitted_at',
         'hr_notes', 'screening_status',
         'id_user_mentor',
+        'embedding',
     ];
 
     protected $casts = [
         'submitted_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
+        'embedding'    => 'array',
     ];
 
     public function assessment()

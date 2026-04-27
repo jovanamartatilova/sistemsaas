@@ -4,293 +4,234 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Company;
-use App\Models\Submission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
     /**
-     * Register a new student
+     * 1. REGISTER UNIFIED (dari Login.jsx)
+     * User daftar dengan name, email, password
      */
-    public function registerStudent(Request $request)
+    public function register(Request $request)
     {
         try {
             $validated = $request->validate([
-                'name' => 'required|string|max:50',
-                'email' => 'required|string|email|max:50|unique:users',
-                'password' => 'required|string|min:6|confirmed',
+                'name' => 'required|string|max:100',
+                'email' => 'required|email|max:100|unique:users',
+                'password' => 'required|string|min:8|confirmed',
             ]);
 
+            do {
+                $id = 'USR' . strtoupper(substr(uniqid(), -7));
+            } while (User::where('id_user', $id)->exists());
+
             $user = User::create([
-                'id_user' => $this->generateUserId(),
+                'id_user' => $id,
                 'name' => $validated['name'],
                 'email' => $validated['email'],
                 'password' => Hash::make($validated['password']),
-                'role' => 'student',
+                'is_active' => true,
             ]);
 
             $token = $user->createToken('auth_token')->plainTextToken;
 
             return response()->json([
-                'message' => 'Student registered successfully',
-                'user' => $user,
+                'message' => 'Registration successful',
+                'user' => [
+                    'id_user' => $user->id_user,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                ],
                 'token' => $token,
-            ], 201);
-        } catch (ValidationException $e) {
-            return response()->json([
-                'message' => 'Validation failed',
-                'errors' => $e->errors(),
-            ], 422);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Registration failed',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
-    }
-
-    /**
-     * Register a new company
-     */
-    public function register(Request $request)
-    {
-        $validated = $request->validate([
-            'name' => 'required|string|max:50',
-            'email' => 'required|email|max:50|unique:companies',
-            'address' => 'required|string|max:100',
-            'password' => 'required|string|min:6|confirmed',
-            'logo' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
-        ]);
-
-        // Auto-generate slug dari nama
-        $slug = Str::slug($validated['name']);
-        $original = $slug;
-        $i = 1;
-        while (Company::where('slug', $slug)->exists()) {
-            $slug = $original . '-' . $i++;
-        }
-
-        // Generate id_company
-        do {
-            $id = 'CMP' . strtoupper(substr(uniqid(), -7));
-        } while (Company::where('id_company', $id)->exists());
-
-        $logoPath = null;
-        if ($request->hasFile('logo')) {
-            $logoPath = $request->file('logo')->store('logos', 'public');
-        }
-
-        $company = Company::create([
-            'id_company' => $id,
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'address' => $validated['address'],
-            'slug' => $slug,
-            'password' => Hash::make($validated['password']),
-            'logo_path' => $logoPath,
-        ]);
-
-        $token = $company->createToken('company_token')->plainTextToken;
-
-        return response()->json([
-            'message' => 'Perusahaan berhasil terdaftar',
-            'company' => $company,
-            'token' => $token,
-            'public_url' => '/c/' . $slug, // kirim ke frontend
-        ], 201);
-    }
-
-    /**
-     * Register a new candidate
-     */
-    public function registerCandidate(Request $request, $slug)
-    {
-        try {
-            // Cari company berdasarkan slug
-            $company = Company::where('slug', $slug)->firstOrFail();
-
-            $validated = $request->validate([
-                'first_name' => 'required|string|max:50',
-                'last_name' => 'required|string|max:50',
-                'email' => 'required|email|max:50',
-                'phone' => 'required|string|max:13',
-                'password' => 'required|string|min:8|confirmed',
-            ]);
-
-            // Check if email already exists
-            $existingUser = User::where('email', $validated['email'])
-                ->where('role', 'candidate')
-                ->first();
-
-            if ($existingUser) {
-                // Email sudah terdaftar - verify password
-                if (!Hash::check($validated['password'], $existingUser->password)) {
-                    return response()->json([
-                        'message' => 'Email or password is incorrect',
-                    ], 401);
-                }
-
-                // Password cocok - update company jika belum ada
-                if (!$existingUser->id_company) {
-                    $existingUser->update([
-                        'id_company' => $company->id_company
-                    ]);
-                }
-
-                $token = $existingUser->createToken('candidate_token')->plainTextToken;
-
-                return response()->json([
-                    'message' => 'Login successful - using existing account',
-                    'user' => $existingUser->fresh(),
-                    'company' => $company,
-                    'token' => $token,
-                    'is_existing_user' => true,
-                ], 200);
-            }
-
-            // Email belum terdaftar - create new user
-            do {
-                $id = 'USR' . strtoupper(substr(uniqid(), -7));
-            } while (User::where('id_user', $id)->exists());
-
-            $user = User::create([
-                'id_user' => $id,
-                'id_company' => $company->id_company, // ← link ke perusahaan
-                'name' => $validated['first_name'] . ' ' . $validated['last_name'],
-                'email' => $validated['email'],
-                'phone' => $validated['phone'],
-                'password' => Hash::make($validated['password']),
-                'role' => 'candidate',
-            ]);
-
-            $token = $user->createToken('candidate_token')->plainTextToken;
-
-            return response()->json([
-                'message' => 'Account successfully created',
-                'user' => $user,
-                'company' => $company,
-                'token' => $token,
-                'is_existing_user' => false,
+                'has_company' => false, // Belum punya company
+                'has_candidate_profile' => false, // Belum punya profile candidate
             ], 201);
 
         } catch (ValidationException $e) {
-            return response()->json([
-                'message' => 'Validation failed',
-                'errors' => $e->errors(),
-            ], 422);
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            return response()->json([
-                'message' => 'Company not found',
-            ], 404);
+            return response()->json(['message' => 'Validation failed', 'errors' => $e->errors()], 422);
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Registration failed',
-                'error' => $e->getMessage(),
-            ], 500);
+            return response()->json(['message' => 'Registration failed', 'error' => $e->getMessage()], 500);
         }
     }
 
     /**
-     * Register a new candidate (generic, without company attachment)
-     * Candidate joins a company later when applying to a position
-     */
-    public function registerCandidateGeneric(Request $request)
-    {
-        try {
-            $validated = $request->validate([
-                'first_name' => 'required|string|max:50',
-                'last_name' => 'required|string|max:50',
-                'email' => 'required|email|max:50|unique:users',
-                'phone' => 'required|string|max:13',
-                'password' => 'required|string|min:8|confirmed',
-            ]);
-
-            do {
-                $id = 'USR' . strtoupper(substr(uniqid(), -7));
-            } while (User::where('id_user', $id)->exists());
-
-            $user = User::create([
-                'id_user' => $id,
-                'id_company' => null, // ← no company attached yet
-                'name' => $validated['first_name'] . ' ' . $validated['last_name'],
-                'email' => $validated['email'],
-                'phone' => $validated['phone'],
-                'password' => Hash::make($validated['password']),
-                'role' => 'candidate',
-            ]);
-
-            $token = $user->createToken('candidate_token')->plainTextToken;
-
-            return response()->json([
-                'message' => 'Account successfully created',
-                'user' => $user,
-                'token' => $token,
-            ], 201);
-        } catch (ValidationException $e) {
-            return response()->json([
-                'message' => 'Validation failed',
-                'errors' => $e->errors(),
-            ], 422);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Registration failed',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
-    }
-
-    /**
-     * Login company and get token
+     * 2. LOGIN UNIFIED
+     * Login pakai email & password, deteksi user_type setelah login
      */
     public function login(Request $request)
     {
         try {
             $validated = $request->validate([
-                'name' => 'required|string',
+                'email' => 'required|email',
                 'password' => 'required|string',
             ]);
 
-            $company = Company::where('name', $validated['name'])->first();
+            // Cek di users
+            $user = User::where('email', $validated['email'])->first();
 
-            if (!$company || !Hash::check($validated['password'], $company->password)) {
-                return response()->json([
-                    'message' => 'Name or password is incorrect',
-                ], 401);
+            if (!$user || !Hash::check($validated['password'], $user->password)) {
+                return response()->json(['message' => 'Email or password is incorrect'], 401);
             }
 
-            $token = $company->createToken('auth_token')->plainTextToken;
+            $company = Company::where('email', $user->email)->first();
+            $userType = $company ? 'admin' : 'candidate';
+            $isNewUser = !$company;
 
-            return response()->json([
+            $token = $user->createToken('auth_token')->plainTextToken;
+
+            $response = [
                 'message' => 'Login successful',
-                'company' => $company,
+                'user' => [
+                    'id_user' => $user->id_user,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                ],
+                'user_type' => $userType,
+                'is_new_user' => $isNewUser,
                 'token' => $token,
-            ], 200);
+            ];
+
+            if ($company) {
+                $response['company'] = $company;
+            }
+
+            return response()->json($response, 200);
+
         } catch (ValidationException $e) {
-            return response()->json([
-                'message' => 'Validation failed',
-                'errors' => $e->errors(),
-            ], 422);
+            return response()->json(['message' => 'Validation failed', 'errors' => $e->errors()], 422);
         } catch (\Exception $e) {
-            \Log::error('Login error: ' . $e->getMessage());
-            return response()->json([
-                'message' => 'Login failed',
-                'error' => $e->getMessage(),
-            ], 500);
+            return response()->json(['message' => 'Login failed', 'error' => $e->getMessage()], 500);
         }
     }
 
     /**
-     * login candidate and get token
-     * Works both with or without slug:
-     * - With slug: login to specific company portal
-     * - Without slug: login to general candidate dashboard
-     *
-     * If candidate has previous submissions, returns list of companies they've registered to
+     * 3. CREATE COMPANY (Admin memulai company)
+     * User yang sudah login (dan belum punya company) bisa membuat company
      */
-    public function loginCandidate(Request $request)
+    public function createCompany(Request $request)
+    {
+        try {
+            $user = $request->user();
+
+            // Cek apakah user sudah punya company yang dia buat
+            if (Company::where('email', $user->email)->exists()) {
+                return response()->json(['message' => 'You already have a company'], 400);
+            }
+
+            $validated = $request->validate([
+                'name' => 'required|string|max:100|unique:companies,name',
+                'phone' => 'required|string|max:13',
+                'address' => 'required|string|max:255',
+                'password' => 'required|string|min:8', // Password khusus untuk login admin company
+            ]);
+
+            // Generate slug dari nama company
+            $slug = Str::slug($validated['name']);
+            $originalSlug = $slug;
+            $counter = 1;
+            while (Company::where('slug', $slug)->exists()) {
+                $slug = $originalSlug . '-' . $counter++;
+            }
+
+            // Generate ID company
+            do {
+                $idCompany = 'CMP' . strtoupper(substr(uniqid(), -7));
+            } while (Company::where('id_company', $idCompany)->exists());
+
+            DB::beginTransaction();
+
+            try {
+                // Buat company
+                $company = Company::create([
+                    'id_company' => $idCompany,
+                    'name' => $validated['name'],
+                    'slug' => $slug,
+                    'email' => $user->email, // Pakai email user sebagai email company
+                    'phone' => $validated['phone'],
+                    'address' => $validated['address'],
+                    'password' => Hash::make($validated['password']),
+                    'is_active' => true,
+                ]);
+
+                // Buat default roles untuk company ini
+                $defaultRoles = ['admin', 'hr', 'mentor'];
+                foreach ($defaultRoles as $roleName) {
+                    \App\Models\Role::create([
+                        'id_role' => 'ROL' . strtoupper(substr(uniqid(), -7)),
+                        'id_company' => $company->id_company,
+                        'name' => $roleName,
+                    ]);
+                }
+
+                DB::commit();
+
+                // Buat token khusus untuk company (opsional)
+                $companyToken = $company->createToken('company_token')->plainTextToken;
+
+                return response()->json([
+                    'message' => 'Company created successfully',
+                    'company' => $company,
+                    'company_token' => $companyToken,
+                    'public_url' => '/c/' . $slug,
+                ], 201);
+
+            } catch (\Exception $e) {
+                DB::rollBack();
+                throw $e;
+            }
+
+        } catch (ValidationException $e) {
+            return response()->json(['message' => 'Validation failed', 'errors' => $e->errors()], 422);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Failed to create company', 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * 4. CREATE CANDIDATE PROFILE (User memulai internship)
+     * User yang sudah login (dan belum punya candidate profile) bisa buat profile candidate
+     */
+    public function createCandidateProfile(Request $request)
+    {
+        try {
+            $user = $request->user();
+
+            $validated = $request->validate([
+                'phone' => 'nullable|string|max:13',
+                'institution' => 'nullable|string|max:100',
+                'education_level' => 'nullable|string|max:50',
+                'major' => 'nullable|string|max:100',
+            ]);
+
+            return response()->json([
+                'message' => 'Candidate profile created successfully',
+                'candidate_profile' => [
+                    'id_user' => $user->id_user,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'phone' => $validated['phone'] ?? null,
+                    'institution' => $validated['institution'] ?? null,
+                    'education_level' => $validated['education_level'] ?? null,
+                    'major' => $validated['major'] ?? null,
+                ],
+            ], 201);
+
+        } catch (ValidationException $e) {
+            return response()->json(['message' => 'Validation failed', 'errors' => $e->errors()], 422);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Failed to create candidate profile', 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * 5. LOGIN AS COMPANY (Admin login ke dashboard company)
+     * Login khusus untuk admin company (pakai email company dan password company)
+     */
+    public function loginCompany(Request $request)
     {
         try {
             $validated = $request->validate([
@@ -299,82 +240,41 @@ class AuthController extends Controller
                 'slug' => 'nullable|string',
             ]);
 
-            $user = User::where('email', $validated['email'])
-                ->where('role', 'candidate')
-                ->first();
+            // Cari company
+            $query = Company::where('email', $validated['email']);
+            if (!empty($validated['slug'])) {
+                $query->where('slug', $validated['slug']);
+            }
+            $company = $query->first();
 
-            if (!$user || !Hash::check($validated['password'], $user->password)) {
+            if (!$company || !Hash::check($validated['password'], $company->password)) {
                 return response()->json(['message' => 'Email or password is incorrect'], 401);
             }
 
-            $token = $user->createToken('candidate_token')->plainTextToken;
-
-            // Get all unique companies where user has submissions
-            $submissionsWithCompanies = Submission::where('id_user', $user->id_user)
-                ->with('vacancy.company')
-                ->get();
-
-            $hasRegistrations = $submissionsWithCompanies->count() > 0;
-
-            // Extract unique companies from submissions
-            $companiesApplied = [];
-            if ($hasRegistrations) {
-                $companiesApplied = $submissionsWithCompanies
-                    ->map(fn($s) => $s->vacancy->company)
-                    ->filter(fn($c) => $c !== null)
-                    ->unique('id_company')
-                    ->values()
-                    ->toArray();
-            }
-
-            // Get latest company for default redirect (from submissions)
-            $latestSubmission = $submissionsWithCompanies->sortByDesc('submitted_at')->first();
-
-            // Add scoped_role to user data
-            $userData = $user->toArray();
-            $userData['scoped_role'] = $user->getScopedRole();
+            // Cek apakah ada user yang terhubung sebagai admin company ini
+            $companyAdmin = CompanyAdmin::where('id_company', $company->id_company)->first();
+            
+            $token = $company->createToken('company_token')->plainTextToken;
 
             $response = [
                 'message' => 'Login successful',
-                'user' => $userData,
+                'company' => $company,
                 'token' => $token,
-                'has_registrations' => $hasRegistrations,
-                'companies_applied' => $companiesApplied,
             ];
 
-            // If slug provided, include company info
-            if (!empty($validated['slug'])) {
-                $company = Company::where('slug', $validated['slug'])->first();
-                if ($company) {
-                    $response['company'] = $company;
-                } elseif ($hasRegistrations && $latestSubmission?->vacancy?->company) {
-                    // Slug not found, fallback to latest from submissions
-                    $response['company'] = $latestSubmission->vacancy->company;
-                } elseif ($user->id_company) {
-                    // Fallback to user's company if registered
-                    $userCompany = Company::find($user->id_company);
-                    if ($userCompany) {
-                        $response['company'] = $userCompany;
-                    }
-                }
-            } elseif ($hasRegistrations && $latestSubmission?->vacancy?->company) {
-                // User has submissions - use their latest company from submissions
-                $response['company'] = $latestSubmission->vacancy->company;
-            } elseif ($user->id_company) {
-                // User registered to company but no submissions yet
-                $userCompany = Company::find($user->id_company);
-                if ($userCompany) {
-                    $response['company'] = $userCompany;
-                    // Also add to companies_applied for display
-                    $companiesApplied = [$userCompany->toArray()];
-                    $response['companies_applied'] = $companiesApplied;
+            if ($companyAdmin) {
+                $user = User::find($companyAdmin->id_user);
+                if ($user) {
+                    $response['admin_user'] = [
+                        'id_user' => $user->id_user,
+                        'name' => $user->name,
+                        'email' => $user->email,
+                    ];
                 }
             }
 
             return response()->json($response, 200);
 
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            return response()->json(['message' => 'Perusahaan tidak ditemukan'], 404);
         } catch (ValidationException $e) {
             return response()->json(['message' => 'Validation failed', 'errors' => $e->errors()], 422);
         } catch (\Exception $e) {
@@ -383,725 +283,75 @@ class AuthController extends Controller
     }
 
     /**
-     * Get current company profile
+     * 6. GET CURRENT USER PROFILE
+     * Mengambil data user lengkap dengan company dan candidate profile
      */
     public function profile(Request $request)
     {
         try {
-            $company = $request->user();
-
-            if (!$company) {
-                return response()->json([
-                    'message' => 'Company not found',
-                ], 404);
-            }
-
-            return response()->json([
-                'message' => 'Profile retrieved successfully',
-                'company' => $company,
-            ], 200);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Failed to retrieve profile',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
-    }
-
-    /**
-     * Login SuperAdmin with email and password
-     */
-    public function loginSuperAdmin(Request $request)
-    {
-        try {
-            $validated = $request->validate([
-                'email' => 'required|email',
-                'password' => 'required|string',
-            ]);
-
-            $user = User::where('email', $validated['email'])
-                ->where('role', 'super_admin')
-                ->first();
-
-            if (!$user || !Hash::check($validated['password'], $user->password)) {
-                return response()->json(['message' => 'Email or password is incorrect'], 401);
-            }
-
-            $token = $user->createToken('superadmin_token')->plainTextToken;
-
-            return response()->json([
-                'message' => 'Login successful',
+            $user = $request->user();
+            
+            $response = [
                 'user' => [
-                    'id' => $user->id_user,
+                    'id_user' => $user->id_user,
                     'name' => $user->name,
                     'email' => $user->email,
-                    'role' => $user->role,
                 ],
-                'token' => $token,
-            ], 200);
+            ];
 
-        } catch (ValidationException $e) {
-            return response()->json(['message' => 'Validation failed', 'errors' => $e->errors()], 422);
+            // Cek company admin
+            $companyAdmin = CompanyAdmin::where('id_user', $user->id_user)->first();
+            if ($companyAdmin) {
+                $company = Company::find($companyAdmin->id_company);
+                if ($company) {
+                    $response['company'] = $company;
+                    $response['user_type'] = 'admin';
+                }
+            }
+
+            // Cek candidate profile
+            $candidateProfile = CandidateProfile::where('id_user', $user->id_user)->first();
+            if ($candidateProfile) {
+                $response['candidate_profile'] = $candidateProfile;
+                $response['user_type'] = 'candidate';
+            }
+
+            // Jika belum punya apa-apa
+            if (!isset($response['user_type'])) {
+                $response['user_type'] = 'new';
+            }
+
+            return response()->json($response, 200);
+
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Login failed', 'error' => $e->getMessage()], 500);
+            return response()->json(['message' => 'Failed to get profile', 'error' => $e->getMessage()], 500);
         }
     }
 
     /**
-     * Logout user
+     * 7. LOGOUT
      */
     public function logout(Request $request)
     {
         try {
             $request->user()->currentAccessToken()->delete();
-
-            return response()->json([
-                'message' => 'Logout successful',
-            ], 200);
+            return response()->json(['message' => 'Logout successful'], 200);
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Logout failed',
-                'error' => $e->getMessage(),
-            ], 500);
+            return response()->json(['message' => 'Logout failed', 'error' => $e->getMessage()], 500);
         }
     }
 
     /**
-     * Forgot password - send reset email
+     * Helper: Get user type
      */
-    public function forgotPassword(Request $request)
+    private function getUserType($user)
     {
-        try {
-            $validated = $request->validate([
-                'email' => 'required|string|email',
-            ]);
-
-            $company = Company::where('email', $validated['email'])->first();
-
-            if (!$company) {
-                return response()->json([
-                    'message' => 'Email not found',
-                ], 404);
-            }
-
-            // Generate reset token
-            $resetToken = \Str::random(32);
-
-            // Store reset token in database
-            \DB::table('password_resets')->where('email', $validated['email'])->delete();
-            \DB::table('password_resets')->insert([
-                'email' => $validated['email'],
-                'token' => $resetToken,
-                'created_at' => now(),
-            ]);
-
-            // Create reset URL (frontend URL)
-            $resetUrl = env('FRONTEND_URL', 'http://localhost:5173') . '/reset-password?token=' . $resetToken . '&email=' . urlencode($validated['email']);
-
-            // Send email using Laravel's Mail facade
-            try {
-                \Mail::raw(
-                    "Hello {$company->name},\n\n" .
-                    "You are receiving this email because there was a request to reset the password for your account.\n\n" .
-                    "Password reset link: {$resetUrl}\n\n" .
-                    "This link will expire in 1 hour.\n\n" .
-                    "If you did not request a password reset, please ignore this email.\n\n" .
-                    "Regards,\nEarlyPath Team",
-                    function ($message) use ($validated, $company) {
-                        $message->to($validated['email'])
-                            ->subject('Reset Password - EarlyPath');
-                    }
-                );
-            } catch (\Exception $e) {
-                \Log::warning('Email send failed: ' . $e->getMessage());
-                // Continue anyway - show success to user
-            }
-
-            return response()->json([
-                'message' => 'Password reset link has been sent to your email. Please check your email.',
-            ], 200);
-        } catch (ValidationException $e) {
-            return response()->json([
-                'message' => 'Validation failed',
-                'errors' => $e->errors(),
-            ], 422);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'An error occurred',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
-    }
-
-    /**
-     * Reset password with token
-     */
-    public function resetPassword(Request $request)
-    {
-        try {
-            $validated = $request->validate([
-                'token' => 'required|string',
-                'email' => 'required|string|email',
-                'password' => 'required|string|min:6|confirmed',
-            ]);
-
-            // Check if reset token exists and is not expired (1 hour)
-            $passwordReset = \DB::table('password_resets')
-                ->where('email', $validated['email'])
-                ->where('token', $validated['token'])
-                ->first();
-
-            if (!$passwordReset) {
-                return response()->json([
-                    'message' => 'Token is not valid or has expired',
-                ], 400);
-            }
-
-            // Check if token is not older than 1 hour
-            if (now()->diffInMinutes($passwordReset->created_at) > 60) {
-                \DB::table('password_resets')->where('email', $validated['email'])->delete();
-                return response()->json([
-                    'message' => 'Token has expired. Please request a new password reset.',
-                ], 400);
-            }
-
-            // Find company and update password
-            $company = Company::where('email', $validated['email'])->first();
-
-            if (!$company) {
-                return response()->json([
-                    'message' => 'Email not found',
-                ], 404);
-            }
-
-            // Update password via raw query untuk memastikan hashing bekerja dengan baik
-            \DB::table('companies')
-                ->where('id_company', $company->id_company)
-                ->update([
-                    'password' => Hash::make($validated['password']),
-                    'updated_at' => now(),
-                ]);
-
-            // Delete the used token
-            \DB::table('password_resets')->where('email', $validated['email'])->delete();
-
-            // Refresh company dan buat token untuk auto-login
-            $company = $company->fresh();
-            $token = $company->createToken('auth_token')->plainTextToken;
-
-            return response()->json([
-                'message' => 'Password successfully changed',
-                'company' => $company,
-                'token' => $token,
-            ], 200);
-        } catch (ValidationException $e) {
-            return response()->json([
-                'message' => 'Validation failed',
-                'errors' => $e->errors(),
-            ], 422);
-        } catch (\Exception $e) {
-            \Log::error('Reset password error: ' . $e->getMessage());
-            return response()->json([
-                'message' => 'An error occurred',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
-    }
-
-    /**
-     * forgot password candidate - send reset email
-     */
-public function forgotPasswordCandidate(Request $request)
-{
-    try {
-        $validated = $request->validate([
-            'email' => 'required|string|email',
-            'slug'  => 'nullable|string',
-        ]);
-
-        // Cari user berdasarkan email dulu
-        $user = User::where('email', $validated['email'])
-            ->where('role', 'candidate')
-            ->first();
-
-        // Kalau ada slug, validasi user memang milik company itu
-        if (!empty($validated['slug'])) {
-            $company = Company::where('slug', $validated['slug'])->first();
-            if ($company && $user && $user->id_company !== $company->id_company) {
-                return response()->json(['message' => 'Email not found'], 404);
-            }
-        }
-
-        if (!$user) {
-            return response()->json(['message' => 'Email not found'], 404);
-        }
-
-        // sisanya sama seperti sebelumnya...
-        $resetToken = \Str::random(32);
-        \DB::table('password_resets')->where('email', $validated['email'])->delete();
-        \DB::table('password_resets')->insert([
-            'email'      => $validated['email'],
-            'token'      => $resetToken,
-            'created_at' => now(),
-        ]);
-
-        $slug = $validated['slug'] ?? optional(Company::find($user->id_company))->slug;
-        $resetUrl = env('FRONTEND_URL', 'http://localhost:5173')
-            . ($slug ? '/c/' . $slug : '')
-            . '/reset-password?token=' . $resetToken
-            . '&email=' . urlencode($validated['email']);
-
-        try {
-            \Mail::raw(
-                "Hello {$user->name},\n\nPassword reset link: {$resetUrl}\n\nThis link will expire in 1 hour.\n\nRegards,\nEarlyPath Team",
-                function ($message) use ($validated) {
-                    $message->to($validated['email'])->subject('Reset Password - EarlyPath');
-                }
-            );
-        } catch (\Exception $e) {
-            \Log::warning('Email send failed: ' . $e->getMessage());
-        }
-
-        return response()->json(['message' => 'Password reset link has been sent to your email.'], 200);
-
-    } catch (ValidationException $e) {
-        return response()->json(['message' => 'Validation failed', 'errors' => $e->errors()], 422);
-    } catch (\Exception $e) {
-        return response()->json(['message' => 'An error occurred', 'error' => $e->getMessage()], 500);
-    }
-}
-
-    public function resetPasswordCandidate(Request $request)
-    {
-        try {
-            $validated = $request->validate([
-                'token' => 'required|string',
-                'email' => 'required|string|email',
-                'password' => 'required|string|min:8|confirmed',
-            ]);
-
-            $passwordReset = \DB::table('password_resets')
-                ->where('email', $validated['email'])
-                ->where('token', $validated['token'])
-                ->first();
-
-            if (!$passwordReset) {
-                return response()->json(['message' => 'Token is not valid or has expired'], 400);
-            }
-
-            if (now()->diffInMinutes($passwordReset->created_at) > 60) {
-                \DB::table('password_resets')->where('email', $validated['email'])->delete();
-                return response()->json(['message' => 'Token has expired. Please request a new one.'], 400);
-            }
-
-            $user = User::where('email', $validated['email'])->first();
-
-            if (!$user) {
-                return response()->json(['message' => 'Email not found'], 404);
-            }
-
-            \DB::table('users')
-                ->where('id_user', $user->id_user)
-                ->update([
-                    'password' => Hash::make($validated['password']),
-                    'updated_at' => now(),
-                ]);
-
-            \DB::table('password_resets')->where('email', $validated['email'])->delete();
-
-            // Refresh user dan buat token untuk auto-login
-            $user = $user->fresh();
-            $token = $user->createToken('candidate_token')->plainTextToken;
-
-            // Get company jika ada
-            $company = null;
-            if ($user->id_company) {
-                $company = Company::find($user->id_company);
-            }
-
-            return response()->json([
-                'message' => 'Password successfully changed',
-                'user' => $user,
-                'company' => $company,
-                'token' => $token,
-            ], 200);
-
-        } catch (ValidationException $e) {
-            return response()->json(['message' => 'Validation failed', 'errors' => $e->errors()], 422);
-        } catch (\Exception $e) {
-            return response()->json(['message' => 'An error occurred', 'error' => $e->getMessage()], 500);
-        }
-    }
-
-    /**
- * Reset password for company WITHOUT auto-login
- * (Untuk kasus user lupa password dan ingin kembali ke halaman login)
- */
-public function resetPasswordNoAutoLogin(Request $request)
-{
-    try {
-        $validated = $request->validate([
-            'token' => 'required|string',
-            'email' => 'required|string|email',
-            'password' => 'required|string|min:6|confirmed',
-        ]);
-
-        // Check if reset token exists and is not expired (1 hour)
-        $passwordReset = \DB::table('password_resets')
-            ->where('email', $validated['email'])
-            ->where('token', $validated['token'])
-            ->first();
-
-        if (!$passwordReset) {
-            return response()->json([
-                'message' => 'Token is not valid or has expired',
-            ], 400);
-        }
-
-        // Check if token is not older than 1 hour
-        if (now()->diffInMinutes($passwordReset->created_at) > 60) {
-            \DB::table('password_resets')->where('email', $validated['email'])->delete();
-            return response()->json([
-                'message' => 'Token has expired. Please request a new password reset.',
-            ], 400);
-        }
-
-        // Find company and update password
-        $company = Company::where('email', $validated['email'])->first();
-
-        if (!$company) {
-            return response()->json([
-                'message' => 'Email not found',
-            ], 404);
-        }
-
-        // Update password
-        \DB::table('companies')
-            ->where('id_company', $company->id_company)
-            ->update([
-                'password' => Hash::make($validated['password']),
-                'updated_at' => now(),
-            ]);
-
-        // Delete the used token
-        \DB::table('password_resets')->where('email', $validated['email'])->delete();
-
-        // KEMBALIKAN RESPONSE TANPA TOKEN (tidak auto-login)
-        return response()->json([
-            'message' => 'Password successfully changed. Please login with your new password.',
-            'redirect_to' => '/login',
-        ], 200);
-
-    } catch (ValidationException $e) {
-        return response()->json([
-            'message' => 'Validation failed',
-            'errors' => $e->errors(),
-        ], 422);
-    } catch (\Exception $e) {
-        \Log::error('Reset password error: ' . $e->getMessage());
-        return response()->json([
-            'message' => 'An error occurred',
-            'error' => $e->getMessage(),
-        ], 500);
-    }
-}
-
-    /**
-     * Generate unique company ID
-     */
-    private function generateCompanyId()
-    {
-        do {
-            $id_company = 'CMP' . strtoupper(substr(uniqid(), -7));
-        } while (Company::where('id_company', $id_company)->exists());
-
-        return $id_company;
-    }
-
-    /**
-     * Generate unique user ID
-     */
-    private function generateUserId()
-    {
-        do {
-            $id_user = 'USR' . strtoupper(substr(uniqid(), -7));
-        } while (User::where('id_user', $id_user)->exists());
-
-        return $id_user;
-    }
-
-    /**
-     * Activate account HR/Mentor
-     */
-    public function activateAccount(Request $request)
-    {
-        try {
-            $validated = $request->validate([
-                'token' => 'required|string',
-                'name' => 'required|string|max:50',
-                'password' => 'required|string|min:8|confirmed',
-            ]);
-
-            $user = User::where('activation_token', $validated['token'])
-                ->where('is_active', false)
-                ->first();
-
-            if (!$user) {
-                return response()->json(['message' => 'Token tidak valid atau akun sudah aktif'], 400);
-            }
-
-            \DB::table('users')
-                ->where('id_user', $user->id_user)
-                ->update([
-                    'name' => $validated['name'],
-                    'password' => Hash::make($validated['password']),
-                    'is_active' => true,
-                    'activation_token' => null,
-                    'updated_at' => now(),
-                ]);
-
-            $user->refresh();
-            $company = Company::find($user->id_company);
-            $token = $user->createToken('staff_token')->plainTextToken;
-
-
-            return response()->json([
-                'message' => 'Account successfully activated',
-                'user' => $user,
-                'company' => $company,
-                'token' => $token,
-            ], 200);
-
-        } catch (ValidationException $e) {
-            return response()->json(['message' => 'Validation failed', 'errors' => $e->errors()], 422);
-        } catch (\Exception $e) {
-            return response()->json(['message' => 'An error occurred', 'error' => $e->getMessage()], 500);
-        }
-    }
-
-
-    /**
-     * Login HR/Mentor
-     */
-    public function loginStaff(Request $request)
-    {
-        try {
-            $validated = $request->validate([
-                'email' => 'required|email',
-                'password' => 'required|string',
-                'slug' => 'required|string',
-            ]);
-
-            $company = Company::where('slug', $validated['slug'])->firstOrFail();
-
-            $user = User::where('email', $validated['email'])
-                ->where('id_company', $company->id_company)
-                ->whereIn('role', ['hr', 'mentor'])
-                ->where('is_active', true)
-                ->first();
-
-            if (!$user || !Hash::check($validated['password'], $user->password)) {
-                return response()->json(['message' => 'Email or password is incorrect'], 401);
-            }
-
-            $token = $user->createToken('staff_token')->plainTextToken;
-
-            return response()->json([
-                'message' => 'Login successful',
-                'user' => $user,
-                'company' => $company,
-                'token' => $token,
-            ], 200);
-
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            return response()->json(['message' => 'Perusahaan tidak ditemukan'], 404);
-        } catch (ValidationException $e) {
-            return response()->json(['message' => 'Validation failed', 'errors' => $e->errors()], 422);
-        } catch (\Exception $e) {
-            return response()->json(['message' => 'Login failed', 'error' => $e->getMessage()], 500);
-        }
-    }
-
-    /**
-     * Check activation token validity and return user + company info for pre-filling activation form
-     */
-    public function checkActivationToken($token)
-    {
-        $user = User::where('activation_token', $token)
-            ->where('is_active', false)
-            ->first();
-
-        if (!$user) {
-            return response()->json(['message' => 'Token tidak valid atau sudah digunakan'], 404);
-        }
-
-        $company = Company::find($user->id_company);
-
-        return response()->json([
-            'user' => ['name' => $user->name, 'email' => $user->email, 'role' => $user->role],
-            'company' => $company,
-        ], 200);
-    }
-
-    /**
-     * Forgot password for staff (HR/Mentor) - send reset email
-     */
-    public function forgotPasswordStaff(Request $request)
-    {
-        try {
-            $validated = $request->validate([
-                'email' => 'required|string|email',
-                'slug'  => 'required|string',
-            ]);
-
-            // Find company by slug
-            $company = Company::where('slug', $validated['slug'])->first();
-            if (!$company) {
-                return response()->json(['message' => 'Company not found'], 404);
-            }
-
-            // Find user by email and company, must be HR or Mentor
-            $user = User::where('email', $validated['email'])
-                ->where('id_company', $company->id_company)
-                ->whereIn('role', ['hr', 'mentor'])
-                ->first();
-
-            if (!$user) {
-                return response()->json(['message' => 'Email not found or user is not staff'], 404);
-            }
-
-            // Generate reset token
-            $resetToken = \Str::random(32);
-
-            // Store reset token in database
-            \DB::table('password_resets')->where('email', $validated['email'])->delete();
-            \DB::table('password_resets')->insert([
-                'email' => $validated['email'],
-                'token' => $resetToken,
-                'created_at' => now(),
-            ]);
-
-            // Create reset URL (frontend URL)
-            $resetUrl = env('FRONTEND_URL', 'http://localhost:5173') . '/c/' . $validated['slug'] . '/staff/reset-password?token=' . $resetToken . '&email=' . urlencode($validated['email']);
-
-            // Send email using Laravel's Mail facade
-            try {
-                \Mail::raw(
-                    "Hello {$user->name},\n\n" .
-                    "You are receiving this email because there was a request to reset the password for your staff account.\n\n" .
-                    "Password reset link: {$resetUrl}\n\n" .
-                    "This link will expire in 1 hour.\n\n" .
-                    "If you did not request a password reset, please ignore this email.\n\n" .
-                    "Regards,\nEarlyPath Team",
-                    function ($message) use ($validated, $user) {
-                        $message->to($validated['email'])
-                            ->subject('Reset Password - EarlyPath Staff Portal');
-                    }
-                );
-            } catch (\Exception $e) {
-                \Log::warning('Email send failed: ' . $e->getMessage());
-                // Continue anyway - show success to user
-            }
-
-            return response()->json([
-                'message' => 'Password reset link has been sent to your email. Please check your email.',
-            ], 200);
-        } catch (ValidationException $e) {
-            return response()->json([
-                'message' => 'Validation failed',
-                'errors' => $e->errors(),
-            ], 422);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'An error occurred',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
-    }
-
-    /**
-     * Reset password for staff (HR/Mentor) with token
-     */
-    public function resetPasswordStaff(Request $request)
-    {
-        try {
-            $validated = $request->validate([
-                'token' => 'required|string',
-                'email' => 'required|string|email',
-                'slug' => 'required|string',
-                'password' => 'required|string|min:6|confirmed',
-            ]);
-
-            // Check if reset token exists and is not expired (1 hour)
-            $passwordReset = \DB::table('password_resets')
-                ->where('email', $validated['email'])
-                ->where('token', $validated['token'])
-                ->first();
-
-            if (!$passwordReset) {
-                return response()->json([
-                    'message' => 'Token is not valid or has expired',
-                ], 400);
-            }
-
-            // Check if token is not older than 1 hour
-            if (now()->diffInMinutes($passwordReset->created_at) > 60) {
-                \DB::table('password_resets')->where('email', $validated['email'])->delete();
-                return response()->json([
-                    'message' => 'Token has expired. Please request a new password reset.',
-                ], 400);
-            }
-
-            // Find company by slug
-            $company = Company::where('slug', $validated['slug'])->first();
-            if (!$company) {
-                return response()->json(['message' => 'Company not found'], 404);
-            }
-
-            // Find user and verify they belong to this company and are staff
-            $user = User::where('email', $validated['email'])
-                ->where('id_company', $company->id_company)
-                ->whereIn('role', ['hr', 'mentor'])
-                ->first();
-
-            if (!$user) {
-                return response()->json([
-                    'message' => 'Email not found or user is not staff',
-                ], 404);
-            }
-
-            // Update password
-            \DB::table('users')
-                ->where('id_user', $user->id_user)
-                ->update([
-                    'password' => Hash::make($validated['password']),
-                    'updated_at' => now(),
-                ]);
-
-            // Delete the used token
-            \DB::table('password_resets')->where('email', $validated['email'])->delete();
-
-            // Refresh user dan buat token untuk auto-login
-            $user = $user->fresh();
-            $token = $user->createToken('staff_token')->plainTextToken;
-
-            return response()->json([
-                'message' => 'Password successfully changed',
-                'user' => $user,
-                'company' => $company,
-                'token' => $token,
-            ], 200);
-        } catch (ValidationException $e) {
-            return response()->json([
-                'message' => 'Validation failed',
-                'errors' => $e->errors(),
-            ], 422);
-        } catch (\Exception $e) {
-            \Log::error('Reset password staff error: ' . $e->getMessage());
-            return response()->json([
-                'message' => 'An error occurred',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
+        $companyAdmin = CompanyAdmin::where('id_user', $user->id_user)->exists();
+        if ($companyAdmin) return 'admin';
+        
+        $candidateProfile = CandidateProfile::where('id_user', $user->id_user)->exists();
+        if ($candidateProfile) return 'candidate';
+        
+        return 'new';
     }
 }

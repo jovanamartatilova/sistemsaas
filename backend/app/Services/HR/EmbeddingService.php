@@ -43,33 +43,30 @@ class EmbeddingService
         }
     }
     
-    public function prepareCandidateText($submission): string
-    {
-        $texts = [];
-        
-        if ($submission->user) {
-            $texts[] = $submission->user->name;
-            $texts[] = $submission->user->email;
-        }
-        
-        if ($submission->position) {
-            $texts[] = $submission->position->name;
-            $texts[] = $submission->position->description ?? '';
-        }
-        
-        if ($submission->vacancy) {
-            $texts[] = $submission->vacancy->title;
-            $texts[] = $submission->vacancy->requirements;
-            $texts[] = $submission->vacancy->description;
-        }
-        
-        $texts[] = $submission->status;
-        
-        if ($submission->hr_notes) {
-            $texts[] = $submission->hr_notes;
-        }
-        
-        $fullText = implode(' | ', array_filter($texts));
-        return substr($fullText, 0, 8000);
+    public function prepareCandidateText($submission, string $cvText = ''): string
+{
+    $parts = [];
+
+    // Hanya nama posisi — bukan description/requirements (shared)
+    if ($submission->position) {
+        $parts[] = 'Applying for: ' . $submission->position->name;
     }
+
+    // Motivasi — ini unik per kandidat
+    if ($submission->motivation_message) {
+        $parts[] = 'Motivation: ' . $submission->motivation_message;
+    }
+
+    // HR notes — unik per kandidat
+    if ($submission->hr_notes) {
+        $parts[] = 'HR Notes: ' . $submission->hr_notes;
+    }
+
+    // CV — paling unik, paling penting
+    if (!empty($cvText)) {
+        $parts[] = 'CV: ' . mb_substr($cvText, 0, 6000);
+    }
+
+    return mb_substr(implode("\n", $parts), 0, 8000);
+}
 }

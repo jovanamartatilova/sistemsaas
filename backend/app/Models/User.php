@@ -42,18 +42,13 @@ class User extends Authenticatable
      */
     protected $fillable = [
     'id_user',
-    'id_company',
-    'id_university',
-    'id_major',
     'name',
+    'id_company',
     'email',
-    'phone',
     'password',
     'role',
     'is_active',
     'activation_token',
-    'photo_path',
-    'id_team',
     ];
 
     /**
@@ -84,21 +79,6 @@ class User extends Authenticatable
         return $this->belongsTo(Company::class, 'id_company', 'id_company');
     }
 
-    public function university()
-    {
-        return $this->belongsTo(University::class, 'id_university', 'id_university');
-    }
-
-    public function major()
-    {
-        return $this->belongsTo(Major::class, 'id_major', 'id_major');
-    }
-
-    public function team()
-    {
-        return $this->belongsTo(Team::class, 'id_team', 'id_team');
-    }
-
     public function teamMembership()
     {
         return $this->hasOne(TeamMember::class, 'id_user', 'id_user');
@@ -107,6 +87,11 @@ class User extends Authenticatable
     public function submissions()
     {
         return $this->hasMany(Submission::class, 'id_user', 'id_user');
+    }
+
+    public function employee()
+    {
+        return $this->hasOne(Employee::class, 'id_user', 'id_user');
     }
 
     /**
