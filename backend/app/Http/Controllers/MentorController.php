@@ -102,8 +102,8 @@ class MentorController extends Controller
 
         $submissionsQuery = Submission::where('id_user_mentor', $mentorId)
             ->with([
-                'user', 
-                'position', 
+                'user',
+                'position',
                 'vacancy',
                 'assessment'
             ]);
@@ -395,7 +395,7 @@ class MentorController extends Controller
         $search = $request->get('search');
 
         $submissionsQuery = Submission::where('id_user_mentor', $mentorId)
-            ->with(['user', 'position', 'assessment']);
+            ->with(['user', 'position', 'assessment', 'vacancy', 'team']);
 
         if ($search) {
             $submissionsQuery->whereHas('user', function($q) use ($search) {
@@ -437,7 +437,7 @@ class MentorController extends Controller
         ];
 
         $recap = $submissions->map(function ($sub) {
-            $assessment = $sub->assessment; // ✅ eager load, no N+1
+            $assessment = $sub->assessment;
             $scoresData = $assessment->scores_data ?? [];
             $completedScores = array_filter($scoresData, fn($s) => $s['score'] !== null);
             $avgScore = count($completedScores) > 0
@@ -446,15 +446,34 @@ class MentorController extends Controller
             $scoredCount = count($completedScores);
             $totalComps = count($scoresData);
 
+            $competencyIds = array_column($scoresData, 'id_competency');
+
+            $competenciesFromDb = !empty($competencyIds)
+                ? \DB::table('competencies')
+                    ->whereIn('id_competency', $competencyIds)
+                    ->select('id_competency', 'name', 'learning_hours')
+                    ->get()
+                    ->keyBy('id_competency')
+                : collect();
+
+            $competencyNames = $competenciesFromDb->pluck('name')->toArray();
+
             $totalHours = 0;
             foreach ($scoresData as $score) {
-                if ($score['status'] === 'passed' || $score['status'] === 'failed') {
-                    $totalHours += $score['learning_hours'] ?? 0;
+                if (($score['status'] === 'passed' || $score['status'] === 'failed') && !empty($score['id_competency'])) {
+                    $comp = $competenciesFromDb->get($score['id_competency']);
+                    $totalHours += $comp ? $comp->learning_hours : ($score['learning_hours'] ?? 0);
                 }
             }
 
+            $period = 'N/A';
+            if ($sub->vacancy && $sub->vacancy->start_date && $sub->vacancy->end_date) {
+                $start = \Carbon\Carbon::parse($sub->vacancy->start_date)->format('M Y');
+                $end = \Carbon\Carbon::parse($sub->vacancy->end_date)->format('M Y');
+                $period = "$start - $end";
+            }
             if ($assessment) {
-                $status = 'Passed';
+                $status = 'Done';
                 $statusBg = '#dcfce7';
                 $statusColor = '#166534';
             } elseif ($avgScore === null) {
@@ -467,18 +486,22 @@ class MentorController extends Controller
                 $statusColor = '#92400e';
             }
 
-            return [
-                'name' => $sub->user->name,
-                'position' => $sub->position->name ?? 'N/A',
-                'program' => 'Regular Batch 3',
-                'type' => !empty($sub->id_team) ? 'Team' : 'Individual',
-                'scored' => "$scoredCount/$totalComps",
-                'hours' => "$totalHours hrs",
-                'avg' => $avgScore,
-                'status' => $status,
-                'statusBg' => $statusBg,
-                'statusColor' => $statusColor,
-            ];
+        return [
+            'name' => $sub->user->name,
+            'position' => $sub->position->name ?? 'N/A',
+            'program' => $sub->vacancy->title ?? 'Regular Batch',
+            'period' => $period,                          // ← tambah ini
+            'type' => !empty($sub->id_team) ? 'Team' : 'Individual',
+            'id_team' => $sub->id_team ?? null,           // ← untuk grouping team
+            'team_name' => $sub->team->name ?? null,
+            'scored' => "$scoredCount/$totalComps",
+            'competency_names' => $competencyNames,
+            'hours' => "$totalHours hrs",
+            'avg' => $avgScore,
+            'status' => $status,
+            'statusBg' => $statusBg,
+            'statusColor' => $statusColor,
+        ];
         });
 
         return response()->json([
@@ -612,17 +635,27 @@ class MentorController extends Controller
                 $fileUrl = $cert->file_path ? asset('storage/' . $cert->file_path) : null;
             }
 
+            $period = 'Jan - Apr 2026';
+            if ($sub->vacancy && $sub->vacancy->start_date && $sub->vacancy->end_date) {
+                $start = \Carbon\Carbon::parse($sub->vacancy->start_date)->format('M');
+                $end = \Carbon\Carbon::parse($sub->vacancy->end_date)->format('M Y');
+                $period = "$start - $end";
+            }
+
             return [
-                'id_submission' => $sub->id_submission,
                 'name' => $sub->user->name,
                 'position' => $sub->position->name ?? 'N/A',
-                'program' => $sub->vacancy->title ?? 'N/A',
-                'score' => $avgScore,
+                'program' => $sub->vacancy->title ?? 'Regular Batch 3',
+                'type' => !empty($sub->id_team) ? 'Team' : 'Individual',
+                'id_team' => $sub->id_team ?? null,
+                'period' => $period,
+                'scored' => "$scoredCount/$totalComps",
+                'competency_names' => $competencyNames,
+                'hours' => "$totalHours hrs",
+                'avg' => $avgScore,
                 'status' => $status,
                 'statusBg' => $statusBg,
                 'statusColor' => $statusColor,
-                'file_url' => $fileUrl,
-                'is_sent' => $cert ? (bool)$cert->is_sent : false,
             ];
         });
 

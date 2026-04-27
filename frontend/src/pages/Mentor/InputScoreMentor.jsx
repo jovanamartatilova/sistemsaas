@@ -16,13 +16,14 @@ const s = {
   content: { padding: "28px", flex: 1, overflowY: "auto" },
   h1: { fontSize: "22px", fontWeight: 700, color: "#0f172a", margin: 0 },
   subtitle: { fontSize: "13px", color: "#64748b", marginTop: "4px", marginBottom: "20px" },
-  layout: { display: "grid", gridTemplateColumns: "1fr", gap: "16px" },
+  layout: { display: "grid", gridTemplateColumns: "340px 1fr", gap: "0", minHeight: "calc(100vh - 120px)", alignItems: "start" },
   card: { background: "#fff", borderRadius: "12px", border: "1px solid #e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,0.04)", overflow: "hidden" },
   ch: { padding: "18px 24px", borderBottom: "1px solid #f1f5f9" },
   ct: { fontSize: "15px", fontWeight: 700, color: "#0f172a" },
   cs: { fontSize: "12px", color: "#94a3b8", marginTop: "2px" },
   // intern picker
   pickerRow: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", padding: "18px 24px", borderBottom: "1px solid #f1f5f9", background: "#f8fafc" },
+compHeader: { display: "grid", gridTemplateColumns: "1fr 80px 80px 90px 80px 160px", alignItems: "center", padding: "10px 24px", gap: "10px" },
   pickerField: { display: "flex", flexDirection: "column", gap: "5px" },
   pickerLabel: { fontSize: "11px", fontWeight: 600, color: "#64748b" },
   pickerSelect: { padding: "7px 10px", border: "1px solid #e2e8f0", borderRadius: "8px", fontSize: "13px", color: "#334155", background: "#fff", outline: "none", fontFamily: "inherit" },
@@ -188,6 +189,7 @@ export default function InputScoreMentor() {
           hours_completed: hoursCompleted,
           status: status,
           notes: compScore?.notes,
+          achievement_description: compScore?.achievement_description ?? null,
         };
       });
 
@@ -330,58 +332,126 @@ export default function InputScoreMentor() {
             </div>
           )}
 
-          <div style={s.layout}>
-            {/* Main scoring card */}
-            <div style={s.card}>
-              <div style={s.ch}>
-                <div style={s.ct}>Score by Competency</div>
-                <div style={s.cs}>All competencies for this position must be scored individually</div>
-              </div>
+        <div style={s.layout}>
+          {/* ── PANEL KIRI: Daftar Intern ── */}
+          <div style={{ background: "#fff", borderRadius: "12px", border: "1px solid #e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,0.04)", display: "flex", flexDirection: "column", overflow: "hidden", position: "sticky", top: "80px" }}>
+            <div style={{ padding: "18px 20px", borderBottom: "1px solid #f1f5f9" }}>
+              <div style={s.ct}>Daftar Intern</div>
+              <div style={{ ...s.cs, marginTop: "4px" }}>{unScoredInterns.length} intern belum dinilai</div>
+            </div>
 
-              {/* Intern + position picker */}
-              <div style={s.pickerRow}>
-                <div style={s.pickerField}>
-                  <label style={s.pickerLabel}>INTERN</label>
-                  <select style={s.pickerSelect} value={selectedSubmissionId || ""} onChange={(e) => handleInternChange(e.target.value)}>
-                    {unScoredInterns.map(i => <option key={i.id_submission} value={i.id_submission}>{i.name}</option>)}
-                  </select>
-                </div>
-                <div style={s.pickerField}>
-                  <label style={s.pickerLabel}>POSITION & TYPE</label>
-                  <div style={{ fontSize: "13px", padding: "7px 0", color: "#334155" }}>
-                    {selectedIntern?.position} &nbsp;·&nbsp;
-                    <span style={{ color: selectedIntern?.type === "Team" ? "#1e40af" : "#64748b", background: selectedIntern?.type === "Team" ? "#dbeafe" : "#f1f5f9", padding: "2px 8px", borderRadius: "5px", fontSize: "12px" }}>{selectedIntern?.type}</span>
-                  </div>
-                </div>
+            {/* Search box */}
+            <div style={{ padding: "12px 16px", borderBottom: "1px solid #f1f5f9" }}>
+              <div style={{ position: "relative" }}>
+                <svg style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input
+                  type="text"
+                  placeholder="Cari intern..."
+                  style={{ width: "100%", padding: "7px 10px 7px 32px", border: "1px solid #e2e8f0", borderRadius: "8px", fontSize: "12px", color: "#334155", background: "#f8fafc", outline: "none", fontFamily: "inherit", boxSizing: "border-box" }}
+                  readOnly
+                />
               </div>
+            </div>
 
-              {/* Column headers */}
-              <div style={{ ...s.compHeader, paddingBottom: "8px", paddingTop: "14px" }}>
-                <div style={s.colLabel}>Competency</div>
-                <div style={s.colLabel}>Req. Hours</div>
-                <div style={s.colLabel}>Score (0–100)</div>
-                <div style={s.colLabel}>Status</div>
-                <div style={s.colLabel}>Notes</div>
-              </div>
-
-              {/* One row per competency */}
-              {competencies.map((comp) => {
-                const sc = scores[comp.id_competency] || { score: "", status: "passed", notes: "" };
+            {/* Intern list */}
+            <div style={{ overflowY: "auto", maxHeight: "calc(100vh - 280px)" }}>
+              {unScoredInterns.map((intern) => {
+                const isSelected = intern.id_submission === selectedSubmissionId;
+                const completedRatio = intern.total_competencies > 0 ? intern.completed_competencies / intern.total_competencies : 0;
+                const isFullyScored = completedRatio === 1;
                 return (
-                  <div key={comp.id_competency} style={s.compRow}>
-                    <div style={s.compHeader}>
+                  <div
+                key={intern.id_submission}
+                onClick={() => handleInternChange(intern.id_submission)}
+                style={{
+                  padding: "9px 16px",
+                  borderBottom: "1px solid #f8fafc",
+                  cursor: "pointer",
+                  background: isSelected ? "#faf5ff" : "#fff",
+                  borderLeft: isSelected ? "3px solid #8b5cf6" : "3px solid transparent",
+                  transition: "all 0.15s",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                }}
+              >
+                {/* Avatar initials */}
+                <div style={{ width: "30px", height: "30px", borderRadius: "50%", background: isSelected ? "#ede9fe" : "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: 700, color: isSelected ? "#7c3aed" : "#64748b", flexShrink: 0 }}>
+                  {intern.name?.split(" ").slice(0, 2).map(w => w[0]).join("").toUpperCase()}
+                </div>
+
+                {/* Name + position in one line each */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: "12px", fontWeight: 700, color: isSelected ? "#7c3aed" : "#0f172a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{intern.name}</div>
+                  <div style={{ fontSize: "10px", color: "#94a3b8", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{intern.position} · {intern.completed_competencies}/{intern.total_competencies}</div>
+                </div>
+
+                {/* Scored check or pending dot */}
+                {isFullyScored
+                  ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" style={{ flexShrink: 0 }}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                  : <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#e2e8f0", flexShrink: 0 }} />
+                }
+              </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* ── PANEL KANAN: Detail Scoring ── */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "0", background: "#fff", borderRadius: "12px", border: "1px solid #e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,0.04)", overflow: "hidden" }}>
+            {/* Header intern terpilih */}
+            <div style={{ padding: "20px 28px", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+              <div>
+                <div style={{ fontSize: "17px", fontWeight: 800, color: "#0f172a", letterSpacing: "-0.01em" }}>{selectedIntern?.name || selectedInternName}</div>
+                <div style={{ fontSize: "12px", color: "#64748b", marginTop: "4px" }}>{selectedIntern?.position}</div>
+                <div style={{ marginTop: "8px", display: "flex", alignItems: "center", gap: "8px" }}>
+                  <span style={{ fontSize: "11px", fontWeight: 600, color: "#8b5cf6", background: "#ede9fe", padding: "3px 10px", borderRadius: "20px" }}>
+                    {competencies.filter(c => scores[c.id_competency]?.score !== null && scores[c.id_competency]?.score !== undefined && scores[c.id_competency]?.score !== "").length}/{competencies.length} kompetensi sudah dinilai
+                  </span>
+                  <span style={{ fontSize: "11px", color: "#94a3b8", background: selectedIntern?.type === "Team" ? "#dbeafe" : "#f1f5f9", color: selectedIntern?.type === "Team" ? "#1e40af" : "#64748b", padding: "3px 10px", borderRadius: "20px", fontWeight: 600 }}>{selectedIntern?.type}</span>
+                </div>
+              </div>
+              {avg !== null && (
+                <div style={{ textAlign: "right" }}>
+                  <div style={{ fontSize: "11px", color: "#94a3b8", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Nilai Akhir</div>
+                  <div style={{ fontSize: "28px", fontWeight: 800, color: "#8b5cf6", lineHeight: 1.1, marginTop: "4px" }}>{avg}</div>
+                </div>
+              )}
+            </div>
+
+            {/* Column headers */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 70px 80px 90px 80px 160px", alignItems: "center", padding: "10px 24px", gap: "10px", paddingBottom: "8px", paddingTop: "14px", background: "#f8fafc", borderBottom: "1px solid #e2e8f0" }}>
+              <div style={s.colLabel}>Competency</div>
+              <div style={s.colLabel}>Req. Hrs</div>
+              <div style={s.colLabel}>Score (0–100)</div>
+              <div style={s.colLabel}>Status</div>
+              <div style={s.colLabel}>Notes</div>
+              <div style={s.colLabel}>Achievement Description</div>
+            </div>
+            {/* Competency rows */}
+            <div style={{ overflowY: "auto", maxHeight: "calc(100vh - 340px)" }}>
+              {competencies.map((comp, idx) => {
+                const sc = scores[comp.id_competency] || { score: "", status: "passed", notes: "", achievement_description: "" };
+                const hasScore = sc.score !== null && sc.score !== undefined && sc.score !== "";
+                return (
+                  <div key={comp.id_competency} style={{ ...s.compRow, background: hasScore ? "#fafffe" : "#fff" }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 70px 80px 90px 80px 160px", alignItems: "center", padding: "10px 24px", gap: "10px" }}>
                       <div>
-                        <div style={s.compLabel}>{comp.name}</div>
+                        <div style={s.compLabel}>{idx + 1}. {comp.name}</div>
                         <div style={s.compHrs}>Required {comp.hours} hrs</div>
                       </div>
                       <div style={s.compHrs}>{comp.hours} hrs</div>
                       <input
                         type="number" min="0" max="100" placeholder="0–100"
-                        style={s.fieldInput}
+                        style={{ ...s.fieldInput, border: hasScore ? "1px solid #a7f3d0" : "1px solid #e2e8f0", background: hasScore ? "#f0fdf4" : "#f8fafc" }}
                         value={sc.score ?? ""}
                         onChange={(e) => updateScore(comp.id_competency, "score", e.target.value === "" ? null : Number(e.target.value))}
                       />
-                      <select style={s.fieldSelect} value={sc.status} onChange={(e) => updateScore(comp.id_competency, "status", e.target.value)}>
+                      <select
+                        style={{ ...s.fieldSelect, color: sc.status === "passed" ? "#16a34a" : "#dc2626", background: sc.status === "passed" ? "#f0fdf4" : "#fef2f2", border: sc.status === "passed" ? "1px solid #a7f3d0" : "1px solid #fecaca" }}
+                        value={sc.status}
+                        onChange={(e) => updateScore(comp.id_competency, "status", e.target.value)}
+                      >
                         <option value="passed">Passed</option>
                         <option value="failed">Failed</option>
                       </select>
@@ -391,24 +461,69 @@ export default function InputScoreMentor() {
                         value={sc.notes || ""}
                         onChange={(e) => updateScore(comp.id_competency, "notes", e.target.value)}
                       />
+
+                      {/* Achievement Description — ready for AI integration */}
+                      <div style={{ position: "relative" }}>
+                        <textarea
+                          placeholder="Describe achievement..."
+                          rows={2}
+                          style={{ ...s.fieldInput, resize: "none", lineHeight: "1.4", paddingRight: "26px", height: "52px", overflowY: "auto" }}
+                          value={sc.achievement_description || ""}
+                          onChange={(e) => updateScore(comp.id_competency, "achievement_description", e.target.value)}
+                        />
+                        {/* AI generate button placeholder */}
+                        <button
+                          title="Generate with AI"
+                          style={{ position: "absolute", right: "4px", bottom: "6px", width: "20px", height: "20px", border: "none", background: "transparent", cursor: "pointer", padding: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "#8b5cf6", borderRadius: "4px" }}
+                          onClick={() => {/* AI integration hook goes here */}}
+                        >
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+                          </svg>
+                        </button>
+                      </div>
+
                     </div>
                   </div>
                 );
               })}
+            </div>
 
-              {/* Auto average footer */}
-              <div style={s.avgFooter}>
-                <div>
-                  <div style={s.avgLabel}>Auto-calculated average score</div>
-                  <div style={s.avgNote}>{scored.length}/{competencies.length} competencies scored</div>
+            {/* Rangkuman Penilaian */}
+            <div style={{ borderTop: "1px solid #e2e8f0", background: "#f8fafc" }}>
+             <div style={{ padding: "16px 24px 12px", borderBottom: "1px solid #f1f5f9" }}>
+              <div style={{ fontSize: "13px", fontWeight: 700, color: "#0f172a" }}>Assessment Summary</div>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0", borderBottom: "1px solid #f1f5f9" }}>
+              <div style={{ padding: "16px 24px", borderRight: "1px solid #f1f5f9" }}>
+                <div style={{ fontSize: "11px", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>Average Score</div>
+                <div style={{ fontSize: "24px", fontWeight: 800, color: "#3b82f6", marginTop: "4px" }}>{avg ?? "—"}</div>
+                <div style={{ fontSize: "11px", color: "#94a3b8" }}>from {competencies.length} competencies</div>
+              </div>
+              <div style={{ padding: "16px 24px", borderRight: "1px solid #f1f5f9" }}>
+                <div style={{ fontSize: "11px", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>Total Required Hours</div>
+                <div style={{ fontSize: "24px", fontWeight: 800, color: "#22c55e", marginTop: "4px" }}>
+                  {competencies.reduce((sum, c) => sum + (c.hours || 0), 0)}
                 </div>
-                <div style={{ textAlign: "right" }}>
-                  <div style={s.avgVal}>{avg !== null ? avg : "—"}</div>
-                </div>
-                <button style={s.btnSave} onClick={handleSave} disabled={saving}>{saving ? 'Saving...' : 'Save All Scores'}</button>
+                <div style={{ fontSize: "11px", color: "#94a3b8" }}>hours</div>
+              </div>
+              <div style={{ padding: "16px 24px" }}>
+                <div style={{ fontSize: "11px", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>Scored</div>
+                <div style={{ fontSize: "24px", fontWeight: 800, color: "#8b5cf6", marginTop: "4px" }}>{scored.length}/{competencies.length}</div>
+                <div style={{ fontSize: "11px", color: "#94a3b8" }}>competencies</div>
               </div>
             </div>
+            <div style={{ ...s.avgFooter, justifyContent: "flex-end", gap: "10px" }}>
+              <div style={{ flex: 1 }}>
+                <div style={s.avgNote}>{scored.length}/{competencies.length} competencies filled in</div>
+              </div>
+              <button style={s.btnSave} onClick={handleSave} disabled={saving}>
+                {saving ? 'Saving...' : 'Save All Scores'}
+              </button>
+            </div>
+            </div>
           </div>
+        </div>
         </div>
 
         {/* Success Notification Modal */}

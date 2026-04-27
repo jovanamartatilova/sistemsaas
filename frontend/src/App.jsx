@@ -53,11 +53,8 @@ import AssignMentor from './pages/HR/AssignMentor';
 
 // Mentor
 import DashboardMentor    from './pages/Mentor/DashboardMentor';
-import InternsMentor      from './pages/Mentor/InternsMentor';
 import AssignTasksMentor  from './pages/Mentor/AssignTasksMentor';
 import InputScoreMentor   from './pages/Mentor/InputScoreMentor';
-import ScoreRecapMentor   from './pages/Mentor/ScoreRecapMentor';
-import CompetenciesMentor from './pages/Mentor/CompetenciesMentor';
 import EvaluationMentor   from './pages/Mentor/EvaluationMentor';
 import CertificateMentor  from './pages/Mentor/CertificateMentor';
 
@@ -134,11 +131,8 @@ export default function App() {
 
                 {/* Mentor — Private */}
                 <Route path="/mentor/dashboard"     element={<Private><DashboardMentor /></Private>} />
-                <Route path="/mentor/interns"        element={<Private><InternsMentor /></Private>} />
                 <Route path="/mentor/assign-tasks"   element={<Private><AssignTasksMentor /></Private>} />
                 <Route path="/mentor/input-score"    element={<Private><InputScoreMentor /></Private>} />
-                <Route path="/mentor/score-recap"    element={<Private><ScoreRecapMentor /></Private>} />
-                <Route path="/mentor/competencies"   element={<Private><CompetenciesMentor /></Private>} />
                 <Route path="/mentor/evaluation"     element={<Private><EvaluationMentor /></Private>} />
                 <Route path="/mentor/certificates"   element={<Private><CertificateMentor /></Private>} />
 
