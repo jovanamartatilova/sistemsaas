@@ -356,9 +356,18 @@ export default function LandingPage() {
 
   useEffect(() => {
     fetch("http://localhost:8000/api/vacancies/public")
-      .then((res) => res.json())
-      .then((data) => { setVacancies(data); setLoading(false); })
-      .catch((err) => { console.error("Failed to fetch vacancies:", err); setLoading(false); });
+      .then(async (res) => {
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data?.message || data?.error || `Request failed with ${res.status}`);
+        }
+        setVacancies(Array.isArray(data) ? data : (data.vacancies || []));
+      })
+      .catch((err) => {
+        console.error("Failed to fetch vacancies:", err);
+        setVacancies([]);
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   return (

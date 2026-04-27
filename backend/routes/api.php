@@ -39,37 +39,21 @@ use App\Http\Controllers\SuperAdmin\DashboardController as SuperAdminDashboardCo
 use App\Http\Controllers\SuperAdmin\TenantController;
 use App\Http\Controllers\SuperAdmin\UserController;
 
-// Public Routes
-
-// Vacancy
+// Public routes
+Route::post('/register', [AuthController::class, 'register']);
+Route::post('/login', [AuthController::class, 'login']);
+Route::post('/login-company', [AuthController::class, 'loginCompany']);
 Route::get('/vacancies/public', [VacancyController::class, 'publicIndex']);
 
-// Company public page
-Route::get('/c/{slug}',           [CompanyPublicController::class, 'show']);
-Route::get('/c/{slug}/vacancies', [CompanyPublicController::class, 'vacancies']);
-
-// Auth — general
-Route::post('/auth/register',        [AuthController::class, 'register']);
-Route::post('/auth/register-student', [AuthController::class, 'registerStudent']);
-Route::post('/auth/login',           [AuthController::class, 'login']);
-Route::post('/auth/login-superadmin', [AuthController::class, 'loginSuperAdmin']);
-Route::post('/auth/forgot-password', [AuthController::class, 'forgotPassword']);
-Route::post('/auth/reset-password',  [AuthController::class, 'resetPassword']);
-Route::post('/auth/reset-password-no-auto', [AuthController::class, 'resetPasswordNoAutoLogin']);
-
-// Auth — candidate
-Route::post('/auth/register-candidate/{slug}', [AuthController::class, 'registerCandidate']);
-Route::post('/auth/register-candidate',        [AuthController::class, 'registerCandidateGeneric']);
-Route::post('/auth/login-candidate',           [AuthController::class, 'loginCandidate']);
-Route::post('/auth/forgot-password-candidate', [AuthController::class, 'forgotPasswordCandidate']);
-Route::post('/auth/reset-password-candidate',  [AuthController::class, 'resetPasswordCandidate']);
-
-// Auth — staff
-Route::post('/auth/activate-account',             [AuthController::class, 'activateAccount']);
-Route::post('/auth/login-staff',                  [AuthController::class, 'loginStaff']);
-Route::post('/auth/forgot-password-staff',        [AuthController::class, 'forgotPasswordStaff']);
-Route::post('/auth/reset-password-staff',         [AuthController::class, 'resetPasswordStaff']);
-Route::get('/auth/check-activation-token/{token}', [AuthController::class, 'checkActivationToken']);
+// Protected routes
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/profile', [AuthController::class, 'profile']);
+    Route::post('/logout', [AuthController::class, 'logout']);
+    
+    // Company & Candidate creation (after registration)
+    Route::post('/create-company', [AuthController::class, 'createCompany']);
+    Route::post('/create-candidate-profile', [AuthController::class, 'createCandidateProfile']);
+});
 
 // Test
 Route::get('/test', fn () => response()->json(['message' => 'API Laravel berhasil']));

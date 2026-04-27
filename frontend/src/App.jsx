@@ -9,6 +9,7 @@ import RegisterPage      from './pages/Auth/SignUp';
 import ForgotPassword    from './pages/Auth/ForgotPassword';
 import ResetPassword     from './pages/Auth/ResetPassword';
 import ActivateAccount   from './pages/Auth/ActivateAccount';
+import Onboarding from "./components/OnboardingModal";
 
 // Candidate
 import SignUpCandidate          from './pages/Candidate/SignUpCandidate';

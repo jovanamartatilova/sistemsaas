@@ -3,19 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore";
 
 export default function Login() {
-  const [activeTab, setActiveTab] = useState("company"); // "company" | "candidate"
-  const [companyType, setCompanyType] = useState("owner"); // "owner" | "staff"
-
-  // Owner Form State
-  const [form, setForm] = useState({ username: "", password: "" });
-
-  // Staff Form State
-  const [staffForm, setStaffForm] = useState({ email: "", password: "", slug: "" });
-
-  // Candidate Form State
-  const [candidateForm, setCandidateForm] = useState({ email: "", password: "", slug: "" });
-  const [companiesApplied, setCompaniesApplied] = useState([]);
-
+  const [form, setForm] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
@@ -28,181 +16,93 @@ export default function Login() {
 
   useEffect(() => {
     if (isAuthenticated && !authLoading) {
-      if (user?.role === "candidate") {
-        if (company?.slug) {
-          navigate(`/c/${company.slug}`);
-        } else if (user?.id_company) {
-          navigate("/candidate/dashboard");
-        } else {
-          navigate("/candidate/dashboard");
-        }
-      } else if (company?.role === "applicant" || company?.role === "student") {
-        navigate("/applicant/portal");
-      } else {
-        navigate("/dashboard");
-      }
+      // Ambil user_type dari store atau dari localStorage
+      const storedUserType = localStorage.getItem("user_type");
+      redirectByUserType(storedUserType);
     }
-  }, [isAuthenticated, authLoading, user, company, navigate]);
+  }, [isAuthenticated, authLoading, navigate]);
 
-  const goToRegister = (e) => {
-    e.preventDefault();
-    navigate("/register");
+  // Redirect berdasarkan user_type (bukan role)
+  const redirectByUserType = (userType) => {
+    if (userType === "admin") {
+      navigate("/dashboard");
+    } else if (userType === "candidate") {
+      navigate("/candidate/dashboard");
+    } else if (userType === "new") {
+      // User baru registrasi belum punya jalur company/candidate.
+      // Arahkan ke dashboard utama supaya tidak mentok di route yang tidak ada.
+      navigate("/dashboard");
+    } else {
+      navigate("/dashboard");
+    }
   };
 
-  // ── Handlers ──────────────────────────────────────────────────────────────
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
-  const handleStaffChange = (e) => setStaffForm({ ...staffForm, [e.target.name]: e.target.value });
-  const handleCandidateChange = (e) => setCandidateForm({ ...candidateForm, [e.target.name]: e.target.value });
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+    setErrorMsg("");
+  };
 
-  // Owner login
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setErrorMsg("");
     setSuccessMsg("");
+
     try {
-      const response = await fetch("http://localhost:8000/api/auth/login", {
+      // ENDPOINT BARU (tanpa /auth)
+      const response = await fetch("http://localhost:8000/api/login", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "Accept": "application/json" },
-        body: JSON.stringify({ name: form.username, password: form.password }),
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ email: form.email, password: form.password }),
       });
+
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || "Login failed");
 
+      const resolvedUserType = data.user_type || (data.company ? "admin" : "candidate");
+
+      // Simpan token
       localStorage.setItem("auth_token", data.token);
-      localStorage.setItem("company", JSON.stringify(data.company));
-      useAuthStore.setState({ isAuthenticated: true, token: data.token, company: data.company });
-      setSuccessMsg("✓ Login successful!");
-
-      setTimeout(() => {
-        const role = data.company.role;
-        if (role === "applicant" || role === "student") navigate("/applicant/portal");
-        else if (role === "mentor") navigate("/mentor/dashboard");
-        else if (role === "hr") navigate("/hr/dashboard");
-        else if (role === "superadmin") navigate("/superadmin");
-        else navigate("/dashboard");
-      }, 800);
-    } catch (err) {
-      setErrorMsg(err.message);
-      setLoading(false);
-    }
-  };
-
-  // Staff (HR / Mentor) login
-  const handleStaffSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setErrorMsg("");
-    setSuccessMsg("");
-    try {
-      const response = await fetch("http://localhost:8000/api/auth/login-staff", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Accept": "application/json" },
-        body: JSON.stringify({
-          email: staffForm.email,
-          password: staffForm.password,
-          slug: staffForm.slug,
-        }),
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || "Login failed");
-
-      localStorage.setItem("auth_token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
-      localStorage.setItem("company", JSON.stringify(data.company));
-      useAuthStore.setState({
-        isAuthenticated: true,
-        token: data.token,
-        user: data.user,
-        company: data.company,
-      });
-      setSuccessMsg("✓ Login successful!");
-
-      setTimeout(() => {
-        const role = data.user.role;
-        if (role === "hr") navigate("/hr/dashboard");
-        else if (role === "mentor") navigate("/mentor/dashboard");
-        else navigate("/dashboard");
-      }, 800);
-    } catch (err) {
-      setErrorMsg(err.message);
-      setLoading(false);
-    }
-  };
-
-  // Candidate login
-  const handleCandidateSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setErrorMsg("");
-    setSuccessMsg("");
-    try {
-      const response = await fetch("http://localhost:8000/api/auth/login-candidate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Accept": "application/json" },
-        body: JSON.stringify({
-          email: candidateForm.email,
-          password: candidateForm.password,
-          slug: candidateForm.slug || undefined,
-        }),
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || "Login failed");
-
-      if (data.companies_applied && data.companies_applied.length > 0) {
-        setCompaniesApplied(data.companies_applied);
-        if (!data.company && data.companies_applied.length > 0) {
-          data.company = data.companies_applied[0];
-        }
+      
+      // Simpan user_type untuk redirect
+      localStorage.setItem("user_type", resolvedUserType);
+      localStorage.setItem("is_new_user", String(!!data.is_new_user));
+      
+      // Simpan user
+      if (data.user) {
+        localStorage.setItem("user", JSON.stringify(data.user));
       }
-
-      localStorage.setItem("auth_token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
+      
+      // Simpan company jika ada (untuk admin)
       if (data.company) {
         localStorage.setItem("company", JSON.stringify(data.company));
-      } else {
-        localStorage.removeItem("company");
       }
+      
+      // Simpan candidate profile jika ada
+      if (data.candidate_profile) {
+        localStorage.setItem("candidate_profile", JSON.stringify(data.candidate_profile));
+      }
+
+      // Update store
       useAuthStore.setState({
         isAuthenticated: true,
         token: data.token,
-        user: data.user,
+        user: data.user || null,
         company: data.company || null,
       });
+
       setSuccessMsg("✓ Login successful!");
 
       setTimeout(() => {
-        if (data.company && data.company.slug) {
-          navigate(`/c/${data.company.slug}`);
-        } else {
-          navigate("/candidate/dashboard");
-        }
+        redirectByUserType(resolvedUserType);
       }, 800);
+      
     } catch (err) {
       setErrorMsg(err.message);
+    } finally {
       setLoading(false);
     }
   };
-
-  // Resolve which submit handler to use
-  const resolveSubmit = () => {
-    if (activeTab === "candidate") return handleCandidateSubmit;
-    if (companyType === "staff") return handleStaffSubmit;
-    return handleSubmit;
-  };
-
-  // Resolve password field binding
-  const passwordValue = activeTab === "candidate"
-    ? candidateForm.password
-    : companyType === "staff"
-      ? staffForm.password
-      : form.password;
-
-  const passwordChange = activeTab === "candidate"
-    ? handleCandidateChange
-    : companyType === "staff"
-      ? handleStaffChange
-      : handleChange;
 
   const inputBase = {
     background: "rgba(255,255,255,0.07)",
@@ -216,13 +116,19 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex">
-      {/* ── Left Panel: Hero ── */}
+      {/* Left Panel - Hero (sama seperti sebelumnya) */}
       <div
         className="hidden lg:flex lg:w-1/2 relative overflow-hidden"
         style={{ background: "linear-gradient(135deg, #0a1628 0%, #0d2044 50%, #0a1a35 100%)" }}
       >
-        <div className="absolute inset-0 bg-cover bg-center bg-no-repeat pointer-events-none" style={{ backgroundImage: "url('/assets/images/bg.png')" }} />
-        <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(to bottom, rgba(10,22,40,0.3) 0%, rgba(10,22,40,0.6) 60%, rgba(10,22,40,0.95) 100%)" }} />
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat pointer-events-none"
+          style={{ backgroundImage: "url('/assets/images/bg.png')" }}
+        />
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{ background: "linear-gradient(to bottom, rgba(10,22,40,0.3) 0%, rgba(10,22,40,0.6) 60%, rgba(10,22,40,0.95) 100%)" }}
+        />
         <div className="absolute top-20 left-20 w-64 h-64 rounded-full blur-3xl opacity-10 pointer-events-none" style={{ background: "#4a9eff" }} />
         <div className="absolute bottom-32 right-10 w-48 h-48 rounded-full blur-3xl opacity-10 pointer-events-none" style={{ background: "#1a6bb5" }} />
 
@@ -238,13 +144,21 @@ export default function Login() {
                 <path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </Link>
-            <Link to="/register" className="text-sm font-medium hover:text-blue-300 transition-colors duration-300" style={{ color: "rgba(255,255,255,0.6)", textDecoration: "none" }}>
-              Don't have an account?{" "}<span className="text-blue-400 hover:underline">Sign up</span>
+            <Link
+              to="/register"
+              className="text-sm font-medium hover:text-blue-300 transition-colors duration-300"
+              style={{ color: "rgba(255,255,255,0.6)", textDecoration: "none" }}
+            >
+              Don't have an account?{" "}
+              <span className="text-blue-400 hover:underline">Sign up</span>
             </Link>
           </div>
 
           <div>
-            <h2 className="text-4xl font-bold text-white mb-4 leading-tight text-left" style={{ fontFamily: "'Poppins', sans-serif", letterSpacing: "-0.5px" }}>
+            <h2
+              className="text-4xl font-bold text-white mb-4 leading-tight text-left"
+              style={{ fontFamily: "'Poppins', sans-serif", letterSpacing: "-0.5px" }}
+            >
               One Step Closer
             </h2>
             <p className="text-base leading-relaxed" style={{ color: "rgba(255,255,255,0.65)", maxWidth: "340px" }}>
@@ -262,249 +176,116 @@ export default function Login() {
         </div>
       </div>
 
-      {/* ── Right Panel: Form ── */}
+      {/* Right Panel - Form (sama seperti sebelumnya) */}
       <div
         className="flex-1 flex flex-col items-center justify-center px-6 py-12 relative overflow-hidden"
         style={{ background: "linear-gradient(160deg, #0d1f3c 0%, #0a1628 40%, #071220 100%)" }}
       >
         {/* Mobile nav */}
         <div className="lg:hidden absolute top-6 left-6 flex items-center gap-4">
-          <Link to="/" className="flex items-center justify-center w-9 h-9 rounded-full border border-white/10 hover:border-white/20 transition-all duration-200" style={{ color: "rgba(255,255,255,0.5)", textDecoration: "none" }}>
+          <Link
+            to="/"
+            className="flex items-center justify-center w-9 h-9 rounded-full border border-white/10 hover:border-white/20 transition-all duration-200"
+            style={{ color: "rgba(255,255,255,0.5)", textDecoration: "none" }}
+          >
             <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
               <path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </Link>
           <Link to="/register" className="text-sm" style={{ color: "rgba(255,255,255,0.55)", textDecoration: "none" }}>
-            Don't have an account?{" "}<span className="text-blue-400 underline">Sign up</span>
+            Don't have an account?{" "}
+            <span className="text-blue-400 underline">Sign up</span>
           </Link>
         </div>
 
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full blur-3xl opacity-5 pointer-events-none" style={{ background: "#4a9eff" }} />
+        <div
+          className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full blur-3xl opacity-5 pointer-events-none"
+          style={{ background: "#4a9eff" }}
+        />
 
         <div className="w-full max-w-md relative z-10">
           {/* Logo + Title */}
-          <div className="text-center mb-3">
+          <div className="text-center mb-6">
             <div className="flex justify-center mb-2">
-              <img src="/assets/images/logo.png" alt="Logo" className="w-15 h-10 object-contain" />
+              <img src="/assets/images/logo.png" alt="Logo" className="w-23 h-20 object-contain" />
             </div>
-            <p className="text-sm font-medium mb-1" style={{ color: "rgba(74,158,255,0.85)" }}>Welcome back to</p>
-            <h1 className="text-xl font-bold text-white mb-1" style={{ letterSpacing: "-0.3px" }}>{companyName}</h1>
+            <p className="text-sm font-medium mb-1" style={{ color: "rgba(74,158,255,0.85)" }}>
+              Welcome back to
+            </p>
+            <h1 className="text-xl font-bold text-white mb-1" style={{ letterSpacing: "-0.3px" }}>
+              {companyName}
+            </h1>
             <p className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>
-              {activeTab === "company"
-                ? companyType === "staff"
-                  ? "Sign in as HR or Mentor staff."
-                  : "Sign in to your company account and continue your journey."
-                : "Sign in to apply to your matching internships."}
+              Sign in with your account to continue.
             </p>
           </div>
 
-          {/* Tab Selector */}
-          <div className="flex p-1 mb-4 rounded-xl" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}>
-            <button
-              onClick={() => { setActiveTab("company"); setErrorMsg(""); setSuccessMsg(""); }}
-              className="flex-1 py-2 text-sm font-medium rounded-lg transition-all duration-200"
-              style={{ background: activeTab === "company" ? "rgba(74,158,255,0.15)" : "transparent", color: activeTab === "company" ? "#4a9eff" : "rgba(255,255,255,0.5)" }}
-            >
-              Company Staff
-            </button>
-            <button
-              onClick={() => { setActiveTab("candidate"); setErrorMsg(""); setSuccessMsg(""); }}
-              className="flex-1 py-2 text-sm font-medium rounded-lg transition-all duration-200"
-              style={{ background: activeTab === "candidate" ? "rgba(74,158,255,0.15)" : "transparent", color: activeTab === "candidate" ? "#4a9eff" : "rgba(255,255,255,0.5)" }}
-            >
-              Candidate
-            </button>
-          </div>
-
-          {/* Sub-toggle Owner / Staff — only visible on company tab */}
-          {activeTab === "company" && (
-            <div className="flex p-1 mb-5 rounded-lg" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}>
-              <button
-                type="button"
-                onClick={() => { setCompanyType("owner"); setErrorMsg(""); }}
-                className="flex-1 py-1.5 text-xs font-medium rounded-md transition-all duration-200"
-                style={{ background: companyType === "owner" ? "rgba(255,255,255,0.1)" : "transparent", color: companyType === "owner" ? "#fff" : "rgba(255,255,255,0.4)" }}
-              >
-                Admin
-              </button>
-              <button
-                type="button"
-                onClick={() => { setCompanyType("staff"); setErrorMsg(""); }}
-                className="flex-1 py-1.5 text-xs font-medium rounded-md transition-all duration-200"
-                style={{ background: companyType === "staff" ? "rgba(255,255,255,0.1)" : "transparent", color: companyType === "staff" ? "#fff" : "rgba(255,255,255,0.4)" }}
-              >
-                HR / Mentor
-              </button>
-            </div>
-          )}
-
           {/* Success */}
           {successMsg && (
-            <div className="px-4 py-3 rounded-lg mb-4 text-sm font-medium flex items-center gap-2 animate-pulse" style={{ background: "rgba(76,175,80,0.15)", borderLeft: "4px solid #4caf50", color: "#81c784" }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" /></svg>
+            <div
+              className="px-4 py-3 rounded-lg mb-4 text-sm font-medium flex items-center gap-2 animate-pulse"
+              style={{ background: "rgba(76,175,80,0.15)", borderLeft: "4px solid #4caf50", color: "#81c784" }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+              </svg>
               {successMsg}
             </div>
           )}
 
           {/* Error */}
           {errorMsg && (
-            <div className="px-4 py-3 rounded-lg mb-4 text-sm border" style={{ background: "rgba(255,59,48,0.1)", borderColor: "rgba(255,59,48,0.3)", color: "#ff6b6b" }}>
+            <div
+              className="px-4 py-3 rounded-lg mb-4 text-sm border"
+              style={{ background: "rgba(255,59,48,0.1)", borderColor: "rgba(255,59,48,0.3)", color: "#ff6b6b" }}
+            >
               {errorMsg}
             </div>
           )}
 
           {/* Form */}
-          <form onSubmit={resolveSubmit()} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Email */}
+            <div>
+              <label className="block text-sm font-medium mb-1.5 text-left" style={{ color: "rgba(255,255,255,0.8)" }}>
+                Email
+              </label>
+              <input
+                type="email"
+                name="email"
+                value={form.email}
+                onChange={handleChange}
+                placeholder="your@email.com"
+                required
+                className="w-full px-4 py-3 rounded-xl text-white placeholder-gray-500 outline-none transition-all duration-200"
+                style={inputBase}
+                onFocus={(e) => Object.assign(e.target.style, inputFocus)}
+                onBlur={(e) => Object.assign(e.target.style, inputBase)}
+              />
+            </div>
 
-            {/* ── Company Tab ── */}
-            {activeTab === "company" && (
-              <>
-                {/* Owner: company name */}
-                {companyType === "owner" && (
-                  <div>
-                    <label className="block text-sm font-medium mb-1.5 text-left" style={{ color: "rgba(255,255,255,0.8)" }}>Company Name</label>
-                    <input
-                      type="text"
-                      name="username"
-                      value={form.username}
-                      onChange={handleChange}
-                      placeholder="Your company name"
-                      required
-                      className="w-full px-4 py-3 rounded-xl text-white placeholder-gray-500 outline-none transition-all duration-200"
-                      style={inputBase}
-                      onFocus={(e) => Object.assign(e.target.style, inputFocus)}
-                      onBlur={(e) => Object.assign(e.target.style, inputBase)}
-                    />
-                  </div>
-                )}
-
-                {/* Staff: slug + email */}
-                {companyType === "staff" && (
-                  <>
-                    <div>
-                      <label className="block text-sm font-medium mb-1.5 text-left" style={{ color: "rgba(255,255,255,0.8)" }}>Company Slug</label>
-                      <input
-                        type="text"
-                        name="slug"
-                        value={staffForm.slug}
-                        onChange={handleStaffChange}
-                        placeholder="e.g. earlypath"
-                        required
-                        className="w-full px-4 py-3 rounded-xl text-white placeholder-gray-500 outline-none transition-all duration-200"
-                        style={inputBase}
-                        onFocus={(e) => Object.assign(e.target.style, inputFocus)}
-                        onBlur={(e) => Object.assign(e.target.style, inputBase)}
-                      />
-                      <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)", marginTop: "4px" }}>
-                        Ask your admin for the company slug.
-                      </p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1.5 text-left" style={{ color: "rgba(255,255,255,0.8)" }}>Email</label>
-                      <input
-                        type="email"
-                        name="email"
-                        value={staffForm.email}
-                        onChange={handleStaffChange}
-                        placeholder="your@email.com"
-                        required
-                        className="w-full px-4 py-3 rounded-xl text-white placeholder-gray-500 outline-none transition-all duration-200"
-                        style={inputBase}
-                        onFocus={(e) => Object.assign(e.target.style, inputFocus)}
-                        onBlur={(e) => Object.assign(e.target.style, inputBase)}
-                      />
-                    </div>
-                  </>
-                )}
-              </>
-            )}
-
-            {/* ── Candidate Tab ── */}
-            {activeTab === "candidate" && (
-              <>
-                {companiesApplied && companiesApplied.length > 0 && (
-                  <div>
-                    <label className="block text-sm font-medium mb-1.5 text-left" style={{ color: "rgba(255,255,255,0.8)" }}>Your Companies</label>
-                    <div className="relative">
-                      <select
-                        name="slug"
-                        value={candidateForm.slug}
-                        onChange={handleCandidateChange}
-                        className="w-full px-4 py-3 rounded-xl text-white placeholder-gray-500 outline-none transition-all duration-200 appearance-none bg-transparent"
-                        style={{ ...inputBase, cursor: "pointer" }}
-                        onFocus={(e) => Object.assign(e.target.style, inputFocus)}
-                        onBlur={(e) => Object.assign(e.target.style, inputBase)}
-                      >
-                        <option value="" style={{ color: "#000" }}>-- Select a company --</option>
-                        {companiesApplied.map((c) => (
-                          <option key={c.id_company} value={c.slug} style={{ color: "#000" }}>{c.name}</option>
-                        ))}
-                      </select>
-                      <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "rgba(255,255,255,0.5)" }}>
-                          <polyline points="6 9 12 15 18 9" />
-                        </svg>
-                      </div>
-                    </div>
-                    <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)", marginTop: "4px" }}>Companies where you have active applications.</p>
-                  </div>
-                )}
-                <div>
-                  <label className="block text-sm font-medium mb-1.5 text-left" style={{ color: "rgba(255,255,255,0.8)" }}>Email</label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={candidateForm.email}
-                    onChange={handleCandidateChange}
-                    placeholder="john@email.com"
-                    required
-                    className="w-full px-4 py-3 rounded-xl text-white placeholder-gray-500 outline-none transition-all duration-200"
-                    style={inputBase}
-                    onFocus={(e) => Object.assign(e.target.style, inputFocus)}
-                    onBlur={(e) => Object.assign(e.target.style, inputBase)}
-                  />
-                </div>
-              </>
-            )}
-
-            {/* ── Password (shared) ── */}
+            {/* Password */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-sm font-medium" style={{ color: "rgba(255,255,255,0.8)" }}>Password</label>
-                {activeTab === "company" && companyType === "staff" && !staffForm.slug ? (
-                  <button
-                    type="button"
-                    disabled
-                    className="text-xs transition-colors duration-200"
-                    style={{ color: "rgba(255,255,255,0.3)", background: "none", border: "none", cursor: "not-allowed" }}
-                    title="Masukkan nama perusahaan terlebih dahulu"
-                  >
-                    Forgot password?
-                  </button>
-                ) : (
-                  <Link
-                    to={
-                      activeTab === "company"
-                        ? companyType === "staff"
-                          ? `/c/${staffForm.slug}/staff/forgot-password`
-                          : "/forgot-password"
-                        : "/forgot-password-candidate"
-                    }
-                    className="text-xs transition-colors duration-200"
-                    style={{ color: "#4a9eff", textDecoration: "none" }}
-                    onMouseEnter={(e) => (e.currentTarget.style.color = "#7bb8ff")}
-                    onMouseLeave={(e) => (e.currentTarget.style.color = "#4a9eff")}
-                  >
-                    Forgot password?
-                  </Link>
-                )}
+                <label className="block text-sm font-medium" style={{ color: "rgba(255,255,255,0.8)" }}>
+                  Password
+                </label>
+                <Link
+                  to="/forgot-password"
+                  className="text-xs transition-colors duration-200"
+                  style={{ color: "#4a9eff", textDecoration: "none" }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = "#7bb8ff")}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = "#4a9eff")}
+                >
+                  Forgot password?
+                </Link>
               </div>
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
                   name="password"
-                  value={passwordValue}
-                  onChange={passwordChange}
+                  value={form.password}
+                  onChange={handleChange}
                   placeholder="Enter your password"
                   required
                   className="w-full px-4 py-3 pr-12 rounded-xl text-white placeholder-gray-500 outline-none transition-all duration-200"
@@ -516,7 +297,7 @@ export default function Login() {
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 p-1 transition-opacity hover:opacity-100"
-                  style={{ color: "rgba(255,255,255,0.4)" }}
+                  style={{ color: "#64748b" }}
                 >
                   {showPassword ? (
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -539,15 +320,27 @@ export default function Login() {
               <input type="checkbox" id="terms" required className="mt-0.5 w-4 h-4 rounded cursor-pointer accent-blue-500" />
               <label htmlFor="terms" className="text-xs leading-relaxed cursor-pointer" style={{ color: "rgba(255,255,255,0.5)" }}>
                 By signing in, you agree to our{" "}
-                <a href="/terms" target="_blank" className="transition-colors duration-200" style={{ color: "#4a9eff" }}
+                <a
+                  href="/terms"
+                  target="_blank"
+                  className="transition-colors duration-200"
+                  style={{ color: "#4a9eff" }}
                   onMouseEnter={(e) => (e.currentTarget.style.color = "#7bb8ff")}
                   onMouseLeave={(e) => (e.currentTarget.style.color = "#4a9eff")}
-                >Terms of Service</a>
-                {" "}and{" "}
-                <a href="/privacy" target="_blank" className="transition-colors duration-200" style={{ color: "#4a9eff" }}
+                >
+                  Terms of Service
+                </a>{" "}
+                and{" "}
+                <a
+                  href="/privacy"
+                  target="_blank"
+                  className="transition-colors duration-200"
+                  style={{ color: "#4a9eff" }}
                   onMouseEnter={(e) => (e.currentTarget.style.color = "#7bb8ff")}
                   onMouseLeave={(e) => (e.currentTarget.style.color = "#4a9eff")}
-                >Privacy Policy</a>
+                >
+                  Privacy Policy
+                </a>
               </label>
             </div>
 
@@ -571,7 +364,9 @@ export default function Login() {
                   </svg>
                   Signing in...
                 </span>
-              ) : "Sign In"}
+              ) : (
+                "Sign In"
+              )}
             </button>
 
             {/* Divider */}
@@ -586,8 +381,16 @@ export default function Login() {
               type="button"
               className="w-full py-3.5 rounded-xl font-medium text-sm flex items-center justify-center gap-3 transition-all duration-200"
               style={{ background: "rgba(255,255,255,0.97)", color: "#1a1a2e" }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = "#fff"; e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.3)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.97)"; e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "none"; }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "#fff";
+                e.currentTarget.style.transform = "translateY(-1px)";
+                e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.3)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "rgba(255,255,255,0.97)";
+                e.currentTarget.style.transform = "translateY(0)";
+                e.currentTarget.style.boxShadow = "none";
+              }}
             >
               <svg width="18" height="18" viewBox="0 0 24 24">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
@@ -602,15 +405,15 @@ export default function Login() {
           {/* Register link */}
           <p className="text-center mt-6 text-sm" style={{ color: "rgba(255,255,255,0.4)" }}>
             Don't have an account?{" "}
-            <button
-              onClick={goToRegister}
-              className="font-semibold transition-colors duration-200 bg-transparent border-none"
-              style={{ color: "#4a9eff", textDecoration: "none", cursor: "pointer", padding: 0 }}
+            <Link
+              to="/register"
+              className="font-semibold transition-colors duration-200"
+              style={{ color: "#4a9eff", textDecoration: "none" }}
               onMouseEnter={(e) => (e.currentTarget.style.color = "#7bb8ff")}
               onMouseLeave={(e) => (e.currentTarget.style.color = "#4a9eff")}
             >
               Sign up here
-            </button>
+            </Link>
           </p>
         </div>
       </div>
