@@ -63,10 +63,10 @@ export default function SidebarCandidate({ userName, userPhoto, company, onLogou
           const isActive = location.pathname === item.to;
           return (
             <Link key={item.label} to={item.to}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-medium transition-colors text-left
                 ${isActive ? "bg-indigo-600 text-white" : "text-slate-400 hover:bg-[#1a2f54] hover:text-white"}`}>
-              {item.icon}
-              {item.label}
+              <span className="flex-shrink-0">{item.icon}</span>
+              <span className="whitespace-nowrap">{item.label}</span>
             </Link>
           );
         })}

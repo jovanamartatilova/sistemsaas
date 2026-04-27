@@ -87,7 +87,8 @@ const Icon = {
     Upload: () => <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></svg>,
     Lock: () => <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>,
     ChevronRight: () => <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6" /></svg>,
-    FileText: () => <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg>
+    FileText: () => <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg>,
+    Sparkles: () => <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" /><path d="M5 3v4" /><path d="M7 5H3" /></svg>
 };
 
 const formatDateToFrontend = (dateStr) => {
@@ -345,8 +346,33 @@ function JobCard({ job, onEdit, onDelete }) {
 
 // ── Modal ─────────────────────────────────────────────────────────────────────
 function Modal({ open, editingJob, onClose, onSubmit, catalog }) {
+    const { token } = useAuthStore();
     const [activeTab, setActiveTab] = useState("detail");
     const [form, setForm] = useState({ title: "", desc: "", kota: "", provinsi: "", alamat: "", batch: "", image: "", photoFile: null });
+    const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+
+    const handleGenerateAIDesc = async () => {
+        if (!form.title) {
+            alert("Please fill in the Program Name first.");
+            return;
+        }
+        setIsGeneratingAI(true);
+        try {
+            const prompt = `Tuliskan satu paragraf deskripsi profesional dan menarik (sekitar 30-50 kata) dalam bahasa Indonesia untuk program magang '${form.title}'. Berikan HANYA teks deskripsinya tanpa awalan, tanpa tanda kutip, dan tanpa penjelasan lain.`;
+            const res = await axios.post("http://127.0.0.1:8000/api/ai/generate", {
+                model: "llama3",
+                prompt: prompt
+            }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setForm({ ...form, desc: res.data.response.trim() });
+        } catch (e) {
+            alert(e.response?.data?.error || e.message || "Failed to connect to backend AI proxy.");
+            console.error(e);
+        } finally {
+            setIsGeneratingAI(false);
+        }
+    };
     const fileInpRef = useRef(null);
     const [tipe, setTipe] = useState("");
     const [payment, setPayment] = useState("");
@@ -498,9 +524,29 @@ function Modal({ open, editingJob, onClose, onSubmit, catalog }) {
                             <FGroup label="Program Name" req style={{ marginTop: 14 }}>
                                 <input style={inp} value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} placeholder="cth. Software Engineer Intern Batch 8" onFocus={focusInp} onBlur={blurInp} />
                             </FGroup>
-                            <FGroup label="Program Description" req style={{ marginTop: 14 }}>
+                            
+                            <div style={{ textAlign: "left", marginTop: 14 }}>
+                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                                    <label style={{ fontSize: 12, fontWeight: 700, color: "#475569", display: "block" }}>
+                                        Program Description <span style={{ color: "#ef4444" }}>*</span>
+                                    </label>
+                                    <button 
+                                        onClick={(e) => { e.preventDefault(); handleGenerateAIDesc(); }}
+                                        disabled={isGeneratingAI}
+                                        style={{
+                                            display: "flex", alignItems: "center", gap: 5,
+                                            background: "linear-gradient(135deg, #6366f1, #8b5cf6)", color: "#fff", border: "none", borderRadius: 6,
+                                            padding: "5px 12px", fontSize: 10, fontWeight: 700, cursor: isGeneratingAI ? "default" : "pointer",
+                                            opacity: isGeneratingAI ? 0.7 : 1, transition: "0.2s", boxShadow: "0 2px 6px rgba(99,102,241,.3)"
+                                        }}
+                                        onMouseEnter={e => !isGeneratingAI && (e.currentTarget.style.transform = "translateY(-1px)")}
+                                        onMouseLeave={e => !isGeneratingAI && (e.currentTarget.style.transform = "translateY(0)")}
+                                    >
+                                        <Icon.Sparkles /> {isGeneratingAI ? "Generating..." : "Generate AI"}
+                                    </button>
+                                </div>
                                 <textarea style={{ ...inp, minHeight: 88, resize: "vertical", lineHeight: 1.6 }} value={form.desc} onChange={e => setForm({ ...form, desc: e.target.value })} placeholder="Briefly describe this internship program…" onFocus={focusInp} onBlur={blurInp} />
-                            </FGroup>
+                            </div>
 
                             {/* Internship Location */}
                             <SectionTitle style={{ marginTop: 24 }}>Internship Location</SectionTitle>

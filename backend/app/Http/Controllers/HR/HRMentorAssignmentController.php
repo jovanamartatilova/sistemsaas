@@ -13,69 +13,69 @@ class HRMentorAssignmentController extends Controller
      * GET /hr/assign-mentor
      */
     public function index(Request $request)
-{
-    $companyId = $request->user()->id_company;
-    
-    $search = $request->get('search');
+    {
+        $companyId = $request->user()->id_company;
 
-    // Get submissions (accepted/interview) with optional search
-    $submissionsQuery = Submission::whereIn('status', ['interview', 'accepted'])
-        ->whereHas('vacancy', fn($q) => $q->where('id_company', $companyId))
-        ->with(['user', 'position', 'vacancy', 'mentor']);
-    
-    if ($search) {
-        $submissionsQuery->whereHas('user', function($q) use ($search) {
-            $q->where('name', 'like', "%{$search}%")
-              ->orWhere('email', 'like', "%{$search}%");
-        });
-    }
-    
-    $submissions = $submissionsQuery->get()
-        ->map(fn($s) => [
-            'id_submission' => $s->id_submission,
-            'name'          => $s->user?->name,
-            'email'         => $s->user?->email,
-            'position'      => $s->position?->name,
-            'program'       => $s->vacancy?->title,
-            'type'          => $s->vacancy?->type,
-            'mentor_id'     => $s->id_user_mentor,
-            'mentor_name'   => $s->mentor?->name,
-            'is_assigned'   => !empty($s->id_user_mentor),
-        ]);
+        $search = $request->get('search');
 
-    // Mentors (no search needed, just all active mentors)
-    $mentors = User::where('id_company', $companyId)
-        ->where('role', 'mentor')
-        ->where('is_active', true)
-        ->get()
-        ->map(function ($m) {
-            $activeInterns = Submission::where('id_user_mentor', $m->id_user)->count();
-            return [
-                'id_mentor'      => $m->id_user,
-                'name'           => $m->name,
-                'email'          => $m->email,
-                'active_interns' => $activeInterns,
-                'capacity'       => 6,
-            ];
-        });
+        // Get submissions (accepted/interview) with optional search
+        $submissionsQuery = Submission::whereIn('status', ['interview', 'accepted'])
+            ->whereHas('vacancy', fn($q) => $q->where('id_company', $companyId))
+            ->with(['user', 'position', 'vacancy', 'mentor']);
 
-    $total      = $submissions->count();
-    $assigned   = $submissions->where('is_assigned', true)->count();
+        if ($search) {
+            $submissionsQuery->whereHas('user', function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
 
-    return response()->json([
-        'success' => true,
-        'data'    => [
-            'stats' => [
-                'total'          => $total,
-                'assigned'       => $assigned,
-                'unassigned'     => $total - $assigned,
-                'active_mentors' => $mentors->count(),
+        $submissions = $submissionsQuery->get()
+            ->map(fn($s) => [
+                'id_submission' => $s->id_submission,
+                'name' => $s->user?->name,
+                'email' => $s->user?->email,
+                'position' => $s->position?->name,
+                'program' => $s->vacancy?->title,
+                'type' => $s->vacancy?->type,
+                'mentor_id' => $s->id_user_mentor,
+                'mentor_name' => $s->mentor?->name,
+                'is_assigned' => !empty($s->id_user_mentor),
+            ]);
+
+        // Mentors (no search needed, just all active mentors)
+        $mentors = User::where('id_company', $companyId)
+            ->where('role', 'mentor')
+            ->where('is_active', true)
+            ->get()
+            ->map(function ($m) {
+                $activeInterns = Submission::where('id_user_mentor', $m->id_user)->count();
+                return [
+                    'id_mentor' => $m->id_user,
+                    'name' => $m->name,
+                    'email' => $m->email,
+                    'active_interns' => $activeInterns,
+                    'capacity' => 6,
+                ];
+            });
+
+        $total = $submissions->count();
+        $assigned = $submissions->where('is_assigned', true)->count();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'stats' => [
+                    'total' => $total,
+                    'assigned' => $assigned,
+                    'unassigned' => $total - $assigned,
+                    'active_mentors' => $mentors->count(),
+                ],
+                'interns' => $submissions,
+                'mentors' => $mentors,
             ],
-            'interns' => $submissions,
-            'mentors' => $mentors,
-        ],
-    ]);
-}
+        ]);
+    }
 
     /**
      * POST /hr/assign-mentor
@@ -84,10 +84,10 @@ class HRMentorAssignmentController extends Controller
     {
         $request->validate([
             'id_submission' => 'required|string|exists:submissions,id_submission',
-            'id_mentor'     => 'required|string|exists:users,id_user',
+            'id_mentor' => 'required|string|exists:users,id_user',
         ]);
 
-        $companyId  = $request->user()->id_company;
+        $companyId = $request->user()->id_company;
 
         $submission = Submission::where('id_submission', $request->id_submission)
             ->where('status', 'accepted')
@@ -118,7 +118,7 @@ class HRMentorAssignmentController extends Controller
      */
     public function unassign(Request $request, string $id)
     {
-        $companyId  = $request->user()->id_company;
+        $companyId = $request->user()->id_company;
 
         $submission = Submission::where('id_submission', $id)
             ->whereHas('vacancy', fn($q) => $q->where('id_company', $companyId))

@@ -3,42 +3,60 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use App\Models\Submission;
+use App\Models\Task;
 use Illuminate\Http\Request;
 
 class MemberTaskController extends Controller
 {
     /**
      * Get all tasks assigned to the authenticated member
-     * A task is an assigned submission to a team member
      */
     public function getTasks(Request $request)
     {
         try {
             $user = $request->user();
 
-            if (!$user || !$user->id_team) {
-                return response()->json([
-                    'message' => 'User is not part of a team',
-                    'data' => []
-                ], 200);
-            }
+            // Members should only see tasks assigned specifically to them as an individual
+            // They should NOT see team-level tasks directly unless they are the id_intern
+            $tasksQuery = Task::where('id_intern', $user->id_user)->whereHas('mentor');
 
-            // Get submissions for this user's team
-            $tasks = Submission::where('id_team', $user->id_team)
-                ->where('id_user', $user->id_user)
-                ->with(['vacancy', 'user'])
+            // Exclude draft tasks, only show tasks that are sent (pending, in_progress, done)
+            $tasks = $tasksQuery->where('status', '!=', 'draft')
+                ->with(['mentor', 'parentTask.subTasks.intern'])
                 ->get()
                 ->map(fn($task) => [
-                    'id' => $task->id_submission,
-                    'title' => $task->vacancy?->position_title ?? 'Task',
-                    'description' => $task->vacancy?->description ?? '',
-                    'status' => $task->status ?? 'pending',
-                    'assignedBy' => $task->vacancy?->company?->name ?? 'Team Leader',
-                    'deadline' => $task->deadline_at ?? $task->vacancy?->deadline ?? null,
-                    'created_at' => $task->created_at,
-                    'updated_at' => $task->updated_at,
+                    'id'               => $task->id_task,
+                    'id_task'          => $task->id_task,
+                    'title'            => $task->title ?? 'Task',
+                    'description'      => $task->description ?? '',
+                    'status'           => $task->status ?? 'pending',
+                    'assignedBy'       => $task->mentor?->name ?? 'Mentor',
+                    'deadline'         => $task->deadline_at,
+                    'feedback_notes'   => $task->feedback_notes,
+                    'parent_task'      => $task->parentTask ? [
+                        'id_task'     => $task->parentTask->id_task,
+                        'title'       => $task->parentTask->title,
+                        'description' => $task->parentTask->description,
+                        'siblings'    => $task->parentTask->subTasks
+                            ->where('id_task', '!=', $task->id_task) // exclude self
+                            ->map(fn($st) => [
+                                'id'           => $st->id_task,
+                                'id_task'      => $st->id_task,
+                                'title'        => $st->title,
+                                'description'  => $st->description,
+                                'assignee'     => $st->intern?->name ?? 'Unknown',
+                                'status'       => $st->status,
+                                'deadline'     => $st->deadline_at,
+                                'work'         => $st->work_attachments,
+                                'feedback_notes' => $st->feedback_notes,
+                            ])->values()
+                    ] : null,
+                    'work_attachments' => $task->work_attachments ?? [],
+                    'submitted_at'     => $task->submitted_at,
+                    'created_at'       => $task->created_at,
+                    'updated_at'       => $task->updated_at,
                 ]);
+
 
             return response()->json([
                 'message' => 'Tasks retrieved successfully',
@@ -64,15 +82,9 @@ class MemberTaskController extends Controller
                 'status' => 'required|in:pending,in_progress,done'
             ]);
 
-            if (!$user || !$user->id_team) {
-                return response()->json([
-                    'message' => 'User is not part of a team'
-                ], 403);
-            }
-
-            $task = Submission::where('id_submission', $taskId)
-                ->where('id_team', $user->id_team)
-                ->where('id_user', $user->id_user)
+            // Task must be assigned to this user or this user's team
+            $task = Task::where('id_task', $taskId)
+                ->where('id_intern', $user->id_user)
                 ->firstOrFail();
 
             $task->status = $validated['status'];
@@ -81,7 +93,7 @@ class MemberTaskController extends Controller
             return response()->json([
                 'message' => 'Task status updated successfully',
                 'data' => [
-                    'id' => $task->id_submission,
+                    'id' => $task->id_task,
                     'status' => $task->status,
                     'updated_at' => $task->updated_at,
                 ]
@@ -107,20 +119,9 @@ class MemberTaskController extends Controller
         try {
             $user = $request->user();
 
-            if (!$user || !$user->id_team) {
-                return response()->json([
-                    'message' => 'User is not part of a team',
-                    'data' => [
-                        'tasksCount' => 0,
-                        'tasksCompleted' => 0,
-                        'tasksInProgress' => 0,
-                    ]
-                ], 200);
-            }
+            $tasksQuery = Task::where('id_intern', $user->id_user);
 
-            $tasks = Submission::where('id_team', $user->id_team)
-                ->where('id_user', $user->id_user)
-                ->get();
+            $tasks = $tasksQuery->where('status', '!=', 'draft')->get();
 
             return response()->json([
                 'message' => 'Dashboard data retrieved successfully',

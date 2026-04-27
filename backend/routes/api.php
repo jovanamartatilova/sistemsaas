@@ -2,6 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use App\Models\User;
@@ -80,6 +81,38 @@ Route::middleware('auth:sanctum')->group(function () {
     // Auth
     Route::get('/auth/profile', [AuthController::class, 'profile']);
     Route::post('/auth/logout',  [AuthController::class, 'logout']);
+
+    // AI Proxy (Groq)
+    Route::post('/ai/generate', function (Request $request) {
+        try {
+            if (!env('GROQ_API_KEY')) {
+                return response()->json(['error' => 'API Key belum di set. Silakan masukkan GROQ_API_KEY di file .env backend Anda.'], 500);
+            }
+
+            $response = Http::withOptions([
+                'verify' => false,
+                'timeout' => 30
+            ])->withHeaders([
+                'Authorization' => 'Bearer ' . env('GROQ_API_KEY'),
+                'Content-Type' => 'application/json',
+            ])->post('https://api.groq.com/openai/v1/chat/completions', [
+                'model' => 'llama-3.3-70b-versatile',
+                'messages' => [
+                    ['role' => 'user', 'content' => $request->input('prompt')]
+                ],
+                'temperature' => 0.6,
+                'max_tokens' => 200
+            ]);
+            
+            if ($response->successful()) {
+                $content = $response->json('choices.0.message.content');
+                return response()->json(['response' => $content]);
+            }
+            return response()->json(['error' => 'Groq API error', 'details' => $response->body()], 500);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to connect to AI Service.', 'msg' => $e->getMessage()], 500);
+        }
+    });
 
     // User (candidate self-service)
     Route::get('/users/me',                         [CandidateController::class, 'getMe']);
@@ -168,7 +201,10 @@ Route::prefix('leader')->middleware(['auth:sanctum', 'ensureCandidate'])->group(
     Route::put('/tasks/{taskId}',           [LeaderController::class, 'updateTaskStatus']);
     Route::get('/team-members',             [LeaderController::class, 'getTeamMembers']);
     Route::post('/tasks',                   [LeaderController::class, 'assignTask']);
-    Route::delete('/team-members/{memberId}', [LeaderController::class, 'removeTeamMember']);
+    Route::put('/tasks/subtask/{taskId}',   [LeaderController::class, 'updateSubTask']);
+    Route::delete('/tasks/subtask/{taskId}', [LeaderController::class, 'deleteSubTask']);
+    Route::post('/tasks/{taskId}/review',    [LeaderController::class, 'reviewSubTask']);
+
 });
 
 // Mentor Routes
@@ -190,6 +226,20 @@ Route::prefix('mentor')->middleware(['auth:sanctum', 'mentorRole'])->group(funct
     // Recap & certificates
     Route::get('/score-recap',   [MentorController::class, 'getScoreRecap']);
     Route::get('/certificates',  [MentorController::class, 'getCertificates']);
+    
+    // Tasks
+    Route::get('/assign-targets', [App\Http\Controllers\MentorTaskController::class, 'getAssignTargets']);
+    Route::get('/competencies', [App\Http\Controllers\MentorTaskController::class, 'getCompetencies']);
+    Route::get('/tasks',          [App\Http\Controllers\MentorTaskController::class, 'index']);
+    Route::post('/tasks',         [App\Http\Controllers\MentorTaskController::class, 'store']);
+    Route::put('/tasks/{id}',     [App\Http\Controllers\MentorTaskController::class, 'update']);
+    Route::delete('/tasks/{id}',  [App\Http\Controllers\MentorTaskController::class, 'destroy']);
+});
+
+// Intern Task Work Routes (leader & member)
+Route::middleware(['auth:sanctum'])->prefix('intern')->group(function () {
+    Route::post('/tasks/{id_task}/work',        [App\Http\Controllers\MentorTaskController::class, 'submitWork']);
+    Route::post('/tasks/{id_task}/upload-file', [App\Http\Controllers\MentorTaskController::class, 'uploadWorkFile']);
 });
 
 // HR Routes

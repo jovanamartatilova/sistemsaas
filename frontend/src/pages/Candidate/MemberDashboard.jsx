@@ -1,317 +1,377 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { CheckCircle, Clock, AlertCircle } from "lucide-react";
+import { useParams } from "react-router-dom";
+import { CheckCircle, Clock, AlertCircle, ChevronDown, ChevronUp, Link2, Upload, Plus, Trash2, ExternalLink, Info, MessageSquare, Users } from "lucide-react";
+
 import { useAuthStore } from "../../stores/authStore";
 import DashboardLayout from "../../components/DashboardLayout";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
-import { isIndependent, debugUserRole, getScopedRole } from "../../utils/roleUtils";
+import { getScopedRole } from "../../utils/roleUtils";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
 
-// Task Status Badge Component (matches existing design)
-function TaskStatusBadge({ status }) {
-  const statusConfig = {
-    pending: { bg: "bg-amber-50", text: "text-amber-600", label: "Pending" },
-    "in_progress": { bg: "bg-blue-50", text: "text-blue-600", label: "In Progress" },
-    "in progress": { bg: "bg-blue-50", text: "text-blue-600", label: "In Progress" },
-    done: { bg: "bg-emerald-50", text: "text-emerald-600", label: "Completed" },
-  };
+const STATUS_CONFIG = {
+  pending:     { label: "Pending",     cls: "bg-amber-50 text-amber-600 border-amber-200" },
+  in_progress: { label: "In Progress", cls: "bg-blue-50 text-blue-600 border-blue-200" },
+  done:        { label: "Done",        cls: "bg-emerald-50 text-emerald-600 border-emerald-200" },
+};
 
-  const config = statusConfig[status?.toLowerCase()] || statusConfig.pending;
-
-  return (
-    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${config.bg} ${config.text}`}>
-      {config.label}
-    </span>
-  );
+function StatusIcon({ status }) {
+  if (status === "done")        return <CheckCircle size={15} className="text-emerald-500 flex-shrink-0" />;
+  if (status === "in_progress") return <Clock size={15} className="text-blue-500 flex-shrink-0" />;
+  return <AlertCircle size={15} className="text-amber-500 flex-shrink-0" />;
 }
 
-// Task Status Icon Component
-function TaskStatusIcon({ status }) {
-  const statusConfig = {
-    pending: { icon: AlertCircle, color: "text-amber-500" },
-    "in_progress": { icon: Clock, color: "text-blue-500" },
-    "in progress": { icon: Clock, color: "text-blue-500" },
-    done: { icon: CheckCircle, color: "text-emerald-500" },
-  };
-
-  const config = statusConfig[status?.toLowerCase()] || statusConfig.pending;
-  const Icon = config.icon;
-
-  return <Icon size={18} className={config.color} />;
-}
-
-
-// Task Card Component (matches existing design)
-function TaskCard({ task, isIndependent, onStatusChange }) {
+function TaskCard({ task, onStatusChange, onWorkSubmitted, onReviewSibling, currentUserId, isLeader }) {
+  const [expanded, setExpanded] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [showSubmitForm, setShowSubmitForm] = useState(false);
+  const [attachments, setAttachments] = useState([{ type: "link", label: "", value: "" }]);
+  const [uploading, setUploading] = useState({});
+  const [submitting, setSubmitting] = useState(false);
+
+  const norm = task.status?.toLowerCase().replace(" ", "_") || "pending";
+  const cfg  = STATUS_CONFIG[norm] || STATUS_CONFIG.pending;
+  const isSubmitted = !!task.submitted_at;
+  const token = localStorage.getItem("token") || localStorage.getItem("auth_token");
 
   const handleStatusChange = async (newStatus) => {
     setIsUpdating(true);
-    try {
-      await onStatusChange(task.id, newStatus);
-    } finally {
-      setIsUpdating(false);
-    }
+    try { await onStatusChange(task.id_task, newStatus); }
+    finally { setIsUpdating(false); }
   };
 
-  const statusOptions = ["pending", "in_progress", "done"];
-  const normalizedStatus = task.status?.toLowerCase().replace(" ", "_") || "pending";
+  const handleSyncMemberWork = () => {
+    if (!task.subtasks || task.subtasks.length === 0) return alert("No member work to sync.");
+    const newAttachments = [];
+    task.subtasks.forEach(st => {
+      if (st.work?.length > 0) {
+        st.work.forEach(w => {
+          newAttachments.push({ type: "link", label: `${st.assignee}: ${w.label}`, value: w.value });
+        });
+      }
+    });
+    if (newAttachments.length === 0) return alert("No work submitted by members yet.");
+    setAttachments(newAttachments);
+    setShowSubmitForm(true);
+    setExpanded(true);
+  };
+
+  const updateAttachment = (i, field, val) => {
+    setAttachments(prev => {
+      const next = [...prev];
+      next[i] = { ...next[i], [field]: val };
+      if (field === "type") next[i].value = "";
+      return next;
+    });
+  };
+
+  const handleFileUpload = async (i, file) => {
+    setUploading(prev => ({ ...prev, [i]: true }));
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch(`${API_BASE_URL}/intern/tasks/${task.id_task}/upload-file`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: fd,
+      });
+      if (!res.ok) throw new Error("Upload failed");
+      const data = await res.json();
+      updateAttachment(i, "value", data.url);
+      if (!attachments[i].label) updateAttachment(i, "label", file.name);
+    } catch (err) { alert(err.message); }
+    finally { setUploading(prev => ({ ...prev, [i]: false })); }
+  };
+
+  const handleSubmit = async () => {
+    const valid = attachments.filter(a => a.label.trim() && a.value.trim());
+    if (!valid.length) return alert("Please add at least one link or file.");
+    setSubmitting(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/intern/tasks/${task.id_task}/work`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ attachments: valid }),
+      });
+      if (!res.ok) throw new Error("Submit failed");
+      onWorkSubmitted(task.id_task, valid);
+      setShowSubmitForm(false);
+    } catch (err) { alert(err.message); }
+    finally { setSubmitting(false); }
+  };
 
   return (
-    <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-3 hover:shadow-sm transition-shadow">
-      {/* Header with title and status icon */}
-      <div className="flex items-start justify-between gap-3">
+    <div className="bg-white border border-slate-200 rounded-xl overflow-hidden text-left w-full">
+      <div 
+        className="flex items-center gap-3 px-5 py-3.5 cursor-pointer select-none"
+        onClick={() => setExpanded(!expanded)}
+      >
+        <StatusIcon status={norm} />
         <div className="flex-1 min-w-0">
-          <h3 className="text-sm font-semibold text-slate-900">{task.title}</h3>
-          {task.description && (
-            <p className="text-xs text-slate-600 mt-1 line-clamp-2">{task.description}</p>
-          )}
+          <p className="text-sm font-semibold text-slate-900 truncate">{task.title}</p>
+          <p className="text-[11px] text-slate-400 mt-0.5">
+            {task.deadline && `Due ${new Date(task.deadline).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`}
+            {isSubmitted && <span className="ml-2 text-emerald-500 font-bold">✓ Submitted</span>}
+          </p>
         </div>
-        <TaskStatusIcon status={task.status} />
+        <select
+          value={norm}
+          onChange={e => { e.stopPropagation(); handleStatusChange(e.target.value); }}
+          onClick={e => e.stopPropagation()}
+          disabled={isUpdating || (isSubmitted && !task.feedback_notes)}
+          className={`text-xs font-semibold px-2.5 py-1.5 rounded-lg border outline-none ${cfg.cls}`}
+        >
+          <option value="pending">Pending</option>
+          <option value="in_progress">In Progress</option>
+          <option value="done">Done</option>
+        </select>
+        {expanded ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
       </div>
 
-      {/* Metadata - only show if part of team */}
-      {!isIndependent && task.assignedBy && (
-        <div className="text-xs text-slate-600 border-t border-slate-100 pt-3">
-          <p>
-            <span className="font-medium text-slate-700">Assigned by:</span> {task.assignedBy}
-          </p>
-          {task.deadline && (
-            <p className="mt-1">
-              <span className="font-medium text-slate-700">Deadline:</span> {new Date(task.deadline).toLocaleDateString()}
-            </p>
+      {expanded && (
+        <div className="border-t border-slate-100 px-5 py-4 space-y-5 bg-white">
+          {task.feedback_notes && (
+            <div className="bg-rose-50 border border-rose-200 rounded-lg p-3 flex gap-3 items-start">
+              <AlertCircle size={16} className="text-rose-500 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-[10px] font-bold text-rose-600 uppercase tracking-widest">Revision Feedback</p>
+                <p className="text-xs text-rose-800 leading-relaxed italic mt-1">"{task.feedback_notes}"</p>
+                <p className="text-[9px] text-rose-400 mt-2 font-bold uppercase underline">Please resubmit with updates</p>
+              </div>
+            </div>
+          )}
+
+          {task.parent_task && (
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
+              <p className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest flex items-center gap-2">
+                <Info size={12} /> Master Task Context
+              </p>
+              <div>
+                <p className="text-[11px] font-bold text-slate-800">{task.parent_task.title}</p>
+                <p className="text-[11px] text-slate-500 italic leading-relaxed mt-1">{task.parent_task.description}</p>
+              </div>
+
+              {task.siblings?.length > 0 && (
+                <div className="pt-3 border-t border-slate-200 mt-3">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Team Collaboration Progress</p>
+                  <div className="space-y-3">
+                    {task.siblings.map(sib => (
+                      <div key={sib.id_task} className="bg-white border border-slate-200 rounded-lg p-3 shadow-sm">
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-full bg-indigo-50 border border-indigo-100 flex items-center justify-center text-[10px] font-bold text-indigo-600">
+                              {sib.assignee?.charAt(0) || "U"}
+                            </div>
+                            <p className="text-[11px] font-bold text-slate-800">{sib.assignee} {sib.id_user === currentUserId ? "(You)" : ""}</p>
+                          </div>
+                          <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${sib.status === 'done' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+                            {sib.status.toUpperCase()}
+                          </span>
+                        </div>
+                        <p className="text-[10px] font-bold text-slate-700 bg-slate-50 px-2 py-1 rounded inline-block mb-2">{sib.title}</p>
+                        {sib.description && (
+                          <div className="mb-2 flex items-start gap-1.5 bg-slate-50/50 p-2 rounded border border-slate-100">
+                            <Info size={11} className="text-slate-400 mt-0.5" />
+                            <p className="text-[10px] text-slate-600 leading-relaxed italic">{sib.description}</p>
+                          </div>
+                        )}
+                        {sib.deadline && (
+                          <div className="mb-2 flex items-center gap-1.5 text-[9px] font-bold text-indigo-500">
+                            <Clock size={10} />
+                            Due: {new Date(sib.deadline).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+                          </div>
+                        )}
+                        {sib.work?.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5 mb-2">
+                            {sib.work.map((w, idx) => (
+                              <a key={idx} href={w.value} target="_blank" rel="noopener noreferrer" className="text-[9px] text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100 flex items-center gap-1 hover:underline">
+                                <Link2 size={10} /> {w.label}
+                              </a>
+                            ))}
+                          </div>
+                        )}
+                        <div className="flex gap-2 pt-2 border-t border-slate-50">
+                          <button onClick={() => { const note = prompt("Feedback:"); if(note) onReviewSibling(sib.id_task, note); }} className="text-[10px] font-bold text-slate-400 hover:text-indigo-600 flex items-center gap-1"><MessageSquare size={10} /> Notes</button>
+                          <div className="flex-1" />
+                          {sib.status !== 'done' && (
+                            <div className="flex gap-1">
+                              <button onClick={() => onReviewSibling(sib.id_task, "[PEER REVISION] Needs updates")} className="text-[9px] px-2 py-1 border border-slate-200 rounded text-slate-400 hover:text-rose-600 font-bold">Revision</button>
+                              <button onClick={() => onReviewSibling(sib.id_task, "[PEER APPROVED] Looks good")} className="text-[9px] px-2 py-1 bg-emerald-50 text-emerald-600 rounded border border-emerald-100 font-bold">Approve</button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {isLeader && task.subtasks?.length > 0 && (
+            <div className="bg-indigo-50/30 border border-indigo-100 rounded-xl p-4 space-y-4">
+              <div className="flex justify-between items-center">
+                <p className="text-[11px] font-bold text-indigo-600 uppercase tracking-widest">Master Control: Member Work</p>
+                {!isSubmitted && (
+                  <button onClick={handleSyncMemberWork} className="text-[11px] font-bold bg-indigo-600 text-white px-3 py-1.5 rounded-lg shadow-md flex items-center gap-2">
+                    <Plus size={14} /> Sync All Work
+                  </button>
+                )}
+              </div>
+              <div className="space-y-2">
+                 {task.subtasks.map(st => (
+                   <div key={st.id} className="bg-white border border-indigo-100 rounded-lg p-2.5 flex justify-between items-center">
+                     <span className="text-[11px] font-bold">{st.assignee} — <span className="font-normal text-slate-500">{st.title}</span></span>
+                     <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${st.status === 'done' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>{st.status.toUpperCase()}</span>
+                   </div>
+                 ))}
+              </div>
+            </div>
+          )}
+
+          {task.description && (
+            <div className="text-left">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Task Specifics</p>
+              <p className="text-sm text-slate-700 leading-relaxed">{task.description}</p>
+            </div>
+          )}
+
+          {isSubmitted && task.work_attachments?.length > 0 && (
+            <div className="text-left">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Submitted Results</p>
+              <div className="flex flex-wrap gap-2">
+                {task.work_attachments.map((att, i) => (
+                  <a key={i} href={att.value} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-700 hover:text-indigo-600">
+                    <Link2 size={11} /> {att.label}
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {(!isSubmitted || task.feedback_notes) && (
+            <div className="pt-2 border-t border-slate-100">
+              {!showSubmitForm ? (
+                <button onClick={() => setShowSubmitForm(true)} className="flex items-center gap-2 text-xs font-bold text-indigo-600 hover:bg-indigo-50 px-4 py-2 rounded-lg transition-all border border-indigo-100">
+                   <Plus size={14} /> {task.feedback_notes ? "Resubmit Work" : "Submit Work"}
+                </button>
+              ) : (
+                <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-4">
+                  <div className="flex justify-between items-center">
+                    <p className="text-xs font-bold text-slate-600 uppercase tracking-wider">Your Submission</p>
+                    <button onClick={() => setShowSubmitForm(false)} className="text-slate-400"><Trash2 size={14} /></button>
+                  </div>
+                  <div className="space-y-3">
+                    {attachments.map((att, i) => (
+                      <div key={i} className="flex gap-2 items-center bg-white p-2 rounded-lg border border-slate-200">
+                        <select value={att.type} onChange={e => updateAttachment(i, "type", e.target.value)} className="text-xs border-none bg-slate-50 rounded p-1.5">
+                          <option value="link">Link</option>
+                          <option value="file">File</option>
+                        </select>
+                        <input value={att.label} onChange={e => updateAttachment(i, "label", e.target.value)} placeholder="Label" className="flex-1 text-xs border border-slate-100 rounded px-2 py-1.5 outline-none" />
+                        {att.type === "link" ? (
+                          <input value={att.value} onChange={e => updateAttachment(i, "value", e.target.value)} placeholder="URL" className="flex-1 text-xs border border-slate-100 rounded px-2 py-1.5 outline-none" />
+                        ) : (
+                          <label className="flex-1 text-center border border-dashed rounded py-1.5 text-[10px] cursor-pointer">
+                             {att.value ? "✓ Uploaded" : "Upload File"}
+                             <input type="file" className="hidden" onChange={e => e.target.files[0] && handleFileUpload(i, e.target.files[0])} />
+                          </label>
+                        )}
+                        <button onClick={() => setAttachments(prev => prev.filter((_, idx) => idx !== i))} className="text-rose-400"><Trash2 size={13} /></button>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex justify-between items-center pt-2">
+                    <button onClick={() => setAttachments([...attachments, { type: "link", label: "", value: "" }])} className="text-[10px] font-bold text-indigo-600">+ Add line</button>
+                    <button onClick={handleSubmit} disabled={submitting} className="text-xs font-bold bg-indigo-600 text-white px-5 py-2 rounded-lg shadow-md">{submitting ? "Sending..." : "Send Submission"}</button>
+                  </div>
+                </div>
+              )}
+            </div>
           )}
         </div>
       )}
-
-      {/* Status and Action Buttons */}
-      <div className="space-y-2 border-t border-slate-100 pt-3">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-medium text-slate-700">Status</span>
-          <TaskStatusBadge status={task.status} />
-        </div>
-
-        {/* Status Change Buttons */}
-        <div className="flex gap-2 pt-1">
-          {statusOptions.map((status) => (
-            <button
-              key={status}
-              onClick={() => handleStatusChange(status)}
-              disabled={isUpdating || normalizedStatus === status}
-              className={`flex-1 text-xs font-semibold py-2 rounded-lg transition-colors ${
-                normalizedStatus === status
-                  ? "bg-indigo-600 text-white"
-                  : "bg-slate-100 text-slate-700 hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
-              }`}
-            >
-              {status === "in_progress" ? "Progress" : status.charAt(0).toUpperCase() + status.slice(1)}
-            </button>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }
 
-
 export default function MemberDashboard() {
-  const { slug } = useParams();
-  const navigate = useNavigate();
   const { user, company } = useAuthStore();
   const [loading, setLoading] = useState(true);
   const [tasks, setTasks] = useState([]);
   const [error, setError] = useState(null);
-  const [userIsIndependent, setUserIsIndependent] = useState(false);
 
-  useEffect(() => {
-    fetchMemberTasks();
-    
-    // Debug: Check user and team info
-    debugUserRole(user, "MemberDashboard");
-    console.log("MemberDashboard - userIsIndependent:", isIndependent(user));
-  }, []);
+  useEffect(() => { fetchMemberTasks(); }, []);
 
   const fetchMemberTasks = async () => {
     try {
       setLoading(true);
-      setError(null);
       const token = localStorage.getItem("token") || localStorage.getItem("auth_token");
-
-      if (!token) {
-        setError("No authentication token found");
-        setLoading(false);
-        return;
-      }
-
-      // Determine which endpoint to use based on role
       const scopedRole = getScopedRole(user);
       const endpoint = scopedRole === "leader" ? `/leader/tasks` : `/member/tasks`;
-      
-      console.log("MemberDashboard - fetching from endpoint:", endpoint, "for role:", scopedRole);
-
-      // Fetch tasks based on role
-      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch tasks");
-      }
-
-      const data = await response.json();
+      const res = await fetch(`${API_BASE_URL}${endpoint}`, { headers: { Authorization: `Bearer ${token}` } });
+      if (!res.ok) throw new Error("Fetch failed");
+      const data = await res.json();
       setTasks(data.data || []);
-      
-      // Check if user is independent (no team/leader) using utility function
-      setUserIsIndependent(isIndependent(user));
-    } catch (err) {
-      console.error("Error fetching tasks:", err);
-      setError(err.message);
-      // Set mock tasks for demo purposes
-      setTasks([
-        {
-          id: 1,
-          title: "Complete Project Proposal",
-          description: "Prepare and submit the quarterly project proposal",
-          status: "in_progress",
-          assignedBy: "John Leader",
-          deadline: "2024-05-15",
-        },
-        {
-          id: 2,
-          title: "Code Review",
-          description: "Review pull requests and provide feedback",
-          status: "pending",
-          assignedBy: "John Leader",
-          deadline: "2024-05-10",
-        },
-        {
-          id: 3,
-          title: "Documentation Update",
-          description: "Update technical documentation",
-          status: "done",
-          assignedBy: "John Leader",
-          deadline: "2024-05-01",
-        },
-      ]);
-    } finally {
-      setLoading(false);
-    }
+    } catch (err) { setError(err.message); }
+    finally { setLoading(false); }
   };
 
   const handleStatusChange = async (taskId, newStatus) => {
-    try {
-      const token = localStorage.getItem("token") || localStorage.getItem("auth_token");
-
-      // Determine which endpoint to use based on role
-      const scopedRole = getScopedRole(user);
-      const endpoint = scopedRole === "leader" ? `/leader/tasks/${taskId}` : `/member/tasks/${taskId}`;
-
-      // Normalize status value (convert "in_progress" to proper format if needed)
-      const payload = {
-        status: newStatus, // send as provided (pending, in_progress, done)
-      };
-
-      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-        method: "PUT",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `HTTP ${response.status}: Failed to update task`);
-      }
-
-      const data = await response.json();
-      
-      // Update local state optimistically
-      setTasks((prevTasks) =>
-        prevTasks.map((task) =>
-          task.id === taskId ? { ...task, status: newStatus } : task
-        )
-      );
-    } catch (err) {
-      console.error("Error updating task status:", err);
-      // Show error but allow retry
-      const message = err.message || "Failed to update task status. Please try again.";
-      alert(message);
-      // Optionally refresh data on error
-      // fetchMemberTasks();
-    }
+    const token = localStorage.getItem("token") || localStorage.getItem("auth_token");
+    const scopedRole = getScopedRole(user);
+    const endpoint = scopedRole === "leader" ? `/leader/tasks/${taskId}` : `/member/tasks/${taskId}`;
+    const res = await fetch(`${API_BASE_URL}${endpoint}`, {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ status: newStatus }),
+    });
+    if (res.ok) fetchMemberTasks();
   };
 
-  if (loading) {
-    return (
-      <DashboardLayout
-        userName={user?.name}
-        userPhoto={user?.photo}
-        company={company}
-      >
-        <LoadingSpinner />
-      </DashboardLayout>
-    );
-  }
+  const handleReviewSibling = async (subtaskId, notes) => {
+    try {
+      const token = localStorage.getItem("token") || localStorage.getItem("auth_token");
+      const res = await fetch(`${API_BASE_URL}/leader/tasks/${subtaskId}/review`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ notes })
+      });
+      if (!res.ok) throw new Error("Feedback failed");
+      alert("Feedback sent!");
+      fetchMemberTasks();
+    } catch (err) { alert(err.message); }
+  };
+
+  const handleWorkSubmitted = (taskId, valid) => {
+    fetchMemberTasks();
+  };
+
+  if (loading) return <DashboardLayout company={company}><LoadingSpinner /></DashboardLayout>;
 
   return (
-    <DashboardLayout
-      userName={user?.name}
-      userPhoto={user?.photo}
-      company={company}
-    >
-      <div className="space-y-6">
-        {/* Header - consistent with other pages */}
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">My Tasks</h1>
-          <p className="text-sm text-slate-600 mt-2">
-            {tasks.length > 0
-              ? `You have ${tasks.length} task${tasks.length !== 1 ? "s" : ""}`
-              : "No tasks assigned yet"}
-          </p>
+    <DashboardLayout userName={user?.name} userPhoto={user?.photo} company={company}>
+      <div className="space-y-6 w-full text-left">
+        <h1 className="text-2xl font-bold text-slate-900">My Tasks</h1>
+        {error && <div className="p-4 bg-rose-50 text-rose-600 rounded-xl border border-rose-200">{error}</div>}
+        <div className="space-y-4">
+          {tasks.length > 0 ? tasks.map(task => (
+            <TaskCard 
+              key={task.id_task} 
+              task={task} 
+              onStatusChange={handleStatusChange} 
+              onWorkSubmitted={handleWorkSubmitted} 
+              onReviewSibling={handleReviewSibling} 
+              currentUserId={user?.id_user}
+              isLeader={getScopedRole(user) === 'leader'}
+            />
+          )) : (
+            <div className="p-10 bg-white border border-slate-200 rounded-xl text-center">
+              <CheckCircle size={40} className="mx-auto text-slate-200 mb-3" />
+              <p className="text-slate-500 font-medium">No tasks assigned yet</p>
+            </div>
+          )}
         </div>
-
-        {/* Error Message */}
-        {error && (
-          <div className="bg-rose-50 border border-rose-200 rounded-xl p-4">
-            <p className="text-sm text-rose-700 font-medium">{error}</p>
-            <button
-              onClick={fetchMemberTasks}
-              className="mt-2 text-xs font-semibold text-rose-600 hover:text-rose-700 underline"
-            >
-              Retry
-            </button>
-          </div>
-        )}
-
-        {/* Tasks List */}
-        {tasks.length > 0 ? (
-          <div className="space-y-3">
-            {tasks.map((task) => (
-              <TaskCard
-                key={task.id}
-                task={task}
-                isIndependent={userIsIndependent}
-                onStatusChange={handleStatusChange}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="bg-white border border-slate-200 rounded-xl p-12 text-center">
-            <CheckCircle size={48} className="mx-auto text-slate-300 mb-4" />
-            <p className="text-slate-700 font-semibold text-base">No Tasks Assigned</p>
-            <p className="text-slate-600 text-sm mt-1">
-              {isIndependent
-                ? "You're working independently. Tasks will appear here once assigned."
-                : "Your team leader will assign tasks to you here."}
-            </p>
-          </div>
-        )}
       </div>
     </DashboardLayout>
   );

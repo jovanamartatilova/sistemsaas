@@ -5,6 +5,7 @@ import { useState } from "react";
 const navItems = [
   { key: "/mentor/dashboard", label: "Dashboard", section: "MENU" },
   { key: "/mentor/interns", label: "My Interns", section: "ASSESSMENT" },
+  { key: "/mentor/assign-tasks", label: "Assign Tasks", section: "ASSESSMENT" },
   { key: "/mentor/input-score", label: "Input Score", section: "ASSESSMENT" },
   { key: "/mentor/score-recap", label: "Score Recap", section: "ASSESSMENT" },
   { key: "/mentor/competencies", label: "Competencies", section: "ASSESSMENT" },
@@ -17,6 +18,7 @@ const SidebarIcon = ({ name }) => {
   const icons = {
     Dashboard: <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" /></svg>,
     "My Interns": <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>,
+    "Assign Tasks": <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16h16V8l-6-6z" /><path d="M14 2v6h6" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg>,
     "Input Score": <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>,
     "Score Recap": <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 18 0A9 9 0 0 0 3 12z" /><path d="M12 6v6l4 2" /></svg>,
     Competencies: <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" /></svg>,
@@ -26,11 +28,33 @@ const SidebarIcon = ({ name }) => {
   return icons[name] || icons.Dashboard;
 };
 
+const SidebarLink = ({ item, isActive, onLogout }) => {
+  const [hov, setHov] = useState(false);
+  return (
+    <Link
+      to={item.key}
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      style={{
+        display: "flex", alignItems: "center", gap: "10px",
+        padding: "9px 12px", borderRadius: "9px", textDecoration: "none",
+        background: isActive ? "rgba(74,158,255,0.12)" : hov ? "rgba(255,255,255,0.05)" : "transparent",
+        border: isActive ? "1px solid rgba(74,158,255,0.22)" : "1px solid transparent",
+        color: isActive ? "#4a9eff" : "rgba(255,255,255,0.58)",
+        fontSize: "13px", fontWeight: isActive ? "600" : "500",
+        transition: "all 0.18s",
+        fontFamily: "'Poppins', 'Segoe UI', sans-serif",
+        margin: "0 2px",
+      }}
+    >
+      <span style={{ opacity: isActive ? 1 : 0.72, flexShrink: 0 }}><SidebarIcon name={item.label} /></span>
+      <span style={{ flex: 1 }}>{item.label}</span>
+      </Link>
+  );
+};
+
 /**
  * SidebarMentor - Consistent sidebar for all mentor pages
- * Props:
- *   mentor     — { name, email? }
- *   onLogout   — () => void
  */
 export function SidebarMentor({ mentor, onLogout }) {
   const location = useLocation();
@@ -69,35 +93,12 @@ export function SidebarMentor({ mentor, onLogout }) {
       {/* Nav sections */}
       {Object.entries(sections).map(([section, items]) => (
         <div key={section} style={{ marginBottom: "8px" }}>
-          <p style={{ fontSize: "10px", fontWeight: "700", color: "rgba(255,255,255,0.25)", letterSpacing: "1.2px", padding: "6px 14px 5px", textTransform: "uppercase", margin: 0, textAlign: "center" }}>
+          <p style={{ fontSize: "10px", fontWeight: "700", color: "rgba(255,255,255,0.25)", letterSpacing: "1.2px", padding: "6px 14px 5px", textTransform: "uppercase", margin: 0, textAlign: "left" }}>
             {section}
           </p>
-          {items.map((item) => {
-            const isActive = location.pathname === item.key;
-            const [hov, setHov] = useState(false);
-            return (
-              <Link
-                key={item.key}
-                to={item.key}
-                onMouseEnter={() => setHov(true)}
-                onMouseLeave={() => setHov(false)}
-                style={{
-                  display: "flex", alignItems: "center", gap: "10px",
-                  padding: "9px 12px", borderRadius: "9px", textDecoration: "none",
-                  background: isActive ? "rgba(74,158,255,0.12)" : hov ? "rgba(255,255,255,0.05)" : "transparent",
-                  border: isActive ? "1px solid rgba(74,158,255,0.22)" : "1px solid transparent",
-                  color: isActive ? "#4a9eff" : "rgba(255,255,255,0.58)",
-                  fontSize: "13px", fontWeight: isActive ? "600" : "500",
-                  transition: "all 0.18s",
-                  fontFamily: "'Poppins', 'Segoe UI', sans-serif",
-                  margin: "0 2px",
-                }}
-              >
-                <span style={{ opacity: isActive ? 1 : 0.72, flexShrink: 0 }}><SidebarIcon name={item.label} /></span>
-                <span style={{ flex: 1 }}>{item.label}</span>
-              </Link>
-            );
-          })}
+          {items.map((item) => (
+            <SidebarLink key={item.key} item={item} isActive={location.pathname === item.key} />
+          ))}
         </div>
       ))}
 
@@ -121,7 +122,7 @@ export function SidebarMentor({ mentor, onLogout }) {
           display: "flex", alignItems: "center", justifyContent: "center",
           fontSize: "12px", fontWeight: "800", color: "#fff",
         }}>
-          {mentor?.name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'MT'}
+          {(mentor?.name || "Mentor").split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{
