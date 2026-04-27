@@ -3,6 +3,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Certificate;
 use App\Models\Interview;
+use App\Models\Team;
+use App\Models\TeamMember;
 
 class Submission extends Model
 {
@@ -69,6 +71,16 @@ class Submission extends Model
     public function mentor()
     {
         return $this->belongsTo(User::class, 'id_user_mentor', 'id_user');
+    }
+
+    public function team()
+    {
+        return $this->belongsTo(Team::class, 'id_team', 'id_team');
+    }
+
+    public function teamMembers()
+    {
+        return $this->hasMany(TeamMember::class, 'id_team', 'id_team');
     }
 
     public function certificate()

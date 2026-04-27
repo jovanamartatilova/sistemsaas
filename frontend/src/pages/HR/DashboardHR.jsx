@@ -73,19 +73,19 @@ function todayStr() {
 
 // ── Status config ─────────────────────────────────────────────────────────────
 const STATUS = {
-  pending:   { bg: "#eff6ff", color: "#1d4ed8", border: "#bfdbfe" },
+  pending: { bg: "#eff6ff", color: "#1d4ed8", border: "#bfdbfe" },
   screening: { bg: "#fefce8", color: "#92400e", border: "#fde68a" },
   interview: { bg: "#f5f3ff", color: "#6d28d9", border: "#ddd6fe" },
-  accepted:  { bg: "#f0fdf4", color: "#15803d", border: "#bbf7d0" },
-  rejected:  { bg: "#fff1f2", color: "#be123c", border: "#fecdd3" },
+  accepted: { bg: "#f0fdf4", color: "#15803d", border: "#bbf7d0" },
+  rejected: { bg: "#fff1f2", color: "#be123c", border: "#fecdd3" },
 };
 
 const PIPELINE_COLORS = {
-  pending:   "#3b82f6",
+  pending: "#3b82f6",
   screening: "#f59e0b",
   interview: "#a855f7",
-  accepted:  "#22c55e",
-  rejected:  "#ef4444",
+  accepted: "#22c55e",
+  rejected: "#ef4444",
 };
 
 // ── Stat Card ─────────────────────────────────────────────────────────────────
@@ -128,8 +128,8 @@ function StatCard({ icon, iconBg, iconColor, title, value, sub, barColors }) {
 const ACTION_CONFIG = {
   screening: { label: "Move to Screening?", btnBg: "#f59e0b", desc: (name) => `Move ${name} to the screening stage?` },
   interview: { label: "Schedule Interview?", btnBg: "#a855f7", desc: (name) => `Move ${name} to the interview stage?` },
-  accept:    { label: "Accept Candidate?",   btnBg: "#16a34a", desc: (name) => `Accept ${name} as an intern?` },
-  reject:    { label: "Reject Candidate?",   btnBg: "#ef4444", desc: (name) => `Reject ${name}'s application? This action cannot be undone.` },
+  accept: { label: "Accept Candidate?", btnBg: "#16a34a", desc: (name) => `Accept ${name} as an intern?` },
+  reject: { label: "Reject Candidate?", btnBg: "#ef4444", desc: (name) => `Reject ${name}'s application? This action cannot be undone.` },
 };
 
 function ConfirmModal({ action, onConfirm, onCancel }) {
@@ -204,12 +204,12 @@ export default function DashboardHR() {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
 
-  const [showLogout, setShowLogout]       = useState(false);
+  const [showLogout, setShowLogout] = useState(false);
   const [confirmAction, setConfirmAction] = useState(null);
-  const [loading, setLoading]             = useState(true);
-  const [search, setSearch]               = useState("");
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
-  const [tableLoading, setTableLoading]   = useState(false);
+  const [tableLoading, setTableLoading] = useState(false);
 
   const [data, setData] = useState({
     user: {},
@@ -261,8 +261,8 @@ export default function DashboardHR() {
     const map = {
       screening: `/hr/candidates/${candidate.id_submission}/screening`,
       interview: `/hr/candidates/${candidate.id_submission}/interview`,
-      accept:    `/hr/candidates/${candidate.id_submission}/accept`,
-      reject:    `/hr/candidates/${candidate.id_submission}/reject`,
+      accept: `/hr/candidates/${candidate.id_submission}/accept`,
+      reject: `/hr/candidates/${candidate.id_submission}/reject`,
     };
     await api(map[type], { method: "PATCH" });
     fetchDashboard();
@@ -276,28 +276,28 @@ export default function DashboardHR() {
       title: "Total Candidates",
       value: data.stats.total_candidates,
       sub: "All registered applicants",
-      barColors: ["#3b82f6","#60a5fa","#93c5fd","#3b82f6","#60a5fa","#93c5fd","#3b82f6"],
+      barColors: ["#3b82f6", "#60a5fa", "#93c5fd", "#3b82f6", "#60a5fa", "#93c5fd", "#3b82f6"],
     },
     {
       icon: <IC.CheckCircle />, iconBg: "#f0fdf4", iconColor: "#16a34a",
       title: "Accepted",
       value: data.stats.accepted,
       sub: "Interns confirmed",
-      barColors: ["#4ade80","#86efac","#4ade80","#86efac","#4ade80","#bbf7d0","#4ade80"],
+      barColors: ["#4ade80", "#86efac", "#4ade80", "#86efac", "#4ade80", "#bbf7d0", "#4ade80"],
     },
     {
       icon: <IC.Calendar />, iconBg: "#f5f3ff", iconColor: "#7c3aed",
       title: "Interview Scheduled",
       value: data.stats.interview_scheduled,
       sub: "Awaiting interviews",
-      barColors: ["#c084fc","#a855f7","#c084fc","#a855f7","#c084fc","#ddd6fe","#a855f7"],
+      barColors: ["#c084fc", "#a855f7", "#c084fc", "#a855f7", "#c084fc", "#ddd6fe", "#a855f7"],
     },
     {
       icon: <IC.Clock />, iconBg: "#fff7ed", iconColor: "#ea580c",
       title: "Pending Review",
       value: data.stats.pending_review,
       sub: "Needs attention",
-      barColors: ["#fb923c","#fdba74","#fb923c","#fdba74","#fb923c","#fed7aa","#fb923c"],
+      barColors: ["#fb923c", "#fdba74", "#fb923c", "#fdba74", "#fb923c", "#fed7aa", "#fb923c"],
     },
   ];
   if (loading) return <LoadingSpinner message="Loading dashboard..." />;
@@ -375,7 +375,7 @@ export default function DashboardHR() {
         <main style={{ flex: 1, padding: "28px 28px 40px", overflowY: "auto" }} className="hr-fadein">
 
           {/* Page heading */}
-          <div style={{ marginBottom: "28px", display: "flex", flexDirection: "column", gap: "4px", textAlign: "left"}}>
+          <div style={{ marginBottom: "28px", display: "flex", flexDirection: "column", gap: "4px", textAlign: "left" }}>
             <div style={{ fontSize: "20px", fontWeight: "800", color: "#0f172a", lineHeight: 1.2 }}>
               {getGreeting()}, {data.user?.name?.split(" ")[0] || "HR"}!
             </div>
@@ -393,7 +393,7 @@ export default function DashboardHR() {
           </div>
 
           {/* Bottom grid: table + pipeline */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: "20px", borderTop: "1px solid #f1f5f9",}}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: "20px", borderTop: "1px solid #f1f5f9", }}>
 
             {/* Recent Candidates Table */}
             <div style={{
@@ -409,72 +409,72 @@ export default function DashboardHR() {
                   <p style={{ fontSize: "12px", color: "#94a3b8", marginTop: "2px" }}>Latest applicants requiring action</p>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
-                {/* Filter Status Dropdown */}
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  style={{
-                    padding: "7px 14px",
-                    borderRadius: "10px",
-                    border: "1px solid",
-                    fontSize: "13px",
-                    fontFamily: "inherit",
-                    cursor: "pointer",
-                    outline: "none",
-                    minWidth: "140px",
-                    // Warna background & border berdasarkan status yang dipilih
-                    background: statusFilter === "pending" ? "#eff6ff" :
-                                statusFilter === "screening" ? "#fefce8" :
-                                statusFilter === "interview" ? "#f5f3ff" :
-                                statusFilter === "accepted" ? "#f0fdf4" :
-                                statusFilter === "rejected" ? "#fff1f2" : "#f8fafc",
-                    color: statusFilter === "pending" ? "#1d4ed8" :
-                          statusFilter === "screening" ? "#92400e" :
+                  {/* Filter Status Dropdown */}
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    style={{
+                      padding: "7px 14px",
+                      borderRadius: "10px",
+                      border: "1px solid",
+                      fontSize: "13px",
+                      fontFamily: "inherit",
+                      cursor: "pointer",
+                      outline: "none",
+                      minWidth: "140px",
+                      // Warna background & border berdasarkan status yang dipilih
+                      background: statusFilter === "pending" ? "#eff6ff" :
+                        statusFilter === "screening" ? "#fefce8" :
+                          statusFilter === "interview" ? "#f5f3ff" :
+                            statusFilter === "accepted" ? "#f0fdf4" :
+                              statusFilter === "rejected" ? "#fff1f2" : "#f8fafc",
+                      color: statusFilter === "pending" ? "#1d4ed8" :
+                        statusFilter === "screening" ? "#92400e" :
                           statusFilter === "interview" ? "#6d28d9" :
-                          statusFilter === "accepted" ? "#15803d" :
-                          statusFilter === "rejected" ? "#be123c" : "#64748b",
-                    borderColor: statusFilter === "pending" ? "#bfdbfe" :
-                                statusFilter === "screening" ? "#fde68a" :
-                                statusFilter === "interview" ? "#ddd6fe" :
-                                statusFilter === "accepted" ? "#bbf7d0" :
-                                statusFilter === "rejected" ? "#fecdd3" : "#e2e8f0",
-                    fontWeight: statusFilter ? "600" : "400",
-                  }}
-                >
-                  <option value="">All Status</option>
-                  <option value="pending" style={{ background: "#eff6ff", color: "#1d4ed8" }}>Pending</option>
-                  <option value="screening" style={{ background: "#fefce8", color: "#92400e" }}>Screening</option>
-                  <option value="interview" style={{ background: "#f5f3ff", color: "#6d28d9" }}>Interview</option>
-                  <option value="accepted" style={{ background: "#f0fdf4", color: "#15803d" }}>Accepted</option>
-                  <option value="rejected" style={{ background: "#fff1f2", color: "#be123c" }}>Rejected</option>
-                </select>
+                            statusFilter === "accepted" ? "#15803d" :
+                              statusFilter === "rejected" ? "#be123c" : "#64748b",
+                      borderColor: statusFilter === "pending" ? "#bfdbfe" :
+                        statusFilter === "screening" ? "#fde68a" :
+                          statusFilter === "interview" ? "#ddd6fe" :
+                            statusFilter === "accepted" ? "#bbf7d0" :
+                              statusFilter === "rejected" ? "#fecdd3" : "#e2e8f0",
+                      fontWeight: statusFilter ? "600" : "400",
+                    }}
+                  >
+                    <option value="">All Status</option>
+                    <option value="pending" style={{ background: "#eff6ff", color: "#1d4ed8" }}>Pending</option>
+                    <option value="screening" style={{ background: "#fefce8", color: "#92400e" }}>Screening</option>
+                    <option value="interview" style={{ background: "#f5f3ff", color: "#6d28d9" }}>Interview</option>
+                    <option value="accepted" style={{ background: "#f0fdf4", color: "#15803d" }}>Accepted</option>
+                    <option value="rejected" style={{ background: "#fff1f2", color: "#be123c" }}>Rejected</option>
+                  </select>
 
-                {/* Search Box */}
-                <div style={{
-                  display: "flex", alignItems: "center", gap: "8px",
-                  background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px",
-                  padding: "7px 14px", width: "220px",
-                }}>
-                  <IC.Search />
-                  <input
-                    placeholder="Search candidates..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    style={{ border: "none", background: "transparent", outline: "none", fontSize: "13px", color: "#64748b", width: "100%", fontFamily: "inherit" }}
-                  />
+                  {/* Search Box */}
+                  <div style={{
+                    display: "flex", alignItems: "center", gap: "8px",
+                    background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px",
+                    padding: "7px 14px", width: "220px",
+                  }}>
+                    <IC.Search />
+                    <input
+                      placeholder="Search candidates..."
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      style={{ border: "none", background: "transparent", outline: "none", fontSize: "13px", color: "#64748b", width: "100%", fontFamily: "inherit" }}
+                    />
+                  </div>
+
+                  <button
+                    onClick={() => navigate("/hr/kandidate")}
+                    style={{
+                      display: "flex", alignItems: "center", gap: "5px",
+                      fontSize: "13px", color: "#4a9eff", background: "none", border: "none",
+                      cursor: "pointer", fontWeight: "600", fontFamily: "inherit",
+                    }}
+                  >
+                    View All <IC.ArrowRight />
+                  </button>
                 </div>
-
-                <button
-                  onClick={() => navigate("/hr/kandidate")}
-                  style={{
-                    display: "flex", alignItems: "center", gap: "5px",
-                    fontSize: "13px", color: "#4a9eff", background: "none", border: "none",
-                    cursor: "pointer", fontWeight: "600", fontFamily: "inherit",
-                  }}
-                >
-                  View All <IC.ArrowRight />
-                </button>
-              </div>
               </div>
 
               {/* Table header */}
@@ -484,7 +484,7 @@ export default function DashboardHR() {
                 background: "#f8fafc", borderBottom: "1px solid #f1f5f9",
               }}>
                 {["CANDIDATE", "POSITION", "STATUS", "ACTION"].map((h) => (
-                  <span key={h} style={{ fontSize: "10.5px", fontWeight: "700", color: "#94a3b8", letterSpacing: "0.06em"}}>
+                  <span key={h} style={{ fontSize: "10.5px", fontWeight: "700", color: "#94a3b8", letterSpacing: "0.06em" }}>
                     {h}
                   </span>
                 ))}
@@ -640,10 +640,10 @@ export default function DashboardHR() {
 
 // ── Action Button helper ──────────────────────────────────────────────────────
 const VARIANT = {
-  green:  { bg: "#f0fdf4", color: "#15803d", border: "#86efac" },
-  red:    { bg: "#fff1f2", color: "#be123c", border: "#fecdd3" },
+  green: { bg: "#f0fdf4", color: "#15803d", border: "#86efac" },
+  red: { bg: "#fff1f2", color: "#be123c", border: "#fecdd3" },
   purple: { bg: "#f5f3ff", color: "#6d28d9", border: "#ddd6fe" },
-  blue:   { bg: "#eff6ff", color: "#1d4ed8", border: "#bfdbfe" },
+  blue: { bg: "#eff6ff", color: "#1d4ed8", border: "#bfdbfe" },
 };
 
 function ActionBtn({ label, variant = "blue", onClick }) {

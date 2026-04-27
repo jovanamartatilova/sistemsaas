@@ -51,11 +51,11 @@ function todayStr() {
 
 // ── Status config ─────────────────────────────────────────────────────────────
 const STATUS = {
-  pending:   { bg: "#eff6ff", color: "#1d4ed8", border: "#bfdbfe", dot: "#3b82f6" },
+  pending: { bg: "#eff6ff", color: "#1d4ed8", border: "#bfdbfe", dot: "#3b82f6" },
   screening: { bg: "#fefce8", color: "#92400e", border: "#fde68a", dot: "#f59e0b" },
   interview: { bg: "#f5f3ff", color: "#6d28d9", border: "#ddd6fe", dot: "#a855f7" },
-  accepted:  { bg: "#f0fdf4", color: "#15803d", border: "#bbf7d0", dot: "#22c55e" },
-  rejected:  { bg: "#fff1f2", color: "#be123c", border: "#fecdd3", dot: "#ef4444" },
+  accepted: { bg: "#f0fdf4", color: "#15803d", border: "#bbf7d0", dot: "#22c55e" },
+  rejected: { bg: "#fff1f2", color: "#be123c", border: "#fecdd3", dot: "#ef4444" },
 };
 
 // ── Stat Card (same as Dashboard) ─────────────────────────────────────────────
@@ -96,10 +96,10 @@ function StatCard({ icon, iconBg, iconColor, title, value, sub, barColors }) {
 
 // ── Action Button (same as Dashboard) ─────────────────────────────────────────
 const VARIANT = {
-  green:  { bg: "#f0fdf4", color: "#15803d", border: "#86efac" },
-  red:    { bg: "#fff1f2", color: "#be123c", border: "#fecdd3" },
+  green: { bg: "#f0fdf4", color: "#15803d", border: "#86efac" },
+  red: { bg: "#fff1f2", color: "#be123c", border: "#fecdd3" },
   purple: { bg: "#f5f3ff", color: "#6d28d9", border: "#ddd6fe" },
-  blue:   { bg: "#eff6ff", color: "#1d4ed8", border: "#bfdbfe" },
+  blue: { bg: "#eff6ff", color: "#1d4ed8", border: "#bfdbfe" },
 };
 
 function ActionBtn({ label, variant = "blue", onClick }) {
@@ -128,8 +128,8 @@ function ActionBtn({ label, variant = "blue", onClick }) {
 const ACTION_CONFIG = {
   screening: { label: "Move to Screening?", btnBg: "#f59e0b", desc: (name) => `Move ${name} to the screening stage?` },
   interview: { label: "Schedule Interview?", btnBg: "#a855f7", desc: (name) => `Move ${name} to the interview stage?` },
-  accept:    { label: "Accept Candidate?",   btnBg: "#16a34a", desc: (name) => `Accept ${name} as an intern?` },
-  reject:    { label: "Reject Candidate?",   btnBg: "#ef4444", desc: (name) => `Reject ${name}'s application? This action cannot be undone.` },
+  accept: { label: "Accept Candidate?", btnBg: "#16a34a", desc: (name) => `Accept ${name} as an intern?` },
+  reject: { label: "Reject Candidate?", btnBg: "#ef4444", desc: (name) => `Reject ${name}'s application? This action cannot be undone.` },
 };
 
 function ConfirmActionModal({ action, onConfirm, onCancel }) {
@@ -226,52 +226,52 @@ export default function CandidatesHR() {
   const user = useAuthStore((state) => state.user);
 
   // State
-const [showLogoutModal, setShowLogoutModal] = useState(false);
-const [showExportModal, setShowExportModal] = useState(false);
-const [confirmAction, setConfirmAction] = useState(null);
-const [data, setData] = useState({ stats: {}, candidates: [] });
-const [search, setSearch] = useState("");
-const [loading, setLoading] = useState(true);
-const [tableLoading, setTableLoading] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [confirmAction, setConfirmAction] = useState(null);
+  const [data, setData] = useState({ stats: {}, candidates: [] });
+  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [tableLoading, setTableLoading] = useState(false);
 
-// Fetch function
-const fetchCandidates = (isSearch = false) => {
-  if (isSearch) {
-    setTableLoading(true);
-  } else {
-    setLoading(true);
-  }
-  const params = new URLSearchParams();
-  if (search) params.set("search", search);
-  
-  api(`/hr/candidates?${params}`)
-    .then((res) => setData(res.data))
-    .catch((err) => console.error("Fetch error:", err))
-    .finally(() => {
-    setLoading(false);
-    setTableLoading(false);
-  });
-};
+  // Fetch function
+  const fetchCandidates = (isSearch = false) => {
+    if (isSearch) {
+      setTableLoading(true);
+    } else {
+      setLoading(true);
+    }
+    const params = new URLSearchParams();
+    if (search) params.set("search", search);
 
-// Initial load (saat mount)
-useEffect(() => {
-  fetchCandidates();
-}, []);  // Kosong = jalan sekali
+    api(`/hr/candidates?${params}`)
+      .then((res) => setData(res.data))
+      .catch((err) => console.error("Fetch error:", err))
+      .finally(() => {
+        setLoading(false);
+        setTableLoading(false);
+      });
+  };
 
-useEffect(() => {
-  const timer = setTimeout(() => {
-    fetchCandidates(true);
-  }, 500);
-  return () => clearTimeout(timer);
-}, [search]);
+  // Initial load (saat mount)
+  useEffect(() => {
+    fetchCandidates();
+  }, []);  // Kosong = jalan sekali
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchCandidates(true);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   const executeAction = async () => {
     const { type, candidate } = confirmAction;
     const endpoints = {
       screening: `/hr/candidates/${candidate.id_submission}/screening`,
       interview: `/hr/candidates/${candidate.id_submission}/interview`,
-      accept:    `/hr/candidates/${candidate.id_submission}/accept`,
-      reject:    `/hr/candidates/${candidate.id_submission}/reject`,
+      accept: `/hr/candidates/${candidate.id_submission}/accept`,
+      reject: `/hr/candidates/${candidate.id_submission}/reject`,
     };
     await api(endpoints[type], { method: "PATCH" });
     fetchCandidates();
@@ -291,9 +291,9 @@ useEffect(() => {
       });
       if (!res.ok) throw new Error(`Export failed: ${res.status}`);
       const blob = await res.blob();
-      const url  = URL.createObjectURL(blob);
-      const a    = document.createElement("a");
-      a.href     = url;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
       a.download = `candidates_${new Date().toISOString().slice(0, 10)}.csv`;
       document.body.appendChild(a);
       a.click();
@@ -317,28 +317,28 @@ useEffect(() => {
       title: "Total Applicants",
       value: data.stats.total,
       sub: "All registered candidates",
-      barColors: ["#3b82f6","#60a5fa","#93c5fd","#3b82f6","#60a5fa","#93c5fd","#3b82f6"],
+      barColors: ["#3b82f6", "#60a5fa", "#93c5fd", "#3b82f6", "#60a5fa", "#93c5fd", "#3b82f6"],
     },
     {
       icon: <IC.Clock />, iconBg: "#fff7ed", iconColor: "#ea580c",
       title: "Unprocessed",
       value: data.stats.unprocessed,
       sub: "Needs follow-up",
-      barColors: ["#fb923c","#fdba74","#fb923c","#fdba74","#fb923c","#fed7aa","#fb923c"],
+      barColors: ["#fb923c", "#fdba74", "#fb923c", "#fdba74", "#fb923c", "#fed7aa", "#fb923c"],
     },
     {
       icon: <IC.CheckCircle />, iconBg: "#f0fdf4", iconColor: "#16a34a",
       title: "Accepted",
       value: data.stats.accepted,
       sub: "Passed all stages",
-      barColors: ["#4ade80","#86efac","#4ade80","#86efac","#4ade80","#bbf7d0","#4ade80"],
+      barColors: ["#4ade80", "#86efac", "#4ade80", "#86efac", "#4ade80", "#bbf7d0", "#4ade80"],
     },
     {
       icon: <IC.UserX />, iconBg: "#fff1f2", iconColor: "#be123c",
       title: "Rejected",
       value: data.stats.rejected,
       sub: "From total applicants",
-      barColors: ["#f87171","#fca5a5","#f87171","#fca5a5","#f87171","#fecdd3","#f87171"],
+      barColors: ["#f87171", "#fca5a5", "#f87171", "#fca5a5", "#f87171", "#fecdd3", "#f87171"],
     },
   ];
 
@@ -376,7 +376,7 @@ useEffect(() => {
             <span style={{ fontSize: "15px", fontWeight: "700", color: "#1e293b" }}>Candidate</span>
             <span style={{ fontSize: "13px", color: "#94a3b8", margin: "0 6px" }}>/</span>
             <span style={{ fontSize: "13px", color: "#94a3b8" }}>All Applicants</span>
-          </div>     
+          </div>
           <span style={{ fontSize: "12px", color: "#94a3b8", whiteSpace: "nowrap" }}>{todayStr()}</span>
         </header>
 
@@ -421,7 +421,7 @@ useEffect(() => {
                   Click View CV to see details and documents
                 </p>
               </div>
-              
+
               <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                 <div style={{
                   display: "flex", alignItems: "center", gap: "8px",
@@ -439,7 +439,7 @@ useEffect(() => {
                     }}
                   />
                 </div>
-                
+
                 <button
                   onClick={() => setShowExportModal(true)}
                   style={{

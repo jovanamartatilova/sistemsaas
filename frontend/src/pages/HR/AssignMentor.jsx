@@ -47,9 +47,9 @@ const IC = {
     </svg>
   ),
   Search: () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
-  </svg>
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+    </svg>
   ),
 };
 
@@ -149,11 +149,11 @@ function ConfirmModal({ title, desc, confirmLabel, confirmBg = "#2563eb", onConf
 
 // ── Action Button (same as dashboard) ─────────────────────────────────────────
 const VARIANT = {
-  green:  { bg: "#f0fdf4", color: "#15803d", border: "#86efac" },
-  red:    { bg: "#fff1f2", color: "#be123c", border: "#fecdd3" },
+  green: { bg: "#f0fdf4", color: "#15803d", border: "#86efac" },
+  red: { bg: "#fff1f2", color: "#be123c", border: "#fecdd3" },
   purple: { bg: "#f5f3ff", color: "#6d28d9", border: "#ddd6fe" },
-  blue:   { bg: "#eff6ff", color: "#1d4ed8", border: "#bfdbfe" },
-  gray:   { bg: "#f8fafc", color: "#475569", border: "#e2e8f0" },
+  blue: { bg: "#eff6ff", color: "#1d4ed8", border: "#bfdbfe" },
+  gray: { bg: "#f8fafc", color: "#475569", border: "#e2e8f0" },
 };
 
 function ActionBtn({ label, variant = "blue", onClick, icon, disabled }) {
@@ -185,67 +185,67 @@ export default function AssignMentorHR() {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
 
-  const [showLogout, setShowLogout]           = useState(false);
-  const [data, setData]                       = useState({ user: {}, stats: {}, interns: [], mentors: [] });
-  const [loading, setLoading]                 = useState(true);
-  const [draft, setDraft]                     = useState({});
-  const [saved, setSaved]                     = useState({});
-  const [modal, setModal]                     = useState(null);       // assign confirm
-  const [unassignTarget, setUnassignTarget]   = useState(null);
+  const [showLogout, setShowLogout] = useState(false);
+  const [data, setData] = useState({ user: {}, stats: {}, interns: [], mentors: [] });
+  const [loading, setLoading] = useState(true);
+  const [draft, setDraft] = useState({});
+  const [saved, setSaved] = useState({});
+  const [modal, setModal] = useState(null);       // assign confirm
+  const [unassignTarget, setUnassignTarget] = useState(null);
   const [showAutoConfirm, setShowAutoConfirm] = useState(false);
-  const [autoLoading, setAutoLoading]         = useState(false);
-  const [selectedMentor, setSelectedMentor]   = useState(null);
-  const [search, setSearch] = useState("");           
+  const [autoLoading, setAutoLoading] = useState(false);
+  const [selectedMentor, setSelectedMentor] = useState(null);
+  const [search, setSearch] = useState("");
   const [tableLoading, setTableLoading] = useState(false);
 
   // ── Fetch ─────────────────────────────────────────────────────────────────────
   const fetchData = (isSearch = false) => {
-  if (isSearch) {
-    setTableLoading(true);   // Loading hanya untuk tabel
-  } else {
-    setLoading(true);        // Loading untuk seluruh halaman
-  }
-  
-  const params = new URLSearchParams();
-  if (search) params.set("search", search);
-  
-  api(`/hr/assign-mentor?${params}`) 
-    .then((res) => {
-      setData(res.data);
-      const initDraft = {};
-      const initSaved = {};
-      res.data.interns.forEach((i) => {
-        if (i.mentor_id) {
-          initDraft[i.id_submission] = i.mentor_id;
-          initSaved[i.id_submission] = true;
-        }
+    if (isSearch) {
+      setTableLoading(true);   // Loading hanya untuk tabel
+    } else {
+      setLoading(true);        // Loading untuk seluruh halaman
+    }
+
+    const params = new URLSearchParams();
+    if (search) params.set("search", search);
+
+    api(`/hr/assign-mentor?${params}`)
+      .then((res) => {
+        setData(res.data);
+        const initDraft = {};
+        const initSaved = {};
+        res.data.interns.forEach((i) => {
+          if (i.mentor_id) {
+            initDraft[i.id_submission] = i.mentor_id;
+            initSaved[i.id_submission] = true;
+          }
+        });
+        setDraft(initDraft);
+        setSaved(initSaved);
+      })
+      .finally(() => {
+        setLoading(false);
+        setTableLoading(false);
       });
-      setDraft(initDraft);
-      setSaved(initSaved);
-    })
-    .finally(() => {
-      setLoading(false);
-      setTableLoading(false);
-    });
-};
+  };
 
   // Initial load (saat pertama kali buka halaman)
-useEffect(() => { 
-  fetchData(); 
-}, []);
+  useEffect(() => {
+    fetchData();
+  }, []);
 
-// Search debounce (hanya loading tabel)
-useEffect(() => {
-  if (!loading) {  
-    const timer = setTimeout(() => {
-      fetchData(true);  // ← true = search mode
-    }, 500);
-    return () => clearTimeout(timer);
-  }
-}, [search]);
+  // Search debounce (hanya loading tabel)
+  useEffect(() => {
+    if (!loading) {
+      const timer = setTimeout(() => {
+        fetchData(true);  // ← true = search mode
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [search]);
 
   // ── Helpers ───────────────────────────────────────────────────────────────────
-  const getMentor  = (id) => data.mentors.find((m) => m.id_mentor === id);
+  const getMentor = (id) => data.mentors.find((m) => m.id_mentor === id);
   const mentorLoad = (mentorId) => data.interns.filter((i) => (draft[i.id_submission] || i.mentor_id) === mentorId).length;
 
   // ── Handlers ──────────────────────────────────────────────────────────────────
@@ -286,9 +286,9 @@ useEffect(() => {
     finally { setAutoLoading(false); }
   };
 
-  const total         = data.stats.total         ?? 0;
-  const assigned      = data.stats.assigned       ?? 0;
-  const unassigned    = data.stats.unassigned     ?? 0;
+  const total = data.stats.total ?? 0;
+  const assigned = data.stats.assigned ?? 0;
+  const unassigned = data.stats.unassigned ?? 0;
   const activeMentors = data.stats.active_mentors ?? 0;
 
   const statCards = [
@@ -296,25 +296,25 @@ useEffect(() => {
       icon: <IC.Users />, iconBg: "#eff6ff", iconColor: "#3b82f6",
       title: "Total Accepted", value: total,
       sub: "Ready to be assigned",
-      barColors: ["#3b82f6","#60a5fa","#93c5fd","#3b82f6","#60a5fa","#93c5fd","#3b82f6"],
+      barColors: ["#3b82f6", "#60a5fa", "#93c5fd", "#3b82f6", "#60a5fa", "#93c5fd", "#3b82f6"],
     },
     {
       icon: <IC.CheckCircle />, iconBg: "#f0fdf4", iconColor: "#16a34a",
       title: "Assigned", value: assigned,
       sub: "Mentor confirmed",
-      barColors: ["#4ade80","#86efac","#4ade80","#86efac","#4ade80","#bbf7d0","#4ade80"],
+      barColors: ["#4ade80", "#86efac", "#4ade80", "#86efac", "#4ade80", "#bbf7d0", "#4ade80"],
     },
     {
       icon: <IC.Clock />, iconBg: "#fff7ed", iconColor: "#ea580c",
       title: "Unassigned", value: unassigned,
       sub: "Needs assignment",
-      barColors: ["#fb923c","#fdba74","#fb923c","#fdba74","#fb923c","#fed7aa","#fb923c"],
+      barColors: ["#fb923c", "#fdba74", "#fb923c", "#fdba74", "#fb923c", "#fed7aa", "#fb923c"],
     },
     {
       icon: <IC.UserCheck />, iconBg: "#f5f3ff", iconColor: "#7c3aed",
       title: "Active Mentors", value: activeMentors,
       sub: "Available to assign",
-      barColors: ["#c084fc","#a855f7","#c084fc","#a855f7","#c084fc","#ddd6fe","#a855f7"],
+      barColors: ["#c084fc", "#a855f7", "#c084fc", "#a855f7", "#c084fc", "#ddd6fe", "#a855f7"],
     },
   ];
 
@@ -391,20 +391,20 @@ useEffect(() => {
               <div style={{
                 display: "flex", alignItems: "center", justifyContent: "space-between",
                 padding: "20px 24px", borderBottom: "1px solid #f1f5f9",
-                flexWrap: "wrap", gap: "12px", 
+                flexWrap: "wrap", gap: "12px",
               }}>
                 <div>
                   <p style={{ fontSize: "15px", fontWeight: "700", color: "#1e293b", margin: 0, textAlign: "left" }}>Accepted Interns</p>
                   <p style={{ fontSize: "12px", color: "#94a3b8", marginTop: "2px" }}>Select a mentor for each intern, then click Assign</p>
                 </div>
-                
+
                 <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                   <div style={{
                     display: "flex", alignItems: "center", gap: "8px",
                     background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px",
                     padding: "7px 14px", width: "240px",
                   }}>
-                    <IC.Search /> 
+                    <IC.Search />
                     <input
                       placeholder="Search by name or email..."
                       value={search}
@@ -415,7 +415,7 @@ useEffect(() => {
                       }}
                     />
                   </div>
-                  
+
                   <ActionBtn
                     label={autoLoading ? "Assigning..." : "Auto-assign Unassigned"}
                     variant="blue"
@@ -442,14 +442,14 @@ useEffect(() => {
               {/* Rows */}
               {tableLoading ? (
                 <div style={{ padding: "48px 0", textAlign: "center", color: "#94a3b8", fontSize: "13px" }}>
-                  <div style={{ 
-                    display: "inline-block", 
-                    width: "20px", 
-                    height: "20px", 
-                    border: "2px solid #e2e8f0", 
-                    borderTopColor: "#3b82f6", 
-                    borderRadius: "50%", 
-                    animation: "spin 0.6s linear infinite" 
+                  <div style={{
+                    display: "inline-block",
+                    width: "20px",
+                    height: "20px",
+                    border: "2px solid #e2e8f0",
+                    borderTopColor: "#3b82f6",
+                    borderRadius: "50%",
+                    animation: "spin 0.6s linear infinite"
                   }} />
                   <div style={{ marginTop: "10px" }}>Searching...</div>
                 </div>
@@ -460,7 +460,7 @@ useEffect(() => {
               ) : (
                 data.interns.map((intern, i) => {
                   const currentDraft = draft[intern.id_submission];
-                  const isSaved      = saved[intern.id_submission];
+                  const isSaved = saved[intern.id_submission];
                   return (
                     <div
                       key={intern.id_submission}
@@ -581,9 +581,9 @@ useEffect(() => {
               ) : (
                 <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
                   {data.mentors.map((mentor) => {
-                    const load     = mentorLoad(mentor.id_mentor);
-                    const pct      = Math.round((load / mentor.capacity) * 100);
-                    const full     = load >= mentor.capacity;
+                    const load = mentorLoad(mentor.id_mentor);
+                    const pct = Math.round((load / mentor.capacity) * 100);
+                    const full = load >= mentor.capacity;
                     const selected = selectedMentor === mentor.id_mentor;
                     return (
                       <div
