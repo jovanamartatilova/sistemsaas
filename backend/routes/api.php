@@ -252,6 +252,7 @@ Route::middleware(['auth:sanctum'])->prefix('hr')->group(function () {
     Route::get('/candidates',                       [HRCandidateController::class, 'index']);
     Route::patch('/candidates/{id}/accept',         [HRCandidateController::class, 'accept']);
     Route::patch('/candidates/{id}/reject',         [HRCandidateController::class, 'reject']);
+    Route::patch('/candidates/{id}/stage',          [HRCandidateController::class, 'updateStage']);
     Route::patch('/candidates/{id}/screening',      [HRCandidateController::class, 'screening']);
     Route::patch('/candidates/{id}/interview',      [HRCandidateController::class, 'interview']);
     Route::get('/candidates/{id}/documents/{type}', [HRCandidateController::class, 'viewDocument']);

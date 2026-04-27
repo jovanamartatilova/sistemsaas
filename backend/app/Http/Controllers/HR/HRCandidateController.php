@@ -23,7 +23,11 @@ class HRCandidateController extends Controller
 
         // Filter by status
         if ($request->filled('status')) {
-            $query->where('status', $request->status);
+            if ($request->status === 'stage_0') {
+                $query->whereIn('status', ['pending', 'stage_0']);
+            } else {
+                $query->where('status', $request->status);
+            }
         }
 
         // Filter by position
@@ -231,7 +235,30 @@ class HRCandidateController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Candidate moved to interview',
-            'data'    => $this->formatSubmission($submission->fresh(['user', 'position', 'vacancy'])),
+            'data'    => $this->formatSubmission($submission->fresh(['user.university', 'position', 'vacancy'])),
+        ]);
+    }
+
+    /**
+     * PATCH /hr/candidates/{id}/stage
+     * Mark candidate dynamically based on stage index
+     */
+    public function updateStage(Request $request, string $id)
+    {
+        $request->validate(['stage' => 'required|string']);
+        
+        $submission = $this->findSubmission($id, $request->user()->id_company);
+
+        if (!$submission) {
+            return response()->json(['success' => false, 'message' => 'Candidate not found'], 404);
+        }
+
+        $submission->update(['status' => $request->stage]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Candidate stage updated',
+            'data'    => $this->formatSubmission($submission->fresh(['user.university', 'position', 'vacancy'])),
         ]);
     }
 
@@ -241,7 +268,7 @@ class HRCandidateController extends Controller
     {
         return Submission::where('id_submission', $id)
             ->whereHas('vacancy', fn($q) => $q->where('id_company', $companyId))
-            ->with(['user', 'position', 'vacancy'])
+            ->with(['user.university', 'position', 'vacancy'])
             ->first();
     }
 
@@ -252,6 +279,7 @@ class HRCandidateController extends Controller
             'name'            => $s->user?->name,
             'email'           => $s->user?->email,
             'phone'           => $s->user?->phone,
+            'university'      => $s->user?->university?->name ?? '-',
             'position'        => $s->position?->name,
             'program'         => $s->vacancy?->title,
             'type'            => $s->vacancy?->type,

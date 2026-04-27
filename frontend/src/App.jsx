@@ -44,9 +44,8 @@ import SuperAdminPages from './pages/SuperAdmin/SuperAdminPages';
 
 // HR
 import DashboardHR  from './pages/HR/DashboardHR';
-import KandidateHR  from './pages/HR/KandidateHR';
-import ScreeningHR  from './pages/HR/ScreeningHR';
-import WawancaraHR  from './pages/HR/WawancaraHR';
+import SelectionHR  from './pages/HR/SelectionHR';
+import ActiveInternHR from './pages/HR/ActiveInternHR';
 import GenerateLOA  from './pages/HR/GenerateLOA';
 import PayrollHR    from './pages/HR/PayrollHR';
 import AssignMentor from './pages/HR/AssignMentor';
@@ -125,12 +124,11 @@ export default function App() {
 
                 {/* HR — Private */}
                 <Route path="/hr/dashboard"     element={<Private><DashboardHR /></Private>} />
-                <Route path="/hr/kandidate"     element={<Private><KandidateHR /></Private>} />
-                <Route path="/hr/screening"     element={<Private><ScreeningHR /></Private>} />
-                <Route path="/hr/wawancara"     element={<Private><WawancaraHR /></Private>} />
+                <Route path="/hr/selection"     element={<Private><SelectionHR /></Private>} />
                 <Route path="/hr/generate-loa"  element={<Private><GenerateLOA /></Private>} />
                 <Route path="/hr/payroll"       element={<Private><PayrollHR /></Private>} />
                 <Route path="/hr/assign-mentor" element={<Private><AssignMentor /></Private>} />
+                <Route path="/hr/active-intern" element={<Private><ActiveInternHR /></Private>} />
 
                 {/* Mentor — Private */}
                 <Route path="/mentor/dashboard"     element={<Private><DashboardMentor /></Private>} />

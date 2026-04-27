@@ -77,6 +77,10 @@ class ProgramController extends Controller
             'competencies.*.name' => 'required|string|max:50',
             'competencies.*.learning_hours' => 'required|integer',
             'competencies.*.description' => 'nullable|string|max:255',
+            'selection_flow' => 'nullable|array',
+            'selection_flow.*.type' => 'required|string|max:50',
+            'selection_flow.*.name' => 'required|string|max:100',
+            'selection_flow.*.description' => 'nullable|string|max:1000',
         ]);
 
         // Check if name already exists for this company
@@ -96,6 +100,7 @@ class ProgramController extends Controller
                 'id_company' => $id_company,
                 'name' => $validated['name'],
                 'quota' => 0, // Legacy field, we use pivot now
+                'selection_flow' => $validated['selection_flow'] ?? [],
             ]);
 
             if (!empty($validated['competencies'])) {
@@ -136,6 +141,10 @@ class ProgramController extends Controller
             'competencies.*.name' => 'required|string|max:50',
             'competencies.*.learning_hours' => 'required|integer',
             'competencies.*.description' => 'nullable|string|max:255',
+            'selection_flow' => 'nullable|array',
+            'selection_flow.*.type' => 'required|string|max:50',
+            'selection_flow.*.name' => 'required|string|max:100',
+            'selection_flow.*.description' => 'nullable|string|max:1000',
         ]);
 
         // Check if name already exists for this company (excluding current position)
@@ -150,7 +159,10 @@ class ProgramController extends Controller
 
         try {
             DB::beginTransaction();
-            $position->update(['name' => $validated['name']]);
+            $position->update([
+                'name' => $validated['name'],
+                'selection_flow' => $validated['selection_flow'] ?? [],
+            ]);
 
             $compIds = [];
             if (!empty($validated['competencies'])) {
