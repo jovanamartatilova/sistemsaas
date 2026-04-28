@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\DB;
 
 class SubmissionController extends Controller
 {
-    public function apply(Request $request, $slug)
+    public function apply(Request $request, $idCompany)
     {
         $request->validate([
             'id_vacancy' => 'required|string',
@@ -40,7 +40,7 @@ class SubmissionController extends Controller
             ]);
         }
 
-        $company = Company::where('slug', $slug)->first();
+        $company = Company::where('id_company', $idCompany)->first();
         if (!$company) {
             return response()->json(['message' => 'Perusahaan tidak ditemukan'], 404);
         }

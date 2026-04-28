@@ -120,7 +120,7 @@ function LockedCertificateCard({ batch, company, progress }) {
 export default function CertificatesPage() {
   const navigate = useNavigate();
   const { logout: globalLogout } = useAuthStore();
-  const { slug } = useParams();
+  const { idCompany } = useParams();
   const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
   const [filter, setFilter] = useState("All");
   const [search, setSearch] = useState("");
@@ -136,7 +136,7 @@ export default function CertificatesPage() {
       try {
         const token = localStorage.getItem("auth_token");
         if (!token) {
-          navigate(`/c/${slug}/dashboard`);
+          navigate(`/c/${idCompany}/dashboard`);
           return;
         }
 
@@ -198,7 +198,7 @@ export default function CertificatesPage() {
     };
 
     fetchData();
-  }, [slug, navigate]);
+  }, [idCompany, navigate]);
 
   const handleLogoutClick = () => {
     setLogoutModal(true);

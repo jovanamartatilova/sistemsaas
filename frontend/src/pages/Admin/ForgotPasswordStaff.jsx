@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 export default function ForgotPasswordStaff() {
-  const { slug } = useParams();
+  const { idCompany } = useParams();
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
@@ -23,7 +23,7 @@ export default function ForgotPasswordStaff() {
   useEffect(() => {
     const fetchCompany = async () => {
       try {
-        const response = await fetch(`http://localhost:8000/api/c/${slug}`, {
+        const response = await fetch(`http://localhost:8000/api/c/${idCompany}`, {
           headers: { "Accept": "application/json" },
         });
         if (!response.ok) throw new Error("Perusahaan tidak ditemukan");
@@ -35,8 +35,8 @@ export default function ForgotPasswordStaff() {
         setCompanyLoading(false);
       }
     };
-    if (slug) fetchCompany();
-  }, [slug]);
+    if (idCompany) fetchCompany();
+  }, [idCompany]);
 
   const inputBase = {
     background: "rgba(255,255,255,0.07)",
@@ -61,7 +61,7 @@ export default function ForgotPasswordStaff() {
           "Content-Type": "application/json",
           "Accept": "application/json",
         },
-        body: JSON.stringify({ email, slug }),
+        body: JSON.stringify({ email, idCompany }),
       });
 
       const data = await response.json();

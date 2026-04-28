@@ -4,14 +4,20 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 export default function ActivateAccount() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const token = searchParams.get("token");
+  const code = searchParams.get("code"); // ← ganti dari token ke code
 
-  const [user, setUser] = useState(null);
+  const [invitation, setInvitation] = useState(null);
   const [company, setCompany] = useState(null);
-  const [tokenLoading, setTokenLoading] = useState(true);
-  const [tokenError, setTokenError] = useState("");
+  const [codeLoading, setCodeLoading] = useState(true);
+  const [codeError, setCodeError] = useState("");
 
-  const [form, setForm] = useState({ name: "", password: "", password_confirmation: "" });
+  const [form, setForm] = useState({
+    first_name: "",
+    last_name: "",
+    email: "",
+    password: "",
+    password_confirmation: "",
+  });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -19,31 +25,31 @@ export default function ActivateAccount() {
   const [done, setDone] = useState(false);
 
   useEffect(() => {
-    if (!token) {
-      setTokenError("Token aktivasi tidak ditemukan.");
-      setTokenLoading(false);
+    if (!code) {
+      setCodeError("Kode undangan tidak ditemukan.");
+      setCodeLoading(false);
       return;
     }
 
-    const checkToken = async () => {
+    const validateCode = async () => {
       try {
-        const response = await fetch(`http://localhost:8000/api/auth/check-activation-token/${token}`, {
-          headers: { "Accept": "application/json" },
-        });
+        const response = await fetch(
+          `http://localhost:8000/api/invitation-codes/validate/${code}`,
+          { headers: { Accept: "application/json" } }
+        );
         const data = await response.json();
-        if (!response.ok) throw new Error(data.message || "Token tidak valid");
-        setUser(data.user);
-        setCompany(data.company);
-        setForm((prev) => ({ ...prev, name: data.user.name ?? "" }));
+        if (!response.ok) throw new Error(data.message || "Kode tidak valid");
+        setInvitation(data.invitation);
+        setCompany(data.invitation.company ?? { name: data.invitation.id_company });
       } catch (err) {
-        setTokenError(err.message);
+        setCodeError(err.message);
       } finally {
-        setTokenLoading(false);
+        setCodeLoading(false);
       }
     };
 
-    checkToken();
-  }, [token]);
+    validateCode();
+  }, [code]);
 
   const getStrength = (pwd) => {
     if (!pwd) return { level: 0, label: "", color: "" };
@@ -76,15 +82,17 @@ export default function ActivateAccount() {
 
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:8000/api/auth/activate-account", {
+      const response = await fetch("http://localhost:8000/api/auth/activate", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Accept": "application/json",
+          Accept: "application/json",
         },
         body: JSON.stringify({
-          token,
-          name: form.name,
+          invitation_code: code,
+          first_name: form.first_name,
+          last_name: form.last_name,
+          email: form.email,
           password: form.password,
           password_confirmation: form.password_confirmation,
         }),
@@ -100,15 +108,12 @@ export default function ActivateAccount() {
 
       setDone(true);
       setTimeout(() => {
-    const role = data.user.role;
-    if (role === 'mentor') {
-        navigate('/mentor/dashboard');
-    } else if (role === 'hr') {
-        navigate('/hr/dashboard');
-    } else {
-        navigate('/dashboard');
-    }
-}, 2000);
+      const role = data.user.role;
+      if (role === 'hr') navigate('/hr/dashboard');
+      else if (role === 'mentor') navigate('/mentor/dashboard');
+      else if (role === 'admin') navigate('/admin/dashboard');
+      else navigate('/dashboard');
+  }, 2000);
     } catch (err) {
       setErrorMsg(err.message);
     } finally {
@@ -125,22 +130,9 @@ export default function ActivateAccount() {
     border: "1px solid rgba(74,158,255,0.5)",
     background: "rgba(74,158,255,0.08)",
   };
-  const inputReadonly = {
-    background: "rgba(255,255,255,0.03)",
-    border: "1px solid rgba(255,255,255,0.06)",
-    fontSize: "14px",
-    color: "rgba(255,255,255,0.4)",
-    cursor: "not-allowed",
-  };
 
-  const roleLabel = (role) => {
-    if (role === "hr") return "HR";
-    if (role === "mentor") return "Mentor";
-    return role?.toUpperCase() ?? "Staff";
-  };
-
-  // ── Token invalid / loading ──
-  if (tokenLoading) {
+  // ── Loading ──
+  if (codeLoading) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center"
         style={{ background: "linear-gradient(160deg, #0d1f3c 0%, #0a1628 40%, #071220 100%)" }}>
@@ -149,13 +141,14 @@ export default function ActivateAccount() {
             <circle cx="12" cy="12" r="10" stroke="rgba(74,158,255,0.2)" strokeWidth="3" />
             <path d="M12 2a10 10 0 0110 10" stroke="#4a9eff" strokeWidth="3" strokeLinecap="round" />
           </svg>
-          <p className="text-sm" style={{ color: "rgba(255,255,255,0.4)" }}>Memverifikasi link aktivasi...</p>
+          <p className="text-sm" style={{ color: "rgba(255,255,255,0.4)" }}>Memverifikasi kode undangan...</p>
         </div>
       </div>
     );
   }
 
-  if (tokenError) {
+  // ── Kode invalid ──
+  if (codeError) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center px-6"
         style={{ background: "linear-gradient(160deg, #0d1f3c 0%, #0a1628 40%, #071220 100%)" }}>
@@ -169,8 +162,8 @@ export default function ActivateAccount() {
               </svg>
             </div>
           </div>
-          <h1 className="text-2xl font-bold text-white mb-2">Link Tidak Valid</h1>
-          <p className="text-sm mb-8" style={{ color: "rgba(255,255,255,0.4)" }}>{tokenError}</p>
+          <h1 className="text-2xl font-bold text-white mb-2">Kode Tidak Valid</h1>
+          <p className="text-sm mb-8" style={{ color: "rgba(255,255,255,0.4)" }}>{codeError}</p>
           <button onClick={() => navigate("/")}
             className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold text-white"
             style={{ background: "linear-gradient(135deg, #2d7dd2 0%, #4a9eff 100%)", border: "none", cursor: "pointer" }}>
@@ -236,38 +229,58 @@ export default function ActivateAccount() {
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full blur-3xl opacity-5 pointer-events-none"
           style={{ background: "#4a9eff" }} />
 
-        <div className="w-full max-w-md relative z-10 text-left">
+        <div className="w-full max-w-md relative z-10">
           {/* Logo + Title */}
           <div className="text-center mb-6">
             <div className="flex justify-center mb-4">
               {company?.logo_path ? (
-                <img src={`http://localhost:8000/storage/${company.logo_path}`} alt={company.name} className="w-16 h-16 object-contain rounded-2xl" />
+                <img src={`http://localhost:8000/storage/${company.logo_path}`} alt={company.name}
+                  className="w-16 h-16 object-contain rounded-2xl" />
               ) : (
                 <img src="/assets/images/logo.png" alt="Logo" className="w-32 h-32 object-contain" />
               )}
             </div>
             <h1 className="text-2xl font-bold text-white mb-1" style={{ letterSpacing: "-0.3px" }}>
-              Activate Your Account
+              Buat Akun Kamu
             </h1>
             <p className="text-sm" style={{ color: "rgba(255,255,255,0.4)", maxWidth: "320px", margin: "0 auto" }}>
-              You have been invited by{" "}
+              Kamu diundang oleh{" "}
               <span style={{ color: "#4a9eff" }}>{company?.name ?? "..."}</span>.
-              {" "}Create your password to start using EarlyPath.
+              {" "}Lengkapi data berikut untuk mulai menggunakan EarlyPath.
             </p>
           </div>
 
-          {/* Info card */}
-          {user && company && (
-            <div className="flex items-center justify-between px-4 py-3 rounded-xl mb-6"
+          {/* Slot info card */}
+          {invitation && (
+            <div className="px-4 py-3 rounded-xl mb-6"
               style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>
-              <div>
-                <p className="text-sm font-medium text-white">{company.name}</p>
-                <p className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.4)" }}>{user.email}</p>
+              <p className="text-xs mb-2" style={{ color: "rgba(255,255,255,0.35)" }}>Detail posisi kamu</p>
+              <div className="flex flex-wrap gap-2">
+                {invitation.label && (
+                  <span className="text-xs px-2.5 py-1 rounded-full"
+                    style={{ background: "rgba(74,158,255,0.12)", color: "#4a9eff", border: "1px solid rgba(74,158,255,0.2)" }}>
+                    {invitation.label}
+                  </span>
+                )}
+                {invitation.division && (
+                  <span className="text-xs px-2.5 py-1 rounded-full"
+                    style={{ background: "rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.6)", border: "1px solid rgba(255,255,255,0.1)" }}>
+                    {invitation.division}
+                  </span>
+                )}
+                {invitation.position && (
+                  <span className="text-xs px-2.5 py-1 rounded-full"
+                    style={{ background: "rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.6)", border: "1px solid rgba(255,255,255,0.1)" }}>
+                    {invitation.position}
+                  </span>
+                )}
+                {invitation.employee_status && (
+                  <span className="text-xs px-2.5 py-1 rounded-full"
+                    style={{ background: "rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.6)", border: "1px solid rgba(255,255,255,0.1)" }}>
+                    {invitation.employee_status}
+                  </span>
+                )}
               </div>
-              <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
-                style={{ background: "rgba(74,158,255,0.15)", color: "#4a9eff", border: "1px solid rgba(74,158,255,0.25)" }}>
-                {roleLabel(user.role)}
-              </span>
             </div>
           )}
 
@@ -281,7 +294,7 @@ export default function ActivateAccount() {
                   <path d="M8 12l3 3 5-5" stroke="#4caf50" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
                 <div>
-                  <p className="font-semibold text-base mb-1">Akun berhasil diaktifkan!</p>
+                  <p className="font-semibold text-base mb-1">Akun berhasil dibuat!</p>
                   <p style={{ color: "rgba(129,199,132,0.75)", fontSize: "13px" }}>Mengarahkan ke dashboard...</p>
                 </div>
               </div>
@@ -295,52 +308,70 @@ export default function ActivateAccount() {
                 </div>
               )}
 
-              {/* Full Name */}
-              <div>
-                <label className="block text-sm font-medium mb-1.5" style={{ color: "rgba(255,255,255,0.8)" }}>
-                  Full Name
-                </label>
-                <input
-                  type="text"
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  placeholder="Your full name"
-                  required
-                  className="w-full px-4 py-3 rounded-xl text-white placeholder-gray-500 outline-none transition-all duration-200"
-                  style={inputBase}
-                  onFocus={(e) => Object.assign(e.target.style, inputFocus)}
-                  onBlur={(e) => Object.assign(e.target.style, inputBase)}
-                />
-                <p className="text-xs mt-1.5" style={{ color: "rgba(255,255,255,0.3)" }}>
-                  Your name was provided by the admin. You can edit it if needed.
-                </p>
+              {/* First & Last Name — 2 kolom */}
+              <div className="flex gap-3">
+                <div className="flex-1">
+                  <label className="block text-sm font-medium mb-1.5" style={{ color: "rgba(255,255,255,0.8)" }}>
+                    First Name
+                  </label>
+                  <input
+                    type="text"
+                    value={form.first_name}
+                    onChange={(e) => setForm({ ...form, first_name: e.target.value })}
+                    placeholder="John"
+                    required
+                    className="w-full px-4 py-3 rounded-xl text-white placeholder-gray-500 outline-none transition-all duration-200"
+                    style={inputBase}
+                    onFocus={(e) => Object.assign(e.target.style, inputFocus)}
+                    onBlur={(e) => Object.assign(e.target.style, inputBase)}
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-sm font-medium mb-1.5" style={{ color: "rgba(255,255,255,0.8)" }}>
+                    Last Name
+                  </label>
+                  <input
+                    type="text"
+                    value={form.last_name}
+                    onChange={(e) => setForm({ ...form, last_name: e.target.value })}
+                    placeholder="Doe"
+                    className="w-full px-4 py-3 rounded-xl text-white placeholder-gray-500 outline-none transition-all duration-200"
+                    style={inputBase}
+                    onFocus={(e) => Object.assign(e.target.style, inputFocus)}
+                    onBlur={(e) => Object.assign(e.target.style, inputBase)}
+                  />
+                </div>
               </div>
 
-              {/* Email (readonly) */}
+              {/* Email */}
               <div>
                 <label className="block text-sm font-medium mb-1.5" style={{ color: "rgba(255,255,255,0.8)" }}>
                   Email
                 </label>
                 <input
                   type="email"
-                  value={user?.email ?? ""}
-                  readOnly
-                  className="w-full px-4 py-3 rounded-xl outline-none"
-                  style={inputReadonly}
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  placeholder="john@example.com"
+                  required
+                  className="w-full px-4 py-3 rounded-xl text-white placeholder-gray-500 outline-none transition-all duration-200"
+                  style={inputBase}
+                  onFocus={(e) => Object.assign(e.target.style, inputFocus)}
+                  onBlur={(e) => Object.assign(e.target.style, inputBase)}
                 />
               </div>
 
-              {/* New Password */}
+              {/* Password */}
               <div>
                 <label className="block text-sm font-medium mb-1.5" style={{ color: "rgba(255,255,255,0.8)" }}>
-                  New Password
+                  Password
                 </label>
                 <div className="relative">
                   <input
                     type={showPassword ? "text" : "password"}
                     value={form.password}
                     onChange={(e) => setForm({ ...form, password: e.target.value })}
-                    placeholder="Minimum 8 characters"
+                    placeholder="Minimum 8 karakter"
                     required
                     className="w-full px-4 py-3 pr-12 rounded-xl text-white placeholder-gray-500 outline-none transition-all duration-200"
                     style={inputBase}
@@ -375,9 +406,6 @@ export default function ActivateAccount() {
                     <p className="text-xs" style={{ color: strength.color }}>Password strength: {strength.label}</p>
                   </div>
                 )}
-                <p className="text-xs mt-1.5" style={{ color: "rgba(255,255,255,0.3)" }}>
-                  Use 8+ characters with a mix of letters, numbers & symbols.
-                </p>
               </div>
 
               {/* Confirm Password */}
@@ -390,7 +418,7 @@ export default function ActivateAccount() {
                     type={showConfirm ? "text" : "password"}
                     value={form.password_confirmation}
                     onChange={(e) => setForm({ ...form, password_confirmation: e.target.value })}
-                    placeholder="Re-enter your password"
+                    placeholder="Ulangi password"
                     required
                     className="w-full px-4 py-3 pr-12 rounded-xl text-white placeholder-gray-500 outline-none transition-all duration-200"
                     style={inputBase}
@@ -435,6 +463,8 @@ export default function ActivateAccount() {
                 style={{
                   background: loading ? "rgba(74,158,255,0.5)" : "linear-gradient(135deg, #2d7dd2 0%, #4a9eff 100%)",
                   boxShadow: loading ? "none" : "0 4px 20px rgba(74,158,255,0.35)",
+                  border: "none",
+                  cursor: loading ? "not-allowed" : "pointer",
                 }}
                 onMouseEnter={(e) => { if (!loading) e.currentTarget.style.transform = "translateY(-1px)"; }}
                 onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; }}>
@@ -444,9 +474,9 @@ export default function ActivateAccount() {
                       <circle cx="12" cy="12" r="10" stroke="white" strokeWidth="3" strokeOpacity="0.3" />
                       <path d="M12 2a10 10 0 0110 10" stroke="white" strokeWidth="3" strokeLinecap="round" />
                     </svg>
-                    Activating...
+                    Saving account...
                   </span>
-                ) : "Activate Account & Sign In"}
+                ) : "Saving Account & Login"}
               </button>
             </form>
           )}

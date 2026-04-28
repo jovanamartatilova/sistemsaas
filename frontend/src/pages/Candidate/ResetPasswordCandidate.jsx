@@ -3,7 +3,7 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore";
 
 export default function ResetPasswordCandidate() {
-  const { slug } = useParams();
+  const { idCompany } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
@@ -25,7 +25,7 @@ export default function ResetPasswordCandidate() {
   useEffect(() => {
     const fetchCompany = async () => {
       try {
-        const response = await fetch(`http://localhost:8000/api/c/${slug}`, {
+        const response = await fetch(`http://localhost:8000/api/c/${idCompany}`, {
           headers: { "Accept": "application/json" },
         });
         if (!response.ok) throw new Error("Perusahaan tidak ditemukan");
@@ -37,8 +37,8 @@ export default function ResetPasswordCandidate() {
         setCompanyLoading(false);
       }
     };
-    if (slug) fetchCompany();
-  }, [slug]);
+    if (idCompany) fetchCompany();
+  }, [idCompany]);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -130,8 +130,8 @@ export default function ResetPasswordCandidate() {
       });
 
       // Redirect langsung ke dashboard
-      if (slug) {
-        window.location.href = `/c/${slug}`;
+      if (idCompany) {
+        window.location.href = `/c/${idCompany}`;
       } else {
         window.location.href = "/candidate/dashboard";
       }

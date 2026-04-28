@@ -42,8 +42,8 @@ class User extends Authenticatable
      */
     protected $fillable = [
     'id_user',
-    'name',
     'id_company',
+    'name',
     'email',
     'password',
     'role',
@@ -92,6 +92,11 @@ class User extends Authenticatable
     public function employee()
     {
         return $this->hasOne(Employee::class, 'id_user', 'id_user');
+    }
+
+    public function candidate()
+    {
+        return $this->hasOne(Candidate::class, 'id_user', 'id_user');
     }
 
     /**

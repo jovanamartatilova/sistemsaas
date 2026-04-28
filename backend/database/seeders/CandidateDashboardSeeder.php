@@ -32,7 +32,7 @@ class CandidateDashboardSeeder extends Seeder
 
         // Company
         $company = Company::firstOrCreate(
-            ['slug' => 'pt-telkom-indonesia-persero-tbk'],
+            ['name' => 'PT Telkom Indonesia (Persero) Tbk'],
             [
                 'id_company' => 'C' . strtoupper(Str::random(8)),
                 'name' => 'PT Telkom Indonesia (Persero) Tbk',

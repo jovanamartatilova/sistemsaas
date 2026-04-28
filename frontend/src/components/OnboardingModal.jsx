@@ -288,18 +288,6 @@ export default function OnboardingModal({ isOpen, onClose }) {
                   <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </button>
-
-              <p className="text-center mt-4">
-                <button
-                  onClick={handleClose}
-                  className="text-xs transition-colors duration-200"
-                  style={{ color: "rgba(255,255,255,0.35)" }}
-                  onMouseEnter={(e) => (e.currentTarget.style.color = "#4a9eff")}
-                  onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.35)")}
-                >
-                  Skip for now →
-                </button>
-              </p>
             </div>
           )}
 

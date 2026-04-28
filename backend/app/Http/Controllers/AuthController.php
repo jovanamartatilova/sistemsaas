@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
+use App\Models\Candidate;
 use App\Models\Company;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
@@ -129,14 +130,6 @@ class AuthController extends Controller
                 'password' => 'required|string|min:8', // Password khusus untuk login admin company
             ]);
 
-            // Generate slug dari nama company
-            $slug = Str::slug($validated['name']);
-            $originalSlug = $slug;
-            $counter = 1;
-            while (Company::where('slug', $slug)->exists()) {
-                $slug = $originalSlug . '-' . $counter++;
-            }
-
             // Generate ID company
             do {
                 $idCompany = 'CMP' . strtoupper(substr(uniqid(), -7));
@@ -149,7 +142,6 @@ class AuthController extends Controller
                 $company = Company::create([
                     'id_company' => $idCompany,
                     'name' => $validated['name'],
-                    'slug' => $slug,
                     'email' => $user->email, // Pakai email user sebagai email company
                     'phone' => $validated['phone'],
                     'address' => $validated['address'],
@@ -157,15 +149,33 @@ class AuthController extends Controller
                     'is_active' => true,
                 ]);
 
-                // Buat default roles untuk company ini
-                $defaultRoles = ['admin', 'hr', 'mentor'];
-                foreach ($defaultRoles as $roleName) {
-                    \App\Models\Role::create([
-                        'id_role' => 'ROL' . strtoupper(substr(uniqid(), -7)),
-                        'id_company' => $company->id_company,
-                        'name' => $roleName,
-                    ]);
-                }
+$defaultRoles = ['admin', 'hr', 'mentor'];
+foreach ($defaultRoles as $roleName) {
+    \App\Models\Role::create([
+        'id_role' => 'ROL' . strtoupper(substr(uniqid(), -7)),
+        'id_company' => $company->id_company,
+        'name' => $roleName,
+    ]);
+}
+
+$nameParts = explode(' ', $user->name, 2);
+
+do {
+    $idEmployee = 'EMP' . strtoupper(substr(uniqid(), -7));
+} while (\App\Models\Employee::where('id_employee', $idEmployee)->exists());
+
+\App\Models\Employee::create([
+    'id_employee' => $idEmployee,
+    'id_user'     => $user->id_user,
+    'id_company'  => $company->id_company,
+    'first_name'  => $nameParts[0],
+    'last_name'   => $nameParts[1] ?? null,
+]);
+
+$user->update(['role' => 'admin']);
+
+                $user->id_company = $company->id_company;
+                $user->save();
 
                 DB::commit();
 
@@ -176,7 +186,6 @@ class AuthController extends Controller
                     'message' => 'Company created successfully',
                     'company' => $company,
                     'company_token' => $companyToken,
-                    'public_url' => '/c/' . $slug,
                 ], 201);
 
             } catch (\Exception $e) {
@@ -196,91 +205,80 @@ class AuthController extends Controller
      * User yang sudah login (dan belum punya candidate profile) bisa buat profile candidate
      */
     public function createCandidateProfile(Request $request)
-    {
-        try {
-            $user = $request->user();
+{
+    try {
+        $user = $request->user();
 
-            $validated = $request->validate([
-                'phone' => 'nullable|string|max:13',
-                'institution' => 'nullable|string|max:100',
-                'education_level' => 'nullable|string|max:50',
-                'major' => 'nullable|string|max:100',
-            ]);
+        $validated = $request->validate([
+            'phone'           => 'nullable|string|max:13',
+            'institution'     => 'nullable|string|max:100',
+            'education_level' => 'nullable|string|max:50',
+            'major'           => 'nullable|string|max:100',
+        ]);
 
-            return response()->json([
-                'message' => 'Candidate profile created successfully',
-                'candidate_profile' => [
-                    'id_user' => $user->id_user,
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'phone' => $validated['phone'] ?? null,
-                    'institution' => $validated['institution'] ?? null,
-                    'education_level' => $validated['education_level'] ?? null,
-                    'major' => $validated['major'] ?? null,
-                ],
-            ], 201);
+        // Generate id_candidate
+        do {
+            $idCandidate = 'CDT' . strtoupper(substr(uniqid(), -7));
+        } while (\App\Models\Candidate::where('id_candidate', $idCandidate)->exists());
 
-        } catch (ValidationException $e) {
-            return response()->json(['message' => 'Validation failed', 'errors' => $e->errors()], 422);
-        } catch (\Exception $e) {
-            return response()->json(['message' => 'Failed to create candidate profile', 'error' => $e->getMessage()], 500);
-        }
+        // Simpan ke tabel candidates
+        $candidate = \App\Models\Candidate::create([
+            'id_candidate'    => $idCandidate,
+            'id_user'         => $user->id_user,
+            'phone'           => $validated['phone'] ?? null,
+            'institution'     => $validated['institution'] ?? null,
+            'education_level' => $validated['education_level'] ?? null,
+            'major'           => $validated['major'] ?? null,
+        ]);
+
+        // Set role jadi candidate di tabel users
+        $user->update(['role' => 'candidate']);
+
+        return response()->json([
+            'message'           => 'Candidate profile created successfully',
+            'candidate_profile' => $candidate,
+        ], 201);
+
+    } catch (ValidationException $e) {
+        return response()->json(['message' => 'Validation failed', 'errors' => $e->errors()], 422);
+    } catch (\Exception $e) {
+        return response()->json(['message' => 'Failed to create candidate profile', 'error' => $e->getMessage()], 500);
     }
+}
 
     /**
      * 5. LOGIN AS COMPANY (Admin login ke dashboard company)
      * Login khusus untuk admin company (pakai email company dan password company)
      */
     public function loginCompany(Request $request)
-    {
-        try {
-            $validated = $request->validate([
-                'email' => 'required|email',
-                'password' => 'required|string',
-                'slug' => 'nullable|string',
-            ]);
+{
+    try {
+        $validated = $request->validate([
+            'email' => 'required|email',
+            'password' => 'required|string',
+        ]);
 
-            // Cari company
-            $query = Company::where('email', $validated['email']);
-            if (!empty($validated['slug'])) {
-                $query->where('slug', $validated['slug']);
-            }
-            $company = $query->first();
+        // Cari company
+        $company = Company::where('email', $validated['email'])->first();
 
-            if (!$company || !Hash::check($validated['password'], $company->password)) {
-                return response()->json(['message' => 'Email or password is incorrect'], 401);
-            }
-
-            // Cek apakah ada user yang terhubung sebagai admin company ini
-            $companyAdmin = CompanyAdmin::where('id_company', $company->id_company)->first();
-            
-            $token = $company->createToken('company_token')->plainTextToken;
-
-            $response = [
-                'message' => 'Login successful',
-                'company' => $company,
-                'token' => $token,
-            ];
-
-            if ($companyAdmin) {
-                $user = User::find($companyAdmin->id_user);
-                if ($user) {
-                    $response['admin_user'] = [
-                        'id_user' => $user->id_user,
-                        'name' => $user->name,
-                        'email' => $user->email,
-                    ];
-                }
-            }
-
-            return response()->json($response, 200);
-
-        } catch (ValidationException $e) {
-            return response()->json(['message' => 'Validation failed', 'errors' => $e->errors()], 422);
-        } catch (\Exception $e) {
-            return response()->json(['message' => 'Login failed', 'error' => $e->getMessage()], 500);
+        if (!$company || !Hash::check($validated['password'], $company->password)) {
+            return response()->json(['message' => 'Email or password is incorrect'], 401);
         }
+        
+        $token = $company->createToken('company_token')->plainTextToken;
+
+        return response()->json([
+            'message' => 'Login successful',
+            'company' => $company,
+            'token' => $token,
+        ], 200);
+
+    } catch (ValidationException $e) {
+        return response()->json(['message' => 'Validation failed', 'errors' => $e->errors()], 422);
+    } catch (\Exception $e) {
+        return response()->json(['message' => 'Login failed', 'error' => $e->getMessage()], 500);
     }
+}
 
     /**
      * 6. GET CURRENT USER PROFILE
@@ -300,17 +298,14 @@ class AuthController extends Controller
             ];
 
             // Cek company admin
-            $companyAdmin = CompanyAdmin::where('id_user', $user->id_user)->first();
-            if ($companyAdmin) {
-                $company = Company::find($companyAdmin->id_company);
-                if ($company) {
-                    $response['company'] = $company;
-                    $response['user_type'] = 'admin';
-                }
+            $company = Company::where('email', $user->email)->first();
+            if ($company) {
+                $response['company'] = $company;
+                $response['user_type'] = 'admin';
             }
 
             // Cek candidate profile
-            $candidateProfile = CandidateProfile::where('id_user', $user->id_user)->first();
+            $candidateProfile = Candidate::where('id_user', $user->id_user)->first();
             if ($candidateProfile) {
                 $response['candidate_profile'] = $candidateProfile;
                 $response['user_type'] = 'candidate';
@@ -342,14 +337,214 @@ class AuthController extends Controller
     }
 
     /**
+     * 8. VALIDATE INVITATION CODE
+     * GET /api/invitation-codes/validate/{code}
+     */
+    public function validateInvitationCode($code)
+    {
+        $invitation = \App\Models\InvitationCode::where('code', $code)
+            ->where('is_active', true)
+            ->with('company')
+            ->first();
+
+        if (!$invitation) {
+            return response()->json(['message' => 'Kode undangan tidak valid atau sudah tidak aktif.'], 404);
+        }
+
+        return response()->json([
+            'valid'      => true,
+            'invitation' => $invitation,
+        ]);
+    }
+
+    /**
+     * 9. ACTIVATE ACCOUNT VIA INVITATION CODE
+     * POST /api/auth/activate
+     */
+    public function activateAccount(Request $request)
+{
+    try {
+        $validated = $request->validate([
+            'invitation_code'     => 'required|string',
+            'first_name'          => 'required|string|max:100',
+            'last_name'           => 'nullable|string|max:100',
+            'email'               => 'required|email|max:100|unique:users,email',
+            'password'            => 'required|string|min:8|confirmed',
+        ]);
+
+        $invitation = \App\Models\InvitationCode::where('code', $validated['invitation_code'])
+            ->where('is_active', true)
+            ->with('company')
+            ->first();
+
+        if (!$invitation) {
+            return response()->json(['message' => 'Invalid or inactive invitation code.'], 422);
+        }
+
+        // Ambil role name dari tabel roles berdasarkan id_role di invitation
+        $roleName = 'employee';
+        if ($invitation->id_role) {
+            $role = \App\Models\Role::find($invitation->id_role);
+            if ($role) $roleName = $role->name; // 'hr', 'mentor', 'admin', etc
+        }
+
+        DB::beginTransaction();
+        try {
+            do {
+                $idUser = 'USR' . strtoupper(substr(uniqid(), -7));
+            } while (User::where('id_user', $idUser)->exists());
+
+            $user = User::create([
+                'id_user'    => $idUser,
+                'name'       => trim($validated['first_name'] . ' ' . ($validated['last_name'] ?? '')),
+                'email'      => $validated['email'],
+                'password'   => Hash::make($validated['password']),
+                'id_company' => $invitation->id_company,
+                'role'       => $roleName, // ← pakai nama role yang beneran
+                'is_active'  => true,
+            ]);
+
+            do {
+                $idEmployee = 'EMP' . strtoupper(substr(uniqid(), -7));
+            } while (\App\Models\Employee::where('id_employee', $idEmployee)->exists());
+
+            \App\Models\Employee::create([
+                'id_employee'     => $idEmployee,
+                'id_user'         => $user->id_user,
+                'id_company'      => $invitation->id_company,
+                'id_role'         => $invitation->id_role, // ← relasi ke tabel roles
+                'first_name'      => $validated['first_name'],
+                'last_name'       => $validated['last_name'] ?? '',
+                'department'      => $invitation->division,
+                'position'        => $invitation->position,
+                'employee_status' => $invitation->employee_status,
+                'schedule'        => $invitation->schedule,
+                'job_level'       => $invitation->job_level,
+                'joined_at'       => now(),
+            ]);
+
+            DB::commit();
+
+            $token = $user->createToken('auth_token')->plainTextToken;
+
+            return response()->json([
+                'message' => 'Account activated successfully.',
+                'token'   => $token,
+                'user'    => [
+                    'id_user'    => $user->id_user,
+                    'name'       => $user->name,
+                    'email'      => $user->email,
+                    'role'       => $user->role,
+                    'id_company' => $user->id_company,
+                ],
+                'company' => $invitation->company,
+            ], 201);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+
+    } catch (ValidationException $e) {
+        return response()->json(['message' => 'Validation failed', 'errors' => $e->errors()], 422);
+    } catch (\Exception $e) {
+        return response()->json(['message' => 'Activation failed.', 'error' => $e->getMessage()], 500);
+    }
+}
+
+    /**
+     * 10. LIST INVITATION CODES (HR/Admin)
+     * GET /api/company/invitation-codes
+     */
+    public function listInvitationCodes(Request $request)
+    {
+        $user = $request->user();
+
+        $codes = \App\Models\InvitationCode::where('id_company', $user->id_company)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json($codes);
+    }
+
+    /**
+     * 11. CREATE INVITATION CODE (HR/Admin)
+     * POST /api/company/invitation-codes
+     */
+    public function createInvitationCode(Request $request)
+{
+    $request->validate([
+        'label'           => 'required|string|max:100',
+        'id_role'         => 'required|string', // ← tambah ini
+        'division'        => 'nullable|string|max:100',
+        'position'        => 'nullable|string|max:100',
+        'employee_status' => 'nullable|string|max:50',
+        'schedule'        => 'nullable|string|max:50',
+        'job_level'       => 'nullable|string|max:50',
+    ]);
+
+    $user = $request->user();
+
+    do {
+        $code = strtoupper(Str::random(8));
+    } while (\App\Models\InvitationCode::where('code', $code)->exists());
+
+    $invitation = \App\Models\InvitationCode::create([
+        'id_company'      => $user->id_company,
+        'id_role'         => $request->id_role, // ← tambah ini
+        'code'            => $code,
+        'label'           => $request->label,
+        'division'        => $request->division,
+        'position'        => $request->position,
+        'employee_status' => $request->employee_status,
+        'schedule'        => $request->schedule,
+        'job_level'       => $request->job_level,
+        'is_active'       => true,
+    ]);
+
+    return response()->json(['message' => 'Invitation code created.', 'invitation' => $invitation], 201);
+}
+
+    /**
+     * 12. TOGGLE INVITATION CODE ACTIVE/NONAKTIF
+     * PATCH /api/company/invitation-codes/{id}/toggle
+     */
+    public function toggleInvitationCode($id)
+    {
+        $code = \App\Models\InvitationCode::findOrFail($id);
+        $code->update(['is_active' => !$code->is_active]);
+
+        return response()->json([
+            'message'   => 'Status updated.',
+            'is_active' => $code->is_active,
+        ]);
+    }
+
+    /**
+     * 13. DELETE INVITATION CODE
+     * DELETE /api/company/invitation-codes/{id}
+     */
+    public function deleteInvitationCode($id)
+    {
+        \App\Models\InvitationCode::findOrFail($id)->delete();
+        return response()->json(['message' => 'Deleted.']);
+    }
+
+public function companyRoles(Request $request)
+{
+    $user = $request->user();
+    $roles = \App\Models\Role::where('id_company', $user->id_company)->get();
+    return response()->json($roles);
+}
+
+    /**
      * Helper: Get user type
      */
     private function getUserType($user)
     {
-        $companyAdmin = CompanyAdmin::where('id_user', $user->id_user)->exists();
-        if ($companyAdmin) return 'admin';
+        if (Company::where('email', $user->email)->exists()) return 'admin';
         
-        $candidateProfile = CandidateProfile::where('id_user', $user->id_user)->exists();
+        $candidateProfile = Candidate::where('id_user', $user->id_user)->exists();
         if ($candidateProfile) return 'candidate';
         
         return 'new';

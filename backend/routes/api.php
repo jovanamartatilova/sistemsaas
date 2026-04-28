@@ -44,11 +44,24 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/login-company', [AuthController::class, 'loginCompany']);
 Route::get('/vacancies/public', [VacancyController::class, 'publicIndex']);
+Route::get('/c/{id_company}', [CompanyPublicController::class, 'show']);
+Route::get('/c/{id_company}/vacancies', [CompanyPublicController::class, 'vacancies']);
+Route::get('/invitation-codes/validate/{code}', [AuthController::class, 'validateInvitationCode']);
+Route::post('/auth/activate', [AuthController::class, 'activateAccount']);
 
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/profile', [AuthController::class, 'profile']);
     Route::post('/logout', [AuthController::class, 'logout']);
+
+    // Company roles (for invitation code management)
+    Route::get('/company/roles', [AuthController::class, 'companyRoles']);
+
+    // Invitation Codes (Company Admin)
+    Route::get('/company/invitation-codes', [AuthController::class, 'listInvitationCodes']);
+    Route::post('/company/invitation-codes', [AuthController::class, 'createInvitationCode']);
+    Route::patch('/company/invitation-codes/{id}/toggle', [AuthController::class, 'toggleInvitationCode']);
+    Route::delete('/company/invitation-codes/{id}', [AuthController::class, 'deleteInvitationCode']);
     
     // Company & Candidate creation (after registration)
     Route::post('/create-company', [AuthController::class, 'createCompany']);
@@ -62,9 +75,9 @@ Route::get('/test', fn () => response()->json(['message' => 'API Laravel berhasi
 
 Route::middleware('auth:sanctum')->group(function () {
 
-    // Auth
-    Route::get('/auth/profile', [AuthController::class, 'profile']);
-    Route::post('/auth/logout',  [AuthController::class, 'logout']);
+// Auth
+Route::get('/auth/profile', [AuthController::class, 'profile']);
+Route::post('/auth/logout',  [AuthController::class, 'logout']);
 
     // AI Proxy (Groq)
     Route::post('/ai/generate', function (Request $request) {
@@ -107,8 +120,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout',                          [CandidateController::class, 'logout']);
 
     // Candidate — apply
-    Route::get('/c/{slug}/my-submission', [CompanyPublicController::class, 'mySubmission']);
-    Route::post('/c/{slug}/apply',        [SubmissionController::class, 'apply']);
+    Route::get('/c/{id_company}/my-submission', [CompanyPublicController::class, 'mySubmission']);
+    Route::post('/c/{id_company}/apply',        [SubmissionController::class, 'apply']);
 
     // Vacancies
     Route::get('/vacancies',        [VacancyController::class, 'index']);
@@ -290,7 +303,6 @@ if (env('APP_DEBUG', false)) {
                 $company = \App\Models\Company::firstOr(fn () => \App\Models\Company::create([
                     'id_company' => 'CMP' . strtoupper(Str::random(7)),
                     'name'       => 'Test Company',
-                    'slug'       => 'test-company',
                     'is_active'  => true,
                 ]));
 

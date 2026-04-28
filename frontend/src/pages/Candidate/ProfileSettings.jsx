@@ -8,7 +8,6 @@ import SidebarCandidate from "../../components/SidebarCandidate";
 
 // --- Main Content ---
 function ProfileContent({ userData, setUserData }) {
-  const { slug } = useParams();
   const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
 
   const [formData, setFormData] = useState({
@@ -341,7 +340,7 @@ function ProfileContent({ userData, setUserData }) {
 export default function ProfileSettings() {
   const navigate = useNavigate();
   const { logout: globalLogout } = useAuthStore();
-  const { slug } = useParams();
+  const { idCompany } = useParams();
   const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
 
   const [userData, setUserData] = useState(() => {
@@ -361,7 +360,7 @@ export default function ProfileSettings() {
       try {
         const token = localStorage.getItem("auth_token");
         if (!token) {
-          navigate(`/c/${slug}/dashboard`);
+          navigate(`/c/${idCompany}/dashboard`);
           return;
         }
 
@@ -400,7 +399,7 @@ export default function ProfileSettings() {
     };
 
     fetchUserData();
-  }, [navigate, slug]);
+  }, [navigate, idCompany]);
 
   const handleLogoutClick = () => {
     setLogoutModal(true);

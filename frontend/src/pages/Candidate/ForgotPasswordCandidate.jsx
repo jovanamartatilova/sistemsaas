@@ -2,11 +2,11 @@ import { useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 
 export default function ForgotPasswordCandidate() {
-  const { slug: slugFromUrl } = useParams();
-  const [slug, setSlug] = useState(slugFromUrl || "");
+  const { idCompany: idCompanyFromUrl } = useParams();
+  const [idCompany, setIdCompany] = useState(idCompanyFromUrl || "");
 
   const [company, setCompany] = useState(null);
-  const [companyLoading, setCompanyLoading] = useState(!!slugFromUrl);
+  const [companyLoading, setCompanyLoading] = useState(!!idCompanyFromUrl);
   const [companyError, setCompanyError] = useState("");
 
   const [email, setEmail] = useState("");
@@ -15,10 +15,10 @@ export default function ForgotPasswordCandidate() {
   const [sent, setSent] = useState(false);
 
 useEffect(() => {
-  if (!slugFromUrl) return; // kalau tidak ada slug di URL, skip
+  if (!idCompanyFromUrl) return;
   const fetchCompany = async () => {
     try {
-      const response = await fetch(`http://localhost:8000/api/c/${slugFromUrl}`, {
+      const response = await fetch(`http://localhost:8000/api/c/${idCompanyFromUrl}`, {
         headers: { "Accept": "application/json" },
       });
       if (!response.ok) throw new Error("Perusahaan tidak ditemukan");
@@ -31,7 +31,7 @@ useEffect(() => {
     }
   };
   fetchCompany();
-}, [slugFromUrl]); // ← slugFromUrl, bukan slug
+}, [idCompanyFromUrl]);
 
   const inputBase = {
     background: "rgba(255,255,255,0.07)",
@@ -55,7 +55,7 @@ useEffect(() => {
           "Content-Type": "application/json",
           "Accept": "application/json",
         },
-        body: JSON.stringify({ email, slug }),
+        body: JSON.stringify({ email, idCompany }),
       });
 
       const data = await response.json();
@@ -257,16 +257,16 @@ useEffect(() => {
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Tambah ini sebelum input email */}
-{!slugFromUrl && (
+{!idCompanyFromUrl && (
   <div>
     <label className="block text-sm font-medium mb-1.5" style={{ color: "rgba(255,255,255,0.8)" }}>
-      Company Slug
+      Company ID
     </label>
     <input
       type="text"
-      value={slug}
-      onChange={(e) => setSlug(e.target.value)}
-      placeholder="contoh: pt-maju-jaya"
+      value={idCompany}
+      onChange={(e) => setIdCompany(e.target.value)}
+      placeholder="contoh: CMPABC1234"
       required
       className="w-full px-4 py-3 rounded-xl text-white placeholder-gray-500 outline-none transition-all duration-200"
       style={inputBase}
@@ -274,7 +274,7 @@ useEffect(() => {
       onBlur={(e) => Object.assign(e.target.style, inputBase)}
     />
     <p className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.3)" }}>
-      You can find the slug in your company’s URL or ask your administrator
+      You can find the company ID in your company URL or ask your administrator
     </p>
   </div>
 )}

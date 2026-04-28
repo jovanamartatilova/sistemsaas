@@ -163,7 +163,6 @@ class CandidateController extends Controller
                 'company' => $company ? [
                     'id_company' => $company->id_company,
                     'name' => $company->name,
-                    'slug' => $company->slug,
                 ] : null,
                 'has_submissions' => $hasSubmissions,
                 'submissions' => $user->submissions->map(fn($s) => [

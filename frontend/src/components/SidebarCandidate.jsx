@@ -4,10 +4,9 @@ import { useAuthStore } from "../stores/authStore";
 import { getScopedRole } from "../utils/roleUtils";
 
 export default function SidebarCandidate({ userName, userPhoto, company, onLogout }) {
-  const { slug } = useParams();
   const location = useLocation();
   const { user } = useAuthStore();
-  const resolvedSlug = slug || company?.slug;
+  const resolvedCompanyId = company?.id_company;
 
   // Get scoped role from user object using utility function
   const scopedRole = getScopedRole(user) || "member";
@@ -16,21 +15,21 @@ export default function SidebarCandidate({ userName, userPhoto, company, onLogou
 
   // Base navigation items (common for all)
   const baseNavItems = [
-    { label: "Dashboard", icon: <LayoutDashboard size={16} />, to: `/c/${resolvedSlug}/dashboard` },
-    { label: "Programs", icon: <BookOpen size={16} />, to: `/c/${resolvedSlug}/programs` },
-    { label: "My Profile", icon: <User size={16} />, to: `/c/${resolvedSlug}/profile` },
-    { label: "Certificates", icon: <Award size={16} />, to: `/c/${resolvedSlug}/certificates` },
+    { label: "Dashboard", icon: <LayoutDashboard size={16} />, to: `/c/${resolvedCompanyId}/dashboard` },
+    { label: "Programs", icon: <BookOpen size={16} />, to: `/c/${resolvedCompanyId}/programs` },
+    { label: "My Profile", icon: <User size={16} />, to: `/c/${resolvedCompanyId}/profile` },
+    { label: "Certificates", icon: <Award size={16} />, to: `/c/${resolvedCompanyId}/certificates` },
   ];
 
   // Role-specific items
   const roleSpecificItems = scopedRole === "leader" 
     ? [
-        { label: "My Tasks", icon: <CheckSquare size={16} />, to: `/c/${resolvedSlug}/leader/tasks` },
-        { label: "Team Management", icon: <Users size={16} />, to: `/c/${resolvedSlug}/leader/team` },
+        { label: "My Tasks", icon: <CheckSquare size={16} />, to: `/c/${resolvedCompanyId}/leader/tasks` },
+        { label: "Team Management", icon: <Users size={16} />, to: `/c/${resolvedCompanyId}/leader/team` },
       ]
     : scopedRole === "member"
     ? [
-        { label: "My Tasks", icon: <CheckSquare size={16} />, to: `/c/${resolvedSlug}/member/tasks` },
+        { label: "My Tasks", icon: <CheckSquare size={16} />, to: `/c/${resolvedCompanyId}/member/tasks` },
       ]
     : [];
 
@@ -42,7 +41,7 @@ export default function SidebarCandidate({ userName, userPhoto, company, onLogou
       {/* 1. Company Logo at the TOP (Added) */}
       {company?.logo_path && (
         <div className="flex justify-center mb-6">
-          <Link to={`/c/${resolvedSlug}`} className="hover:opacity-80 transition-opacity">
+          <Link to={`/c/${resolvedCompanyId}`} className="hover:opacity-80 transition-opacity">
             <img
               src={`http://localhost:8000/storage/${company.logo_path}`}
               alt={company.name || "Company"}

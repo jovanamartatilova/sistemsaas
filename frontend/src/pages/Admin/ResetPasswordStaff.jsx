@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams, useParams } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore";
 
 export default function ResetPasswordStaff() {
-  const { slug } = useParams();
+  const { idCompany } = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token");
@@ -24,7 +24,7 @@ export default function ResetPasswordStaff() {
   useEffect(() => {
     const fetchCompany = async () => {
       try {
-        const response = await fetch(`http://localhost:8000/api/c/${slug}`, {
+        const response = await fetch(`http://localhost:8000/api/c/${idCompany}`, {
           headers: { "Accept": "application/json" },
         });
         if (!response.ok) throw new Error("Perusahaan tidak ditemukan");
@@ -36,8 +36,8 @@ export default function ResetPasswordStaff() {
         setCompanyLoading(false);
       }
     };
-    if (slug) fetchCompany();
-  }, [slug]);
+    if (idCompany) fetchCompany();
+  }, [idCompany]);
 
   // Fungsi untuk back to login (membersihkan semua data)
   const handleBackToLogin = (e) => {
@@ -111,7 +111,7 @@ export default function ResetPasswordStaff() {
         body: JSON.stringify({
           token,
           email,
-          slug,
+          idCompany,
           password: form.password,
           password_confirmation: form.password_confirmation,
         }),
