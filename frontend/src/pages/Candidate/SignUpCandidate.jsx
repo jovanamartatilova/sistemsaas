@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom"
 import { useAuthStore } from "../../stores/authStore";
 
 export default function SignUpCandidate() {
-    const { slug } = useParams();
+    const { idCompany } = useParams();
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
 
@@ -28,11 +28,11 @@ export default function SignUpCandidate() {
     const [loading, setLoading] = useState(false);
     const [errorMsg, setErrorMsg] = useState("");
 
-    // Fetch company data by slug
+    // Fetch company data by company id
     useEffect(() => {
         const fetchCompany = async () => {
             try {
-                const response = await fetch(`http://localhost:8000/api/c/${slug}`, {
+                const response = await fetch(`http://localhost:8000/api/c/${idCompany}`, {
                     headers: { "Accept": "application/json" },
                 });
                 if (!response.ok) throw new Error("Perusahaan tidak ditemukan");
@@ -45,8 +45,8 @@ export default function SignUpCandidate() {
             }
         };
 
-        if (slug) fetchCompany();
-    }, [slug]);
+        if (idCompany) fetchCompany();
+    }, [idCompany]);
 
     const handleChange = (e) => {
         setForm({ ...form, [e.target.name]: e.target.value });
@@ -64,7 +64,7 @@ export default function SignUpCandidate() {
         setLoading(true);
 
         try {
-            const response = await fetch(`http://localhost:8000/api/auth/register-candidate/${slug}`, {
+            const response = await fetch(`http://localhost:8000/api/auth/register-candidate/${idCompany}`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -115,9 +115,9 @@ export default function SignUpCandidate() {
             // Otherwise navigate to dashboard
             setTimeout(() => {
                 if (vacancyId && positionId) {
-                    navigate(`/c/${slug}/apply/${vacancyId}/${positionId}`);
+                    navigate(`/c/${idCompany}/apply/${vacancyId}/${positionId}`);
                 } else {
-                    navigate(`/c/${slug}`);
+                    navigate(`/c/${idCompany}`);
                 }
             }, 500);
 
@@ -225,7 +225,7 @@ export default function SignUpCandidate() {
 
                     {/* Switch to Login */}
                     <Link
-                        to={`/c/${slug}/login`}
+                        to={`/c/${idCompany}/login`}
                         className="text-sm font-medium hover:text-blue-300 transition-colors duration-300"
                         style={{ color: "rgba(255,255,255,0.6)", textDecoration: "none" }}
                     >
@@ -309,7 +309,7 @@ export default function SignUpCandidate() {
                         </svg>
                     </Link>
                     <Link
-                        to={`/c/${slug}/login`}
+                        to={`/c/${idCompany}/login`}
                         className="text-sm"
                         style={{ color: "rgba(255,255,255,0.55)", textDecoration: "none" }}
                     >
@@ -620,7 +620,7 @@ export default function SignUpCandidate() {
                     <p className="text-center mt-6 text-sm" style={{ color: "rgba(255,255,255,0.4)" }}>
                         Already have an account?{" "}
                         <Link
-                            to={`/c/${slug}/login`}
+                            to={`/c/${idCompany}/login`}
                             className="font-semibold transition-colors duration-200"
                             style={{ color: "#4a9eff", textDecoration: "none" }}
                             onMouseEnter={(e) => (e.currentTarget.style.color = "#7bb8ff")}

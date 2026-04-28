@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore";
 
 export default function LoginStaff() {
-  const { slug } = useParams();
+  const { idCompany } = useParams();
   const navigate = useNavigate();
 
   const [company, setCompany] = useState(null);
@@ -19,7 +19,7 @@ export default function LoginStaff() {
   useEffect(() => {
     const fetchCompany = async () => {
       try {
-        const response = await fetch(`http://localhost:8000/api/c/${slug}`, {
+        const response = await fetch(`http://localhost:8000/api/c/${idCompany}`, {
           headers: { "Accept": "application/json" },
         });
         if (!response.ok) throw new Error("Perusahaan tidak ditemukan");
@@ -31,8 +31,8 @@ export default function LoginStaff() {
         setCompanyLoading(false);
       }
     };
-    if (slug) fetchCompany();
-  }, [slug]);
+    if (idCompany) fetchCompany();
+  }, [idCompany]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -50,7 +50,7 @@ export default function LoginStaff() {
         body: JSON.stringify({
           email: form.email,
           password: form.password,
-          slug,
+          idCompany,
         }),
       });
 
@@ -248,7 +248,7 @@ export default function LoginStaff() {
               <div className="flex items-center justify-between mb-1.5">
                 <label className="block text-sm font-medium" style={{ color: "rgba(255,255,255,0.8)" }}>Password</label>
                 <button type="button"
-                  onClick={() => navigate(`/c/${slug}/staff/forgot-password`)}
+                  onClick={() => navigate(`/c/${idCompany}/staff/forgot-password`)}
                   className="text-xs transition-colors duration-200"
                   style={{ ...btnLink, color: "#4a9eff" }}
                   onMouseEnter={(e) => (e.currentTarget.style.color = "#7bb8ff")}
@@ -315,7 +315,7 @@ export default function LoginStaff() {
           {/* Back to company page */}
           <p className="text-center text-sm" style={{ color: "rgba(255,255,255,0.4)" }}>
             <button
-              onClick={() => navigate(`/c/${slug}`)}
+              onClick={() => navigate(`/c/${idCompany}`)}
               className="transition-colors duration-200"
               style={{ ...btnLink, color: "rgba(255,255,255,0.4)" }}
               onMouseEnter={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.7)")}

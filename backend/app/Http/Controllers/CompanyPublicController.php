@@ -7,9 +7,9 @@ use Illuminate\Http\Request;
 
 class CompanyPublicController extends Controller
 {
-    public function show($slug)
+    public function show($idCompany)
     {
-        $company = Company::where('slug', $slug)->firstOrFail();
+        $company = Company::where('id_company', $idCompany)->firstOrFail();
 
         // ✅ Associate candidate with company if they are logged in and don't have one yet
         if ($user = auth('sanctum')->user()) {
@@ -22,9 +22,9 @@ class CompanyPublicController extends Controller
         return response()->json(['company' => $company]);
     }
 
-    public function vacancies($slug)
+    public function vacancies($idCompany)
     {
-        $company = Company::where('slug', $slug)->firstOrFail();
+        $company = Company::where('id_company', $idCompany)->firstOrFail();
         
         // ✅ Associate candidate with company if they are logged in and don't have one yet
         if ($user = auth('sanctum')->user()) {
@@ -45,9 +45,9 @@ class CompanyPublicController extends Controller
         return response()->json(['vacancies' => $vacancies]);
     }
 
-    public function mySubmission(Request $request, $slug)
+    public function mySubmission(Request $request, $idCompany)
     {
-        $company = Company::where('slug', $slug)->firstOrFail();
+        $company = Company::where('id_company', $idCompany)->firstOrFail();
         $user = $request->user();
 
         // ✅ Associate candidate with company if they are logged in and don't have one yet

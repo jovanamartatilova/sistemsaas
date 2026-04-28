@@ -12,10 +12,10 @@ class SuperAdminTestSeeder extends Seeder
     {
         // Create test companies
         $companies = [
-            ['id_company' => 'comp_001', 'name' => 'Tech Solutions', 'email' => 'tech@solutions.com', 'address' => 'Jl. Tech Street No. 1, Jakarta', 'status' => 'active', 'slug' => 'tech-solutions', 'password' => bcrypt('company123')],
-            ['id_company' => 'comp_002', 'name' => 'Digital Innovations', 'email' => 'digital@innovations.com', 'address' => 'Jl. Digital Lane No. 2, Bandung', 'status' => 'active', 'slug' => 'digital-innovations', 'password' => bcrypt('company123')],
-            ['id_company' => 'comp_003', 'name' => 'Global Services', 'email' => 'global@services.com', 'address' => 'Jl. Global Ave No. 3, Surabaya', 'status' => 'suspended', 'slug' => 'global-services', 'password' => bcrypt('company123')],
-            ['id_company' => 'comp_004', 'name' => 'StartUp Hub', 'email' => 'startup@hub.com', 'address' => 'Jl. Startup Blvd No. 4, Medan', 'status' => 'inactive', 'slug' => 'startup-hub', 'password' => bcrypt('company123')],
+            ['id_company' => 'comp_001', 'name' => 'Tech Solutions', 'email' => 'tech@solutions.com', 'address' => 'Jl. Tech Street No. 1, Jakarta', 'status' => 'active', 'password' => bcrypt('company123')],
+            ['id_company' => 'comp_002', 'name' => 'Digital Innovations', 'email' => 'digital@innovations.com', 'address' => 'Jl. Digital Lane No. 2, Bandung', 'status' => 'active', 'password' => bcrypt('company123')],
+            ['id_company' => 'comp_003', 'name' => 'Global Services', 'email' => 'global@services.com', 'address' => 'Jl. Global Ave No. 3, Surabaya', 'status' => 'suspended', 'password' => bcrypt('company123')],
+            ['id_company' => 'comp_004', 'name' => 'StartUp Hub', 'email' => 'startup@hub.com', 'address' => 'Jl. Startup Blvd No. 4, Medan', 'status' => 'inactive', 'password' => bcrypt('company123')],
         ];
 
         foreach ($companies as $comp_data) {

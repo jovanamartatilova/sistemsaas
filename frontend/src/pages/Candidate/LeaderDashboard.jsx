@@ -59,7 +59,6 @@ function TeamMemberCard({ member, onViewTasks }) {
 }
 
 export default function LeaderDashboard() {
-  const { slug } = useParams();
   const navigate = useNavigate();
   const { user, company } = useAuthStore();
   const [loading, setLoading] = useState(true);
@@ -122,11 +121,11 @@ export default function LeaderDashboard() {
   };
 
   const handleViewTasks = (memberId) => {
-    navigate(`/c/${slug}/member/tasks?team=${memberId}`);
+    navigate(`/c/${company?.id_company}/member/tasks?team=${memberId}`);
   };
 
   const handleNavigateToTeam = () => {
-    navigate(`/c/${slug}/leader/team`);
+    navigate(`/c/${company?.id_company}/leader/team`);
   };
 
   if (loading) {

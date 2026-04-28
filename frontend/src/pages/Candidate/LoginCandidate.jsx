@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore";
 
 export default function LoginCandidate() {
-    const { slug } = useParams();
+    const { idCompany } = useParams();
     const navigate = useNavigate();
     const { isAuthenticated, user, company: authCompany, loading: authLoading } = useAuthStore();
 
@@ -14,11 +14,11 @@ export default function LoginCandidate() {
         if (isAuthenticated && !authLoading) {
             if (user?.role === "candidate") {
                 // For candidates: check if they have a company
-                // Priority: company.slug (from response/localStorage) > user.id_company (from DB)
-                if (authCompany?.slug) {
-                    navigate(`/c/${authCompany.slug}`);
-                } else if (slug) {
-                    navigate(`/c/${slug}`);
+                // Priority: company.id_company (from response/localStorage) > user.id_company (from DB)
+                if (authCompany?.id_company) {
+                    navigate(`/c/${authCompany.id_company}`);
+                } else if (idCompany) {
+                    navigate(`/c/${idCompany}`);
                 } else if (user?.id_company) {
                     // Fallback if company details not in store but user has id_company
                     navigate("/candidate/dashboard");
@@ -29,7 +29,7 @@ export default function LoginCandidate() {
                 navigate("/dashboard");
             }
         }
-    }, [isAuthenticated, authLoading, user, authCompany, navigate]);
+    }, [isAuthenticated, authLoading, user, authCompany, idCompany, navigate]);
 
     const [companyError, setCompanyError] = useState("");
 
@@ -42,7 +42,7 @@ export default function LoginCandidate() {
     useEffect(() => {
         const fetchCompany = async () => {
             try {
-                const response = await fetch(`http://localhost:8000/api/c/${slug}`, {
+                const response = await fetch(`http://localhost:8000/api/c/${idCompany}`, {
                     headers: { "Accept": "application/json" },
                 });
                 if (!response.ok) throw new Error("Perusahaan tidak ditemukan");
@@ -54,8 +54,8 @@ export default function LoginCandidate() {
                 setCompanyLoading(false);
             }
         };
-        if (slug) fetchCompany();
-    }, [slug]);
+        if (idCompany) fetchCompany();
+    }, [idCompany]);
 
     const handleChange = (e) => {
         setForm({ ...form, [e.target.name]: e.target.value });
@@ -77,7 +77,6 @@ export default function LoginCandidate() {
                 body: JSON.stringify({
                     email: form.email,
                     password: form.password,
-                    slug: slug || undefined,
                 }),
             });
 
@@ -114,10 +113,10 @@ export default function LoginCandidate() {
 
             setTimeout(() => {
                 // Redirect based on whether candidate has company in response
-                if (data.company && data.company.slug) {
-                    navigate(`/c/${data.company.slug}`);
-                } else if (slug) {
-                    navigate(`/c/${slug}`);
+                if (data.company && data.company.id_company) {
+                    navigate(`/c/${data.company.id_company}`);
+                } else if (idCompany) {
+                    navigate(`/c/${idCompany}`);
                 } else {
                     navigate(`/candidate/dashboard`);
                 }
@@ -210,7 +209,7 @@ export default function LoginCandidate() {
 
                     {/* Switch to Register */}
                     <Link
-                        to={`/c/${slug}/register`}
+                        to={`/c/${idCompany}/register`}
                         className="text-sm font-medium hover:text-blue-300 transition-colors duration-300"
                         style={{ color: "rgba(255,255,255,0.6)", textDecoration: "none" }}
                     >
@@ -272,7 +271,7 @@ export default function LoginCandidate() {
                         </svg>
                     </Link>
                     <Link
-                        to={`/c/${slug}/register`}
+                        to={`/c/${idCompany}/register`}
                         className="text-sm"
                         style={{ color: "rgba(255,255,255,0.55)", textDecoration: "none" }}
                     >
@@ -343,7 +342,7 @@ export default function LoginCandidate() {
                             <div className="flex items-center justify-between mb-1.5">
                                 <label className="block text-sm font-medium" style={{ color: "rgba(255,255,255,0.8)" }}>Password</label>
                                 <button type="button"
-                                    onClick={() => navigate(`/c/${slug}/forgot-password`)}
+                                    onClick={() => navigate(`/c/${idCompany}/forgot-password`)}
                                     className="text-xs transition-colors duration-200"
                                     style={{ ...btnLink, color: "#4a9eff" }}
                                     onMouseEnter={(e) => (e.currentTarget.style.color = "#7bb8ff")}
@@ -425,7 +424,7 @@ export default function LoginCandidate() {
                     <p className="text-center mt-6 text-sm" style={{ color: "rgba(255,255,255,0.4)" }}>
                         Don't have an account?{" "}
                         <button
-                            onClick={() => navigate(`/c/${slug}/register`)}
+                            onClick={() => navigate(`/c/${idCompany}/register`)}
                             className="font-semibold transition-colors duration-200"
                             style={{ ...btnLink, color: "#4a9eff" }}
                             onMouseEnter={(e) => (e.currentTarget.style.color = "#7bb8ff")}

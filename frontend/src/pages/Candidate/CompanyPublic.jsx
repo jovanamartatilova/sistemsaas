@@ -92,9 +92,9 @@ function PositionCard({ position, onClick }) {
   );
 }
 
-const PositionDetailModal = ({ position, slug, isAuthenticated, onClose }) => {
-  if (!position) return null;
+const PositionDetailModal = ({ position, idCompany, isAuthenticated, onClose }) => {
   const navigate = useNavigate();
+  if (!position) return null;
   const vacancy = position.vacancy;
   return (
     <div onClick={(e) => e.target === e.currentTarget && onClose()} style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.6)", backdropFilter: "blur(6px)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
@@ -119,7 +119,7 @@ const PositionDetailModal = ({ position, slug, isAuthenticated, onClose }) => {
             <Chip label={`${position.pivot?.quota || 0} Quota`} color="#f59e0b" />
             <Chip label={`${vacancy.total_quota || 0} Total Quota`} color="#64748b" />
           </div>
-          <button onClick={() => { if (isAuthenticated) navigate(`/c/${slug}/apply/${vacancy.id_vacancy}/${position.id_position}`); else navigate(`/c/${slug}/register?vacancy_id=${vacancy.id_vacancy}&position_id=${position.id_position}`); }}
+          <button onClick={() => { if (isAuthenticated) navigate(`/c/${idCompany}/apply/${vacancy.id_vacancy}/${position.id_position}`); else navigate(`/c/${idCompany}/register?vacancy_id=${vacancy.id_vacancy}&position_id=${position.id_position}`); }}
             style={{ width: "100%", padding: 15, background: "linear-gradient(135deg,#1a5fc4,#2d7ff3)", border: "none", borderRadius: 12, color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer", boxShadow: "0 8px 20px rgba(45,127,243,0.35)", fontFamily: "'Poppins',sans-serif" }}>
             Apply Now
           </button>
@@ -140,7 +140,7 @@ function DropItem({ icon, label, color, onClick }) {
 }
 
 export default function CompanyPublicPage() {
-  const { slug } = useParams();
+  const { idCompany } = useParams();
   const navigate = useNavigate();
   const { isAuthenticated, user, logout } = useAuthStore();
   const [profileOpen, setProfileOpen] = useState(false);
@@ -164,12 +164,12 @@ export default function CompanyPublicPage() {
   }, []);
 
   useEffect(() => {
-    fetch(`http://localhost:8000/api/c/${slug}`, { headers: { Accept: "application/json" } })
+    fetch(`http://localhost:8000/api/c/${idCompany}`, { headers: { Accept: "application/json" } })
       .then(r => r.json())
       .then(data => {
         if (data.company) {
           setCompany(data.company);
-          fetch(`http://localhost:8000/api/c/${slug}/vacancies`, { headers: { Accept: "application/json" } })
+          fetch(`http://localhost:8000/api/c/${idCompany}/vacancies`, { headers: { Accept: "application/json" } })
             .then(res => res.json())
             .then(vData => setVacancies(vData.vacancies || []))
             .catch(console.error);
@@ -177,7 +177,7 @@ export default function CompanyPublicPage() {
       })
       .catch(() => setCompany(null))
       .finally(() => setLoading(false));
-  }, [slug]);
+  }, [idCompany]);
 
   const positions = vacancies.flatMap(v => (v.positions || []).map(p => ({ ...p, vacancy: v })));
 
@@ -242,7 +242,7 @@ export default function CompanyPublicPage() {
                     <div style={{ fontSize: "13px", fontWeight: "700", color: "#0f172a" }}>{user?.name || user?.full_name}</div>
                     <div style={{ fontSize: "11px", color: "#64748b", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user?.email}</div>
                   </div>
-                  <DropItem icon={Icon.dashboard} label="Dashboard" onClick={() => { setProfileOpen(false); navigate(user?.role === "candidate" ? `/c/${slug}/dashboard` : "/dashboard"); }} />
+                  <DropItem icon={Icon.dashboard} label="Dashboard" onClick={() => { setProfileOpen(false); navigate(user?.role === "candidate" ? `/c/${idCompany}/dashboard` : "/dashboard"); }} />
                   <div style={{ height: 1, background: "#f1f5f9", margin: "4px 0" }} />
                   <DropItem icon={Icon.logout} label="Logout" color="#ef4444" onClick={() => { setProfileOpen(false); setLogoutModalOpen(true); }} />
                 </div>
@@ -250,8 +250,8 @@ export default function CompanyPublicPage() {
             </div>
           ) : (
             <>
-              <button onClick={() => navigate(`/c/${slug}/login`)} style={{ padding: "8px 18px", borderRadius: 9, fontSize: 13, fontWeight: 600, background: "#fff", border: "1.5px solid #e2e8f0", color: "#334155", cursor: "pointer", fontFamily: "inherit" }}>Sign In</button>
-              <button onClick={() => navigate(`/c/${slug}/register`)} style={{ padding: "8px 18px", borderRadius: 9, fontSize: 13, fontWeight: 700, background: "linear-gradient(135deg,#1a5fc4,#2d7ff3)", border: "none", color: "#fff", cursor: "pointer", boxShadow: "0 4px 14px rgba(45,127,243,0.3)", fontFamily: "inherit" }}>Register</button>
+              <button onClick={() => navigate(`/c/${idCompany}/login`)} style={{ padding: "8px 18px", borderRadius: 9, fontSize: 13, fontWeight: 600, background: "#fff", border: "1.5px solid #e2e8f0", color: "#334155", cursor: "pointer", fontFamily: "inherit" }}>Sign In</button>
+              <button onClick={() => navigate(`/c/${idCompany}/register`)} style={{ padding: "8px 18px", borderRadius: 9, fontSize: 13, fontWeight: 700, background: "linear-gradient(135deg,#1a5fc4,#2d7ff3)", border: "none", color: "#fff", cursor: "pointer", boxShadow: "0 4px 14px rgba(45,127,243,0.3)", fontFamily: "inherit" }}>Register</button>
             </>
           )}
         </div>
@@ -295,8 +295,8 @@ export default function CompanyPublicPage() {
 
               {!isAuthenticated && (
                 <div style={{ display: "flex", gap: 12, justifyContent: "center", marginBottom: 24 }}>
-                  <button onClick={() => navigate(`/c/${slug}/register`)} style={{ padding: "11px 26px", borderRadius: 10, fontSize: 14, fontWeight: 700, background: "linear-gradient(135deg,#2d7ff3,#38bdf8)", border: "none", color: "#fff", cursor: "pointer", boxShadow: "0 8px 24px rgba(45,127,243,0.4)", fontFamily: "inherit" }}>Get Started</button>
-                  <button onClick={() => navigate(`/c/${slug}/login`)} style={{ padding: "11px 22px", borderRadius: 10, fontSize: 14, fontWeight: 600, background: "rgba(255,255,255,0.08)", border: "1.5px solid rgba(255,255,255,0.15)", color: "#fff", cursor: "pointer", fontFamily: "inherit" }}>Sign In</button>
+                  <button onClick={() => navigate(`/c/${idCompany}/register`)} style={{ padding: "11px 26px", borderRadius: 10, fontSize: 14, fontWeight: 700, background: "linear-gradient(135deg,#2d7ff3,#38bdf8)", border: "none", color: "#fff", cursor: "pointer", boxShadow: "0 8px 24px rgba(45,127,243,0.4)", fontFamily: "inherit" }}>Get Started</button>
+                  <button onClick={() => navigate(`/c/${idCompany}/login`)} style={{ padding: "11px 22px", borderRadius: 10, fontSize: 14, fontWeight: 600, background: "rgba(255,255,255,0.08)", border: "1.5px solid rgba(255,255,255,0.15)", color: "#fff", cursor: "pointer", fontFamily: "inherit" }}>Sign In</button>
                 </div>
               )}
 
@@ -409,7 +409,7 @@ export default function CompanyPublicPage() {
                 </p>
               </div>
               {!isAuthenticated && (
-                <button onClick={() => navigate(`/c/${slug}/register`)} style={{ padding: "10px 22px", borderRadius: 10, fontSize: 13, fontWeight: 700, background: "linear-gradient(135deg,#1a5fc4,#2d7ff3)", border: "none", color: "#fff", cursor: "pointer", fontFamily: "inherit", marginTop: 20 }}>Register to Apply</button>
+                <button onClick={() => navigate(`/c/${idCompany}/register`)} style={{ padding: "10px 22px", borderRadius: 10, fontSize: 13, fontWeight: 700, background: "linear-gradient(135deg,#1a5fc4,#2d7ff3)", border: "none", color: "#fff", cursor: "pointer", fontFamily: "inherit", marginTop: 20 }}>Register to Apply</button>
               )}
             </div>
 
@@ -448,11 +448,11 @@ export default function CompanyPublicPage() {
               </div>
               {!isAuthenticated ? (
                 <div style={{ display: "flex", gap: 12, flexShrink: 0, position: "relative", zIndex: 1 }}>
-                  <button onClick={() => navigate(`/c/${slug}/register`)} style={{ padding: "13px 28px", borderRadius: 10, fontSize: 14, fontWeight: 700, background: "linear-gradient(135deg,#2d7ff3,#38bdf8)", border: "none", color: "#fff", cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>Apply Now</button>
-                  <button onClick={() => navigate(`/c/${slug}/login`)} style={{ padding: "13px 24px", borderRadius: 10, fontSize: 14, fontWeight: 600, background: "rgba(255,255,255,0.1)", border: "1.5px solid rgba(255,255,255,0.2)", color: "#fff", cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>Sign In</button>
+                  <button onClick={() => navigate(`/c/${idCompany}/register`)} style={{ padding: "13px 28px", borderRadius: 10, fontSize: 14, fontWeight: 700, background: "linear-gradient(135deg,#2d7ff3,#38bdf8)", border: "none", color: "#fff", cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>Apply Now</button>
+                  <button onClick={() => navigate(`/c/${idCompany}/login`)} style={{ padding: "13px 24px", borderRadius: 10, fontSize: 14, fontWeight: 600, background: "rgba(255,255,255,0.1)", border: "1.5px solid rgba(255,255,255,0.2)", color: "#fff", cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>Sign In</button>
                 </div>
               ) : (
-                <button onClick={() => navigate(`/c/${slug}/dashboard`)} style={{ padding: "13px 28px", borderRadius: 10, fontSize: 14, fontWeight: 700, background: "linear-gradient(135deg,#2d7ff3,#38bdf8)", border: "none", color: "#fff", cursor: "pointer", fontFamily: "inherit", flexShrink: 0 }}>Go to Dashboard</button>
+                <button onClick={() => navigate(`/c/${idCompany}/dashboard`)} style={{ padding: "13px 28px", borderRadius: 10, fontSize: 14, fontWeight: 700, background: "linear-gradient(135deg,#2d7ff3,#38bdf8)", border: "none", color: "#fff", cursor: "pointer", fontFamily: "inherit", flexShrink: 0 }}>Go to Dashboard</button>
               )}
             </div>
           </div>
@@ -504,7 +504,7 @@ export default function CompanyPublicPage() {
         </footer>
       </main>
 
-      {selectedPosition && <PositionDetailModal position={selectedPosition} slug={slug} isAuthenticated={isAuthenticated} onClose={() => setSelectedPosition(null)} />}
+      {selectedPosition && <PositionDetailModal position={selectedPosition} idCompany={idCompany} isAuthenticated={isAuthenticated} onClose={() => setSelectedPosition(null)} />}
 
       {logoutModalOpen && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(10,22,40,.8)", backdropFilter: "blur(4px)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>

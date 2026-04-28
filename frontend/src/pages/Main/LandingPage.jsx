@@ -220,7 +220,7 @@ const VacancyDetailModal = ({ vacancy, onClose }) => {
             <span style={{ fontSize: "11px", fontWeight: "700", background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.5)", padding: "6px 14px", borderRadius: "8px", marginLeft: "auto" }}>{vacancy.total_quota || 0} Total Quota</span>
           </div>
           <button
-            onClick={() => { const slug = vacancy.company?.slug || ""; slug ? navigate(`/c/${slug}/register?vacancy_id=${vacancy.id_vacancy}`) : alert("Perusahaan belum lengkap profilnya."); }}
+            onClick={() => { const companyId = vacancy.company?.id_company || ""; companyId ? navigate(`/c/${companyId}/register?vacancy_id=${vacancy.id_vacancy}`) : alert("Perusahaan belum lengkap profilnya."); }}
             style={{ width: "100%", padding: "16px", background: "linear-gradient(135deg, #2d7dd2 0%, #4a9eff 100%)", border: "none", borderRadius: "12px", color: "#fff", fontSize: "16px", fontWeight: "700", cursor: "pointer", transition: "0.2s", boxShadow: "0 10px 15px -3px rgba(74,158,255,0.4)" }}
             onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"}
             onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}
@@ -327,7 +327,7 @@ export default function LandingPage() {
     const user = JSON.parse(localStorage.getItem("user"));
     const company = authCompany || JSON.parse(localStorage.getItem("company"));
     if (user) {
-      if (user.role === "candidate" && company?.slug) return `/c/${company.slug}/dashboard`;
+      if (user.role === "candidate" && company?.id_company) return `/c/${company.id_company}/dashboard`;
       if (user.role === "hr") return "/hr/dashboard";
       if (user.role === "mentor") return "/mentor/dashboard";
       if (user.role === "super_admin" || user.role === "superadmin") return "/superadmin/dashboard";

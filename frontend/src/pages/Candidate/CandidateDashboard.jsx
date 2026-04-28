@@ -101,7 +101,6 @@ function TaskItem({ title, status, deadline }) {
 // /member/tasks, /member/dashboard, /leader/dashboard, /leader/team endpoints
 function CandidateDashboardWithRedirect() {
   const navigate = useNavigate();
-  const { slug } = useParams();
   const { user } = useAuthStore();
 
   // FOR NOW: Just show base dashboard

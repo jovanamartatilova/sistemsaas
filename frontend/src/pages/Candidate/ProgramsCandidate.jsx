@@ -264,7 +264,7 @@ function ProgramCard({ program }) {
 // --- Main Page ---
 export default function ProgramsPage() {
   const navigate = useNavigate();
-  const { slug } = useParams();
+  const { idCompany } = useParams();
   const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
   const { company: authCompany, logout: globalLogout } = useAuthStore();
 
@@ -278,11 +278,11 @@ export default function ProgramsPage() {
   const [selectedVacancy, setSelectedVacancy] = useState(null);
   const [logoutModal, setLogoutModal] = useState(false);
 
-  const isDiscoveryMode = slug === "undefined" && !authCompany?.slug;
+  const isDiscoveryMode = idCompany === "undefined" && !authCompany?.id_company;
 
   useEffect(() => {
-    if (slug === "undefined" && authCompany?.slug) {
-      navigate(`/c/${authCompany.slug}/programs`, { replace: true });
+    if (idCompany === "undefined" && authCompany?.id_company) {
+      navigate(`/c/${authCompany.id_company}/programs`, { replace: true });
       return;
     }
 
@@ -348,7 +348,7 @@ export default function ProgramsPage() {
     };
 
     fetchData();
-  }, [slug, authCompany, navigate, isDiscoveryMode]);
+  }, [idCompany, authCompany, navigate, isDiscoveryMode]);
 
   const handleLogoutClick = () => {
     setLogoutModal(true);
@@ -469,8 +469,8 @@ export default function ProgramsPage() {
         vacancy={selectedVacancy}
         onCancel={() => setSelectedVacancy(null)}
         onConfirm={() => {
-          const slug = selectedVacancy.company?.slug;
-          navigate(`/c/${slug}`);
+          const companyId = selectedVacancy.company?.id_company;
+          navigate(`/c/${companyId}`);
           setSelectedVacancy(null);
         }}
       />

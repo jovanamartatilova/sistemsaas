@@ -10,13 +10,13 @@ export default function PrivateRoute({ children }) {
   }
 
   if (!isAuthenticated) {
-    // Jika route adalah candidate route (/c/:slug/...), redirect ke candidate login
+    // Jika route adalah candidate route (/c/:idCompany/...), redirect ke candidate login
     if (location.pathname.startsWith('/c/')) {
-      // Extract slug dari path: /c/:slug/...
-      const slugMatch = location.pathname.match(/^\/c\/([^/]+)/);
-      if (slugMatch) {
-        const slug = slugMatch[1];
-        return <Navigate to={`/c/${slug}/login`} replace />;
+      // Extract company id dari path: /c/:idCompany/...
+      const companyMatch = location.pathname.match(/^\/c\/([^/]+)/);
+      if (companyMatch) {
+        const idCompany = companyMatch[1];
+        return <Navigate to={`/c/${idCompany}/login`} replace />;
       }
     }
     // Default fallback untuk route lainnya

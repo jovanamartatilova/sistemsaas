@@ -91,27 +91,27 @@ export default function App() {
                 <Route path="/forgot-password-candidate" element={<ForgotPasswordCandidate />} />
 
                 {/* Company — Public */}
-                <Route path="/c/:slug"                   element={<CompanyPublicPage />} />
-                <Route path="/c/:slug/register"          element={<SignUpCandidate />} />
-                <Route path="/c/:slug/login"             element={<LoginCandidate />} />
-                <Route path="/c/:slug/forgot-password"   element={<ForgotPasswordCandidate />} />
-                <Route path="/c/:slug/reset-password"    element={<ResetPasswordCandidate />} />
-                <Route path="/c/:slug/staff/login"       element={<LoginStaff />} />
-                <Route path="/c/:slug/staff/forgot-password"   element={<ForgotPasswordStaff />} />
-                <Route path="/c/:slug/staff/reset-password"    element={<ResetPasswordStaff />} />
+                <Route path="/c/:idCompany"                   element={<CompanyPublicPage />} />
+                <Route path="/c/:idCompany/register"          element={<SignUpCandidate />} />
+                <Route path="/c/:idCompany/login"             element={<LoginCandidate />} />
+                <Route path="/c/:idCompany/forgot-password"   element={<ForgotPasswordCandidate />} />
+                <Route path="/c/:idCompany/reset-password"    element={<ResetPasswordCandidate />} />
+                <Route path="/c/:idCompany/staff/login"       element={<LoginStaff />} />
+                <Route path="/c/:idCompany/staff/forgot-password"   element={<ForgotPasswordStaff />} />
+                <Route path="/c/:idCompany/staff/reset-password"    element={<ResetPasswordStaff />} />
 
                 {/* Candidate — Private */}
                 <Route path="/candidate/dashboard"                   element={<Private><CandidateDashboard /></Private>} />
-                <Route path="/c/:slug/dashboard"                     element={<Private><CandidateDashboard /></Private>} />
-                <Route path="/c/:slug/leader/dashboard"              element={<Private><LeaderDashboard /></Private>} />
-                <Route path="/c/:slug/leader/team"                   element={<Private><LeaderTeamManagement /></Private>} />
-                <Route path="/c/:slug/leader/tasks"                  element={<Private><MemberDashboard /></Private>} />
-                <Route path="/c/:slug/member/dashboard"              element={<Private><MemberDashboard /></Private>} />
-                <Route path="/c/:slug/member/tasks"                  element={<Private><MemberDashboard /></Private>} />
-                <Route path="/c/:slug/programs"                      element={<Private><ProgramsPage /></Private>} />
-                <Route path="/c/:slug/certificates"                  element={<Private><CertificateCandidate /></Private>} />
-                <Route path="/c/:slug/profile"                       element={<Private><ProfileSettings /></Private>} />
-                <Route path="/c/:slug/apply/:vacancyId/:positionId"  element={<Private><SubmissionForm /></Private>} />
+                <Route path="/c/:idCompany/dashboard"                     element={<Private><CandidateDashboard /></Private>} />
+                <Route path="/c/:idCompany/leader/dashboard"              element={<Private><LeaderDashboard /></Private>} />
+                <Route path="/c/:idCompany/leader/team"                   element={<Private><LeaderTeamManagement /></Private>} />
+                <Route path="/c/:idCompany/leader/tasks"                  element={<Private><MemberDashboard /></Private>} />
+                <Route path="/c/:idCompany/member/dashboard"              element={<Private><MemberDashboard /></Private>} />
+                <Route path="/c/:idCompany/member/tasks"                  element={<Private><MemberDashboard /></Private>} />
+                <Route path="/c/:idCompany/programs"                      element={<Private><ProgramsPage /></Private>} />
+                <Route path="/c/:idCompany/certificates"                  element={<Private><CertificateCandidate /></Private>} />
+                <Route path="/c/:idCompany/profile"                       element={<Private><ProfileSettings /></Private>} />
+                <Route path="/c/:idCompany/apply/:vacancyId/:positionId"  element={<Private><SubmissionForm /></Private>} />
 
                 {/* Admin — Private */}
                 <Route path="/dashboard"  element={<Private><DashboardRouter /></Private>} />

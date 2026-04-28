@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore";
 
 export default function SubmissionForm() {
-  const { slug, vacancyId, positionId } = useParams();
+  const { idCompany, vacancyId, positionId } = useParams();
   const navigate = useNavigate();
   const { user, token, loading: authLoading } = useAuthStore();
 
@@ -46,11 +46,11 @@ export default function SubmissionForm() {
     if (!authLoading && !token) {
       // Redirect to login if not authenticated
       const timer = setTimeout(() => {
-        navigate(`/c/${slug}/login`);
+        navigate(`/c/${idCompany}/login`);
       }, 1500);
       return () => clearTimeout(timer);
     }
-  }, [token, authLoading, slug, navigate]);
+  }, [token, authLoading, idCompany, navigate]);
 
   useEffect(() => {
     let isMounted = true;
@@ -66,7 +66,7 @@ export default function SubmissionForm() {
                 headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
               }).catch(e => { console.error("Could not fetch user profile:", e); return null; })
             : Promise.resolve(null),
-          fetch(`http://127.0.0.1:8000/api/c/${slug}`, {
+          fetch(`http://127.0.0.1:8000/api/c/${idCompany}`, {
             headers: { Accept: "application/json" },
           }),
         ]);
@@ -84,7 +84,7 @@ export default function SubmissionForm() {
         if (isMounted) setCompany(cData.company);
 
         // GET Vacancies
-        const vRes = await fetch(`http://127.0.0.1:8000/api/c/${slug}/vacancies`, {
+        const vRes = await fetch(`http://127.0.0.1:8000/api/c/${idCompany}/vacancies`, {
           headers: { Accept: "application/json" },
         });
         const vData = await vRes.json();
@@ -103,7 +103,7 @@ export default function SubmissionForm() {
     };
     fetchData();
     return () => { isMounted = false; };
-  }, [slug, vacancyId, positionId]);
+  }, [idCompany, vacancyId, positionId]);
 
   const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB in bytes
 
@@ -197,7 +197,7 @@ export default function SubmissionForm() {
       formData.append("linkedin_url", form.linkedin_url);
       formData.append("motivation_message", form.motivation_message);
 
-      const response = await fetch(`http://127.0.0.1:8000/api/c/${slug}/apply`, {
+      const response = await fetch(`http://127.0.0.1:8000/api/c/${idCompany}/apply`, {
         method: "POST",
         headers: {
           "Accept": "application/json",
@@ -214,7 +214,7 @@ export default function SubmissionForm() {
       }
 
       setSuccessMsg("Application submitted successfully!");
-      setTimeout(() => navigate(`/c/${slug}/dashboard`), 2000);
+      setTimeout(() => navigate(`/c/${idCompany}/dashboard`), 2000);
 
     } catch (err) {
       if (err.name === "AbortError") {
