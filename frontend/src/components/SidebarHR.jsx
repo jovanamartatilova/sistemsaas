@@ -55,23 +55,22 @@ const IC = {
 // ── Nav definition ─────────────────────────────────────────────────────────────
 const NAV_SECTIONS = [
   {
-    label: "MENU",
+    label: null,
     items: [
       { key: "/hr/dashboard",    label: "Dashboard",     icon: <IC.Dashboard /> },
     ],
   },
   {
-    label: "SELECTION",
+    label: "SELECTION FLOW",
     items: [
-      { key: "/hr/kandidate",    label: "Candidates",    icon: <IC.Candidates /> },
-      { key: "/hr/screening",    label: "Screening",     icon: <IC.Screening /> },
-      { key: "/hr/wawancara",    label: "Interview",     icon: <IC.Interview /> },
+      { key: "/hr/selection",    label: "Selection",     icon: <IC.Screening /> },
+      { key: "/hr/assign-mentor",label: "Assign Mentor", icon: <IC.AssignMentor /> },
+      { key: "/hr/active-intern",label: "Active Intern", icon: <IC.Candidates /> },
     ],
   },
   {
     label: "ADMINISTRATION",
     items: [
-      { key: "/hr/assign-mentor", label: "Assign Mentor", icon: <IC.AssignMentor /> },
       { key: "/hr/generate-loa",  label: "Generate LoA",  icon: <IC.GenerateLoa /> },
       { key: "/hr/payroll",       label: "Payroll",        icon: <IC.Payroll /> },
     ],
@@ -155,15 +154,17 @@ export default function SidebarHR({ user, onLogout }) {
       </Link>
 
       {/* Nav sections */}
-      {NAV_SECTIONS.map((section) => (
-        <div key={section.label} style={{ marginBottom: "8px" }}>
-          <p style={{
-            fontSize: "10px", fontWeight: "700", color: "rgba(255,255,255,0.25)",
-            letterSpacing: "1.2px", padding: "6px 14px 5px", textTransform: "uppercase",
-            margin: 0, justifyContent: "center", display: "center", textAlign: "center",
-          }}>
-            {section.label}
-          </p>
+      {NAV_SECTIONS.map((section, idx) => (
+        <div key={idx} style={{ marginBottom: "8px" }}>
+          {section.label && (
+            <p style={{
+              fontSize: "10px", fontWeight: "700", color: "rgba(255,255,255,0.25)",
+              letterSpacing: "1.2px", padding: "6px 14px 5px", textTransform: "uppercase",
+              margin: 0, textAlign: "left",
+            }}>
+              {section.label}
+            </p>
+          )}
           {section.items.map((item) => (
             <SideItem
               key={item.key}

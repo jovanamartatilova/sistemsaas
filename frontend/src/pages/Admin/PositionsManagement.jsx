@@ -249,13 +249,15 @@ function CatalogItem({ item, onEdit, onDelete }) {
 
 function PositionModal({ open, item, onClose, onSave }) {
     const { token } = useAuthStore();
-    const [form, setForm] = useState({ name: "", competencies: [] });
+    const [form, setForm] = useState({ name: "", competencies: [], selection_flow: [] });
     const [generatingIndex, setGeneratingIndex] = useState(null);
+    const [generatingFlowIndex, setGeneratingFlowIndex] = useState(null);
     useEffect(() => {
         if (open) {
             setForm({
                 name: item?.name || "",
-                competencies: (item?.competencies || []).map(c => ({ name: c.name, learning_hours: c.learning_hours, description: c.description }))
+                competencies: (item?.competencies || []).map(c => ({ name: c.name, learning_hours: c.learning_hours, description: c.description })),
+                selection_flow: item?.selection_flow || []
             });
         }
     }, [open, item]);
@@ -292,6 +294,36 @@ function PositionModal({ open, item, onClose, onSave }) {
         }
     };
 
+    const handleFlowChange = (i, field, val) => {
+        const next = [...form.selection_flow];
+        next[i][field] = val;
+        setForm({ ...form, selection_flow: next });
+    };
+
+    const handleGenerateAIFlow = async (i) => {
+        const flowName = form.selection_flow[i].name;
+        const posName = form.name;
+        if (!flowName || !posName) {
+            alert("Please fill in the Position Name and Stage Title first.");
+            return;
+        }
+        setGeneratingFlowIndex(i);
+        try {
+            const prompt = `Tuliskan satu paragraf singkat deskripsi instruksi HR untuk tahap seleksi '${flowName}' pada posisi '${posName}'. Berikan HANYA teks deskripsinya tanpa awalan, tanpa tanda kutip.`;
+            const res = await axios.post("http://127.0.0.1:8000/api/ai/generate", {
+                model: "llama3",
+                prompt: prompt
+            }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            handleFlowChange(i, "description", res.data.response.trim());
+        } catch (e) {
+            alert(e.response?.data?.error || e.message);
+        } finally {
+            setGeneratingFlowIndex(null);
+        }
+    };
+
     const inp = { textAlign: "left", border: "1.5px solid #e2e8f0", borderRadius: 8, padding: "8px 12px", fontFamily: "inherit", fontSize: 13, color: "#0f172a", background: "#fff", outline: "none", width: "100%", transition: "all .15s" };
 
     return (
@@ -310,6 +342,62 @@ function PositionModal({ open, item, onClose, onSave }) {
                         <div style={{ textAlign: "left" }}>
                             <label style={{ fontSize: 12, fontWeight: 700, color: "#475569", display: "block", marginBottom: 6 }}>NAME</label>
                             <input style={inp} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="e.g. Frontend Developer" />
+                        </div>
+                        <div style={{ textAlign: "left" }}>
+                            <label style={{ fontSize: 12, fontWeight: 700, color: "#475569", display: "block", marginBottom: 12 }}>SELECTION FLOW</label>
+                            {form.selection_flow.map((f, i) => (
+                                <div key={i} style={{ padding: 16, border: "1px solid #e2e8f0", borderRadius: 12, background: "#f8fafc", position: "relative", marginBottom: 12 }}>
+                                    <div style={{ display: "grid", gridTemplateColumns: f.type === "screening" ? "1fr" : "1fr 1fr", gap: 12, marginBottom: f.type === "screening" ? 0 : 12 }}>
+                                        <div>
+                                            <label style={{ fontSize: 10, fontWeight: 700, color: "#64748b", textTransform: "uppercase", marginBottom: 4, display: "block" }}>Stage Type</label>
+                                            <select style={inp} value={f.type} onChange={e => {
+                                                const newType = e.target.value;
+                                                handleFlowChange(i, "type", newType);
+                                                if (newType === "screening") {
+                                                    handleFlowChange(i, "name", "Screening CV & Portfolio");
+                                                    handleFlowChange(i, "description", "");
+                                                }
+                                            }}>
+                                                <option value="">-- Select Type --</option>
+                                                <option value="screening">Screening (CV/Porto)</option>
+                                                <option value="test">Test / Assessment</option>
+                                                <option value="interview">Interview</option>
+                                            </select>
+                                        </div>
+                                        {f.type !== "screening" && (
+                                            <div>
+                                                <label style={{ fontSize: 10, fontWeight: 700, color: "#64748b", textTransform: "uppercase", marginBottom: 4, display: "block" }}>Stage Title / Activity</label>
+                                                <input style={inp} value={f.name} onChange={e => handleFlowChange(i, "name", e.target.value)} placeholder="e.g. Wawancara User" />
+                                            </div>
+                                        )}
+                                    </div>
+                                    {f.type !== "screening" && (
+                                        <>
+                                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                                                <label style={{ fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.5px" }}>Instructions / Description</label>
+                                                <button 
+                                                    type="button"
+                                                    onClick={() => handleGenerateAIFlow(i)}
+                                                    disabled={generatingFlowIndex === i}
+                                                    style={{
+                                                        display: "flex", alignItems: "center", gap: 5,
+                                                        background: "linear-gradient(135deg, #10b981, #059669)", color: "#fff", border: "none", borderRadius: 6,
+                                                        padding: "5px 12px", fontSize: 10, fontWeight: 700, cursor: generatingFlowIndex === i ? "default" : "pointer",
+                                                        opacity: generatingFlowIndex === i ? 0.7 : 1, transition: "0.2s", boxShadow: "0 2px 6px rgba(16,185,129,.3)"
+                                                    }}
+                                                    onMouseEnter={e => generatingFlowIndex !== i && (e.currentTarget.style.transform = "translateY(-1px)")}
+                                                    onMouseLeave={e => generatingFlowIndex !== i && (e.currentTarget.style.transform = "translateY(0)")}
+                                                >
+                                                    <Icon.Sparkles /> {generatingFlowIndex === i ? "Generating..." : "Generate AI"}
+                                                </button>
+                                            </div>
+                                            <textarea style={{ ...inp, minHeight: 80 }} value={f.description} onChange={e => handleFlowChange(i, "description", e.target.value)} placeholder="What HR should evaluate in this stage..." />
+                                        </>
+                                    )}
+                                    <button onClick={() => setForm({ ...form, selection_flow: form.selection_flow.filter((_, j) => j !== i) })} style={{ position: "absolute", top: -8, right: -8, width: 24, height: 24, borderRadius: "50%", border: "1px solid #fee2e2", background: "#fff", color: "#ef4444", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
+                                </div>
+                            ))}
+                            <button onClick={() => setForm({ ...form, selection_flow: [...form.selection_flow, { type: "", name: "", description: "" }] })} style={{ width: "100%", padding: "10px", border: "1.5px dashed #e2e8f0", borderRadius: 12, background: "none", color: "#64748b", fontSize: 12.5, fontWeight: 700, cursor: "pointer", transition: "0.2s", marginBottom: 12 }} onMouseEnter={e => e.currentTarget.style.borderColor = "#c6cfd8"}>+ Add Selection Stage</button>
                         </div>
                         <div style={{ textAlign: "left" }}>
                             <label style={{ fontSize: 12, fontWeight: 700, color: "#475569", display: "block", marginBottom: 12 }}>COMPETENCIES</label>

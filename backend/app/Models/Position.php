@@ -12,6 +12,11 @@ class Position extends Model
         'id_position',
         'id_company',
         'name',
+        'selection_flow',
+    ];
+
+    protected $casts = [
+        'selection_flow' => 'array',
     ];
     public function vacancies()
     {
