@@ -392,7 +392,7 @@ export default function SettingsAdmin() {
                         <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>Sign Out?</h3>
                         <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 20 }}>
                             <button onClick={() => setLogoutModalOpen(false)} style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid #e2e8f0", background: "#fff", fontWeight: 700, cursor: "pointer" }}>Cancel</button>
-                            <button onClick={() => { logout(); navigate("/login"); }} style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: "#ef4444", color: "#fff", fontWeight: 700, cursor: "pointer" }}>Sign Out</button>
+                            <button onClick={async () => { await logout(); navigate("/", { replace: true }); }} style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: "#ef4444", color: "#fff", fontWeight: 700, cursor: "pointer" }}>Sign Out</button>
                         </div>
                     </div>
                 </div>

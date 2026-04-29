@@ -147,7 +147,7 @@ export default function EvaluationMentor() {
       localStorage.clear();
       useAuthStore.setState({ isAuthenticated: false, mentor: null });
       setLogoutModal(false);
-      navigate("/login");
+      navigate("/", { replace: true });
     }
   };
 

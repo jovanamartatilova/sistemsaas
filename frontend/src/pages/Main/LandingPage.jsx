@@ -326,13 +326,18 @@ export default function LandingPage() {
   const getDashboardPath = () => {
     const user = JSON.parse(localStorage.getItem("user"));
     const company = authCompany || JSON.parse(localStorage.getItem("company"));
+    const storedUserType = localStorage.getItem("user_type");
+    const hasCandidateProfile = !!localStorage.getItem("candidate_profile");
+    const resolvedRole = user?.role || user?.user_type || storedUserType || (hasCandidateProfile ? "candidate" : null);
+    const normalizedRole = String(resolvedRole || "").trim().toLowerCase();
+
     if (user) {
-      if (user.role === "candidate" && company?.id_company) return `/c/${company.id_company}/dashboard`;
-      if (user.role === "hr") return "/hr/dashboard";
-      if (user.role === "mentor") return "/mentor/dashboard";
-      if (user.role === "super_admin" || user.role === "superadmin") return "/superadmin/dashboard";
+      if ((normalizedRole === "candidate" || normalizedRole === "apprentice") && company?.id_company) return `/c/${company.id_company}/dashboard`;
+      if (normalizedRole === "hr") return "/hr/dashboard";
+      if (normalizedRole === "mentor") return "/mentor/dashboard";
+      if (normalizedRole === "super_admin" || normalizedRole === "superadmin") return "/superadmin/dashboard";
     }
-    return "/dashboard";
+    return normalizedRole === "candidate" || normalizedRole === "apprentice" ? "/candidate/dashboard" : "/dashboard";
   };
 
   useEffect(() => {

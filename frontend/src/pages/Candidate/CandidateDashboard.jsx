@@ -146,12 +146,8 @@ function EarlyPathDashboard() {
 
       if (!response.ok) {
         if (response.status === 401) {
-          localStorage.removeItem("auth_token");
-          localStorage.removeItem("token");
-          localStorage.removeItem("company");
-          localStorage.removeItem("user");
-          localStorage.removeItem("candidate_user");
-          navigate("/");
+          await globalLogout();
+          navigate("/", { replace: true });
           return;
         }
         throw new Error("Failed to fetch dashboard data");
@@ -174,26 +170,12 @@ function EarlyPathDashboard() {
 
   const confirmLogout = async () => {
     try {
-      const token = localStorage.getItem("token") || localStorage.getItem("auth_token");
-      if (token) {
-        await fetch(`${API_BASE_URL}/auth/logout`, {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
-      }
+      await globalLogout();
     } catch (err) {
       console.error("Error during logout:", err);
     } finally {
-      localStorage.removeItem("auth_token");
-      localStorage.removeItem("token");
-      localStorage.removeItem("company");
-      localStorage.removeItem("user");
-      localStorage.removeItem("candidate_user");
       setLogoutModal(false);
-      navigate("/");
+      navigate("/", { replace: true });
     }
   };
 

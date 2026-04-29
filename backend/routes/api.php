@@ -66,6 +66,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // Company & Candidate creation (after registration)
     Route::post('/create-company', [AuthController::class, 'createCompany']);
     Route::post('/create-candidate-profile', [AuthController::class, 'createCandidateProfile']);
+
+    
 });
 
 // Test
@@ -244,14 +246,19 @@ Route::middleware(['auth:sanctum'])->prefix('intern')->group(function () {
 Route::middleware(['auth:sanctum'])->prefix('hr')->group(function () {
     Route::get('/dashboard', [HRDashboardController::class, 'index']);
 
-    // Candidates (export must be before {id} pattern)
+    // Apprentices
+    Route::get('/apprentices', [HRCandidateController::class, 'apprentices']);
+
+    // Candidates
     Route::get('/candidates/export',                [HRCandidateController::class, 'exportCsv']);
+    Route::get('/candidates/all',                   [HRCandidateController::class, 'allCandidates']);
     Route::get('/candidates',                       [HRCandidateController::class, 'index']);
     Route::patch('/candidates/{id}/accept',         [HRCandidateController::class, 'accept']);
     Route::patch('/candidates/{id}/reject',         [HRCandidateController::class, 'reject']);
     Route::patch('/candidates/{id}/stage',          [HRCandidateController::class, 'updateStage']);
     Route::patch('/candidates/{id}/screening',      [HRCandidateController::class, 'screening']);
     Route::patch('/candidates/{id}/interview',      [HRCandidateController::class, 'interview']);
+    Route::patch('/candidates/{id}/notes',          [HRCandidateController::class, 'updateNotes']);   
     Route::get('/candidates/{id}/documents/{type}', [HRCandidateController::class, 'viewDocument']);
 
     // Screening

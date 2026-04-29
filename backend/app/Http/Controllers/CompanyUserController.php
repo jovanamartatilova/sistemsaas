@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -155,8 +156,14 @@ class CompanyUserController extends Controller
     public function destroy(Request $request, $id)
     {
         $currentUser = $request->user();
+        $companyId = $currentUser->employee?->id_company;
+
+        if (!$companyId) {
+            return response()->json(['message' => 'Company not found'], 403);
+        }
+
         $user = User::where('id_user', $id)
-            ->where('id_company', $currentUser->id_company)
+            ->whereHas('employee', fn ($query) => $query->where('id_company', $companyId))
             ->firstOrFail();
 
         // Don't allow self-deletion
@@ -164,7 +171,17 @@ class CompanyUserController extends Controller
             return response()->json(['message' => 'You cannot delete yourself'], 400);
         }
 
-        $user->delete();
+        
+        
+        DB::transaction(function () use ($user) {
+            $user->tokens()->delete();
+
+            if ($user->employee) {
+                $user->employee->delete();
+            }
+
+            $user->delete();
+        });
 
         return response()->json(['message' => 'User deleted successfully']);
     }

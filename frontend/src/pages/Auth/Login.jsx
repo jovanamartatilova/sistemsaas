@@ -14,28 +14,35 @@ export default function Login() {
 
   const companyName = "EarlyPath";
 
-  useEffect(() => {
-    if (isAuthenticated && !authLoading) {
-      // Ambil user_type dari store atau dari localStorage
-      const storedUserType = localStorage.getItem("user_type");
-      redirectByUserType(storedUserType);
-    }
-  }, [isAuthenticated, authLoading, navigate]);
+  const normalizeRole = (value) => String(value || "").trim().toLowerCase().replace(/\s+/g, "_");
 
-  // Redirect berdasarkan user_type (bukan role)
-  const redirectByUserType = (userType) => {
-    if (userType === "admin") {
-      navigate("/dashboard");
-    } else if (userType === "candidate") {
-      navigate("/candidate/dashboard");
-    } else if (userType === "new") {
-      // User baru registrasi belum punya jalur company/candidate.
-      // Arahkan ke dashboard utama supaya tidak mentok di route yang tidak ada.
-      navigate("/dashboard");
+  const redirectByRole = (role, redirectPath = null) => {
+    if (redirectPath) {
+      navigate(redirectPath, { replace: true });
+      return;
+    }
+
+    const normalizedRole = normalizeRole(role);
+    if (normalizedRole === "mentor") {
+      navigate("/mentor/dashboard", { replace: true });
+    } else if (normalizedRole === "hr") {
+      navigate("/hr/dashboard", { replace: true });
+    } else if (normalizedRole === "super_admin" || normalizedRole === "superadmin") {
+      navigate("/superadmin/dashboard", { replace: true });
+    } else if (normalizedRole === "candidate") {
+      navigate("/candidate/dashboard", { replace: true });
     } else {
-      navigate("/dashboard");
+      navigate("/dashboard", { replace: true });
     }
   };
+
+  useEffect(() => {
+    if (isAuthenticated && !authLoading) {
+      const storedUser = JSON.parse(localStorage.getItem("user") || "null");
+      const storedRole = storedUser?.role || localStorage.getItem("user_type") || user?.role;
+      redirectByRole(storedRole);
+    }
+  }, [isAuthenticated, authLoading, navigate, user]);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -59,13 +66,14 @@ export default function Login() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || "Login failed");
 
-      const resolvedUserType = data.user_type || (data.company ? "admin" : "candidate");
+      const resolvedRole = data.redirect_role || data.role || data.user?.role || data.user_type || "candidate";
+      const redirectPath = data.redirect_path;
 
       // Simpan token
       localStorage.setItem("auth_token", data.token);
       
-      // Simpan user_type untuk redirect
-      localStorage.setItem("user_type", resolvedUserType);
+      // Simpan role untuk redirect
+      localStorage.setItem("user_type", resolvedRole);
       localStorage.setItem("is_new_user", String(!!data.is_new_user));
       
       // Simpan user
@@ -94,7 +102,7 @@ export default function Login() {
       setSuccessMsg("✓ Login successful!");
 
       setTimeout(() => {
-        redirectByUserType(resolvedUserType);
+        redirectByRole(resolvedRole, redirectPath);
       }, 800);
       
     } catch (err) {

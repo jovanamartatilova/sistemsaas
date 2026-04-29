@@ -50,6 +50,7 @@ import ActiveInternHR from './pages/HR/ActiveInternHR';
 import GenerateLOA  from './pages/HR/GenerateLOA';
 import PayrollHR    from './pages/HR/PayrollHR';
 import AssignMentor from './pages/HR/AssignMentor';
+import CandidateHR from './pages/hr/CandidateHR';
 
 // Mentor
 import DashboardMentor    from './pages/Mentor/DashboardMentor';
@@ -127,6 +128,8 @@ export default function App() {
                 <Route path="/hr/payroll"       element={<Private><PayrollHR /></Private>} />
                 <Route path="/hr/assign-mentor" element={<Private><AssignMentor /></Private>} />
                 <Route path="/hr/active-intern" element={<Private><ActiveInternHR /></Private>} />
+                <Route path="/hr/candidates" element={<CandidateHR />} />
+                <Route path="/hr/active-intern" element={<ActiveInternHR />} />
 
                 {/* Mentor — Private */}
                 <Route path="/mentor/dashboard"     element={<Private><DashboardMentor /></Private>} />

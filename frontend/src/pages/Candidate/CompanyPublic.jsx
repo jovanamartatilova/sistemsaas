@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore";
+import { getDashboardPathByRole } from "../../utils/roleUtils";
 
 const formatDate = (dateStr) => {
   if (!dateStr) return "-";
@@ -242,7 +243,7 @@ export default function CompanyPublicPage() {
                     <div style={{ fontSize: "13px", fontWeight: "700", color: "#0f172a" }}>{user?.name || user?.full_name}</div>
                     <div style={{ fontSize: "11px", color: "#64748b", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user?.email}</div>
                   </div>
-                  <DropItem icon={Icon.dashboard} label="Dashboard" onClick={() => { setProfileOpen(false); navigate(user?.role === "candidate" ? `/c/${idCompany}/dashboard` : "/dashboard"); }} />
+                    <DropItem icon={Icon.dashboard} label="Dashboard" onClick={() => { setProfileOpen(false); navigate(getDashboardPathByRole(user?.role || user?.user_type || localStorage.getItem("user_type") || (localStorage.getItem("candidate_profile") ? "candidate" : null), idCompany)); }} />
                   <div style={{ height: 1, background: "#f1f5f9", margin: "4px 0" }} />
                   <DropItem icon={Icon.logout} label="Logout" color="#ef4444" onClick={() => { setProfileOpen(false); setLogoutModalOpen(true); }} />
                 </div>
@@ -452,7 +453,7 @@ export default function CompanyPublicPage() {
                   <button onClick={() => navigate(`/c/${idCompany}/login`)} style={{ padding: "13px 24px", borderRadius: 10, fontSize: 14, fontWeight: 600, background: "rgba(255,255,255,0.1)", border: "1.5px solid rgba(255,255,255,0.2)", color: "#fff", cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>Sign In</button>
                 </div>
               ) : (
-                <button onClick={() => navigate(`/c/${idCompany}/dashboard`)} style={{ padding: "13px 28px", borderRadius: 10, fontSize: 14, fontWeight: 700, background: "linear-gradient(135deg,#2d7ff3,#38bdf8)", border: "none", color: "#fff", cursor: "pointer", fontFamily: "inherit", flexShrink: 0 }}>Go to Dashboard</button>
+                <button onClick={() => navigate(getDashboardPathByRole(user?.role || user?.user_type || localStorage.getItem("user_type") || (localStorage.getItem("candidate_profile") ? "candidate" : null), idCompany))} style={{ padding: "13px 28px", borderRadius: 10, fontSize: 14, fontWeight: 700, background: "linear-gradient(135deg,#2d7ff3,#38bdf8)", border: "none", color: "#fff", cursor: "pointer", fontFamily: "inherit", flexShrink: 0 }}>Go to Dashboard</button>
               )}
             </div>
           </div>
@@ -516,7 +517,7 @@ export default function CompanyPublicPage() {
             <p style={{ fontSize: 14, color: "#64748b", lineHeight: 1.6, marginBottom: 28 }}>You will need to sign in again to access your dashboard.</p>
             <div style={{ display: "flex", gap: 12 }}>
               <button onClick={() => setLogoutModalOpen(false)} style={{ flex: 1, padding: "12px", borderRadius: 12, border: "1px solid #e2e8f0", background: "transparent", fontSize: 14, fontWeight: 700, color: "#64748b", cursor: "pointer", transition: "0.2s", fontFamily: "inherit" }} onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>Cancel</button>
-              <button onClick={() => { logout(); setLogoutModalOpen(false); navigate("/"); }} style={{ flex: 1, padding: "12px", borderRadius: 12, border: "none", background: "#ef4444", fontSize: 14, fontWeight: 700, color: "#fff", cursor: "pointer", transition: "0.2s", boxShadow: "0 8px 20px rgba(239,68,68,0.3)", fontFamily: "inherit" }} onMouseEnter={e => e.currentTarget.style.transform = "translateY(-1px)"} onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}>Yes, Logout</button>
+              <button onClick={async () => { await logout(); setLogoutModalOpen(false); navigate("/", { replace: true }); }} style={{ flex: 1, padding: "12px", borderRadius: 12, border: "none", background: "#ef4444", fontSize: 14, fontWeight: 700, color: "#fff", cursor: "pointer", transition: "0.2s", boxShadow: "0 8px 20px rgba(239,68,68,0.3)", fontFamily: "inherit" }} onMouseEnter={e => e.currentTarget.style.transform = "translateY(-1px)"} onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}>Yes, Logout</button>
             </div>
           </div>
         </div>

@@ -210,7 +210,7 @@ export default function CertificateMentor() {
       localStorage.clear();
       useAuthStore.setState({ isAuthenticated: false, token: null, user: null, company: null });
       setLogoutModal(false);
-      navigate("/login");
+        navigate("/", { replace: true });
     }
   };
 

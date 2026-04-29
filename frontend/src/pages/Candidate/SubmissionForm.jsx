@@ -214,7 +214,7 @@ export default function SubmissionForm() {
       }
 
       setSuccessMsg("Application submitted successfully!");
-      setTimeout(() => navigate(`/c/${idCompany}/dashboard`), 2000);
+      setTimeout(() => navigate(`/c/${idCompany}`, { replace: true }), 2000);
 
     } catch (err) {
       if (err.name === "AbortError") {

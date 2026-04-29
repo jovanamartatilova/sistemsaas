@@ -10,6 +10,7 @@ class InvitationCode extends Model
 
     protected $fillable = [
         'id_company',
+        'id_role',
         'code',
         'label',
         'division',
@@ -23,5 +24,10 @@ class InvitationCode extends Model
     public function company()
     {
         return $this->belongsTo(Company::class, 'id_company', 'id_company');
+    }
+
+    public function role()
+    {
+        return $this->belongsTo(Role::class, 'id_role', 'id_role');
     }
 }

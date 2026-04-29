@@ -63,6 +63,7 @@ const NAV_SECTIONS = [
   {
     label: "SELECTION FLOW",
     items: [
+      { key: "/hr/candidates",   label: "Candidates",    icon: <IC.Candidates /> },
       { key: "/hr/selection",    label: "Selection",     icon: <IC.Screening /> },
       { key: "/hr/assign-mentor",label: "Assign Mentor", icon: <IC.AssignMentor /> },
       { key: "/hr/active-intern",label: "Active Intern", icon: <IC.Candidates /> },
