@@ -236,7 +236,7 @@ class HRCandidateController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Candidate moved to interview',
-            'data'    => $this->formatSubmission($submission->fresh(['user.university', 'position', 'vacancy'])),
+            'data'    => $this->formatSubmission($submission->fresh(['user.candidate', 'position', 'vacancy'])),
         ]);
     }
 
@@ -259,7 +259,7 @@ class HRCandidateController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Candidate stage updated',
-            'data'    => $this->formatSubmission($submission->fresh(['user.university', 'position', 'vacancy'])),
+            'data'    => $this->formatSubmission($submission->fresh(['user.candidate', 'position', 'vacancy'])),
         ]);
     }
 
@@ -269,7 +269,7 @@ class HRCandidateController extends Controller
     {
         return Submission::where('id_submission', $id)
             ->whereHas('vacancy', fn($q) => $q->where('id_company', $companyId))
-            ->with(['user.university', 'position', 'vacancy'])
+            ->with(['user.candidate', 'position', 'vacancy'])
             ->first();
     }
 
@@ -280,7 +280,7 @@ class HRCandidateController extends Controller
             'name'            => $s->user?->name,
             'email'           => $s->user?->email,
             'phone'           => $s->user?->phone,
-            'university'      => $s->user?->university?->name ?? '-',
+            'university'      => $s->user?->candidate?->institution ?? '-',
             'position'        => $s->position?->name,
             'program'         => $s->vacancy?->title,
             'type'            => $s->vacancy?->type,
@@ -300,11 +300,11 @@ class HRCandidateController extends Controller
         $query = Submission::whereHas('vacancy', fn($q) =>
             $q->where('id_company', $companyId)
         )->with([
-            'user.university',
+            'user.candidate',
             'position',
             'vacancy',
             'team',
-            'teamMembers.user.university',
+            'teamMembers.user.candidate',
         ]);
     
         // Filter status
@@ -395,7 +395,7 @@ class HRCandidateController extends Controller
                     'id_user'    => $tm->id_user,
                     'name'       => $tm->user?->name,
                     'email'      => $tm->user?->email,
-                    'university' => $tm->user?->university?->name ?? '-',
+                    'university' => $tm->user?->candidate?->institution ?? '-',
                     'is_leader'  => (bool) $tm->is_leader,
                 ];
             }
@@ -410,7 +410,7 @@ class HRCandidateController extends Controller
             'name'                   => $s->user?->name,
             'email'                  => $s->user?->email,
             'phone'                  => $s->user?->phone,
-            'university'             => $s->user?->university?->name ?? '-',
+            'university'             => $s->user?->candidate?->institution ?? '-',
     
             'position'               => $s->position?->name,
             'program'                => $s->vacancy?->title,
@@ -433,7 +433,7 @@ class HRCandidateController extends Controller
         $query = \App\Models\Apprentice::whereHas('submission.vacancy', fn($q) =>
             $q->where('id_company', $companyId)
         )->with([
-            'submission.user.university',
+            'submission.user.candidate',
             'submission.position',
             'submission.vacancy',
             'submission.mentor',   // relasi mentor via id_user_mentor di Submission
@@ -483,7 +483,7 @@ class HRCandidateController extends Controller
             'name'          => $s?->user?->name,
             'email'         => $s?->user?->email,
             'phone'         => $s?->user?->phone,
-            'university'    => $s?->user?->university?->name ?? '-',
+            'university'    => $s?->user?->candidate?->institution ?? '-',
             'id_team'       => $s?->id_team,
     
             // Program info

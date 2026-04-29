@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Apprentice;
+use App\Models\Candidate;
 use App\Models\Company;
 use App\Models\Interview;
 use App\Models\Major;
@@ -191,29 +192,32 @@ class CandidateController extends Controller
 
         $user = $request->user();
 
+        $candidate = Candidate::firstOrNew(['id_user' => $user->id_user]);
+        if (!$candidate->exists) {
+            $candidate->id_candidate = 'CDT' . strtoupper(substr(uniqid(), -7));
+        }
+
+        $user->fill($request->only(['name']));
+
+        if ($request->filled('phone')) {
+            $candidate->phone = $request->phone;
+        }
+
         if ($request->filled('university_name')) {
-            $university = University::firstOrCreate(
-                ['name' => $request->university_name],
-                ['id_university' => 'U' . strtoupper(Str::random(9))]
-            );
-            $user->id_university = $university->id_university;
+            $candidate->institution = $request->university_name;
         }
 
         if ($request->filled('major_name')) {
-            $major = Major::firstOrCreate(
-                ['name' => $request->major_name],
-                ['id_major' => 'M' . strtoupper(Str::random(9))]
-            );
-            $user->id_major = $major->id_major;
+            $candidate->major = $request->major_name;
         }
 
-        $user->fill($request->only(['name', 'phone']));
         $user->save();
+        $candidate->save();
 
         return response()->json([
             'success' => true,
             'message' => 'Profile berhasil diperbarui',
-            'data' => $user->fresh(['university', 'major']),
+            'data' => $user->fresh(['candidate']),
         ]);
     }
 
@@ -309,8 +313,8 @@ class CandidateController extends Controller
     /** GET /api/users/me */
     public function getMe(Request $request)
     {
-        // ← load relasi university dan major
-        $user = $request->user()->load(['university', 'major']);
+        $user = $request->user()->load(['candidate']);
+        $candidate = $user->candidate;
 
         return response()->json([
             'success' => true,
@@ -320,10 +324,10 @@ class CandidateController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
                 'phone_number' => $user->phone,
-                'university' => $user->university?->name ?? '',   // ← nama universitas
-                'university_id' => $user->id_university ?? '',
-                'major' => $user->major?->name ?? '',        // ← nama jurusan
-                'major_id' => $user->id_major ?? '',
+                'university' => $candidate?->institution ?? '',
+                'university_id' => null,
+                'major' => $candidate?->major ?? '',
+                'major_id' => null,
                 'profile_picture' => $user->photo_path ? asset('storage/' . $user->photo_path) : null,
                 'role' => $user->role ?? 'Apprentice',
             ]
@@ -347,38 +351,33 @@ class CandidateController extends Controller
             'major_name' => 'sometimes|string|max:100',  // ← ganti dari education_level
         ]);
 
-        // Update field sederhana
-        $updateData = [];
-        if (isset($validated['full_name']))
-            $updateData['name'] = $validated['full_name'];
-        if (isset($validated['email']))
-            $updateData['email'] = $validated['email'];
-        if (isset($validated['phone_number']))
-            $updateData['phone'] = $validated['phone_number'];
+        $candidate = Candidate::firstOrNew(['id_user' => $user->id_user]);
+        if (!$candidate->exists) {
+            $candidate->id_candidate = 'CDT' . strtoupper(substr(uniqid(), -7));
+        }
 
-        // Update universitas — cari atau buat baru di tabel universities
+        if (isset($validated['full_name'])) {
+            $user->name = $validated['full_name'];
+        }
+        if (isset($validated['email'])) {
+            $user->email = $validated['email'];
+        }
+
+        if (isset($validated['phone_number'])) {
+            $candidate->phone = $validated['phone_number'];
+        }
+
         if (!empty($validated['university_name'])) {
-            $university = University::firstOrCreate(
-                ['name' => $validated['university_name']],
-                ['id_university' => 'U' . strtoupper(Str::random(9))]
-            );
-            $updateData['id_university'] = $university->id_university;
+            $candidate->institution = $validated['university_name'];
         }
 
-        // Update jurusan — cari atau buat baru di tabel majors
         if (!empty($validated['major_name'])) {
-            $major = Major::firstOrCreate(
-                ['name' => $validated['major_name']],
-                ['id_major' => 'M' . strtoupper(Str::random(9))]
-            );
-            $updateData['id_major'] = $major->id_major;
+            $candidate->major = $validated['major_name'];
         }
 
-        if (!empty($updateData)) {
-            $user->update($updateData);
-            $user->refresh();
-            $user->load(['university', 'major']); // ← load relasi setelah update
-        }
+        $user->save();
+        $candidate->save();
+        $user->load(['candidate']);
 
         return response()->json([
             'success' => true,
@@ -387,11 +386,11 @@ class CandidateController extends Controller
                 'id_user' => $user->id_user,
                 'full_name' => $user->name,
                 'email' => $user->email,
-                'phone_number' => $user->phone,
-                'university' => $user->university?->name ?? '',
-                'university_id' => $user->id_university ?? '',
-                'major' => $user->major?->name ?? '',
-                'major_id' => $user->id_major ?? '',
+                'phone_number' => $user->candidate?->phone ?? '',
+                'university' => $user->candidate?->institution ?? '',
+                'university_id' => null,
+                'major' => $user->candidate?->major ?? '',
+                'major_id' => null,
                 'profile_picture' => $user->photo_path ? asset('storage/' . $user->photo_path) : null,
                 'role' => $user->role ?? 'Apprentice',
             ]

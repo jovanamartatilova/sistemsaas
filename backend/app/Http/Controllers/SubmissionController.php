@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Candidate;
 use App\Models\Company;
 use App\Models\Major;
 use App\Models\Position;
@@ -139,14 +140,22 @@ class SubmissionController extends Controller
 
             // 4. Update User Profile
             $user->name = $request->name;
-            $user->id_university = $university->id_university;
-            $user->id_major = $major->id_major;
             // ✅ Set the company from the vacancy being applied to
             $user->id_company = $company->id_company;
             if ($teamId) {
                 $user->id_team = $teamId;
             }
             $user->save();
+
+            $candidate = Candidate::firstOrNew(['id_user' => $user->id_user]);
+            if (!$candidate->exists) {
+                $candidate->id_candidate = 'CDT' . strtoupper(Str::random(7));
+            }
+            $candidate->phone = $candidate->phone ?? null;
+            $candidate->institution = $request->university_name;
+            $candidate->education_level = $candidate->education_level ?? null;
+            $candidate->major = $request->major_name;
+            $candidate->save();
 
             // 5. Upload Files
             $cvPath = $request->file('cv_file')->store('submissions/cv', 'public');

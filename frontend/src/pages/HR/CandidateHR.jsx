@@ -5,12 +5,12 @@ import { useAuthStore } from '../../stores/authStore';
 import SidebarHR from '../../components/SidebarHR';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
 
-// ─── Icons ──────────────────────────────────────────────────────────────────
+// ─── Icons ───────────────────────────────────────────────────────────────────
 const IC = {
   Search:       () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>,
   Eye:          () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>,
   Edit:         () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>,
-  FileText:     () => <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>,
+  FileText:     () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>,
   MapPin:       () => <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>,
   ChevronDown:  () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>,
   ChevronRight: () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>,
@@ -18,11 +18,11 @@ const IC = {
   User:         () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
   MessageSquare:() => <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>,
   X:            () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
-  Check:        () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>,
-  ExternalLink: () => <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>,
+  ExternalLink: () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>,
+  Folder:       () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>,
 };
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 function todayStr() {
   return new Date().toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' });
 }
@@ -43,7 +43,6 @@ const STATUS_CONFIG = {
 function getStatusCfg(status) {
   if (!status) return STATUS_CONFIG.pending;
   if (STATUS_CONFIG[status]) return STATUS_CONFIG[status];
-  // handle dynamic stage_X
   if (status.startsWith('stage_')) {
     const n = parseInt(status.split('_')[1], 10) + 1;
     return { label: `Stage ${n}`, bg: '#eff6ff', color: '#1d4ed8', border: '#bfdbfe' };
@@ -83,25 +82,6 @@ function IconBtn({ icon, title, onClick, color = '#475569', bgHov = '#f1f5f9' })
   );
 }
 
-function DocBtn({ label, onClick }) {
-  const [hov, setHov] = useState(false);
-  return (
-    <button
-      onClick={onClick}
-      onMouseEnter={() => setHov(true)}
-      onMouseLeave={() => setHov(false)}
-      style={{
-        display: 'flex', alignItems: 'center', gap: '4px', padding: '3px 8px', borderRadius: '6px',
-        fontSize: '10.5px', fontWeight: '600', cursor: 'pointer', border: '1px solid #e2e8f0',
-        background: hov ? '#f1f5f9' : '#fff', color: '#475569', fontFamily: 'inherit', transition: 'all 0.15s',
-      }}
-    >
-      <IC.FileText />
-      {label}
-    </button>
-  );
-}
-
 function FilterChip({ label, active, onClick }) {
   return (
     <button
@@ -118,10 +98,84 @@ function FilterChip({ label, active, onClick }) {
   );
 }
 
+// ─── Document List Modal ──────────────────────────────────────────────────────
+// Opens from the folder icon in the Documents column — lists all docs for that candidate.
+const DOC_TYPES = [
+  { key: 'has_cv',               label: 'CV',                 type: 'cv' },
+  { key: 'has_cover_letter',     label: 'Cover Letter',       type: 'cover_letter' },
+  { key: 'has_portfolio',        label: 'Portfolio',          type: 'portfolio' },
+  { key: 'has_institution_letter', label: 'Institution Letter', type: 'institution_letter' },
+];
+
+function DocListModal({ candidate, onClose, onViewDoc }) {
+  if (!candidate) return null;
+  const available = DOC_TYPES.filter(d => candidate[d.key]);
+
+  return (
+    <div
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+      style={{ position: 'fixed', inset: 0, background: 'rgba(10,22,40,0.5)', zIndex: 400, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}
+    >
+      <div style={{ background: '#fff', borderRadius: '16px', width: '100%', maxWidth: '380px', overflow: 'hidden' }}>
+        {/* Header */}
+        <div style={{ padding: '18px 22px', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <h3 style={{ margin: 0, fontSize: '14px', fontWeight: '700', color: '#0f172a' }}>Documents</h3>
+            <p style={{ margin: '2px 0 0', fontSize: '11.5px', color: '#94a3b8' }}>{candidate.name}</p>
+          </div>
+          <IconBtn icon={<IC.X />} title="Close" onClick={onClose} />
+        </div>
+
+        {/* Body */}
+        <div style={{ padding: '16px 22px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {available.length === 0 ? (
+            <p style={{ margin: 0, fontSize: '13px', color: '#94a3b8', textAlign: 'center', padding: '24px 0' }}>No documents uploaded.</p>
+          ) : (
+            available.map((d) => (
+              <DocItem key={d.type} label={d.label} onView={() => { onViewDoc(candidate, d.type); onClose(); }} />
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DocItem({ label, onView }) {
+  const [hov, setHov] = useState(false);
+  return (
+    <div
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '10px 14px', borderRadius: '10px', border: '1px solid #e2e8f0',
+        background: hov ? '#f8fafc' : '#fff', transition: 'background 0.15s',
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{ width: '30px', height: '30px', borderRadius: '8px', background: '#eff6ff', color: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <IC.FileText />
+        </div>
+        <span style={{ fontSize: '13px', fontWeight: '600', color: '#1e293b' }}>{label}</span>
+      </div>
+      <button
+        onClick={onView}
+        style={{
+          display: 'flex', alignItems: 'center', gap: '4px', padding: '5px 10px', borderRadius: '7px',
+          fontSize: '11.5px', fontWeight: '600', cursor: 'pointer', border: '1px solid #bfdbfe',
+          background: '#eff6ff', color: '#1d4ed8', fontFamily: 'inherit', transition: 'all 0.15s',
+        }}
+      >
+        <IC.ExternalLink /> Open
+      </button>
+    </div>
+  );
+}
+
 // ─── Detail Modal ─────────────────────────────────────────────────────────────
 function DetailModal({ candidate, onClose, onViewDoc }) {
   if (!candidate) return null;
-
   const isGroup = !!candidate.id_team;
 
   return (
@@ -130,7 +184,7 @@ function DetailModal({ candidate, onClose, onViewDoc }) {
       style={{ position: 'fixed', inset: 0, background: 'rgba(10,22,40,0.5)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}
     >
       <div style={{ background: '#fff', borderRadius: '16px', width: '100%', maxWidth: '560px', maxHeight: '85vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-        {/* Modal Header */}
+        {/* Header */}
         <div style={{ padding: '20px 24px', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
             <h3 style={{ margin: 0, fontSize: '15px', fontWeight: '700', color: '#0f172a' }}>Candidate Detail</h3>
@@ -141,9 +195,9 @@ function DetailModal({ candidate, onClose, onViewDoc }) {
           <IconBtn icon={<IC.X />} title="Close" onClick={onClose} />
         </div>
 
-        {/* Modal Body */}
+        {/* Body */}
         <div style={{ overflowY: 'auto', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          
+
           {/* Profile */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
             <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#eff6ff', color: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', fontWeight: '700', flexShrink: 0 }}>
@@ -154,20 +208,18 @@ function DetailModal({ candidate, onClose, onViewDoc }) {
               <div style={{ fontSize: '12.5px', color: '#64748b' }}>{candidate.email}</div>
               {candidate.phone && <div style={{ fontSize: '12px', color: '#94a3b8' }}>{candidate.phone}</div>}
             </div>
-            <div style={{ marginLeft: 'auto' }}>
-              <StatusBadge status={candidate.status} />
-            </div>
+            <div style={{ marginLeft: 'auto' }}><StatusBadge status={candidate.status} /></div>
           </div>
 
           {/* Info Grid */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             {[
-              { label: 'University', value: candidate.university || '-' },
-              { label: 'Position', value: candidate.position || '-' },
-              { label: 'Program', value: candidate.program || '-' },
-              { label: 'Type', value: candidate.type || '-' },
-              { label: 'Applied Date', value: candidate.submitted_at ? new Date(candidate.submitted_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : '-' },
-              { label: 'Submission Type', value: isGroup ? 'Group' : 'Individual' },
+              { label: 'University',       value: candidate.university || '-' },
+              { label: 'Position',         value: candidate.position || '-' },
+              { label: 'Program',          value: candidate.program || '-' },
+              { label: 'Type',             value: candidate.type || '-' },
+              { label: 'Applied Date',     value: candidate.submitted_at ? new Date(candidate.submitted_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : '-' },
+              { label: 'Submission Type',  value: isGroup ? 'Team' : 'Individual' },
             ].map(({ label, value }) => (
               <div key={label} style={{ background: '#f8fafc', borderRadius: '8px', padding: '10px 12px' }}>
                 <div style={{ fontSize: '10.5px', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', marginBottom: '3px' }}>{label}</div>
@@ -176,7 +228,7 @@ function DetailModal({ candidate, onClose, onViewDoc }) {
             ))}
           </div>
 
-          {/* Team Members (if group) */}
+          {/* Team Members */}
           {isGroup && candidate.team_members && candidate.team_members.length > 0 && (
             <div>
               <div style={{ fontSize: '11px', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', marginBottom: '8px' }}>Team Members</div>
@@ -202,12 +254,11 @@ function DetailModal({ candidate, onClose, onViewDoc }) {
           {/* Documents */}
           <div>
             <div style={{ fontSize: '11px', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', marginBottom: '8px' }}>Documents</div>
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-              {candidate.has_cv && <DocBtn label="CV" onClick={() => onViewDoc(candidate, 'cv')} />}
-              {candidate.has_cover_letter && <DocBtn label="Cover Letter" onClick={() => onViewDoc(candidate, 'cover_letter')} />}
-              {candidate.has_portfolio && <DocBtn label="Portfolio" onClick={() => onViewDoc(candidate, 'portfolio')} />}
-              {candidate.has_institution_letter && <DocBtn label="Institution Letter" onClick={() => onViewDoc(candidate, 'institution_letter')} />}
-              {!candidate.has_cv && !candidate.has_cover_letter && !candidate.has_portfolio && !candidate.has_institution_letter && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {DOC_TYPES.filter(d => candidate[d.key]).map(d => (
+                <DocItem key={d.type} label={d.label} onView={() => onViewDoc(candidate, d.type)} />
+              ))}
+              {!DOC_TYPES.some(d => candidate[d.key]) && (
                 <span style={{ fontSize: '12px', color: '#cbd5e1' }}>No documents uploaded</span>
               )}
             </div>
@@ -261,16 +312,17 @@ function NotesModal({ candidate, onClose, onSave }) {
             rows={5}
             style={{
               width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #e2e8f0',
-              fontSize: '13px', fontFamily: 'inherit', color: '#1e293b', resize: 'vertical',
-              outline: 'none', lineHeight: '1.6', boxSizing: 'border-box',
+              fontSize: '13px', fontFamily: 'inherit', color: '#1e293b',
+              background: '#ffffff', /* ← was previously yellowish, now white */
+              resize: 'vertical', outline: 'none', lineHeight: '1.6', boxSizing: 'border-box',
             }}
           />
           <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-            <button onClick={onClose} style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#fff', cursor: 'pointer', fontSize: '13px', fontFamily: 'inherit' }}>Cancel</button>
+            <button onClick={onClose} style={{ padding: '9px 18px', borderRadius: '10px', border: '1px solid #e2e8f0', background: '#fff', cursor: 'pointer', fontSize: '13px', fontWeight: '600', color: '#64748b', fontFamily: 'inherit' }}>Cancel</button>
             <button
               onClick={handleSave}
               disabled={saving}
-              style={{ padding: '8px 18px', borderRadius: '8px', border: 'none', background: '#3b82f6', color: '#fff', cursor: 'pointer', fontSize: '13px', fontWeight: '600', fontFamily: 'inherit', opacity: saving ? 0.7 : 1 }}
+              style={{ padding: '9px 18px', borderRadius: '10px', border: 'none', background: '#3b82f6', color: '#fff', cursor: 'pointer', fontSize: '13px', fontWeight: '700', fontFamily: 'inherit', opacity: saving ? 0.7 : 1 }}
             >
               {saving ? 'Saving...' : 'Save Notes'}
             </button>
@@ -281,21 +333,48 @@ function NotesModal({ candidate, onClose, onSave }) {
   );
 }
 
+// ─── Docs Icon Button ─────────────────────────────────────────────────────────
+// Compact button shown in the Documents column — opens DocListModal
+function DocsIconBtn({ candidate, onOpen, hasAny }) {
+  const [hov, setHov] = useState(false);
+  return (
+    <button
+      title={hasAny ? 'View documents' : 'No documents'}
+      onClick={hasAny ? onOpen : undefined}
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      style={{
+        display: 'flex', alignItems: 'center', gap: '5px',
+        padding: '4px 10px', borderRadius: '7px', fontSize: '11.5px', fontWeight: '600',
+        cursor: hasAny ? 'pointer' : 'default',
+        border: `1px solid ${hasAny ? (hov ? '#93c5fd' : '#bfdbfe') : '#e2e8f0'}`,
+        background: hasAny ? (hov ? '#dbeafe' : '#eff6ff') : '#f8fafc',
+        color: hasAny ? '#1d4ed8' : '#cbd5e1',
+        fontFamily: 'inherit', transition: 'all 0.15s',
+      }}
+    >
+      <IC.Folder />
+      {hasAny ? 'See Docs' : 'None'}
+    </button>
+  );
+}
+
 // ─── Row Components ───────────────────────────────────────────────────────────
 function GroupRow({ candidate, onDetail, onNotes, onViewDoc }) {
   const [expanded, setExpanded] = useState(false);
+  const [docModal, setDocModal] = useState(false);
   const members = candidate.team_members || [];
+  const hasAnyDoc = candidate.has_cv || candidate.has_cover_letter || candidate.has_portfolio || candidate.has_institution_letter;
 
   return (
     <>
-      {/* Group Header Row */}
       <div style={{
-        display: 'grid', gridTemplateColumns: '1.8fr 1fr 1fr 1.2fr 0.8fr 0.9fr', gap: '12px',
+        display: 'grid', gridTemplateColumns: '1.8fr 1fr 0.8fr 1.2fr 0.8fr 0.9fr', gap: '12px',
         padding: '14px 24px', alignItems: 'center', borderBottom: '1px solid #f1f5f9',
         background: expanded ? '#fafbff' : 'transparent',
       }}>
-        {/* Candidate / Team Name */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', textAlign: 'left' }}>
+        {/* Candidate / Team */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <button
             onClick={() => setExpanded(v => !v)}
             style={{
@@ -317,24 +396,19 @@ function GroupRow({ candidate, onDetail, onNotes, onViewDoc }) {
           </div>
         </div>
 
-        {/* University (leader's) */}
+        {/* University */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: '#475569', minWidth: 0 }}>
           <IC.MapPin />
           <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{candidate.university || '-'}</span>
         </div>
 
-        {/* Documents */}
-        <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
-          {candidate.has_cv && <DocBtn label="CV" onClick={() => onViewDoc(candidate, 'cv')} />}
-          {candidate.has_portfolio && <DocBtn label="Porto" onClick={() => onViewDoc(candidate, 'portfolio')} />}
-          {candidate.has_institution_letter && <DocBtn label="Recom" onClick={() => onViewDoc(candidate, 'institution_letter')} />}
-          {!candidate.has_cv && !candidate.has_portfolio && !candidate.has_institution_letter && (
-            <span style={{ fontSize: '11.5px', color: '#cbd5e1' }}>—</span>
-          )}
+        {/* Documents — compact icon button */}
+        <div>
+          <DocsIconBtn candidate={candidate} hasAny={hasAnyDoc} onOpen={() => setDocModal(true)} />
         </div>
 
-        {/* Notes Preview */}
-        <div style={{ fontSize: '11.5px', color: '#64748b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'left' }}>
+        {/* Notes */}
+        <div style={{ fontSize: '11.5px', color: '#64748b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {candidate.hr_notes
             ? <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><IC.MessageSquare /><span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{candidate.hr_notes}</span></span>
             : <span style={{ color: '#cbd5e1' }}>No notes</span>
@@ -354,7 +428,7 @@ function GroupRow({ candidate, onDetail, onNotes, onViewDoc }) {
       {/* Expanded Members */}
       {expanded && members.map((m, i) => (
         <div key={i} style={{
-          display: 'grid', gridTemplateColumns: '1.8fr 1fr 1fr 1.2fr 0.8fr 0.9fr', gap: '12px',
+          display: 'grid', gridTemplateColumns: '1.8fr 1fr 0.8fr 1.2fr 0.8fr 0.9fr', gap: '12px',
           padding: '10px 24px 10px 72px', alignItems: 'center', borderBottom: '1px solid #f8fafc',
           background: '#f8fafc',
         }}>
@@ -377,80 +451,92 @@ function GroupRow({ candidate, onDetail, onNotes, onViewDoc }) {
           <div /><div /><div /><div />
         </div>
       ))}
+
+      {/* Doc List Modal */}
+      {docModal && (
+        <DocListModal candidate={candidate} onClose={() => setDocModal(false)} onViewDoc={onViewDoc} />
+      )}
     </>
   );
 }
 
 function IndividualRow({ candidate, onDetail, onNotes, onViewDoc }) {
+  const [docModal, setDocModal] = useState(false);
+  const hasAnyDoc = candidate.has_cv || candidate.has_cover_letter || candidate.has_portfolio || candidate.has_institution_letter;
+
   return (
-    <div style={{
-      display: 'grid', gridTemplateColumns: '1.8fr 1fr 1fr 1.2fr 0.8fr 0.9fr', gap: '12px',
-      padding: '14px 24px', alignItems: 'center', borderBottom: '1px solid #f1f5f9',
-    }}>
-      {/* Candidate */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', textAlign: 'left' }}>
-        <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: '#f1f5f9', color: '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: '700', flexShrink: 0 }}>
-          {(candidate.name || '?').slice(0, 2).toUpperCase()}
+    <>
+      <div style={{
+        display: 'grid', gridTemplateColumns: '1.8fr 1fr 0.8fr 1.2fr 0.8fr 0.9fr', gap: '12px',
+        padding: '14px 24px', alignItems: 'center', borderBottom: '1px solid #f1f5f9',
+      }}>
+        {/* Candidate */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: '#f1f5f9', color: '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: '700', flexShrink: 0 }}>
+            {(candidate.name || '?').slice(0, 2).toUpperCase()}
+          </div>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: '13px', fontWeight: '700', color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{candidate.name}</div>
+            <div style={{ fontSize: '11.5px', color: '#94a3b8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{candidate.email}</div>
+          </div>
         </div>
-        <div style={{ minWidth: 0 }}>
-          <div style={{ fontSize: '13px', fontWeight: '700', color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{candidate.name}</div>
-          <div style={{ fontSize: '11.5px', color: '#94a3b8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{candidate.email}</div>
+
+        {/* University */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: '#475569', minWidth: 0 }}>
+          <div style={{ flexShrink: 0 }}><IC.MapPin /></div>
+          <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{candidate.university || '-'}</span>
+        </div>
+
+        {/* Documents — compact icon button */}
+        <div>
+          <DocsIconBtn candidate={candidate} hasAny={hasAnyDoc} onOpen={() => setDocModal(true)} />
+        </div>
+
+        {/* Notes */}
+        <div style={{ fontSize: '11.5px', color: '#64748b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {candidate.hr_notes
+            ? <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><IC.MessageSquare /><span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{candidate.hr_notes}</span></span>
+            : <span style={{ color: '#cbd5e1' }}>No notes</span>
+          }
+        </div>
+
+        {/* Status */}
+        <div><StatusBadge status={candidate.status} /></div>
+
+        {/* Actions */}
+        <div style={{ display: 'flex', gap: '5px' }}>
+          <IconBtn icon={<IC.Eye />} title="View Detail" onClick={() => onDetail(candidate)} />
+          <IconBtn icon={<IC.Edit />} title="Edit Notes" onClick={() => onNotes(candidate)} bgHov="#fef9c3" />
         </div>
       </div>
 
-      {/* University */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: '#475569', minWidth: 0 }}>
-        <div style={{ flexShrink: 0 }}><IC.MapPin /></div>
-        <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{candidate.university || '-'}</span>
-      </div>
-
-      {/* Documents */}
-      <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
-        {candidate.has_cv && <DocBtn label="CV" onClick={() => onViewDoc(candidate, 'cv')} />}
-        {candidate.has_portfolio && <DocBtn label="Porto" onClick={() => onViewDoc(candidate, 'portfolio')} />}
-        {candidate.has_institution_letter && <DocBtn label="Recom" onClick={() => onViewDoc(candidate, 'institution_letter')} />}
-        {!candidate.has_cv && !candidate.has_portfolio && !candidate.has_institution_letter && (
-          <span style={{ fontSize: '11.5px', color: '#cbd5e1' }}>—</span>
-        )}
-      </div>
-
-      {/* Notes */}
-      <div style={{ fontSize: '11.5px', color: '#64748b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'left' }}>
-        {candidate.hr_notes
-          ? <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><IC.MessageSquare /><span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{candidate.hr_notes}</span></span>
-          : <span style={{ color: '#cbd5e1' }}>No notes</span>
-        }
-      </div>
-
-      {/* Status */}
-      <div><StatusBadge status={candidate.status} /></div>
-
-      {/* Actions */}
-      <div style={{ display: 'flex', gap: '5px' }}>
-        <IconBtn icon={<IC.Eye />} title="View Detail" onClick={() => onDetail(candidate)} />
-        <IconBtn icon={<IC.Edit />} title="Edit Notes" onClick={() => onNotes(candidate)} bgHov="#fef9c3" />
-      </div>
-    </div>
+      {/* Doc List Modal */}
+      {docModal && (
+        <DocListModal candidate={candidate} onClose={() => setDocModal(false)} onViewDoc={onViewDoc} />
+      )}
+    </>
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
+// ─── Status Options ───────────────────────────────────────────────────────────
 const STATUS_OPTIONS = [
   { value: '', label: 'All Status' },
-  { value: 'pending', label: 'Pending' },
-  { value: 'stage_0', label: 'Stage 1' },
-  { value: 'stage_1', label: 'Stage 2' },
-  { value: 'stage_2', label: 'Stage 3' },
+  { value: 'pending',   label: 'Pending' },
+  { value: 'stage_0',   label: 'Stage 1' },
+  { value: 'stage_1',   label: 'Stage 2' },
+  { value: 'stage_2',   label: 'Stage 3' },
   { value: 'screening', label: 'Screening' },
-  { value: 'test', label: 'Test' },
+  { value: 'test',      label: 'Test' },
   { value: 'interview', label: 'Interview' },
-  { value: 'accepted', label: 'Accepted' },
-  { value: 'rejected', label: 'Rejected' },
+  { value: 'accepted',  label: 'Accepted' },
+  { value: 'rejected',  label: 'Rejected' },
 ];
 
+// ─── Main Page ────────────────────────────────────────────────────────────────
 export default function CandidateHR() {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
+  const logout = useAuthStore((state) => state.logout);
 
   const [loading, setLoading] = useState(true);
   const [candidates, setCandidates] = useState([]);
@@ -464,7 +550,7 @@ export default function CandidateHR() {
   const [notesCandidate, setNotesCandidate] = useState(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
-  // ── Fetch ────────────────────────────────────────────────────────────
+  // ── Fetch ────────────────────────────────────────────────────────────────────
   const fetchCandidates = (isSearch = false) => {
     if (isSearch) setTableLoading(true);
     const params = new URLSearchParams();
@@ -485,17 +571,13 @@ export default function CandidateHR() {
     return () => clearTimeout(t);
   }, [search]);
 
-  // ── Group deduplication ───────────────────────────────────────────────
-  // Group submissions: deduplicate by id_team, keeping one row per team
+  // ── Deduplication ─────────────────────────────────────────────────────────────
   const rows = useMemo(() => {
     const seen = new Set();
     const out = [];
     for (const c of candidates) {
       if (c.id_team) {
-        if (!seen.has(c.id_team)) {
-          seen.add(c.id_team);
-          out.push(c);
-        }
+        if (!seen.has(c.id_team)) { seen.add(c.id_team); out.push(c); }
       } else {
         out.push(c);
       }
@@ -503,11 +585,12 @@ export default function CandidateHR() {
     return out;
   }, [candidates]);
 
-  // ── Actions ───────────────────────────────────────────────────────────
+  // ── Actions ───────────────────────────────────────────────────────────────────
   const viewDoc = async (c, type) => {
     try {
       const res = await api(`/hr/candidates/${c.id_submission}/documents/${type}`);
-      if (res.data?.url) window.open(res.data.url, '_blank');
+      const url = res.url || res.data?.url;
+      if (url) window.open(url, '_blank');
     } catch { alert('Document not found'); }
   };
 
@@ -518,10 +601,9 @@ export default function CandidateHR() {
     } catch { alert('Failed to save notes'); }
   };
 
-  const handleLogout = () => {
-    localStorage.clear();
-    useAuthStore.setState({ isAuthenticated: false, token: null, user: null, company: null });
-    navigate('/login');
+  const handleLogout = async () => {
+    await logout();
+    navigate('/', { replace: true });
   };
 
   if (loading) return <LoadingSpinner message="Loading candidates..." />;
@@ -548,26 +630,27 @@ export default function CandidateHR() {
           {/* Page Title */}
           <div style={{ marginBottom: '24px' }}>
             <h1 style={{ fontSize: '22px', fontWeight: '800', color: '#0f172a', margin: 0 }}>Candidate Management</h1>
-            <p style={{ fontSize: '13px', color: '#64748b', marginTop: '4px' }}>View and manage all applicants across individual and group submissions.</p>
+            <p style={{ fontSize: '13px', color: '#64748b', marginTop: '4px' }}>View and manage all applicants across individual and team submissions.</p>
           </div>
 
           {/* Main Card */}
           <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02)' }}>
-            
+
             {/* Filters Bar */}
             <div style={{ padding: '16px 20px', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-              {/* Type Filter */}
+              {/* Type Filter — "Group" renamed to "Team" */}
               <div style={{ display: 'flex', gap: '6px' }}>
                 {[
                   { value: 'all',        label: 'All' },
                   { value: 'individual', label: 'Individual', icon: <IC.User /> },
-                  { value: 'group',      label: 'Group',      icon: <IC.Users /> },
+                  { value: 'group',      label: 'Team',       icon: <IC.Users /> },
                 ].map(({ value, label, icon }) => (
-                  <FilterChip key={value} label={
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                      {icon}{label}
-                    </span>
-                  } active={typeFilter === value} onClick={() => setTypeFilter(value)} />
+                  <FilterChip
+                    key={value}
+                    label={<span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>{icon}{label}</span>}
+                    active={typeFilter === value}
+                    onClick={() => setTypeFilter(value)}
+                  />
                 ))}
               </div>
 
@@ -598,8 +681,8 @@ export default function CandidateHR() {
               </div>
             </div>
 
-            {/* Table Header */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1.8fr 1fr 1fr 1.2fr 0.8fr 0.9fr', gap: '12px', padding: '10px 24px', background: '#fcfcfd', borderBottom: '1px solid #f1f5f9' }}>
+            {/* Table Header — columns updated to match narrower DOCUMENTS column */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1.8fr 1fr 0.8fr 1.2fr 0.8fr 0.9fr', gap: '12px', padding: '10px 24px', background: '#fcfcfd', borderBottom: '1px solid #f1f5f9' }}>
               {['CANDIDATE', 'UNIVERSITY', 'DOCUMENTS', 'NOTES', 'STATUS', 'ACTION'].map(h => (
                 <div key={h} style={{ fontSize: '10px', fontWeight: '700', color: '#94a3b8', letterSpacing: '0.05em' }}>{h}</div>
               ))}
@@ -625,23 +708,46 @@ export default function CandidateHR() {
         </main>
       </div>
 
-      {/* Modals */}
+      {/* ── Modals ── */}
       {detailCandidate && (
         <DetailModal candidate={detailCandidate} onClose={() => setDetailCandidate(null)} onViewDoc={viewDoc} />
       )}
-
       {notesCandidate && (
         <NotesModal candidate={notesCandidate} onClose={() => setNotesCandidate(null)} onSave={saveNotes} />
       )}
 
+      {/* Logout Modal — style matched to DashboardHR */}
       {showLogoutModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(10,22,40,0.5)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ background: '#fff', borderRadius: '16px', padding: '28px', width: '360px' }}>
-            <h3 style={{ margin: '0 0 8px 0', fontSize: '16px' }}>Sign Out?</h3>
-            <p style={{ margin: '0 0 24px 0', fontSize: '13px', color: '#64748b' }}>Are you sure you want to sign out?</p>
+          <div style={{
+            background: '#fff', borderRadius: '16px', padding: '28px', width: '360px',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.18)', fontFamily: "'Poppins','Segoe UI',sans-serif",
+          }}>
+            <div style={{ fontSize: '16px', fontWeight: '700', color: '#0f172a', marginBottom: '6px' }}>Sign Out?</div>
+            <div style={{ fontSize: '13px', color: '#64748b', lineHeight: 1.6, marginBottom: '24px' }}>
+              Are you sure you want to sign out from your HR account?
+            </div>
             <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-              <button onClick={() => setShowLogoutModal(false)} style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#fff', cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
-              <button onClick={handleLogout} style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', background: '#ef4444', color: '#fff', cursor: 'pointer', fontFamily: 'inherit' }}>Sign Out</button>
+              <button
+                onClick={() => setShowLogoutModal(false)}
+                style={{
+                  padding: '9px 18px', borderRadius: '10px', border: '1px solid #e2e8f0',
+                  background: '#fff', fontSize: '13px', fontWeight: '600', color: '#64748b',
+                  cursor: 'pointer', fontFamily: 'inherit',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleLogout}
+                style={{
+                  padding: '9px 18px', borderRadius: '10px', border: 'none',
+                  background: '#ef4444', fontSize: '13px', fontWeight: '700',
+                  color: '#fff', cursor: 'pointer', fontFamily: 'inherit',
+                }}
+              >
+                Yes, Sign Out
+              </button>
             </div>
           </div>
         </div>

@@ -5,7 +5,7 @@ import { getDashboardPathByRole } from "../../utils/roleUtils";
 export default function ActivateAccount() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const code = searchParams.get("code"); // ← ganti dari token ke code
+  const code = searchParams.get("code");
 
   const [invitation, setInvitation] = useState(null);
   const [company, setCompany] = useState(null);
@@ -27,7 +27,7 @@ export default function ActivateAccount() {
 
   useEffect(() => {
     if (!code) {
-      setCodeError("Kode undangan tidak ditemukan.");
+      setCodeError("Invitation code not found.");
       setCodeLoading(false);
       return;
     }
@@ -39,7 +39,7 @@ export default function ActivateAccount() {
           { headers: { Accept: "application/json" } }
         );
         const data = await response.json();
-        if (!response.ok) throw new Error(data.message || "Kode tidak valid");
+        if (!response.ok) throw new Error(data.message || "Invalid code");
         setInvitation(data.invitation);
         setCompany(data.invitation.company ?? { name: data.invitation.id_company });
       } catch (err) {
@@ -73,11 +73,11 @@ export default function ActivateAccount() {
     setErrorMsg("");
 
     if (form.password !== form.password_confirmation) {
-      setErrorMsg("Password tidak cocok");
+      setErrorMsg("Passwords do not match");
       return;
     }
     if (form.password.length < 8) {
-      setErrorMsg("Password minimal 8 karakter");
+      setErrorMsg("Password must be at least 8 characters long");
       return;
     }
 
@@ -100,7 +100,7 @@ export default function ActivateAccount() {
       });
 
       const data = await response.json();
-      if (!response.ok) throw new Error(data.message || "Aktivasi gagal");
+      if (!response.ok) throw new Error(data.message || "Activation failed");
 
       localStorage.setItem("auth_token", data.token);
       localStorage.setItem("hr_token", data.token);
@@ -142,7 +142,7 @@ export default function ActivateAccount() {
             <circle cx="12" cy="12" r="10" stroke="rgba(74,158,255,0.2)" strokeWidth="3" />
             <path d="M12 2a10 10 0 0110 10" stroke="#4a9eff" strokeWidth="3" strokeLinecap="round" />
           </svg>
-          <p className="text-sm" style={{ color: "rgba(255,255,255,0.4)" }}>Memverifikasi kode undangan...</p>
+          <p className="text-sm" style={{ color: "rgba(255,255,255,0.4)" }}>Verified invitation code...</p>
         </div>
       </div>
     );
@@ -163,7 +163,7 @@ export default function ActivateAccount() {
               </svg>
             </div>
           </div>
-          <h1 className="text-2xl font-bold text-white mb-2">Kode Tidak Valid</h1>
+          <h1 className="text-2xl font-bold text-white mb-2">Invalid Code</h1>
           <p className="text-sm mb-8" style={{ color: "rgba(255,255,255,0.4)" }}>{codeError}</p>
           <button onClick={() => navigate("/")}
             className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold text-white"
@@ -242,12 +242,12 @@ export default function ActivateAccount() {
               )}
             </div>
             <h1 className="text-2xl font-bold text-white mb-1" style={{ letterSpacing: "-0.3px" }}>
-              Buat Akun Kamu
+              Activate Your Account
             </h1>
             <p className="text-sm" style={{ color: "rgba(255,255,255,0.4)", maxWidth: "320px", margin: "0 auto" }}>
-              Kamu diundang oleh{" "}
+              You are invited by{" "}
               <span style={{ color: "#4a9eff" }}>{company?.name ?? "..."}</span>.
-              {" "}Lengkapi data berikut untuk mulai menggunakan EarlyPath.
+              {" "}Fill the following data to start using EarlyPath.
             </p>
           </div>
 
@@ -255,7 +255,7 @@ export default function ActivateAccount() {
           {invitation && (
             <div className="px-4 py-3 rounded-xl mb-6"
               style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>
-              <p className="text-xs mb-2" style={{ color: "rgba(255,255,255,0.35)" }}>Detail posisi kamu</p>
+              <p className="text-xs mb-2" style={{ color: "rgba(255,255,255,0.35)" }}>Position Details</p>
               <div className="flex flex-wrap gap-2">
                 {invitation.label && (
                   <span className="text-xs px-2.5 py-1 rounded-full"
@@ -295,8 +295,8 @@ export default function ActivateAccount() {
                   <path d="M8 12l3 3 5-5" stroke="#4caf50" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
                 <div>
-                  <p className="font-semibold text-base mb-1">Akun berhasil dibuat!</p>
-                  <p style={{ color: "rgba(129,199,132,0.75)", fontSize: "13px" }}>Mengarahkan ke dashboard...</p>
+                  <p className="font-semibold text-base mb-1">Account created successfully!</p>
+                  <p style={{ color: "rgba(129,199,132,0.75)", fontSize: "13px" }}>Redirecting to dashboard...</p>
                 </div>
               </div>
             </div>
@@ -372,7 +372,7 @@ export default function ActivateAccount() {
                     type={showPassword ? "text" : "password"}
                     value={form.password}
                     onChange={(e) => setForm({ ...form, password: e.target.value })}
-                    placeholder="Minimum 8 karakter"
+                    placeholder="Minimum 8 characters"
                     required
                     className="w-full px-4 py-3 pr-12 rounded-xl text-white placeholder-gray-500 outline-none transition-all duration-200"
                     style={inputBase}
@@ -419,7 +419,7 @@ export default function ActivateAccount() {
                     type={showConfirm ? "text" : "password"}
                     value={form.password_confirmation}
                     onChange={(e) => setForm({ ...form, password_confirmation: e.target.value })}
-                    placeholder="Ulangi password"
+                    placeholder="Re-enter password"
                     required
                     className="w-full px-4 py-3 pr-12 rounded-xl text-white placeholder-gray-500 outline-none transition-all duration-200"
                     style={inputBase}

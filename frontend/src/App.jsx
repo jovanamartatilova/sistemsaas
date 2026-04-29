@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useParams, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from './stores/authStore';
 import PrivateRoute from './components/PrivateRoute';
 
@@ -12,7 +12,6 @@ import ActivateAccount   from './pages/Auth/ActivateAccount';
 import Onboarding from "./components/OnboardingModal";
 
 // Candidate
-import SignUpCandidate          from './pages/Candidate/SignUpCandidate';
 import LoginCandidate           from './pages/Candidate/LoginCandidate';
 import ForgotPasswordCandidate  from './pages/Candidate/ForgotPasswordCandidate';
 import ResetPasswordCandidate   from './pages/Candidate/ResetPasswordCandidate';
@@ -62,6 +61,19 @@ import CertificateMentor  from './pages/Mentor/CertificateMentor';
 // Helper
 const Private = ({ children }) => <PrivateRoute>{children}</PrivateRoute>;
 
+const CandidateRegisterRedirect = () => {
+    const { idCompany } = useParams();
+    const [searchParams] = useSearchParams();
+    const vacancyId = searchParams.get('vacancy_id');
+    const positionId = searchParams.get('position_id');
+
+    if (vacancyId && positionId) {
+        return <Navigate to={`/c/${idCompany}/apply/${vacancyId}/${positionId}`} replace />;
+    }
+
+    return <Navigate to={`/c/${idCompany}/login`} replace />;
+};
+
 /** Redirect ke mentor dashboard jika role === 'mentor', selain itu tampilkan DashboardPage */
 const DashboardRouter = () => {
     const { user, company } = useAuthStore();
@@ -89,7 +101,7 @@ export default function App() {
 
                 {/* Company — Public */}
                 <Route path="/c/:idCompany"                   element={<CompanyPublicPage />} />
-                <Route path="/c/:idCompany/register"          element={<SignUpCandidate />} />
+                <Route path="/c/:idCompany/register"          element={<CandidateRegisterRedirect />} />
                 <Route path="/c/:idCompany/login"             element={<LoginCandidate />} />
                 <Route path="/c/:idCompany/forgot-password"   element={<ForgotPasswordCandidate />} />
                 <Route path="/c/:idCompany/reset-password"    element={<ResetPasswordCandidate />} />
