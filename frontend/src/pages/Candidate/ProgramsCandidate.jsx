@@ -84,9 +84,14 @@ function DiscoveryCard({ vacancy, onApply }) {
 
         <button
           onClick={() => onApply(vacancy)}
-          className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold shadow-md shadow-indigo-100 transition-all active:scale-95"
+          disabled={vacancy.hasApplied}
+          className={`w-full py-2.5 rounded-xl text-sm font-bold transition-all active:scale-95 ${
+            vacancy.hasApplied
+              ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+              : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-100'
+          }`}
         >
-          Apply Now
+          {vacancy.hasApplied ? 'Already Applied' : 'Apply Now'}
         </button>
       </div>
     </div>
@@ -313,11 +318,30 @@ export default function ProgramsPage() {
           setUserData(data.data || data);
         }
 
+        // Fetch user's previous submissions to check for duplicates
+        let userSubmissions = [];
+        try {
+          const submResp = await fetch(`${API_BASE_URL}/submissions`, {
+            headers: { "Authorization": `Bearer ${token}` },
+          });
+          if (submResp.ok) {
+            const submData = await submResp.json();
+            userSubmissions = submData.data || submData || [];
+          }
+        } catch (e) {
+          console.log("Could not fetch submissions");
+        }
+
         if (isDiscoveryMode) {
           const resp = await fetch(`${API_BASE_URL}/vacancies/public`);
           if (resp.ok) {
             const data = await resp.json();
-            setPublicVacancies(data || []);
+            // Mark vacancies the user has already applied to
+            const vacanciesWithStatus = (data || []).map(vacancy => ({
+              ...vacancy,
+              hasApplied: userSubmissions.some(sub => sub.id_vacancy === vacancy.id_vacancy)
+            }));
+            setPublicVacancies(vacanciesWithStatus);
           }
         } else {
           const progResp = await fetch(`${API_BASE_URL}/positions`, {

@@ -99,6 +99,21 @@ class User extends Authenticatable
         return $this->hasOne(Candidate::class, 'id_user', 'id_user');
     }
 
+    public function university()
+    {
+        return $this->belongsTo(University::class, 'id_university', 'id_university');
+    }
+
+    public function major()
+    {
+        return $this->belongsTo(Major::class, 'id_major', 'id_major');
+    }
+
+    public function team()
+    {
+        return $this->belongsTo(Team::class, 'id_team', 'id_team');
+    }
+
     /**
      * Get scoped role (leader or member) based on team membership
      * Returns: 'leader', 'member', or null if not in a team

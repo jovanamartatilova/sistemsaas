@@ -11,9 +11,9 @@ function ProfileContent({ userData, setUserData }) {
   const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
 
   const [formData, setFormData] = useState({
-    full_name: userData?.full_name || "",
+    full_name: userData?.name || "",
     email: userData?.email || "",
-    phone_number: userData?.phone_number || "",
+    phone_number: userData?.phone || "",
     university_name: userData?.university || "",
     major_name: userData?.major || "",
   });
@@ -21,19 +21,19 @@ function ProfileContent({ userData, setUserData }) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
   const [avatarFile, setAvatarFile] = useState(null);
-  const [avatarPreview, setAvatarPreview] = useState(userData?.profile_picture || null);
+  const [avatarPreview, setAvatarPreview] = useState(userData?.photo_url || null);
 
   // Sync formData ketika userData berubah
   useEffect(() => {
     if (userData) {
       setFormData({
-        full_name: userData?.full_name || "",
+        full_name: userData?.name || "",
         email: userData?.email || "",
-        phone_number: userData?.phone_number || "",
+        phone_number: userData?.phone || "",
         university_name: userData?.university || "",
         major_name: userData?.major || "",
       });
-      setAvatarPreview(userData?.profile_picture || null);
+      setAvatarPreview(userData?.photo_url || null);
     }
   }, [userData]);
 
@@ -68,14 +68,19 @@ function ProfileContent({ userData, setUserData }) {
         return;
       }
 
-      // Update profile
-      const profileResponse = await fetch(`${API_BASE_URL}/users/${userData?.id_user}`, {
+      // Update profile using /candidate/profile endpoint
+      const profileResponse = await fetch(`${API_BASE_URL}/candidate/profile`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`,
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          name: formData.full_name,
+          phone: formData.phone_number,
+          university_name: formData.university_name,
+          major_name: formData.major_name,
+        }),
       });
 
       if (!profileResponse.ok) {
@@ -86,9 +91,9 @@ function ProfileContent({ userData, setUserData }) {
       // Upload avatar jika ada
       if (avatarFile) {
         const formDataUpload = new FormData();
-        formDataUpload.append("avatar", avatarFile);
+        formDataUpload.append("photo", avatarFile);
 
-        const uploadResponse = await fetch(`${API_BASE_URL}/users/${userData?.id_user}/upload-avatar`, {
+        const uploadResponse = await fetch(`${API_BASE_URL}/candidate/profile/photo`, {
           method: "POST",
           headers: { "Authorization": `Bearer ${token}` },
           body: formDataUpload,
@@ -101,7 +106,7 @@ function ProfileContent({ userData, setUserData }) {
       }
 
       // Fetch data terbaru dari server
-      const refreshResponse = await fetch(`${API_BASE_URL}/users/me`, {
+      const refreshResponse = await fetch(`${API_BASE_URL}/candidate/profile`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -117,15 +122,15 @@ function ProfileContent({ userData, setUserData }) {
         localStorage.setItem("candidate_user", JSON.stringify(updatedUser));
 
         setFormData({
-          full_name: updatedUser?.full_name || "",
+          full_name: updatedUser?.name || "",
           email: updatedUser?.email || "",
-          phone_number: updatedUser?.phone_number || "",
+          phone_number: updatedUser?.phone || "",
           university_name: updatedUser?.university || "",
           major_name: updatedUser?.major || "",
         });
 
-        if (updatedUser?.profile_picture) {
-          setAvatarPreview(updatedUser.profile_picture);
+        if (updatedUser?.photo_url) {
+          setAvatarPreview(updatedUser.photo_url);
         }
       }
 
@@ -140,14 +145,14 @@ function ProfileContent({ userData, setUserData }) {
 
   const handleCancel = () => {
     setFormData({
-      full_name: userData?.full_name || "",
+      full_name: userData?.name || "",
       email: userData?.email || "",
-      phone_number: userData?.phone_number || "",
+      phone_number: userData?.phone || "",
       university_name: userData?.university || "",
       major_name: userData?.major || "",
     });
     setAvatarFile(null);
-    setAvatarPreview(userData?.profile_picture || null);
+    setAvatarPreview(userData?.photo_url || null);
     setMessage({ type: "", text: "" });
   };
 
@@ -364,7 +369,7 @@ export default function ProfileSettings() {
           return;
         }
 
-        const response = await fetch(`${API_BASE_URL}/users/me`, {
+        const response = await fetch(`${API_BASE_URL}/candidate/profile`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -432,8 +437,8 @@ export default function ProfileSettings() {
     return (
       <div className="min-h-screen bg-gray-50 flex">
         <SidebarCandidate 
-          userName={userData?.full_name} 
-          userPhoto={userData?.profile_picture}
+          userName={userData?.name} 
+          userPhoto={userData?.photo_url}
           company={JSON.parse(localStorage.getItem("company"))}
           onLogout={handleLogout} 
         />
@@ -463,8 +468,8 @@ export default function ProfileSettings() {
   return (
     <div className="min-h-screen bg-gray-50 flex">
       <SidebarCandidate 
-        userName={userData?.full_name} 
-        userPhoto={userData?.profile_picture}
+        userName={userData?.name} 
+        userPhoto={userData?.photo_url}
         company={JSON.parse(localStorage.getItem("company"))}
         onLogout={handleLogout} 
       />

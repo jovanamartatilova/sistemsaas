@@ -56,7 +56,6 @@ import CandidateHR from './pages/hr/CandidateHR';
 import DashboardMentor    from './pages/Mentor/DashboardMentor';
 import AssignTasksMentor  from './pages/Mentor/AssignTasksMentor';
 import InputScoreMentor   from './pages/Mentor/InputScoreMentor';
-import EvaluationMentor   from './pages/Mentor/EvaluationMentor';
 import CertificateMentor  from './pages/Mentor/CertificateMentor';
 
 // Helper
@@ -135,7 +134,6 @@ export default function App() {
                 <Route path="/mentor/dashboard"     element={<Private><DashboardMentor /></Private>} />
                 <Route path="/mentor/assign-tasks"   element={<Private><AssignTasksMentor /></Private>} />
                 <Route path="/mentor/input-score"    element={<Private><InputScoreMentor /></Private>} />
-                <Route path="/mentor/evaluation"     element={<Private><EvaluationMentor /></Private>} />
                 <Route path="/mentor/certificates"   element={<Private><CertificateMentor /></Private>} />
 
             </Routes>

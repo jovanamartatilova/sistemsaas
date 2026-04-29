@@ -64,10 +64,31 @@ export default function LeaderDashboard() {
   const [loading, setLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState(null);
   const [error, setError] = useState(null);
+  const [userPhoto, setUserPhoto] = useState(null);
 
   useEffect(() => {
     fetchLeaderData();
+    fetchUserProfile();
   }, []);
+
+  const fetchUserProfile = async () => {
+    try {
+      const token = localStorage.getItem("token") || localStorage.getItem("auth_token");
+      if (!token) return;
+
+      const res = await fetch(`${API_BASE_URL}/candidate/profile`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.data?.photo_url) {
+          setUserPhoto(data.data.photo_url);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch user profile:", err);
+    }
+  };
 
   const fetchLeaderData = async () => {
     try {
@@ -132,7 +153,7 @@ export default function LeaderDashboard() {
     return (
       <DashboardLayout
         userName={user?.name}
-        userPhoto={user?.photo}
+        userPhoto={userPhoto || user?.photo}
         company={company}
       >
         <LoadingSpinner />
@@ -143,7 +164,7 @@ export default function LeaderDashboard() {
   return (
     <DashboardLayout
       userName={user?.name}
-      userPhoto={user?.photo}
+      userPhoto={userPhoto || user?.photo}
       company={company}
     >
       <div className="space-y-8">
