@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Candidate;
 use App\Models\Company;
 use App\Models\Major;
 use App\Models\Position;
@@ -114,7 +115,7 @@ class SubmissionController extends Controller
                         DB::rollBack();
                         return response()->json(['success' => false, 'message' => 'Team code not found. Please make sure the code entered is valid for this program.'], 404);
                     }
-                    
+
                     // Verify that the team belongs to a submission for the exact same id_vacancy
                     $teamSubmission = Submission::where('id_team', $team->id_team)
                                     ->where('id_vacancy', $request->id_vacancy)
@@ -123,7 +124,7 @@ class SubmissionController extends Controller
                         DB::rollBack();
                         return response()->json(['success' => false, 'message' => 'Team code not found. Please make sure the code entered is valid for this program.'], 404);
                     }
-                    
+
                     $teamId = $team->id_team;
                 }
 
@@ -137,16 +138,28 @@ class SubmissionController extends Controller
                 ]);
             }
 
-            // 4. Update User Profile
+            // 4. Update User Profile & Candidate Profile
             $user->name = $request->name;
-            $user->id_university = $university->id_university;
-            $user->id_major = $major->id_major;
-            // ✅ Set the company from the vacancy being applied to
-            $user->id_company = $company->id_company;
-            if ($teamId) {
-                $user->id_team = $teamId;
-            }
             $user->save();
+
+            // Update Candidate record with university, major, company info
+            $candidate = Candidate::where('id_user', $user->id_user)->first();
+            if ($candidate) {
+                $candidate->institution = $request->university_name;
+                $candidate->major = $request->major_name;
+                $candidate->save();
+            } else {
+                // Create candidate record if it doesn't exist
+                Candidate::create([
+                    'id_candidate' => 'CND' . strtoupper(Str::random(9)),
+                    'id_user' => $user->id_user,
+                    'institution' => $request->university_name,
+                    'major' => $request->major_name,
+                ]);
+            }
+
+            // Store company reference in submission (not user table)
+            // Store team reference in submission (not user table)
 
             // 5. Upload Files
             $cvPath = $request->file('cv_file')->store('submissions/cv', 'public');

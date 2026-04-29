@@ -60,6 +60,11 @@ class Submission extends Model
         return $this->hasOne(Interview::class, 'id_submission', 'id_submission');
     }
 
+    public function interviews()
+    {
+        return $this->hasMany(Interview::class, 'id_submission', 'id_submission');
+    }
+
     public function payroll()
     {
         return $this->hasOne(Payroll::class, 'id_submission', 'id_submission');

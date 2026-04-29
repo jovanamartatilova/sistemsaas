@@ -5,6 +5,7 @@ import { useAuthStore } from "../../stores/authStore";
 import { useMentorStore } from "../../stores/mentorStore";
 import { SidebarMentor, MentorLoadingSpinner } from "../../components/SidebarMentor";
 import { onDataRefresh } from "../../utils/dataRefresh";
+import { LoadingSpinner } from "../../components/LoadingSpinner";
 
 
 // ─── STYLES ───────────────────────────────────────────────────────────────────
@@ -178,11 +179,31 @@ const handleExportCSV = (mode = "current") => {
   const avgScore = dashData?.average_score ?? 0;
   
   const statCards = [
-    { value: dashData?.total_interns ?? 0, label: "My Interns", badge: "Active", badgeBg: "#f5f3ff", badgeColor: "#7c3aed", sub: "Total active", barColor: "#8b5cf6", barWidth: "80%" },
-    { value: dashData?.needs_input ?? 0, label: "Needs Input", badge: "Action", badgeBg: "#ede9fe", badgeColor: "#6d28d9", sub: "Evaluation", barColor: "#a855f7", barWidth: "45%" },
-    { value: dashData?.interns_passed ?? 0, label: "Passed", badge: null, sub: "Recommended", barColor: "#22c55e", barWidth: "62%" },
-    { value: dashData?.ready_for_certificate ?? 0, label: "Ready for Certificate", badge: null, sub: "For issuance", barColor: "#06b6d4", barWidth: "50%" },
-  ];
+  {
+    value: dashData?.total_interns ?? 0, label: "My Interns", badge: "Active", badgeBg: "#f5f3ff", badgeColor: "#7c3aed", sub: "Total active",
+    barColors: ["#8b5cf6","#a78bfa","#c4b5fd","#8b5cf6","#a78bfa","#c4b5fd","#8b5cf6"],
+    iconBg: "#f5f3ff", iconColor: "#7c3aed",
+    icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+  },
+  {
+    value: dashData?.needs_input ?? 0, label: "Needs Input", badge: "Action", badgeBg: "#ede9fe", badgeColor: "#6d28d9", sub: "Evaluation",
+    barColors: ["#a855f7","#c084fc","#a855f7","#c084fc","#a855f7","#c084fc","#a855f7"],
+    iconBg: "#ede9fe", iconColor: "#6d28d9",
+    icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+  },
+  {
+    value: dashData?.interns_passed ?? 0, label: "Passed", badge: null, sub: "Recommended",
+    barColors: ["#22c55e","#4ade80","#22c55e","#4ade80","#22c55e","#4ade80","#22c55e"],
+    iconBg: "#f0fdf4", iconColor: "#16a34a",
+    icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+  },
+  {
+    value: dashData?.ready_for_certificate ?? 0, label: "Ready for Certificate", badge: null, sub: "For issuance",
+    barColors: ["#06b6d4","#22d3ee","#06b6d4","#22d3ee","#06b6d4","#22d3ee","#06b6d4"],
+    iconBg: "#ecfeff", iconColor: "#0891b2",
+    icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg>
+  },
+];
 
   if (loading) {
     return (
@@ -196,7 +217,7 @@ const handleExportCSV = (mode = "current") => {
             </div>
           </div>
           <div style={s.content}>
-            <p>Loading...</p>
+            <LoadingSpinner message="Loading Dashboard..." />
           </div>
         </main>
       </div>
@@ -245,18 +266,30 @@ const handleExportCSV = (mode = "current") => {
           <p style={s.subtitle}>Summary of your intern supervision today.</p>
 
           <div style={s.grid4}>
-            {statCards.map((c, i) => (
-              <div key={i} style={s.stat}>
-                <div style={s.statTop}>
-                  <span style={s.statLabel}>{c.label}</span>
-                  {c.badge && <span style={s.statBadge(c.badgeBg, c.badgeColor)}>{c.badge}</span>}
+          {statCards.map((c, i) => (
+            <div key={i} style={s.stat}>
+              {/* Top: icon + badge */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
+                <div style={{ width: "38px", height: "38px", borderRadius: "10px", background: c.iconBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px" }}>
+                  {c.icon}
                 </div>
-                <div style={s.statVal}>{c.value}</div>
-                <div style={s.statBar}><div style={s.statFill(c.barWidth, c.barColor)} /></div>
-                <div style={s.statSub}>{c.sub}</div>
+                {c.badge && <span style={s.statBadge(c.badgeBg, c.badgeColor)}>{c.badge}</span>}
               </div>
-            ))}
-          </div>
+              {/* Value */}
+              <div style={{ fontSize: "28px", fontWeight: "800", color: "#0f172a", letterSpacing: "-1px", marginTop: "4px" }}>{c.value}</div>
+              {/* Label */}
+              <div style={{ fontSize: "13px", color: "#64748b", fontWeight: "500" }}>{c.label}</div>
+              {/* Mini bar chart */}
+              <div style={{ display: "flex", gap: "3px", marginTop: "10px", alignItems: "flex-end", height: "28px" }}>
+                {c.barColors.map((clr, j) => (
+                  <div key={j} style={{ flex: 1, background: clr, borderRadius: "3px 3px 0 0", height: `${30 + Math.sin(j) * 20}%`, opacity: 0.4, minHeight: "4px" }} />
+                ))}
+              </div>
+              {/* Sub */}
+              <div style={{ fontSize: "11px", color: "#94a3b8", marginTop: "4px" }}>{c.sub}</div>
+            </div>
+          ))}
+        </div>
 
           <div style={s.card}>
             <div style={{...s.ch, flexDirection: "column", alignItems: "center", textAlign: "center", gap: "8px"}}>
@@ -385,7 +418,7 @@ const handleExportCSV = (mode = "current") => {
                     ) : (
                       recapInterns.filter(r => r.type === "Individual").slice(0, 4).map((row, i) => (
                         <tr key={i}>
-                          <td style={{...s.td, textAlign: "left"}}><span style={s.cname}>{row.name}</span></td>
+                          <td style={s.td}><span style={s.cname}>{row.name}</span></td>
                           <td style={s.td}>{row.position}</td>
                           <td style={s.td}>{row.program}</td>
                           <td style={s.td}>{row.period}</td>

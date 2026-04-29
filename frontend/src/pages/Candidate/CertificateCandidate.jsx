@@ -85,26 +85,16 @@ function LockedCertificateCard({ batch, company, progress }) {
           <p className="text-xs text-slate-400 mt-1">{batch}</p>
         </div>
 
-        {/* Progress */}
-        <div className="border-t border-slate-100 py-4 space-y-1.5">
-          <div className="flex justify-between text-xs text-slate-400">
-            <span>Internship Progress</span>
-            <span className="font-medium">{progress}%</span>
-          </div>
-          <div className="w-full bg-slate-100 rounded-full h-1.5">
-            <div
-              className="bg-indigo-400 h-1.5 rounded-full transition-all"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
+        {/* Progress - Removed per requirements */}
+        <div className="border-t border-slate-100 py-4">
+          <p className="text-xs text-slate-400 text-center">Not yet available</p>
         </div>
 
         {/* Locked button */}
-        <div className="border-t border-slate-100 pt-4 flex items-center justify-between">
-          <p className="text-xs text-slate-400">Not yet available</p>
+        <div className="border-t border-slate-100 pt-4">
           <button
             disabled
-            className="flex items-center gap-1.5 bg-slate-100 text-slate-400 text-xs font-semibold px-3 py-1.5 rounded-lg cursor-not-allowed"
+            className="w-full flex items-center justify-center gap-1.5 bg-slate-100 text-slate-400 text-xs font-semibold px-3 py-2 rounded-lg cursor-not-allowed"
           >
             <Lock size={11} />
             Locked

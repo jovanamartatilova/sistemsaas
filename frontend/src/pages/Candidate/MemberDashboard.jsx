@@ -300,8 +300,31 @@ export default function MemberDashboard() {
   const [loading, setLoading] = useState(true);
   const [tasks, setTasks] = useState([]);
   const [error, setError] = useState(null);
+  const [userPhoto, setUserPhoto] = useState(null);
 
-  useEffect(() => { fetchMemberTasks(); }, []);
+  useEffect(() => { 
+    fetchMemberTasks();
+    fetchUserProfile();
+  }, []);
+
+  const fetchUserProfile = async () => {
+    try {
+      const token = localStorage.getItem("token") || localStorage.getItem("auth_token");
+      if (!token) return;
+
+      const res = await fetch(`${API_BASE_URL}/candidate/profile`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.data?.photo_url) {
+          setUserPhoto(data.data.photo_url);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch user profile:", err);
+    }
+  };
 
   const fetchMemberTasks = async () => {
     try {
@@ -347,10 +370,10 @@ export default function MemberDashboard() {
     fetchMemberTasks();
   };
 
-  if (loading) return <DashboardLayout company={company}><LoadingSpinner /></DashboardLayout>;
+  if (loading) return <DashboardLayout company={company}><LoadingSpinner message="Loading My Tasks" /></DashboardLayout>;
 
   return (
-    <DashboardLayout userName={user?.name} userPhoto={user?.photo} company={company}>
+    <DashboardLayout userName={user?.name} userPhoto={userPhoto || user?.photo} company={company}>
       <div className="space-y-6 w-full text-left">
         <h1 className="text-2xl font-bold text-slate-900">My Tasks</h1>
         {error && <div className="p-4 bg-rose-50 text-rose-600 rounded-xl border border-rose-200">{error}</div>}
