@@ -248,7 +248,7 @@ export default function InputScoreMentor() {
       localStorage.clear();
       useAuthStore.setState({ isAuthenticated: false, mentor: null });
       setLogoutModal(false);
-      navigate("/login");
+      navigate("/", { replace: true });
     }
   };
 

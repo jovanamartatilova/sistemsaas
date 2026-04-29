@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { getDashboardPathByRole } from "../../utils/roleUtils";
 
 export default function ActivateAccount() {
   const navigate = useNavigate();
@@ -106,14 +107,14 @@ export default function ActivateAccount() {
       localStorage.setItem("user", JSON.stringify(data.user));
       localStorage.setItem("company", JSON.stringify(data.company));
 
+      const role = data.redirect_role || data.user?.role || data.invitation?.role?.name || invitation?.role?.name || invitation?.role_name || invitation?.assigned_role || data.role;
+      const companyId = data.company?.id_company ?? data.user?.id_company ?? company?.id_company;
+      const redirectPath = data.redirect_path || getDashboardPathByRole(role, companyId);
+
       setDone(true);
       setTimeout(() => {
-      const role = data.user.role;
-      if (role === 'hr') navigate('/hr/dashboard');
-      else if (role === 'mentor') navigate('/mentor/dashboard');
-      else if (role === 'admin') navigate('/admin/dashboard');
-      else navigate('/dashboard');
-  }, 2000);
+        navigate(redirectPath, { replace: true });
+      }, 2000);
     } catch (err) {
       setErrorMsg(err.message);
     } finally {

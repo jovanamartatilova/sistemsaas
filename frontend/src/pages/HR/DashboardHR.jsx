@@ -203,6 +203,7 @@ function LogoutModal({ onConfirm, onCancel }) {
 export default function DashboardHR() {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
+  const logout = useAuthStore((state) => state.logout);
 
   const [showLogout, setShowLogout] = useState(false);
   const [confirmAction, setConfirmAction] = useState(null);
@@ -250,10 +251,9 @@ export default function DashboardHR() {
   }, [search, statusFilter]);
 
   // ── Handlers ─────────────────────────────────────────────────────────────────
-  const handleLogout = () => {
-    localStorage.clear();
-    useAuthStore.setState({ isAuthenticated: false, token: null, user: null, company: null });
-    navigate("/login");
+  const handleLogout = async () => {
+    await logout();
+    navigate("/", { replace: true });
   };
 
   const executeAction = async () => {

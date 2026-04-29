@@ -57,3 +57,27 @@ export function debugUserRole(user, context = "") {
     is_independent: isIndependent(user),
   });
 }
+
+function normalizeRole(role) {
+  if (!role) return null;
+  return String(role).trim().toLowerCase().replace(/\s+/g, "_");
+}
+
+export function getDashboardPathByRole(role, companyId = null) {
+  const normalizedRole = normalizeRole(role);
+
+  if (normalizedRole === "mentor") return "/mentor/dashboard";
+  if (normalizedRole === "hr") return "/hr/dashboard";
+  if (normalizedRole === "admin" || normalizedRole === "super_admin" || normalizedRole === "superadmin") {
+    return "/dashboard";
+  }
+  if (normalizedRole === "candidate") {
+    return companyId ? `/c/${companyId}/dashboard` : "/candidate/dashboard";
+  }
+
+  return "/dashboard";
+}
+
+export function getLogoutRedirectPath() {
+  return "/";
+}

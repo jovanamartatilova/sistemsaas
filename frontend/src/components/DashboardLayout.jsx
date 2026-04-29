@@ -29,7 +29,7 @@ export default function DashboardLayout({
 
   const handleLogout = async () => {
     await logout();
-    navigate("/login");
+    navigate("/", { replace: true });
   };
 
   const handleLogoutClick = () => {

@@ -174,7 +174,7 @@ function CopiedToast({ show }) {
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function UserManagement() {
     const navigate = useNavigate();
-    const { logout, token } = useAuthStore();
+    const { logout, token, user: currentUser } = useAuthStore();
 
     const [company, setCompany] = useState(null);
     const [activeTab, setActiveTab] = useState("codes"); // 'codes' | 'staff'
@@ -304,7 +304,9 @@ export default function UserManagement() {
                 headers: { Authorization: `Bearer ${token}` }
             });
             fetchStaff();
-        } catch (err) { alert("Failed to remove user."); }
+        } catch (err) {
+            alert(err.response?.data?.message || "Failed to remove user.");
+        }
     };
 
     const closeModal = () => {
@@ -665,7 +667,11 @@ export default function UserManagement() {
                                                 {u.created_at ? new Date(u.created_at).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" }) : "—"}
                                             </td>
                                             <td style={{ padding: "14px 20px", textAlign: "right" }}>
-                                                <button onClick={() => handleDeleteStaff(u.id_user)} className="icon-btn-red"
+                                                <button
+                                                    onClick={() => handleDeleteStaff(u.id_user)}
+                                                    disabled={u.id_user === currentUser?.id_user}
+                                                    title={u.id_user === currentUser?.id_user ? "You cannot remove the account you are logged in with" : "Delete"}
+                                                    className="icon-btn-red"
                                                     style={{ width: "32px", height: "32px", borderRadius: "8px", border: "1px solid #fecaca", background: "#fff", color: "#fca5a5", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s" }}>
                                                     <IC.Trash />
                                                 </button>
@@ -851,7 +857,7 @@ export default function UserManagement() {
                         <div style={{ fontSize: "13px", color: "#64748b", lineHeight: 1.6, marginBottom: "20px" }}>Are you sure you want to sign out from your account?</div>
                         <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
                             <button onClick={() => setLogoutModalOpen(false)} style={{ padding: "10px 18px", borderRadius: "10px", border: "1px solid #e2e8f0", background: "#fff", fontSize: "13px", fontWeight: "700", color: "#64748b", cursor: "pointer", fontFamily: "'Poppins', sans-serif" }}>Cancel</button>
-                            <button onClick={() => { logout(); navigate("/login"); }} style={{ padding: "10px 18px", borderRadius: "10px", border: "none", background: "#ef4444", fontSize: "13px", fontWeight: "700", color: "#fff", cursor: "pointer", fontFamily: "'Poppins', sans-serif" }}>Yes, Sign Out</button>
+                            <button onClick={async () => { await logout(); navigate("/", { replace: true }); }} style={{ padding: "10px 18px", borderRadius: "10px", border: "none", background: "#ef4444", fontSize: "13px", fontWeight: "700", color: "#fff", cursor: "pointer", fontFamily: "'Poppins', sans-serif" }}>Yes, Sign Out</button>
                         </div>
                     </div>
                 </div>

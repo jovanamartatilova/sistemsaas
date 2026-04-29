@@ -53,9 +53,13 @@ export const authService = {
       const token = localStorage.getItem('auth_token');
       if (!token) {
         localStorage.removeItem('auth_token');
+        localStorage.removeItem('hr_token');
         localStorage.removeItem('company');
         localStorage.removeItem('user');
         localStorage.removeItem('candidate_user');
+        localStorage.removeItem('candidate_profile');
+        localStorage.removeItem('user_type');
+        localStorage.removeItem('is_new_user');
         return;
       }
 
@@ -70,9 +74,13 @@ export const authService = {
     } finally {
       // Always clear localStorage regardless of endpoint success/failure
       localStorage.removeItem('auth_token');
+      localStorage.removeItem('hr_token');
       localStorage.removeItem('company');
       localStorage.removeItem('user');
       localStorage.removeItem('candidate_user');
+      localStorage.removeItem('candidate_profile');
+      localStorage.removeItem('user_type');
+      localStorage.removeItem('is_new_user');
     }
   },
 

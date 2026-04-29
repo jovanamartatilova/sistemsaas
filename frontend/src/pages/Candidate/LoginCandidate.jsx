@@ -12,7 +12,11 @@ export default function LoginCandidate() {
 
     useEffect(() => {
         if (isAuthenticated && !authLoading) {
-            if (user?.role === "candidate") {
+            const storedUserType = localStorage.getItem("user_type");
+            const hasCandidateProfile = !!localStorage.getItem("candidate_profile");
+            const resolvedRole = user?.role || user?.user_type || storedUserType || (hasCandidateProfile ? "candidate" : null);
+
+            if (resolvedRole === "candidate" || resolvedRole === "apprentice") {
                 // For candidates: check if they have a company
                 // Priority: company.id_company (from response/localStorage) > user.id_company (from DB)
                 if (authCompany?.id_company) {

@@ -78,9 +78,29 @@ class AuthController extends Controller
                 return response()->json(['message' => 'Email or password is incorrect'], 401);
             }
 
-            $company = Company::where('email', $user->email)->first();
-            $userType = $company ? 'admin' : 'candidate';
-            $isNewUser = !$company;
+            $company = $user->company ?: $user->employee?->company ?: Company::where('email', $user->email)->first();
+            $role = strtolower((string) ($user->role ?? ''));
+
+            if (!$role) {
+                if ($company) {
+                    $role = 'admin';
+                } elseif ($user->candidate()->exists()) {
+                    $role = 'candidate';
+                } else {
+                    $role = 'candidate';
+                }
+            }
+
+            $redirectPath = match ($role) {
+                'mentor' => '/mentor/dashboard',
+                'hr' => '/hr/dashboard',
+                'super_admin', 'superadmin' => '/superadmin/dashboard',
+                'candidate' => '/candidate/dashboard',
+                'staff', 'admin' => '/dashboard',
+                default => '/dashboard',
+            };
+
+            $isNewUser = $role === 'candidate' && !$company && !$user->candidate()->exists();
 
             $token = $user->createToken('auth_token')->plainTextToken;
 
@@ -90,8 +110,13 @@ class AuthController extends Controller
                     'id_user' => $user->id_user,
                     'name' => $user->name,
                     'email' => $user->email,
+                    'role' => $role,
+                    'id_company' => $user->id_company,
                 ],
-                'user_type' => $userType,
+                'role' => $role,
+                'redirect_role' => $role,
+                'redirect_path' => $redirectPath,
+                'user_type' => $role,
                 'is_new_user' => $isNewUser,
                 'token' => $token,
             ];
@@ -344,7 +369,7 @@ $user->update(['role' => 'admin']);
     {
         $invitation = \App\Models\InvitationCode::where('code', $code)
             ->where('is_active', true)
-            ->with('company')
+            ->with(['company', 'role'])
             ->first();
 
         if (!$invitation) {
@@ -353,6 +378,7 @@ $user->update(['role' => 'admin']);
 
         return response()->json([
             'valid'      => true,
+            'redirect_role' => $invitation->role?->name,
             'invitation' => $invitation,
         ]);
     }
@@ -430,6 +456,14 @@ $user->update(['role' => 'admin']);
             return response()->json([
                 'message' => 'Account activated successfully.',
                 'token'   => $token,
+                'redirect_role' => $roleName,
+                'redirect_path' => $roleName === 'mentor'
+                    ? '/mentor/dashboard'
+                    : ($roleName === 'hr'
+                        ? '/hr/dashboard'
+                        : ($roleName === 'admin' || $roleName === 'super_admin' || $roleName === 'superadmin'
+                            ? '/dashboard'
+                            : '/candidate/dashboard')),
                 'user'    => [
                     'id_user'    => $user->id_user,
                     'name'       => $user->name,

@@ -58,6 +58,7 @@ export default function DashboardMentor() {
   const [tableLoading, setTableLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("individual");
   const [exportDropdown, setExportDropdown] = useState(false);
+  const logout = useAuthStore((state) => state.logout);
 
   // ─── USE MENTOR STORE (caching + smart fetching) ──────────────────────────
   const { mentor, dashData, interns, recapInterns, loading, error, fetchDashboard, fetchInterns, fetchRecapInterns, backgroundFetchDashboard } = useMentorStore();
@@ -104,21 +105,13 @@ useEffect(() => {
 
   const confirmLogout = async () => {
     try {
-      const token = localStorage.getItem("token");
-      if (token) {
-        await fetch("http://localhost:8000/api/auth/logout", {
-          method: "POST",
-          headers: { "Authorization": `Bearer ${token}` },
-        });
-      }
+      await logout();
     } catch (err) {
       console.error("Logout error:", err);
     } finally {
-      localStorage.clear();
       useMentorStore.setState({ mentor: null, dashData: null, interns: [], stats: null });
-      useAuthStore.setState({ isAuthenticated: false, token: null, user: null, company: null });
       setLogoutModal(false);
-      navigate("/login");
+      navigate("/", { replace: true });
     }
   };
 

@@ -255,7 +255,7 @@ export default function GenerateLoAHR() {
   const handleLogout = () => {
     localStorage.clear();
     useAuthStore.setState({ isAuthenticated: false, token: null, user: null, company: null });
-    navigate("/login");
+    navigate("/", { replace: true });
   };
 
   const handleGenerate = async (id) => {

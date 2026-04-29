@@ -277,7 +277,7 @@ export default function AssignMentorHR() {
   const handleLogout = () => {
     localStorage.clear();
     useAuthStore.setState({ isAuthenticated: false, token: null, user: null, company: null });
-    navigate("/login");
+    navigate("/", { replace: true });
   };
 
   const handleAutoAssign = async () => {
