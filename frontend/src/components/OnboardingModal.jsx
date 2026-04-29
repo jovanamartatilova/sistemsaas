@@ -361,7 +361,7 @@ export default function OnboardingModal({ isOpen, onClose }) {
                   onBlur={(e) => Object.assign(e.target.style, inputBase)}
                 />
                 <p className="text-xs mt-1.5" style={{ color: "rgba(255,255,255,0.3)" }}>
-                  Password khusus untuk login ke dashboard perusahaan
+                  A separate password for company dashboard login
                 </p>
               </div>
 

@@ -223,56 +223,33 @@ class CandidateController extends Controller
             $user = $request->user();
             $candidate = Candidate::where('id_user', $user->id_user)->first();
 
-            // Update user name if provided
-            if ($request->filled('name')) {
-                $user->name = $request->name;
-                $user->save();
-            }
-
-            // Update candidate fields (phone, institution, major, photo)
-            if ($candidate) {
-                if ($request->filled('phone')) {
-                    $candidate->phone = $request->phone;
-                }
-                if ($request->filled('university_name')) {
-                    $candidate->institution = $request->university_name;
-                }
-                if ($request->filled('major_name')) {
-                    $candidate->major = $request->major_name;
-                }
-                $candidate->save();
-            }
-
-            // Reload and return updated profile
-            $candidate = Candidate::where('id_user', $user->id_user)->first();
-            $user->refresh();
-
-            $phone = $candidate && $candidate->phone ? $candidate->phone : ($user->phone ?? null);
-            $photoPath = $candidate && $candidate->photo_path ? $candidate->photo_path : ($user->photo_path ?? null);
-            $universityName = $candidate && $candidate->institution ? $candidate->institution : null;
-            $majorName = $candidate && $candidate->major ? $candidate->major : null;
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Profile berhasil diperbarui',
-                'data' => [
-                    'id_user' => $user->id_user,
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'phone' => $phone,
-                    'photo_url' => $photoPath ? asset('storage/' . $photoPath) : null,
-                    'university' => $universityName,
-                    'major' => $majorName,
-                ],
-            ]);
-        } catch (\Exception $e) {
-            \Log::error('updateProfile error: ' . $e->getMessage() . ' | File: ' . $e->getFile() . ' | Line: ' . $e->getLine());
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to update profile',
-                'error' => $e->getMessage(),
-            ], 500);
+        $candidate = Candidate::firstOrNew(['id_user' => $user->id_user]);
+        if (!$candidate->exists) {
+            $candidate->id_candidate = 'CDT' . strtoupper(substr(uniqid(), -7));
         }
+
+        $user->fill($request->only(['name']));
+
+        if ($request->filled('phone')) {
+            $candidate->phone = $request->phone;
+        }
+
+        if ($request->filled('university_name')) {
+            $candidate->institution = $request->university_name;
+        }
+
+        if ($request->filled('major_name')) {
+            $candidate->major = $request->major_name;
+        }
+
+        $user->save();
+        $candidate->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Profile updated successfully',
+            'data' => $user->fresh(['candidate']),
+        ]);
     }
 
     /** POST /candidate/profile/photo */
@@ -384,39 +361,25 @@ class CandidateController extends Controller
     /** GET /api/users/me */
     public function getMe(Request $request)
     {
-        try {
-            $user = $request->user();
-            $candidate = Candidate::where('id_user', $user->id_user)->first();
+        $user = $request->user()->load(['candidate']);
+        $candidate = $user->candidate;
 
-            $phone = $candidate && $candidate->phone ? $candidate->phone : ($user->phone ?? '');
-            $institution = $candidate && $candidate->institution ? $candidate->institution : '';
-            $major = $candidate && $candidate->major ? $candidate->major : '';
-            $photoPath = $candidate && $candidate->photo_path ? $candidate->photo_path : ($user->photo_path ?? null);
-
-            return response()->json([
-                'success' => true,
-                'data' => [
-                    'id_user' => $user->id_user,
-                    'full_name' => $user->name,
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'phone_number' => $phone,
-                    'university' => $institution,
-                    'university_id' => '',
-                    'major' => $major,
-                    'major_id' => '',
-                    'profile_picture' => $photoPath ? asset('storage/' . $photoPath) : null,
-                    'role' => $user->role ?? 'Apprentice',
-                ]
-            ]);
-        } catch (\Exception $e) {
-            \Log::error('getMe error: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to load user data',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'id_user' => $user->id_user,
+                'full_name' => $user->name,
+                'name' => $user->name,
+                'email' => $user->email,
+                'phone_number' => $user->phone,
+                'university' => $candidate?->institution ?? '',
+                'university_id' => null,
+                'major' => $candidate?->major ?? '',
+                'major_id' => null,
+                'profile_picture' => $user->photo_path ? asset('storage/' . $user->photo_path) : null,
+                'role' => $user->role ?? 'Apprentice',
+            ]
+        ]);
     }
 
     /** PUT /api/users/{id_user} */
@@ -437,66 +400,50 @@ class CandidateController extends Controller
                 'major_name' => 'sometimes|string|max:100',
             ]);
 
-            // Update user fields (name, email)
-            $updateData = [];
-            if (isset($validated['full_name'])) {
-                $updateData['name'] = $validated['full_name'];
-            }
-            if (isset($validated['email'])) {
-                $updateData['email'] = $validated['email'];
-            }
-
-            if (!empty($updateData)) {
-                $user->update($updateData);
-            }
-
-            // Update candidate fields (phone, university/institution, major)
-            $candidate = Candidate::where('id_user', $user->id_user)->first();
-            if ($candidate) {
-                if (isset($validated['phone_number'])) {
-                    $candidate->phone = $validated['phone_number'];
-                }
-                if (!empty($validated['university_name'])) {
-                    $candidate->institution = $validated['university_name'];
-                }
-                if (!empty($validated['major_name'])) {
-                    $candidate->major = $validated['major_name'];
-                }
-                $candidate->save();
-            }
-
-            $user->refresh();
-            $candidate = Candidate::where('id_user', $user->id_user)->first();
-
-            $phone = $candidate && $candidate->phone ? $candidate->phone : ($user->phone ?? '');
-            $institution = $candidate && $candidate->institution ? $candidate->institution : '';
-            $major = $candidate && $candidate->major ? $candidate->major : '';
-            $photoPath = $candidate && $candidate->photo_path ? $candidate->photo_path : ($user->photo_path ?? null);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Profile updated successfully',
-                'data' => [
-                    'id_user' => $user->id_user,
-                    'full_name' => $user->name,
-                    'email' => $user->email,
-                    'phone_number' => $phone,
-                    'university' => $institution,
-                    'university_id' => '',
-                    'major' => $major,
-                    'major_id' => '',
-                    'profile_picture' => $photoPath ? asset('storage/' . $photoPath) : null,
-                    'role' => $user->role ?? 'Apprentice',
-                ]
-            ]);
-        } catch (\Exception $e) {
-            \Log::error('updateUser error: ' . $e->getMessage() . ' | File: ' . $e->getFile() . ' | Line: ' . $e->getLine());
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to update profile',
-                'error' => $e->getMessage(),
-            ], 500);
+        $candidate = Candidate::firstOrNew(['id_user' => $user->id_user]);
+        if (!$candidate->exists) {
+            $candidate->id_candidate = 'CDT' . strtoupper(substr(uniqid(), -7));
         }
+
+        if (isset($validated['full_name'])) {
+            $user->name = $validated['full_name'];
+        }
+        if (isset($validated['email'])) {
+            $user->email = $validated['email'];
+        }
+
+        if (isset($validated['phone_number'])) {
+            $candidate->phone = $validated['phone_number'];
+        }
+
+        if (!empty($validated['university_name'])) {
+            $candidate->institution = $validated['university_name'];
+        }
+
+        if (!empty($validated['major_name'])) {
+            $candidate->major = $validated['major_name'];
+        }
+
+        $user->save();
+        $candidate->save();
+        $user->load(['candidate']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Profile updated successfully',
+            'data' => [
+                'id_user' => $user->id_user,
+                'full_name' => $user->name,
+                'email' => $user->email,
+                'phone_number' => $user->candidate?->phone ?? '',
+                'university' => $user->candidate?->institution ?? '',
+                'university_id' => null,
+                'major' => $user->candidate?->major ?? '',
+                'major_id' => null,
+                'profile_picture' => $user->photo_path ? asset('storage/' . $user->photo_path) : null,
+                'role' => $user->role ?? 'Apprentice',
+            ]
+        ]);
     }
 
     /** POST /api/users/{id_user}/upload-avatar */

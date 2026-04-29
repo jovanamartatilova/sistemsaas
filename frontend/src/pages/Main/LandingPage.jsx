@@ -186,6 +186,18 @@ const formatDate = (dateStr) => {
 const VacancyDetailModal = ({ vacancy, onClose }) => {
   if (!vacancy) return null;
   const navigate = useNavigate();
+  const companyId = vacancy.company?.id_company || "";
+
+  const handleApply = (position) => {
+    if (!companyId || !position?.id_position) {
+      alert("Perusahaan belum lengkap profilnya.");
+      return;
+    }
+
+    onClose();
+    navigate(`/c/${companyId}/apply/${vacancy.id_vacancy}/${position.id_position}`);
+  };
+
   return (
     <div onClick={(e) => e.target === e.currentTarget && onClose()} style={{ position: "fixed", inset: 0, background: "rgba(10,22,40,0.85)", backdropFilter: "blur(8px)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
       <div style={{ background: "#0d1a28", borderRadius: "24px", width: "100%", maxWidth: "600px", maxHeight: "90vh", overflowY: "auto", position: "relative", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.08)" }}>
@@ -204,7 +216,15 @@ const VacancyDetailModal = ({ vacancy, onClose }) => {
               {(vacancy.positions || []).map((p, idx) => (
                 <div key={idx} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 12px", background: "rgba(255,255,255,0.03)", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.05)" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "15px", color: "rgba(255,255,255,0.8)" }}><IconDot /> <span>{p.name || p}</span></div>
-                  <span style={{ fontSize: "12px", fontWeight: "700", color: "#4a9eff", background: "rgba(74,158,255,0.1)", padding: "2px 8px", borderRadius: "6px" }}>{p.pivot?.quota || 0} Quota</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <span style={{ fontSize: "12px", fontWeight: "700", color: "#4a9eff", background: "rgba(74,158,255,0.1)", padding: "2px 8px", borderRadius: "6px" }}>{p.pivot?.quota || 0} Quota</span>
+                    <button
+                      onClick={() => handleApply(p)}
+                      style={{ padding: "7px 12px", borderRadius: "8px", border: "none", background: "linear-gradient(135deg, #2d7dd2 0%, #4a9eff 100%)", color: "#fff", fontSize: "12px", fontWeight: "700", cursor: "pointer", fontFamily: "inherit" }}
+                    >
+                      Apply
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -214,17 +234,14 @@ const VacancyDetailModal = ({ vacancy, onClose }) => {
             <div style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "14.5px", color: "rgba(255,255,255,0.5)", fontStyle: "italic" }}><IconCal /> <span>{formatDate(vacancy.start_date || vacancy.deadline)} - {formatDate(vacancy.end_date || vacancy.deadline)}</span></div>
             <div style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "14.5px", color: "#fb7185", fontWeight: "600" }}><IconDeadline /> <span>Pendaftaran Deadline: {formatDate(vacancy.deadline)}</span></div>
           </div>
-          <div style={{ display: "flex", gap: "10px", marginBottom: "40px" }}>
+          <div style={{ display: "flex", gap: "10px", marginBottom: "24px" }}>
             <span style={{ fontSize: "11px", fontWeight: "700", textTransform: "capitalize", padding: "6px 14px", borderRadius: "8px", background: "rgba(74,158,255,0.1)", color: "#4a9eff" }}>{vacancy.type}</span>
             <span style={{ fontSize: "12px", fontWeight: "700", textTransform: "capitalize", padding: "6px 14px", borderRadius: "8px", background: "rgba(16,185,129,0.1)", color: "#10b981" }}>{vacancy.payment_type}</span>
             <span style={{ fontSize: "11px", fontWeight: "700", background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.5)", padding: "6px 14px", borderRadius: "8px", marginLeft: "auto" }}>{vacancy.total_quota || 0} Total Quota</span>
           </div>
-          <button
-            onClick={() => { const companyId = vacancy.company?.id_company || ""; companyId ? navigate(`/c/${companyId}/register?vacancy_id=${vacancy.id_vacancy}`) : alert("Perusahaan belum lengkap profilnya."); }}
-            style={{ width: "100%", padding: "16px", background: "linear-gradient(135deg, #2d7dd2 0%, #4a9eff 100%)", border: "none", borderRadius: "12px", color: "#fff", fontSize: "16px", fontWeight: "700", cursor: "pointer", transition: "0.2s", boxShadow: "0 10px 15px -3px rgba(74,158,255,0.4)" }}
-            onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"}
-            onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}
-          >Daftar Sekarang</button>
+          <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.55)", lineHeight: "1.6", margin: 0 }}>
+            Pilih salah satu posisi di atas untuk lanjut ke submission form.
+          </p>
         </div>
       </div>
     </div>
@@ -913,7 +930,6 @@ export default function LandingPage() {
       <VacancyDetailModal
         vacancy={selectedVacancy}
         onClose={() => setSelectedVacancy(null)}
-        onApply={() => { setSelectedVacancy(null); navigate(`/register-applicant?vacancy_id=${selectedVacancy.id_vacancy}`); }}
       />
 
       {/* Responsive CSS */}

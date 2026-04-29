@@ -140,27 +140,23 @@ class SubmissionController extends Controller
 
             // 4. Update User Profile & Candidate Profile
             $user->name = $request->name;
+            // ✅ Set the company from the vacancy being applied to
+            $user->id_company = $company->id_company;
+            if ($teamId) {
+                $user->id_team = $teamId;
+            }
             $user->save();
 
-            // Update Candidate record with university, major, company info
-            $candidate = Candidate::where('id_user', $user->id_user)->first();
-            if ($candidate) {
-                $candidate->institution = $request->university_name;
-                $candidate->major = $request->major_name;
-                $candidate->save();
-            } else {
-                // Create candidate record if it doesn't exist
-                Candidate::create([
-                    'id_candidate' => 'CND' . strtoupper(Str::random(9)),
-                    'id_user' => $user->id_user,
-                    'institution' => $request->university_name,
-                    'major' => $request->major_name,
-                ]);
+            $candidate = Candidate::firstOrNew(['id_user' => $user->id_user]);
+            if (!$candidate->exists) {
+                $candidate->id_candidate = 'CDT' . strtoupper(Str::random(7));
             }
-
-            // Store company reference in submission (not user table)
-            // Store team reference in submission (not user table)
-
+            $candidate->phone = $candidate->phone ?? null;
+            $candidate->institution = $request->university_name;
+            $candidate->education_level = $candidate->education_level ?? null;
+            $candidate->major = $request->major_name;
+            $candidate->save();
+          
             // 5. Upload Files
             $cvPath = $request->file('cv_file')->store('submissions/cv', 'public');
             $coverLetterPath = $request->file('cover_letter_file')->store('submissions/cover_letters', 'public');

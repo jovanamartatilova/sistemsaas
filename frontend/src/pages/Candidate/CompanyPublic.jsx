@@ -120,7 +120,7 @@ const PositionDetailModal = ({ position, idCompany, isAuthenticated, onClose }) 
             <Chip label={`${position.pivot?.quota || 0} Quota`} color="#f59e0b" />
             <Chip label={`${vacancy.total_quota || 0} Total Quota`} color="#64748b" />
           </div>
-          <button onClick={() => { if (isAuthenticated) navigate(`/c/${idCompany}/apply/${vacancy.id_vacancy}/${position.id_position}`); else navigate(`/c/${idCompany}/register?vacancy_id=${vacancy.id_vacancy}&position_id=${position.id_position}`); }}
+          <button onClick={() => navigate(`/c/${idCompany}/apply/${vacancy.id_vacancy}/${position.id_position}`)}
             style={{ width: "100%", padding: 15, background: "linear-gradient(135deg,#1a5fc4,#2d7ff3)", border: "none", borderRadius: 12, color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer", boxShadow: "0 8px 20px rgba(45,127,243,0.35)", fontFamily: "'Poppins',sans-serif" }}>
             Apply Now
           </button>
