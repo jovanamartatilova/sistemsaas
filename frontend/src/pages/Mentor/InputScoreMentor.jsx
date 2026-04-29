@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { SidebarMentor } from "../../components/SidebarMentor";
+import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { mentorApi } from "../../api/mentorApi";
 import { useAuthStore } from "../../stores/authStore";
 import { broadcastDataRefresh, onDataRefresh } from "../../utils/dataRefresh";
@@ -16,7 +17,7 @@ const s = {
   content: { padding: "28px", flex: 1, overflowY: "auto" },
   h1: { fontSize: "22px", fontWeight: 700, color: "#0f172a", margin: 0 },
   subtitle: { fontSize: "13px", color: "#64748b", marginTop: "4px", marginBottom: "20px" },
-  layout: { display: "grid", gridTemplateColumns: "340px 1fr", gap: "0", minHeight: "calc(100vh - 120px)", alignItems: "start" },
+  layout: { display: "grid", gridTemplateColumns: "340px 1fr", gap: "16px", minHeight: "calc(100vh - 120px)", alignItems: "start" },
   card: { background: "#fff", borderRadius: "12px", border: "1px solid #e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,0.04)", overflow: "hidden" },
   ch: { padding: "18px 24px", borderBottom: "1px solid #f1f5f9" },
   ct: { fontSize: "15px", fontWeight: 700, color: "#0f172a" },
@@ -63,6 +64,11 @@ export default function InputScoreMentor() {
   const [error, setError] = useState(null);
   const [logoutModal, setLogoutModal] = useState(false);
   const [successModal, setSuccessModal] = useState(false);
+  const [evaluation, setEvaluation] = useState("");
+  const [generatingAll, setGeneratingAll] = useState(false);
+  const [generatingId, setGeneratingId] = useState(null);
+  const [certificateGenerated, setCertificateGenerated] = useState(false);
+  const [generatingCert, setGeneratingCert] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -98,61 +104,71 @@ export default function InputScoreMentor() {
     };
   }, []);
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const [profileRes, internsRes] = await Promise.all([
-        mentorApi.getProfile(),
-        mentorApi.getInterns(''),
-      ]);
-      
-      setMentor(profileRes.data);
-      setInterns(internsRes.data);
-      
-      // Filter to only unscored interns
+  const fetchData = async (skipAutoSelect = false) => {
+  try {
+    setLoading(true);
+    const [profileRes, internsRes] = await Promise.all([
+      mentorApi.getProfile(),
+      mentorApi.getInterns(''),
+    ]);
+    
+    setMentor(profileRes.data);
+    setInterns(internsRes.data);
+console.log('fetchData result:', internsRes.data);
+console.log('unscored count:', internsRes.data.filter(i => 
+  i.completed_competencies < i.total_competencies || i.total_competencies === 0
+).length);
+    
+    if (!skipAutoSelect) {
       const unscored = internsRes.data.filter(i => i.completed_competencies < i.total_competencies || i.total_competencies === 0);
       if (unscored.length > 0) {
         setSelectedSubmissionId(unscored[0].id_submission);
         setSelectedInternName(unscored[0].name);
         fetchCompetencies(unscored[0].id_submission);
       }
-    } catch (error) {
-      console.error('Error fetching data:', error);
-      setError('Failed to load data');
-    } finally {
-      setLoading(false);
     }
-  };
+  } catch (error) {
+    console.error('Error fetching data:', error);
+    setError('Failed to load data');
+  } finally {
+    setLoading(false);
+  }
+};
 
-  const fetchCompetencies = async (idSubmission) => {
-    try {
-      const res = await mentorApi.getCompetencies(idSubmission);
-      setCompetencies(res.data);
-      
-      const newScores = {};
-      res.data.forEach(comp => {
-        newScores[comp.id_competency] = {
-          score: comp.score,
-          hours_completed: comp.hours_completed,
-          status: comp.status || 'pending', // Ensure status always has a value
-          notes: comp.notes,
-        };
-      });
-      setScores(newScores);
-    } catch (error) {
-      console.error('Error fetching competencies:', error);
-    }
-  };
+    const fetchCompetencies = async (idSubmission) => {
+        try {
+          const res = await mentorApi.getCompetencies(idSubmission);
+          setCompetencies(res.data);
+          
+          const newScores = {};
+          res.data.forEach(comp => {
+            newScores[comp.id_competency] = {
+              score: comp.score,
+              hours_completed: comp.hours_completed,
+              status: comp.status || 'passed',
+              notes: comp.notes,
+              achievement_description: comp.achievement_description || '',
+              definition: comp.description || comp.definition || '',
+            };
+          });
+          setScores(newScores);
+          setCertificateGenerated(false);
+          setEvaluation('');
+        } catch (error) {
+          console.error('Error fetching competencies:', error);
+        }
+      };
 
   const handleInternChange = (idSubmission) => {
-    const selected = interns.find(i => i.id_submission === idSubmission);
-    if (selected) {
-      setSelectedSubmissionId(idSubmission);
-      setSelectedInternName(selected.name);
-      setScores({});
-      fetchCompetencies(idSubmission);
-    }
-  };
+  const selected = interns.find(i => i.id_submission === idSubmission);
+  if (selected) {
+    setSelectedSubmissionId(idSubmission);
+    setSelectedInternName(selected.name);
+    setScores({});
+    setEvaluation('');
+    fetchCompetencies(idSubmission);
+  }
+};
 
   const updateScore = (compId, field, value) => {
     setScores(prev => ({
@@ -183,15 +199,16 @@ export default function InputScoreMentor() {
         // If passed, use required hours; otherwise use existing hours_completed or 0
         const hoursCompleted = status === 'passed' ? comp.hours : (compScore?.hours_completed ?? 0);
         
-        return {
+      return {
           id_competency: comp.id_competency,
           score: compScore?.score,
           hours_completed: hoursCompleted,
           status: status,
           notes: compScore?.notes,
           achievement_description: compScore?.achievement_description ?? null,
+          definition: compScore?.definition ?? null,
         };
-      });
+    }); 
 
       console.log('DEBUG - Saving scores:', {
         idSubmission: selectedSubmissionId,
@@ -204,12 +221,25 @@ export default function InputScoreMentor() {
       const response = await mentorApi.inputScores(selectedSubmissionId, scoresArray);
       console.log('Save response:', response.data);
       
-      // Broadcast data refresh to notify dashboard and other pages
+      // Broadcast data refresh to notify both InputScore and Certificate pages
       broadcastDataRefresh('scores');
+      broadcastDataRefresh('certificate');
+
+      // Save evaluation with narrative and recommendation if provided
+      if (evaluation.trim()) {
+        try {
+          await mentorApi.saveEvaluation(selectedSubmissionId, {
+            narrative: evaluation.trim() || '',
+          });
+          console.log('Evaluation saved successfully');
+        } catch (evalErr) {
+          console.warn('Evaluation save failed:', evalErr.response?.data || evalErr.message);
+        }
+      }
       
       setSuccessModal(true);
-      // Refresh competencies to confirm save
       await fetchCompetencies(selectedSubmissionId);
+      await fetchData(true);
       setScores({});
     } catch (error) {
       console.error('Error saving scores:', error);
@@ -239,6 +269,61 @@ export default function InputScoreMentor() {
     }
   };
 
+  const generateAchievementDescription = async (compId) => {
+    const comp = competencies.find(c => c.id_competency === compId);
+    const sc = scores[compId];
+    if (!comp) return;
+    setGeneratingId(compId);
+    try {
+      const prompt = `You are an internship assessment assistant. Write a concise, professional achievement description (2-3 sentences) for an intern who completed the competency below.\n\nCompetency: ${comp.name}\nDefinition: ${sc?.definition || comp.definition || comp.description || 'Not specified'}\nScore: ${sc?.score ?? 'Not yet scored'}\nStatus: ${sc?.status ?? 'pending'}\nRequired hours: ${comp.hours}\n\nWrite a positive, specific, and factual achievement description in English. Do not include a score number. Keep it under 60 words.`;
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 200, messages: [{ role: "user", content: prompt }] }),
+      });
+      const data = await response.json();
+      const text = data.content?.find(b => b.type === 'text')?.text?.trim() || '';
+      if (text) updateScore(compId, 'achievement_description', text);
+    } catch (e) {
+      console.error('AI generation error:', e);
+    } finally {
+      setGeneratingId(null);
+    }
+  };
+
+  const generateAllDescriptions = async () => {
+    setGeneratingAll(true);
+    for (const comp of competencies) {
+      const sc = scores[comp.id_competency];
+      if (sc?.achievement_description) continue;
+      const prompt = `You are an internship assessment assistant. Write a concise, professional achievement description (2-3 sentences) for an intern who completed the competency below.\n\nCompetency: ${comp.name}\nDefinition: ${sc?.definition || comp.definition || comp.description || 'Not specified'}\nScore: ${sc?.score ?? 'Not yet scored'}\nStatus: ${sc?.status ?? 'pending'}\nRequired hours: ${comp.hours}\n\nWrite a positive, specific, and factual achievement description in English. Do not include a score number. Keep it under 60 words.`;
+      try {
+        const response = await fetch("https://api.anthropic.com/v1/messages", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 200, messages: [{ role: "user", content: prompt }] }),
+        });
+        const data = await response.json();
+        const text = data.content?.find(b => b.type === 'text')?.text?.trim() || '';
+        if (text) setScores(prev => ({ ...prev, [comp.id_competency]: { ...prev[comp.id_competency], achievement_description: text } }));
+      } catch {}
+      await new Promise(r => setTimeout(r, 300));
+    }
+    setGeneratingAll(false);
+  };
+
+  const handleGenerateCertificate = async () => {
+    setGeneratingCert(true);
+    try {
+      await mentorApi.generateCertificate?.(selectedSubmissionId);
+      setCertificateGenerated(true);
+    } catch (err) {
+      setError('Failed to generate certificate. Please save scores first.');
+    } finally {
+      setGeneratingCert(false);
+    }
+  };
+
   const handleLogoutClick = () => setLogoutModal(true);
 
   const confirmLogout = async () => {
@@ -253,15 +338,7 @@ export default function InputScoreMentor() {
   };
 
   const handleLogout = handleLogoutClick;
-
-  // Filter interns to only show those NOT fully scored and NOT already passed
-  const unScoredInterns = interns.filter(i => {
-    // Exclude if recommendation is "Recommended to Pass" (already evaluated/passed)
-    if (i.recommendation === "Recommended to Pass") return false;
-    // Include if not fully scored
-    return i.completed_competencies < i.total_competencies || i.total_competencies === 0;
-  });
-  
+  const unScoredInterns = interns;
   const selectedIntern = interns.find(i => i.id_submission === selectedSubmissionId);
   const scored = competencies.filter(c => scores[c.id_competency]?.score !== null && scores[c.id_competency]?.score !== undefined && scores[c.id_competency]?.score !== "");
   const avg = scored.length > 0 ? (scored.reduce((sum, c) => sum + Number(scores[c.id_competency].score), 0) / scored.length).toFixed(1) : null;
@@ -278,32 +355,7 @@ export default function InputScoreMentor() {
               <span style={s.bcActive}>Input Score</span>
             </div>
           </div>
-          <div style={s.content}><p>Loading...</p></div>
-        </main>
-      </div>
-    );
-  }
-
-  // Show empty state if no unscored interns
-  if (unScoredInterns.length === 0) {
-    return (
-      <div style={s.app}>
-        <SidebarMentor mentor={mentor} onLogout={handleLogout} />
-        <main style={s.main}>
-          <div style={s.topbar}>
-            <div style={s.bc}>
-              <span>Dashboard</span><span style={s.bcSep}>/</span>
-              <span>Assessment</span><span style={s.bcSep}>/</span>
-              <span style={s.bcActive}>Input Score</span>
-            </div>
-          </div>
-          <div style={s.content}>
-            <h1 style={s.h1}>Input Score</h1>
-            <p style={s.subtitle}>All assigned interns have been scored already.</p>
-            <div style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", color: "#166534", padding: "16px", borderRadius: "8px", marginTop: "16px" }}>
-              ✓ All interns have been scored. Check <Link to="/mentor/score-recap" style={{color: "#15803d", fontWeight: 600}}>Score Recap</Link> for details or <Link to="/mentor/evaluation" style={{color: "#15803d", fontWeight: 600}}>Evaluation</Link> to proceed.
-            </div>
-          </div>
+          <div style={s.content}><LoadingSpinner message="Loading Input Score ..." /></div>
         </main>
       </div>
     );
@@ -311,7 +363,7 @@ export default function InputScoreMentor() {
 
   return (
     <div style={s.app}>
-      <style>{`* { box-sizing: border-box; margin: 0; padding: 0; } ::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 99px; }`}</style>
+    <style>{`* { box-sizing: border-box; margin: 0; padding: 0; } ::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 99px; } @keyframes spin { to { transform: rotate(360deg); } } textarea:focus, input:focus, select:focus { border-color: #a78bfa !important; box-shadow: 0 0 0 3px rgba(139,92,246,0.08); }`}</style>
       <SidebarMentor mentor={mentor} onLogout={handleLogout} />
       <main style={s.main}>
         <div style={s.topbar}>
@@ -336,8 +388,8 @@ export default function InputScoreMentor() {
           {/* ── PANEL KIRI: Daftar Intern ── */}
           <div style={{ background: "#fff", borderRadius: "12px", border: "1px solid #e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,0.04)", display: "flex", flexDirection: "column", overflow: "hidden", position: "sticky", top: "80px" }}>
             <div style={{ padding: "18px 20px", borderBottom: "1px solid #f1f5f9" }}>
-              <div style={s.ct}>Daftar Intern</div>
-              <div style={{ ...s.cs, marginTop: "4px" }}>{unScoredInterns.length} intern belum dinilai</div>
+              <div style={s.ct}>Intern List</div>
+              <div style={{ ...s.cs, marginTop: "4px" }}>{unScoredInterns.length} interns</div>
             </div>
 
             {/* Search box */}
@@ -346,7 +398,7 @@ export default function InputScoreMentor() {
                 <svg style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                 <input
                   type="text"
-                  placeholder="Cari intern..."
+                  placeholder="Search intern..."
                   style={{ width: "100%", padding: "7px 10px 7px 32px", border: "1px solid #e2e8f0", borderRadius: "8px", fontSize: "12px", color: "#334155", background: "#f8fafc", outline: "none", fontFamily: "inherit", boxSizing: "border-box" }}
                   readOnly
                 />
@@ -383,7 +435,7 @@ export default function InputScoreMentor() {
                 {/* Name + position in one line each */}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: "12px", fontWeight: 700, color: isSelected ? "#7c3aed" : "#0f172a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{intern.name}</div>
-                  <div style={{ fontSize: "10px", color: "#94a3b8", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{intern.position} · {intern.completed_competencies}/{intern.total_competencies}</div>
+                <div style={{ fontSize: "10px", color: "#94a3b8", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{intern.position}</div>
                 </div>
 
                 {/* Scored check or pending dot */}
@@ -406,83 +458,94 @@ export default function InputScoreMentor() {
                 <div style={{ fontSize: "12px", color: "#64748b", marginTop: "4px" }}>{selectedIntern?.position}</div>
                 <div style={{ marginTop: "8px", display: "flex", alignItems: "center", gap: "8px" }}>
                   <span style={{ fontSize: "11px", fontWeight: 600, color: "#8b5cf6", background: "#ede9fe", padding: "3px 10px", borderRadius: "20px" }}>
-                    {competencies.filter(c => scores[c.id_competency]?.score !== null && scores[c.id_competency]?.score !== undefined && scores[c.id_competency]?.score !== "").length}/{competencies.length} kompetensi sudah dinilai
+                  {competencies.filter(c => scores[c.id_competency]?.score !== null && scores[c.id_competency]?.score !== undefined && scores[c.id_competency]?.score !== "").length}/{competencies.length} competencies scored
                   </span>
                   <span style={{ fontSize: "11px", color: "#94a3b8", background: selectedIntern?.type === "Team" ? "#dbeafe" : "#f1f5f9", color: selectedIntern?.type === "Team" ? "#1e40af" : "#64748b", padding: "3px 10px", borderRadius: "20px", fontWeight: 600 }}>{selectedIntern?.type}</span>
                 </div>
               </div>
               {avg !== null && (
                 <div style={{ textAlign: "right" }}>
-                  <div style={{ fontSize: "11px", color: "#94a3b8", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Nilai Akhir</div>
+                  <div style={{ fontSize: "11px", color: "#94a3b8", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Final Score</div>
                   <div style={{ fontSize: "28px", fontWeight: 800, color: "#8b5cf6", lineHeight: 1.1, marginTop: "4px" }}>{avg}</div>
                 </div>
               )}
             </div>
 
-            {/* Column headers */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 70px 80px 90px 80px 160px", alignItems: "center", padding: "10px 24px", gap: "10px", paddingBottom: "8px", paddingTop: "14px", background: "#f8fafc", borderBottom: "1px solid #e2e8f0" }}>
-              <div style={s.colLabel}>Competency</div>
-              <div style={s.colLabel}>Req. Hrs</div>
-              <div style={s.colLabel}>Score (0–100)</div>
-              <div style={s.colLabel}>Status</div>
-              <div style={s.colLabel}>Notes</div>
-              <div style={s.colLabel}>Achievement Description</div>
-            </div>
-            {/* Competency rows */}
-            <div style={{ overflowY: "auto", maxHeight: "calc(100vh - 340px)" }}>
+            {/* Competency Cards */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "0" }}>
               {competencies.map((comp, idx) => {
-                const sc = scores[comp.id_competency] || { score: "", status: "passed", notes: "", achievement_description: "" };
+                const sc = scores[comp.id_competency] || { score: "", status: "passed", notes: "", achievement_description: "", definition: "" };
                 const hasScore = sc.score !== null && sc.score !== undefined && sc.score !== "";
+                const isGenerating = generatingId === comp.id_competency;
                 return (
-                  <div key={comp.id_competency} style={{ ...s.compRow, background: hasScore ? "#fafffe" : "#fff" }}>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 70px 80px 90px 80px 160px", alignItems: "center", padding: "10px 24px", gap: "10px" }}>
+                  <div key={comp.id_competency} style={{ borderBottom: "1px solid #f1f5f9", padding: "20px 24px", background: hasScore ? "#fafffe" : "#fff" }}>
+                    {/* Comp title row */}
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "14px" }}>
                       <div>
-                        <div style={s.compLabel}>{idx + 1}. {comp.name}</div>
-                        <div style={s.compHrs}>Required {comp.hours} hrs</div>
+                        <div style={{ fontSize: "13px", fontWeight: 700, color: "#0f172a" }}>{idx + 1}. {comp.name}</div>
+                        <div style={{ fontSize: "11px", color: "#94a3b8", marginTop: "2px" }}>
+                          Range: 0.00 – 100.00{comp.weight ? ` (Weight: ${(comp.weight * 100).toFixed(0)}%)` : ''} • Estimated: {comp.hours} hrs
+                        </div>
                       </div>
-                      <div style={s.compHrs}>{comp.hours} hrs</div>
+                      {hasScore && (
+                        <div style={{ fontSize: "12px", fontWeight: 800, color: "#8b5cf6", flexShrink: 0 }}>
+                          {sc.score}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Score field */}
+                    <div style={{ marginBottom: "12px" }}>
+                      <div style={{ fontSize: "10px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "5px" }}>Score</div>
                       <input
-                        type="number" min="0" max="100" placeholder="0–100"
-                        style={{ ...s.fieldInput, border: hasScore ? "1px solid #a7f3d0" : "1px solid #e2e8f0", background: hasScore ? "#f0fdf4" : "#f8fafc" }}
+                        type="number" min="0" max="100" placeholder="0 – 100"
+                        style={{ ...s.fieldInput, maxWidth: "180px", border: hasScore ? "1px solid #a7f3d0" : "1px solid #e2e8f0", background: hasScore ? "#f0fdf4" : "#f8fafc" }}
                         value={sc.score ?? ""}
                         onChange={(e) => updateScore(comp.id_competency, "score", e.target.value === "" ? null : Number(e.target.value))}
                       />
-                      <select
-                        style={{ ...s.fieldSelect, color: sc.status === "passed" ? "#16a34a" : "#dc2626", background: sc.status === "passed" ? "#f0fdf4" : "#fef2f2", border: sc.status === "passed" ? "1px solid #a7f3d0" : "1px solid #fecaca" }}
-                        value={sc.status}
-                        onChange={(e) => updateScore(comp.id_competency, "status", e.target.value)}
-                      >
-                        <option value="passed">Passed</option>
-                        <option value="failed">Failed</option>
-                      </select>
-                      <input
-                        type="text" placeholder="Optional note..."
-                        style={s.fieldInput}
-                        value={sc.notes || ""}
-                        onChange={(e) => updateScore(comp.id_competency, "notes", e.target.value)}
-                      />
+                    </div>
 
-                      {/* Achievement Description — ready for AI integration */}
+                    {/* Competency Definition — editable */}
+                    <div style={{ marginBottom: "12px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "5px" }}>
+                        <div style={{ fontSize: "10px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>Competency Definition</div>
+                        <span style={{ fontSize: "10px", color: "#94a3b8", fontStyle: "italic" }}>(from position data, can be edited)</span>
+                      </div>
+                      <textarea
+                        rows={2}
+                        placeholder="Competency definition..."
+                        style={{ ...s.fieldInput, resize: "vertical", lineHeight: "1.6", minHeight: "56px" }}
+                        value={sc.definition ?? (comp.definition || comp.description || "")}
+                        onChange={(e) => updateScore(comp.id_competency, "definition", e.target.value)}
+                      />
+                    </div>
+
+                    {/* Achievement Description */}
+                    <div>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "5px" }}>
+                        <div style={{ fontSize: "10px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>Achievement Description</div>
+                        <span style={{ fontSize: "10px", color: "#94a3b8", fontStyle: "italic" }}>(can be generated by AI or typed manually)</span>
+                      </div>
                       <div style={{ position: "relative" }}>
                         <textarea
-                          placeholder="Describe achievement..."
-                          rows={2}
-                          style={{ ...s.fieldInput, resize: "none", lineHeight: "1.4", paddingRight: "26px", height: "52px", overflowY: "auto" }}
+                          placeholder="Describe what the intern achieved in this competency..."
+                          rows={3}
+                          style={{ ...s.fieldInput, resize: "vertical", lineHeight: "1.6", minHeight: "72px", paddingRight: "34px" }}
                           value={sc.achievement_description || ""}
                           onChange={(e) => updateScore(comp.id_competency, "achievement_description", e.target.value)}
                         />
-                        {/* AI generate button placeholder */}
                         <button
                           title="Generate with AI"
-                          style={{ position: "absolute", right: "4px", bottom: "6px", width: "20px", height: "20px", border: "none", background: "transparent", cursor: "pointer", padding: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "#8b5cf6", borderRadius: "4px" }}
-                          onClick={() => {/* AI integration hook goes here */}}
+                          style={{ position: "absolute", right: "8px", top: "8px", width: "24px", height: "24px", border: "1px solid #ede9fe", background: isGenerating ? "#ede9fe" : "#faf5ff", cursor: isGenerating ? "not-allowed" : "pointer", padding: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "#8b5cf6", borderRadius: "6px" }}
+                          onClick={() => generateAchievementDescription(comp.id_competency)}
+                          disabled={isGenerating}
                         >
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
-                          </svg>
+                          {isGenerating
+                            ? <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: "spin 1s linear infinite" }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                            : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
+                          }
                         </button>
                       </div>
-
                     </div>
                   </div>
                 );
@@ -494,32 +557,91 @@ export default function InputScoreMentor() {
              <div style={{ padding: "16px 24px 12px", borderBottom: "1px solid #f1f5f9" }}>
               <div style={{ fontSize: "13px", fontWeight: 700, color: "#0f172a" }}>Assessment Summary</div>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0", borderBottom: "1px solid #f1f5f9" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0", borderBottom: "1px solid #f1f5f9" }}>
               <div style={{ padding: "16px 24px", borderRight: "1px solid #f1f5f9" }}>
                 <div style={{ fontSize: "11px", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>Average Score</div>
                 <div style={{ fontSize: "24px", fontWeight: 800, color: "#3b82f6", marginTop: "4px" }}>{avg ?? "—"}</div>
                 <div style={{ fontSize: "11px", color: "#94a3b8" }}>from {competencies.length} competencies</div>
               </div>
-              <div style={{ padding: "16px 24px", borderRight: "1px solid #f1f5f9" }}>
-                <div style={{ fontSize: "11px", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>Total Required Hours</div>
+              <div style={{ padding: "16px 24px" }}>
+                <div style={{ fontSize: "11px", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>Total Work Hours</div>
                 <div style={{ fontSize: "24px", fontWeight: 800, color: "#22c55e", marginTop: "4px" }}>
                   {competencies.reduce((sum, c) => sum + (c.hours || 0), 0)}
                 </div>
                 <div style={{ fontSize: "11px", color: "#94a3b8" }}>hours</div>
               </div>
-              <div style={{ padding: "16px 24px" }}>
-                <div style={{ fontSize: "11px", fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>Scored</div>
-                <div style={{ fontSize: "24px", fontWeight: 800, color: "#8b5cf6", marginTop: "4px" }}>{scored.length}/{competencies.length}</div>
-                <div style={{ fontSize: "11px", color: "#94a3b8" }}>competencies</div>
-              </div>
             </div>
-            <div style={{ ...s.avgFooter, justifyContent: "flex-end", gap: "10px" }}>
-              <div style={{ flex: 1 }}>
-                <div style={s.avgNote}>{scored.length}/{competencies.length} competencies filled in</div>
+
+{/* Evaluation Notes */}
+            <div style={{ padding: "16px 24px", borderBottom: "1px solid #f1f5f9" }}>
+              <div style={{ fontSize: "13px", fontWeight: 700, color: "#0f172a", marginBottom: "2px" }}>Evaluation</div>
+              <div style={{ fontSize: "11px", color: "#94a3b8", marginBottom: "8px" }}>Overall evaluation and feedback for this intern's performance</div>
+              <textarea
+                placeholder="Write your overall evaluation for this intern (e.g., the intern showed significant progress in team collaboration...)"
+                style={{ ...s.fieldInput, resize: "vertical", lineHeight: "1.6", minHeight: "80px", width: "100%", marginBottom: "16px" }}
+                value={evaluation}
+                onChange={(e) => setEvaluation(e.target.value)}
+              />
+            </div>
+
+            {/* Action buttons */}
+            <div style={{ padding: "16px 24px", display: "flex", flexDirection: "column", gap: "12px" }}>
+              {/* Row 1: Generate All AI */}
+              <div>
+                <button
+                  style={{ padding: "10px 20px", background: "#f0fdf4", color: "#16a34a", border: "1px solid #bbf7d0", borderRadius: "8px", fontSize: "13px", fontWeight: 700, cursor: generatingAll ? "not-allowed" : "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: "8px", opacity: generatingAll ? 0.7 : 1 }}
+                  onClick={generateAllDescriptions}
+                  disabled={generatingAll}
+                >
+                  {generatingAll
+                    ? <><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: "spin 1s linear infinite" }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Generating...</>
+                    : <><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg> Generate All Achievement Descriptions with AI</>
+                  }
+                </button>
+                <div style={{ fontSize: "11px", color: "#94a3b8", marginTop: "5px" }}>Click to generate achievement descriptions for all competencies at once</div>
               </div>
-              <button style={s.btnSave} onClick={handleSave} disabled={saving}>
-                {saving ? 'Saving...' : 'Save All Scores'}
-              </button>
+
+              {/* Row 2: Save + Certificate */}
+              <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                <button
+                  style={{ padding: "10px 22px", background: "#1e293b", color: "#fff", border: "none", borderRadius: "8px", fontSize: "13px", fontWeight: 700, cursor: saving ? "not-allowed" : "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: "8px", opacity: saving ? 0.7 : 1 }}
+                  onClick={handleSave}
+                  disabled={saving}
+                >
+                  {saving
+                    ? <><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: "spin 1s linear infinite" }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Saving...</>
+                    : <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save Assessment</>
+                  }
+                </button>
+
+                {certificateGenerated ? (
+                  <>
+                    <div style={{ padding: "10px 18px", background: "#f0fdf4", color: "#16a34a", border: "1px solid #bbf7d0", borderRadius: "8px", fontSize: "13px", fontWeight: 700, display: "flex", alignItems: "center", gap: "7px" }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                      Certificate Created
+                    </div>
+                    <button
+                      style={{ padding: "10px 18px", background: "#fff", color: "#334155", border: "1px solid #e2e8f0", borderRadius: "8px", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: "7px" }}
+                      onClick={handleGenerateCertificate}
+                      disabled={generatingCert}
+                    >
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.51"/></svg>
+                      Re-generate
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    style={{ padding: "10px 22px", background: "#8b5cf6", color: "#fff", border: "none", borderRadius: "8px", fontSize: "13px", fontWeight: 700, cursor: generatingCert ? "not-allowed" : "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: "8px", opacity: generatingCert ? 0.7 : 1 }}
+                    onClick={handleGenerateCertificate}
+                    disabled={generatingCert}
+                  >
+                    {generatingCert
+                      ? <><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: "spin 1s linear infinite" }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Generating...</>
+                      : <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg> Generate Certificate</>
+                    }
+                  </button>
+                )}
+              </div>
             </div>
             </div>
           </div>

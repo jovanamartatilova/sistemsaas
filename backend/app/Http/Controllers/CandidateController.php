@@ -35,6 +35,9 @@ class CandidateController extends Controller
                 \Log::warning('Could not load relationships: ' . $e->getMessage());
             }
 
+            // Load candidate profile for photo and other fields
+            $candidate = Candidate::where('id_user', $user->id_user)->first();
+
             $submission = null;
             if (isset($user->id_user)) {
                 $submission = Submission::where('id_user', $user->id_user)
@@ -68,6 +71,9 @@ class CandidateController extends Controller
 
             $overallProgress = 0;
 
+            // Prefer candidate photo if available
+            $photoPath = $candidate && $candidate->photo_path ? $candidate->photo_path : ($user->photo_path ?? null);
+
             return response()->json([
                 'success' => true,
                 'data' => [
@@ -76,9 +82,10 @@ class CandidateController extends Controller
                         'name' => $user->name ?? 'User',
                         'email' => $user->email ?? '',
                         'phone' => $user->phone ?? '',
-                        'photo_url' => (isset($user->photo_path) && $user->photo_path)
-                            ? asset('storage/' . $user->photo_path)
+                        'photo_url' => $photoPath
+                            ? asset('storage/' . $photoPath)
                             : null,
+                        'photo_path' => $photoPath,
                         'university' => '-',
                         'major' => '-',
                         'overall_progress' => $overallProgress,
@@ -137,47 +144,69 @@ class CandidateController extends Controller
     /** GET /candidate/profile */
     public function getProfile(Request $request)
     {
-        $user = $request->user()->load(['university', 'major', 'team', 'submissions.vacancy']);
+        try {
+            $user = $request->user();
 
-        // Check if user has any submissions
-        $hasSubmissions = $user->submissions->count() > 0;
-        $company = null;
+            // prefer candidate table fields when available
+            $candidate = Candidate::where('id_user', $user->id_user)->first();
 
-        // Only include company if user has submissions
-        if ($hasSubmissions && $user->id_company) {
-            $company = Company::find($user->id_company);
+            // eager load submissions and team only
+            try {
+                $user->load(['submissions.vacancy', 'team']);
+            } catch (\Exception $e) {
+                \Log::warning('Could not eager load submissions/team: ' . $e->getMessage());
+            }
+
+            // Check if user has any submissions
+            $hasSubmissions = $user->submissions->count() > 0;
+            $company = null;
+
+            if ($hasSubmissions && $user->id_company) {
+                $company = Company::find($user->id_company);
+            }
+
+            $submissions = $user->submissions->map(fn($s) => [
+                'id_submission' => $s->id_submission,
+                'vacancy' => $s->vacancy?->description,
+                'status' => $s->status,
+                'submitted_at' => $s->submitted_at,
+                'cv_url' => ($s->cv_file ? asset('storage/' . $s->cv_file) : null),
+                'portfolio_url' => ($s->portfolio_file ? asset('storage/' . $s->portfolio_file) : null),
+            ])->toArray();
+
+            // derive profile fields preferring candidate record
+            $phone = $candidate && $candidate->phone ? $candidate->phone : ($user->phone ?? null);
+            $photoPath = $candidate && $candidate->photo_path ? $candidate->photo_path : ($user->photo_path ?? null);
+            $universityName = $candidate && $candidate->institution ? $candidate->institution : ($user->university?->name ?? null);
+            $majorName = $candidate && $candidate->major ? $candidate->major : ($user->major?->name ?? null);
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'id_user' => $user->id_user,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'phone' => $phone,
+                    'photo_url' => $photoPath ? asset('storage/' . $photoPath) : null,
+                    'university' => $universityName,
+                    'major' => $majorName,
+                    'team' => $user->team?->name,
+                    'company' => $company ? [
+                        'id_company' => $company->id_company,
+                        'name' => $company->name,
+                    ] : null,
+                    'has_submissions' => $hasSubmissions,
+                    'submissions' => $submissions,
+                ],
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('getProfile error: ' . $e->getMessage() . ' | File: ' . $e->getFile() . ' | Line: ' . $e->getLine());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load profile',
+                'error' => $e->getMessage(),
+            ], 500);
         }
-
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'id_user' => $user->id_user,
-                'name' => $user->name,
-                'email' => $user->email,
-                'phone' => $user->phone,
-                'photo_url' => $user->photo_path
-                    ? asset('storage/' . $user->photo_path)
-                    : null,
-                'university' => $user->university?->name,
-                'major' => $user->major?->name,
-                'team' => $user->team?->name,
-                'company' => $company ? [
-                    'id_company' => $company->id_company,
-                    'name' => $company->name,
-                ] : null,
-                'has_submissions' => $hasSubmissions,
-                'submissions' => $user->submissions->map(fn($s) => [
-                    'id_submission' => $s->id_submission,
-                    'vacancy' => $s->vacancy?->description,
-                    'status' => $s->status,
-                    'submitted_at' => $s->submitted_at,
-                    'cv_url' => asset('storage/' . $s->cv_file),
-                    'portfolio_url' => $s->portfolio_file
-                        ? asset('storage/' . $s->portfolio_file)
-                        : null,
-                ]),
-            ],
-        ]);
     }
 
     /** PUT /candidate/profile */
@@ -190,7 +219,9 @@ class CandidateController extends Controller
             'major_name' => 'sometimes|string|max:100',
         ]);
 
-        $user = $request->user();
+        try {
+            $user = $request->user();
+            $candidate = Candidate::where('id_user', $user->id_user)->first();
 
         $candidate = Candidate::firstOrNew(['id_user' => $user->id_user]);
         if (!$candidate->exists) {
@@ -216,7 +247,7 @@ class CandidateController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Profile berhasil diperbarui',
+            'message' => 'Profile updated successfully',
             'data' => $user->fresh(['candidate']),
         ]);
     }
@@ -228,17 +259,34 @@ class CandidateController extends Controller
             'photo' => 'required|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
-        $user = $request->user();
-        $path = $request->file('photo')->store('candidates/photos', 'public');
+        try {
+            $user = $request->user();
+            $candidate = Candidate::where('id_user', $user->id_user)->first();
 
-        $user->photo_path = $path;
-        $user->save();
+            if (!$candidate) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Candidate profile not found',
+                ], 404);
+            }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Foto profil berhasil diupload',
-            'photo_url' => asset('storage/' . $path),
-        ]);
+            $path = $request->file('photo')->store('candidates/photos', 'public');
+            $candidate->photo_path = $path;
+            $candidate->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Foto profil berhasil diupload',
+                'photo_url' => asset('storage/' . $path),
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('uploadPhoto error: ' . $e->getMessage() . ' | File: ' . $e->getFile() . ' | Line: ' . $e->getLine());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to upload photo',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     // ═══════════════════════════════════════════════════
@@ -337,19 +385,20 @@ class CandidateController extends Controller
     /** PUT /api/users/{id_user} */
     public function updateUser(Request $request, string $id_user)
     {
-        $user = $request->user();
+        try {
+            $user = $request->user();
 
-        if ($user->id_user !== $id_user) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
-        }
+            if ($user->id_user !== $id_user) {
+                return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+            }
 
-        $validated = $request->validate([
-            'full_name' => 'sometimes|string|max:100',
-            'email' => 'sometimes|email|unique:users,email,' . $id_user . ',id_user',
-            'phone_number' => 'sometimes|string|max:20',
-            'university_name' => 'sometimes|string|max:100',  // ← ganti dari city
-            'major_name' => 'sometimes|string|max:100',  // ← ganti dari education_level
-        ]);
+            $validated = $request->validate([
+                'full_name' => 'sometimes|string|max:100',
+                'email' => 'sometimes|email|unique:users,email,' . $id_user . ',id_user',
+                'phone_number' => 'sometimes|string|max:20',
+                'university_name' => 'sometimes|string|max:100',
+                'major_name' => 'sometimes|string|max:100',
+            ]);
 
         $candidate = Candidate::firstOrNew(['id_user' => $user->id_user]);
         if (!$candidate->exists) {
@@ -400,26 +449,46 @@ class CandidateController extends Controller
     /** POST /api/users/{id_user}/upload-avatar */
     public function uploadAvatar(Request $request, string $id_user)
     {
-        $user = $request->user();
+        try {
+            $user = $request->user();
 
-        if ($user->id_user !== $id_user) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+            if ($user->id_user !== $id_user) {
+                return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+            }
+
+            $request->validate(['avatar' => 'required|image|mimes:jpeg,png,jpg|max:2048']);
+
+            $candidate = Candidate::where('id_user', $user->id_user)->first();
+
+            if (!$candidate) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Candidate profile not found',
+                ], 404);
+            }
+
+            // Delete old avatar if exists
+            if ($candidate->photo_path) {
+                \Storage::disk('public')->delete($candidate->photo_path);
+            }
+
+            $path = $request->file('avatar')->store('candidates/avatars', 'public');
+            $candidate->photo_path = $path;
+            $candidate->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Avatar uploaded successfully',
+                'profile_picture' => asset('storage/' . $path),
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('uploadAvatar error: ' . $e->getMessage() . ' | File: ' . $e->getFile() . ' | Line: ' . $e->getLine());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to upload avatar',
+                'error' => $e->getMessage(),
+            ], 500);
         }
-
-        $request->validate(['avatar' => 'required|image|mimes:jpeg,png,jpg|max:2048']);
-
-        if ($user->photo_path) {
-            \Storage::disk('public')->delete($user->photo_path);
-        }
-
-        $path = $request->file('avatar')->store('candidates/avatars', 'public');
-        $user->update(['photo_path' => $path]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Avatar uploaded successfully',
-            'profile_picture' => $user->photo_path ? asset('storage/' . $user->photo_path) : null,
-        ]);
     }
 
     public function getPositions(Request $request)

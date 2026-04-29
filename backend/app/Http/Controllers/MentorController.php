@@ -223,6 +223,7 @@ class MentorController extends Controller
             return [
                 'id_competency' => $comp->id_competency,
                 'name' => $comp->name,
+                'description' => $comp->description ?? null,
                 'hours' => $comp->learning_hours,
                 'score' => $score ? $score['score'] : null,
                 'hours_completed' => $score ? $score['hours_completed'] : null,
@@ -498,6 +499,8 @@ class MentorController extends Controller
             'competency_names' => $competencyNames,
             'hours' => "$totalHours hrs",
             'avg' => $avgScore,
+            'score' => $avgScore,
+            'id_submission' => $sub->id_submission,
             'status' => $status,
             'statusBg' => $statusBg,
             'statusColor' => $statusColor,
@@ -524,7 +527,6 @@ class MentorController extends Controller
 
         return response()->json([
             'narrative' => $submission->narrative ?? '',
-            'recommendation' => $submission->recommendation ?? 'Recommended to Pass',
             'status' => $submission->evaluation_status ?? 'draft',
         ]);
     }
@@ -533,47 +535,31 @@ class MentorController extends Controller
      * Save/update evaluation
      */
     public function saveEvaluation(Request $request, $idSubmission)
-    {
-        $request->validate([
-            'narrative' => 'required|string',
-            'recommendation' => 'required|in:Recommended to Pass,Not Recommended,Extension Required',
-        ]);
+{
+    $request->validate([
+        'narrative' => 'required|string',
+    ]);
+    $submission->update([
+        'narrative' => $request->narrative,
+        'evaluation_status' => 'reviewed',
+    ]);
 
-        $mentorId = $request->user()->id_user;
-
-        // Verify submission belongs to this mentor
-        $submission = Submission::where('id_submission', $idSubmission)
-            ->where('id_user_mentor', $mentorId)
-            ->firstOrFail();
-
-        // Update submission with evaluation data
-        $submission->update([
+    if ($assessment) {
+        $assessment->update([
             'narrative' => $request->narrative,
-            'recommendation' => $request->recommendation,
             'evaluation_status' => 'reviewed',
         ]);
-
-        // Also save/update Assessment record with evaluation data
-        $assessment = Assessment::where('id_submission', $idSubmission)->first();
-        if ($assessment) {
-            $assessment->update([
-                'narrative' => $request->narrative,
-                'recommendation' => $request->recommendation,
-                'evaluation_status' => 'reviewed',
-            ]);
-        } else {
-            // Create new assessment record if doesn't exist
-            Assessment::create([
-                'id_assessment' => (string) Str::uuid(),
-                'id_submission' => $idSubmission,
-                'id_user' => $submission->id_user,
-                'id_user_mentor' => $mentorId,
-                'narrative' => $request->narrative,
-                'recommendation' => $request->recommendation,
-                'evaluation_status' => 'reviewed',
-                'scores_data' => [], // Empty array, will be populated by scores submission
-            ]);
-        }
+    } else {
+        Assessment::create([
+            'id_assessment' => (string) Str::uuid(),
+            'id_submission' => $idSubmission,
+            'id_user' => $submission->id_user,
+            'id_user_mentor' => $mentorId,
+            'narrative' => $request->narrative,
+            'evaluation_status' => 'reviewed',
+            'scores_data' => [],
+        ]);
+    }
 
         return response()->json(['message' => 'Evaluation saved successfully']);
     }
@@ -619,8 +605,32 @@ class MentorController extends Controller
         $certificates = $submissions->map(function ($sub) {
             $assessment = $sub->assessment;
             $scoresData = $assessment->scores_data ?? [];
-            $scores = array_filter($scoresData, fn($s) => $s['score'] !== null);
-            $avgScore = count($scores) > 0 ? round(array_sum(array_column($scores, 'score')) / count($scores), 1) : null;
+            $completedScores = array_filter($scoresData, fn($s) => $s['score'] !== null);
+            $avgScore = count($completedScores) > 0
+                ? round(array_sum(array_column($completedScores, 'score')) / count($completedScores), 1)
+                : null;
+            $scoredCount = count($completedScores);
+            $totalComps = count($scoresData);
+
+            // Get competency names and total hours
+            $competencyIds = array_column($scoresData, 'id_competency');
+            $competenciesFromDb = !empty($competencyIds)
+                ? \DB::table('competencies')
+                    ->whereIn('id_competency', $competencyIds)
+                    ->select('id_competency', 'name', 'learning_hours')
+                    ->get()
+                    ->keyBy('id_competency')
+                : collect();
+
+            $competencyNames = $competenciesFromDb->pluck('name')->toArray();
+
+            $totalHours = 0;
+            foreach ($scoresData as $score) {
+                if (($score['status'] === 'passed' || $score['status'] === 'failed') && !empty($score['id_competency'])) {
+                    $comp = $competenciesFromDb->get($score['id_competency']);
+                    $totalHours += $comp ? $comp->learning_hours : ($score['learning_hours'] ?? 0);
+                }
+            }
 
             $status = ($avgScore !== null && $avgScore >= 75) ? 'Passed' : 'Not Passed';
             $statusBg = $status === 'Passed' ? '#dcfce7' : '#fecaca';
@@ -653,6 +663,8 @@ class MentorController extends Controller
                 'competency_names' => $competencyNames,
                 'hours' => "$totalHours hrs",
                 'avg' => $avgScore,
+                'score' => $avgScore,
+                'id_submission' => $sub->id_submission,
                 'status' => $status,
                 'statusBg' => $statusBg,
                 'statusColor' => $statusColor,

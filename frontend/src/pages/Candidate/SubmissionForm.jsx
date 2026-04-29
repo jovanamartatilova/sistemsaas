@@ -314,7 +314,7 @@ export default function SubmissionForm() {
 
             {/* ── 1. Informasi Pribadi ── */}
             <div>
-              <h3 style={{ fontSize: 16, fontWeight: 700, color: "#0f172a", margin: "0 0 16px", paddingBottom: 10, borderBottom: "1px solid #e2e8f0" }}>1. Informasi Pelamar</h3>
+              <h3 style={{ fontSize: 16, fontWeight: 700, color: "#0f172a", margin: "0 0 16px", paddingBottom: 10, borderBottom: "1px solid #e2e8f0" }}>1. Applicant Information</h3>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
                 <div>
                   <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#475569", marginBottom: 6 }}>Name <span style={{ color: "#ef4444" }}>*</span></label>

@@ -115,7 +115,7 @@ class SubmissionController extends Controller
                         DB::rollBack();
                         return response()->json(['success' => false, 'message' => 'Team code not found. Please make sure the code entered is valid for this program.'], 404);
                     }
-                    
+
                     // Verify that the team belongs to a submission for the exact same id_vacancy
                     $teamSubmission = Submission::where('id_team', $team->id_team)
                                     ->where('id_vacancy', $request->id_vacancy)
@@ -124,7 +124,7 @@ class SubmissionController extends Controller
                         DB::rollBack();
                         return response()->json(['success' => false, 'message' => 'Team code not found. Please make sure the code entered is valid for this program.'], 404);
                     }
-                    
+
                     $teamId = $team->id_team;
                 }
 
@@ -138,7 +138,7 @@ class SubmissionController extends Controller
                 ]);
             }
 
-            // 4. Update User Profile
+            // 4. Update User Profile & Candidate Profile
             $user->name = $request->name;
             // ✅ Set the company from the vacancy being applied to
             $user->id_company = $company->id_company;
@@ -156,7 +156,7 @@ class SubmissionController extends Controller
             $candidate->education_level = $candidate->education_level ?? null;
             $candidate->major = $request->major_name;
             $candidate->save();
-
+          
             // 5. Upload Files
             $cvPath = $request->file('cv_file')->store('submissions/cv', 'public');
             $coverLetterPath = $request->file('cover_letter_file')->store('submissions/cover_letters', 'public');
