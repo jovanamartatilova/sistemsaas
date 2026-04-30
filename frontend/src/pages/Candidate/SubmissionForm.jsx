@@ -1,7 +1,219 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore";
 
+/* ─── Searchable Dropdown ─────────────────────────────────────── */
+function SearchableSelect({ options = [], value, onChange, placeholder = "Search & select…", required }) {
+  const [query, setQuery] = useState("");
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  const selected = options.find((o) => o.value === value);
+  const filtered = options.filter((o) =>
+    o.label.toLowerCase().includes(query.toLowerCase())
+  );
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  return (
+    <div ref={ref} style={{ position: "relative", width: "100%" }}>
+      <button
+        type="button"
+        onClick={() => setOpen((p) => !p)}
+        style={{
+          width: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "11px 14px",
+          background: "#fff",
+          border: open ? "1.5px solid #1a56db" : "1.5px solid #d1d5db",
+          borderRadius: 10,
+          fontSize: 14,
+          color: selected ? "#111827" : "#9ca3af",
+          cursor: "pointer",
+          fontFamily: "inherit",
+          transition: "border 0.15s",
+          textAlign: "left",
+        }}
+      >
+        <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {selected ? selected.label : placeholder}
+        </span>
+        <svg
+          width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+          style={{ flexShrink: 0, transform: open ? "rotate(180deg)" : "rotate(0)", transition: "transform 0.2s" }}
+        >
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </button>
+
+      {open && (
+        <div style={{
+          position: "absolute", top: "calc(100% + 6px)", left: 0, right: 0, zIndex: 200,
+          background: "#fff", border: "1.5px solid #e5e7eb", borderRadius: 12,
+          boxShadow: "0 10px 40px rgba(0,0,0,0.12)", overflow: "hidden",
+          animation: "dropIn 0.12s ease",
+        }}>
+          <style>{`@keyframes dropIn { from { opacity:0; transform:translateY(-6px) } to { opacity:1; transform:translateY(0) } }`}</style>
+          <div style={{ padding: "10px 10px 6px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, background: "#f9fafb", border: "1px solid #e5e7eb", borderRadius: 8, padding: "7px 10px" }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input
+                autoFocus
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search role…"
+                style={{ border: "none", background: "none", outline: "none", fontSize: 13, color: "#111827", width: "100%", fontFamily: "inherit" }}
+              />
+            </div>
+          </div>
+          <div style={{ maxHeight: 220, overflowY: "auto", padding: "4px 6px 8px" }}>
+            {filtered.length === 0 ? (
+              <div style={{ padding: "12px 10px", textAlign: "center", color: "#9ca3af", fontSize: 13 }}>No results found</div>
+            ) : filtered.map((o) => (
+              <button
+                key={o.value}
+                type="button"
+                onClick={() => { onChange(o.value); setOpen(false); setQuery(""); }}
+                style={{
+                  width: "100%", textAlign: "left", padding: "9px 12px", border: "none",
+                  borderRadius: 8, cursor: "pointer", fontSize: 13.5, fontFamily: "inherit",
+                  background: value === o.value ? "#eff6ff" : "transparent",
+                  color: value === o.value ? "#1a56db" : "#374151",
+                  fontWeight: value === o.value ? 600 : 400,
+                  display: "flex", alignItems: "center", justifyContent: "space-between",
+                  transition: "background 0.1s",
+                }}
+                onMouseEnter={(e) => { if (value !== o.value) e.currentTarget.style.background = "#f9fafb"; }}
+                onMouseLeave={(e) => { if (value !== o.value) e.currentTarget.style.background = "transparent"; }}
+              >
+                {o.label}
+                {value === o.value && (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1a56db" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─── File Upload Card ───────────────────────────────────────── */
+function FileCard({ label, name, required, hint, value, error, onChange }) {
+  return (
+    <div style={{
+      background: value ? "#f0fdf4" : "#fafafa",
+      border: `1.5px dashed ${error ? "#f87171" : value ? "#86efac" : "#d1d5db"}`,
+      borderRadius: 12, padding: "16px 18px",
+      transition: "all 0.2s",
+    }}>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: hint ? 6 : 10 }}>
+        <div>
+          <span style={{ fontSize: 13.5, fontWeight: 700, color: "#111827" }}>{label}</span>
+          {required && <span style={{ color: "#ef4444", marginLeft: 3 }}>*</span>}
+        </div>
+        <span style={{ fontSize: 11, color: "#9ca3af", fontWeight: 500, flexShrink: 0, marginLeft: 8 }}>PDF · Max 2 MB</span>
+      </div>
+      {hint && <p style={{ fontSize: 12, color: "#6b7280", margin: "0 0 10px", lineHeight: 1.5 }}>{hint}</p>}
+
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <input type="file" name={name} id={`file-${name}`} onChange={onChange} accept=".pdf" style={{ display: "none" }} />
+        <label
+          htmlFor={`file-${name}`}
+          style={{
+            display: "inline-flex", alignItems: "center", gap: 6,
+            padding: "7px 14px", borderRadius: 8, cursor: "pointer",
+            background: value ? "#dcfce7" : "#fff",
+            border: `1px solid ${value ? "#86efac" : "#e5e7eb"}`,
+            fontSize: 12.5, fontWeight: 600,
+            color: value ? "#16a34a" : "#374151",
+            transition: "all 0.15s",
+          }}
+        >
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          {value ? "Replace" : "Choose File"}
+        </label>
+        {value && <span style={{ fontSize: 12, color: "#16a34a", fontWeight: 600 }}>✓ {value.name}</span>}
+      </div>
+      {error && <p style={{ margin: "6px 0 0", fontSize: 12, color: "#ef4444", fontWeight: 600 }}>⚠ {error}</p>}
+    </div>
+  );
+}
+
+/* ─── Step Indicator ─────────────────────────────────────────── */
+function StepIndicator({ current, steps }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 0, marginBottom: 36 }}>
+      {steps.map((s, i) => (
+        <div key={i} style={{ display: "flex", alignItems: "center", flex: i < steps.length - 1 ? 1 : "none" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+            <div style={{
+              width: 28, height: 28, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
+              background: i < current ? "#1a56db" : i === current ? "#1a56db" : "#f3f4f6",
+              color: i <= current ? "#fff" : "#9ca3af",
+              fontSize: 12, fontWeight: 700, transition: "all 0.3s",
+              boxShadow: i === current ? "0 0 0 4px rgba(26,86,219,0.15)" : "none",
+            }}>
+              {i < current ? <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg> : i + 1}
+            </div>
+            <span style={{ fontSize: 12, fontWeight: i === current ? 700 : 500, color: i === current ? "#1a56db" : i < current ? "#374151" : "#9ca3af", whiteSpace: "nowrap" }}>{s}</span>
+          </div>
+          {i < steps.length - 1 && (
+            <div style={{ flex: 1, height: 2, background: i < current ? "#1a56db" : "#e5e7eb", margin: "0 12px", transition: "background 0.3s", minWidth: 20 }} />
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ─── Section Wrapper ────────────────────────────────────────── */
+function Section({ num, title, children }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <div style={{
+          width: 30, height: 30, borderRadius: 8, background: "linear-gradient(135deg,#1a56db,#3b82f6)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: 13, fontWeight: 800, color: "#fff", flexShrink: 0,
+        }}>{num}</div>
+        <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: "#111827", letterSpacing: "-0.2px" }}>{title}</h3>
+      </div>
+      <div style={{ paddingLeft: 0 }}>{children}</div>
+    </div>
+  );
+}
+
+/* ─── Input Field ────────────────────────────────────────────── */
+function Field({ label, required, children, hint }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+      <label style={{ fontSize: 12.5, fontWeight: 600, color: "#374151" }}>
+        {label}{required && <span style={{ color: "#ef4444", marginLeft: 3 }}>*</span>}
+      </label>
+      {children}
+      {hint && <p style={{ margin: 0, fontSize: 11.5, color: "#9ca3af" }}>{hint}</p>}
+    </div>
+  );
+}
+
+const inputStyle = {
+  width: "100%", padding: "11px 14px", fontSize: 14, color: "#111827",
+  background: "#fff", border: "1.5px solid #d1d5db", borderRadius: 10,
+  outline: "none", fontFamily: "inherit", transition: "border 0.15s", boxSizing: "border-box",
+};
+
+/* ─── Main Component ──────────────────────────────────────────── */
 export default function SubmissionForm() {
   const { idCompany, vacancyId, positionId } = useParams();
   const navigate = useNavigate();
@@ -9,18 +221,16 @@ export default function SubmissionForm() {
 
   const [company, setCompany] = useState(null);
   const [vacancy, setVacancy] = useState(null);
-  const [positionName, setPositionName] = useState("");
+  const [positions, setPositions] = useState([]);   // all positions in this vacancy
   const [loading, setLoading] = useState(true);
+  const [step, setStep] = useState(0); // 0 = personal, 1 = documents, 2 = info
 
   const [form, setForm] = useState({
     name: "",
     email: "",
     university_name: "",
     major_name: "",
-    apply_as: "", // blank by default
-    team_name: "",
-    team_code: "",
-    team_role: "", // 'leader' atau 'member'
+    id_position: positionId || "",  // searchable dropdown
     cv_file: null,
     cover_letter_file: null,
     institution_letter_file: null,
@@ -34,95 +244,103 @@ export default function SubmissionForm() {
   const [successMsg, setSuccessMsg] = useState("");
   const [fileErrors, setFileErrors] = useState({});
 
+  /* Pre-fill name from auth */
   useEffect(() => {
-    // If user's name is available but form.name is empty, set it
-    if (user?.name && !form.name) {
-      setForm((prev) => ({ ...prev, name: user.name }));
-    }
+    if (user?.name && !form.name) setForm((p) => ({ ...p, name: user.name }));
   }, [user]);
 
-  // ✅ Check authentication on mount
+  /* Auth guard */
   useEffect(() => {
     if (!authLoading && !token) {
-      // Redirect to login if not authenticated
-      const timer = setTimeout(() => {
-        navigate(`/c/${idCompany}/login`);
-      }, 1500);
-      return () => clearTimeout(timer);
+      const t = setTimeout(() => navigate(`/c/${idCompany}/login`), 1500);
+      return () => clearTimeout(t);
     }
-  }, [token, authLoading, idCompany, navigate]);
+  }, [token, authLoading]);
 
+  /* Fetch data */
   useEffect(() => {
-    let isMounted = true;
-
-    const fetchData = async () => {
+    let alive = true;
+    (async () => {
       try {
-        if (isMounted) { setLoading(true); setErrorMsg(""); }
-
-        // Fetch profile + company secara paralel
-        const [profileResult, cRes] = await Promise.all([
+        alive && setLoading(true);
+        const [profileRes, companyRes, vacanciesRes] = await Promise.all([
           token
             ? fetch("http://127.0.0.1:8000/api/auth/profile", {
                 headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
-              }).catch(e => { console.error("Could not fetch user profile:", e); return null; })
+              }).catch(() => null)
             : Promise.resolve(null),
-          fetch(`http://127.0.0.1:8000/api/c/${idCompany}`, {
-            headers: { Accept: "application/json" },
-          }),
+          fetch(`http://127.0.0.1:8000/api/c/${idCompany}`, { headers: { Accept: "application/json" } }),
+          fetch(`http://127.0.0.1:8000/api/c/${idCompany}/vacancies`, { headers: { Accept: "application/json" } }),
         ]);
 
-        if (!isMounted) return;
+        if (!alive) return;
 
-        if (profileResult?.ok) {
-          const uData = await profileResult.json();
-          const profile = uData.company || uData.user || {};
-          setForm(prev => ({ ...prev, name: profile.name || "", email: profile.email || "" }));
+        if (profileRes?.ok) {
+          const u = await profileRes.json();
+          const p = u.company || u.user || {};
+          setForm((prev) => ({ ...prev, name: p.name || "", email: p.email || "" }));
         }
 
-        if (!cRes.ok) throw new Error("Company not found");
-        const cData = await cRes.json();
-        if (isMounted) setCompany(cData.company);
+        if (!companyRes.ok) throw new Error("Company not found");
+        const cData = await companyRes.json();
+        setCompany(cData.company);
 
-        // GET Vacancies
-        const vRes = await fetch(`http://127.0.0.1:8000/api/c/${idCompany}/vacancies`, {
-          headers: { Accept: "application/json" },
-        });
-        const vData = await vRes.json();
-        const foundVacancy = vData.vacancies.find(v => v.id_vacancy === vacancyId);
-        if (foundVacancy && isMounted) {
-          setVacancy(foundVacancy);
-          const foundPos = foundVacancy.positions.find(p => p.id_position === positionId);
-          if (foundPos) setPositionName(foundPos.name);
+        const vData = await vacanciesRes.json();
+        const found = vData.vacancies?.find((v) => v.id_vacancy === vacancyId);
+        if (found) {
+          setVacancy(found);
+          setPositions(found.positions || []);
         }
       } catch (err) {
-        if (isMounted) setErrorMsg(err.message || "Failed to load position information. Please try again.");
-        console.error(err);
+        setErrorMsg(err.message || "Failed to load form data.");
       } finally {
-        if (isMounted) setLoading(false);
+        alive && setLoading(false);
       }
-    };
-    fetchData();
-    return () => { isMounted = false; };
-  }, [idCompany, vacancyId, positionId]);
+    })();
+    return () => { alive = false; };
+  }, [idCompany, vacancyId]);
 
-  const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB in bytes
+  const MAX_FILE = 2 * 1024 * 1024;
 
-  const handleFileChange = (e) => {
+  const handleFile = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
-    if (file.size > MAX_FILE_SIZE) {
-      setFileErrors(prev => ({ ...prev, [e.target.name]: `File size of "${file.name}" exceeds the maximum limit of 2MB (file size: ${(file.size / 1024 / 1024).toFixed(2)}MB)` }));
-      e.target.value = ""; // reset input
+    if (file.size > MAX_FILE) {
+      setFileErrors((p) => ({ ...p, [e.target.name]: `"${file.name}" exceeds 2 MB (${(file.size / 1024 / 1024).toFixed(2)} MB)` }));
+      e.target.value = "";
       return;
     }
-
-    setFileErrors(prev => ({ ...prev, [e.target.name]: null }));
-    setForm({ ...form, [e.target.name]: file });
+    setFileErrors((p) => ({ ...p, [e.target.name]: null }));
+    setForm((p) => ({ ...p, [e.target.name]: file }));
   };
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e) => setForm((p) => ({ ...p, [e.target.name]: e.target.value }));
+
+  /* Step validation */
+  const validateStep = (s) => {
+    if (s === 0) {
+      if (!form.name || !form.university_name || !form.major_name || !form.id_position) {
+        setErrorMsg("Please complete all required fields in this section.");
+        return false;
+      }
+    }
+    if (s === 1) {
+      if (!form.cv_file || !form.cover_letter_file) {
+        setErrorMsg("CV and Documents are required.");
+        return false;
+      }
+      const active = Object.values(fileErrors).filter(Boolean);
+      if (active.length > 0) {
+        setErrorMsg("Please fix file size errors before continuing.");
+        return false;
+      }
+    }
+    setErrorMsg("");
+    return true;
+  };
+
+  const goNext = () => {
+    if (validateStep(step)) setStep((p) => p + 1);
   };
 
   const handleSubmit = async (e) => {
@@ -130,347 +348,340 @@ export default function SubmissionForm() {
     setErrorMsg("");
     setSuccessMsg("");
 
-    // ✅ Check authentication first
-    if (!token) {
-      setErrorMsg("You must be logged in to apply. Please log in and try again.");
-      return;
-    }
-
-    // Block submit jika masih ada file error
-    const activeFileErrors = Object.values(fileErrors).filter(Boolean);
-    if (activeFileErrors.length > 0) {
-      setErrorMsg("Please fix the files that exceed the size limit before submitting.");
-      return;
-    }
-
-    if (!form.name || !form.university_name || !form.major_name || !form.cv_file || !form.cover_letter_file || !form.motivation_message) {
-      setErrorMsg("Please complete all required fields!");
-      return;
-    }
-
-    if (!form.apply_as) {
-      setErrorMsg("Please select an application scheme (Personal / Team)!");
-      return;
-    }
-
-    if (form.apply_as === "team") {
-      if (!form.team_role) {
-        setErrorMsg("Please select your role in the team (Leader/Member)!");
-        return;
-      }
-      if (form.team_role === "leader" && !form.team_name) {
-        setErrorMsg("Please enter your team name!");
-        return;
-      }
-      if (form.team_role === "member" && !form.team_code) {
-        setErrorMsg("Please enter your team code!");
-        return;
-      }
-    }
+    if (!token) { setErrorMsg("You must be logged in to apply."); return; }
+    if (!validateStep(2)) return;
+    if (!form.motivation_message) { setErrorMsg("Please fill in your motivation."); return; }
 
     setSubmitting(true);
-
-    const submitController = new AbortController();
-    const submitTimeout = setTimeout(() => submitController.abort(), 30000); // 30 detik untuk upload file
+    const ctrl = new AbortController();
+    const timeout = setTimeout(() => ctrl.abort(), 30000);
 
     try {
-      const formData = new FormData();
-      formData.append("id_vacancy", vacancyId);
-      formData.append("id_position", positionId);
-      formData.append("name", form.name);
-      formData.append("university_name", form.university_name);
-      formData.append("major_name", form.major_name);
-      formData.append("apply_as", form.apply_as);
-      if (form.apply_as === "team") {
-        formData.append("team_role", form.team_role);
-        if (form.team_role === "leader") {
-          formData.append("team_name", form.team_name);
-        } else if (form.team_role === "member") {
-          formData.append("team_code", form.team_code);
-        }
-      }
+      const fd = new FormData();
+      fd.append("id_vacancy", vacancyId);
+      fd.append("id_position", form.id_position);
+      fd.append("name", form.name);
+      fd.append("university_name", form.university_name);
+      fd.append("major_name", form.major_name);
+      fd.append("cv_file", form.cv_file);
+      fd.append("cover_letter_file", form.cover_letter_file);
+      if (form.institution_letter_file) fd.append("institution_letter_file", form.institution_letter_file);
+      if (form.portfolio_file) fd.append("portfolio_file", form.portfolio_file);
+      fd.append("linkedin_url", form.linkedin_url);
+      fd.append("motivation_message", form.motivation_message);
 
-      formData.append("cv_file", form.cv_file);
-      formData.append("cover_letter_file", form.cover_letter_file);
-      formData.append("institution_letter_file", form.institution_letter_file);
-      if (form.portfolio_file) formData.append("portfolio_file", form.portfolio_file);
-      formData.append("linkedin_url", form.linkedin_url);
-      formData.append("motivation_message", form.motivation_message);
-
-      const response = await fetch(`http://127.0.0.1:8000/api/c/${idCompany}/apply`, {
+      const res = await fetch(`http://127.0.0.1:8000/api/c/${idCompany}/apply`, {
         method: "POST",
-        headers: {
-          "Accept": "application/json",
-          ...(token ? { "Authorization": `Bearer ${token}` } : {})  // ✅ Only send token if it exists
-        },
-        body: formData,
-        signal: submitController.signal,
+        headers: { Accept: "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: fd,
+        signal: ctrl.signal,
       });
 
-      if (!response.ok) {
-        let errMsg = "Failed to submit application";
-        try { const data = await response.json(); errMsg = data.message || errMsg; } catch (_) {}
-        throw new Error(errMsg);
+      if (!res.ok) {
+        let msg = "Submission failed";
+        try { const d = await res.json(); msg = d.message || msg; } catch (_) {}
+        throw new Error(msg);
       }
 
-      setSuccessMsg("Application submitted successfully!");
-      setTimeout(() => navigate(`/c/${idCompany}`, { replace: true }), 2000);
+    setSuccessMsg("Application submitted successfully! 🎉");
+    setTimeout(() => {
+      // Cek role dari user atau langsung ke candidate dashboard
+      if (user?.role === 'candidate') {
+        navigate("/candidate/dashboard", { replace: true });
+      } else {
+        navigate(`/c/${idCompany}/dashboard`, { replace: true });
+      }
+    }, 2500);
 
     } catch (err) {
-      if (err.name === "AbortError") {
-        setErrorMsg("Submission too slow (timeout 30 seconds). Check your connection and ensure the backend is running, then try again.");
-      } else if (err.message === "Failed to fetch") {
-        setErrorMsg("Unable to connect to the server. Please ensure the Laravel backend is running on port 8000.");
-      } else {
-        setErrorMsg(err.message);
-      }
+      if (err.name === "AbortError") setErrorMsg("Request timed out. Check your connection and try again.");
+      else if (err.message === "Failed to fetch") setErrorMsg("Cannot connect to server. Ensure the backend is running on port 8000.");
+      else setErrorMsg(err.message);
       setSubmitting(false);
     } finally {
-      clearTimeout(submitTimeout);
+      clearTimeout(timeout);
     }
   };
 
+  /* Position options for dropdown */
+  const positionOptions = positions.map((p) => ({ value: p.id_position, label: p.name }));
+
+  /* ── Loading ── */
   if (loading) return (
-    <div style={{ minHeight: "100vh", background: "#f8fafc", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16 }}>
-      <div style={{ width: 40, height: 40, border: "4px solid #e2e8f0", borderTop: "4px solid #2d7ff3", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-      <p style={{ color: "#64748b", fontSize: 14, fontWeight: 500 }}>Loading ...</p>
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#f9fafb" }}>
+      <div style={{ textAlign: "center" }}>
+        <div style={{ width: 44, height: 44, border: "3px solid #e5e7eb", borderTop: "3px solid #1a56db", borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 12px" }} />
+        <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+        <p style={{ color: "#6b7280", fontSize: 13, fontWeight: 500 }}>Loading application form…</p>
+      </div>
     </div>
   );
 
-  // ✅ Show message if not authenticated
-  if (!token && !authLoading) {
-    return (
-      <div style={{ minHeight: "100vh", background: "#f8fafc", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16 }}>
-        <div style={{ padding: 40, background: "white", borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.1)", maxWidth: 400, textAlign: "center" }}>
-          <div style={{ fontSize: 36, marginBottom: 16 }}>🔐</div>
-          <h2 style={{ fontSize: 20, fontWeight: 700, color: "#1e293b", marginBottom: 8 }}>Login Diperlukan</h2>
-          <p style={{ color: "#64748b", fontSize: 14, marginBottom: 24 }}>Anda harus login terlebih dahulu untuk mendaftar. Sistem akan mengalihkan Anda ke halaman login...</p>
-          <div style={{ width: 40, height: 40, border: "4px solid #e2e8f0", borderTop: "4px solid #2d7ff3", borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto" }} />
-        </div>
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+  /* ── Unauthed ── */
+  if (!token && !authLoading) return (
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#f9fafb" }}>
+      <div style={{ padding: 40, background: "#fff", borderRadius: 16, boxShadow: "0 4px 24px rgba(0,0,0,0.08)", maxWidth: 360, textAlign: "center" }}>
+        <div style={{ fontSize: 40, marginBottom: 12 }}>🔐</div>
+        <h2 style={{ margin: "0 0 8px", fontSize: 18, fontWeight: 700, color: "#111827" }}>Login Required</h2>
+        <p style={{ color: "#6b7280", fontSize: 13, margin: "0 0 20px" }}>Redirecting you to the login page…</p>
+        <div style={{ width: 36, height: 36, border: "3px solid #e5e7eb", borderTop: "3px solid #1a56db", borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto" }} />
       </div>
-    );
-  }
+    </div>
+  );
+
+  const STEPS = ["Personal Info", "Documents", "Final Details"];
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f8fafc", fontFamily: "'Poppins', sans-serif", textAlign: "left", paddingBottom: "100px" }}>
+    <div style={{ minHeight: "100vh", background: "#f9fafb", fontFamily: "'DM Sans', 'Segoe UI', sans-serif" }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes fadeUp { from { opacity:0; transform:translateY(16px) } to { opacity:1; transform:translateY(0) } }
+        input:focus, textarea:focus { border-color: #1a56db !important; box-shadow: 0 0 0 3px rgba(26,86,219,0.08); }
+        * { box-sizing: border-box; }
+      `}</style>
 
-      {/* Navbar Dark - match exactly like companyPublic */}
+      {/* ── Navbar ── */}
       <header style={{
-        position: "sticky", top: 0, zIndex: 100,
-        height: 60, padding: "0 64px",
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        background: "rgba(6,13,26,0.85)", backdropFilter: "blur(20px)",
-        borderBottom: "1px solid rgba(255,255,255,0.06)",
+        position: "sticky", top: 0, zIndex: 100, height: 58,
+        padding: "0 48px", display: "flex", alignItems: "center", justifyContent: "space-between",
+        background: "rgba(8,12,26,0.9)", backdropFilter: "blur(20px)",
+        borderBottom: "1px solid rgba(255,255,255,0.05)",
       }}>
-        {/* Left: EarlyPath Logo */}
-        <Link to="/" style={{ display: "flex", alignItems: "center", gap: "10px", textDecoration: "none" }}>
-          <img src="/assets/images/logo.png" alt="EarlyPath Logo" style={{ height: "46px", width: "auto" }} />
-          <span style={{ fontSize: 18, fontWeight: 800, color: "#fff", letterSpacing: "-0.5px" }}>EarlyPath</span>
+        <Link to="/" style={{ display: "flex", alignItems: "center", gap: 9, textDecoration: "none" }}>
+          <img src="/assets/images/logo.png" alt="EarlyPath" style={{ height: 40, width: "auto" }} />
+          <span style={{ fontSize: 16, fontWeight: 800, color: "#fff", letterSpacing: "-0.3px" }}>EarlyPath</span>
         </Link>
-
-        {/* Right: Company Name */}
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          {company && (
-            <>
-              <span style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", fontWeight: 500 }}>Applying to</span>
-              <span style={{ padding: "4px 10px", background: "rgba(255,255,255,0.06)", borderRadius: 6, fontSize: 13, fontWeight: 700, color: "#fff", border: "1px solid rgba(255,255,255,0.1)" }}>
-                {company.name}
-              </span>
-            </>
-          )}
-        </div>
+        {company && (
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", fontWeight: 500 }}>Applying to</span>
+            <span style={{
+              padding: "4px 12px", borderRadius: 20,
+              background: "rgba(26,86,219,0.25)", border: "1px solid rgba(26,86,219,0.4)",
+              fontSize: 12.5, fontWeight: 700, color: "#93b4ff",
+            }}>{company.name}</span>
+          </div>
+        )}
       </header>
 
-      <main style={{ maxWidth: 1200, margin: "40px auto 0", padding: "0 48px" }}>
+      <main style={{ width: "100%", margin: "0 auto", padding: "36px 24px 100px", animation: "fadeUp 0.4s ease" }}>
 
-        {/* Back Button */}
-        <button onClick={() => navigate(-1)} style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", color: "#64748b", cursor: "pointer", fontSize: 14, fontWeight: 600, padding: 0, marginBottom: 24, transition: "color 0.2s" }} onMouseEnter={e => e.currentTarget.style.color = "#0f172a"} onMouseLeave={e => e.currentTarget.style.color = "#64748b"}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-          Back
+        {/* Back */}
+        <button
+          onClick={() => step > 0 ? setStep((p) => p - 1) : navigate(-1)}
+          style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", color: "#6b7280", cursor: "pointer", fontSize: 13, fontWeight: 600, padding: 0, marginBottom: 28, transition: "color 0.15s" }}
+          onMouseEnter={(e) => e.currentTarget.style.color = "#111827"}
+          onMouseLeave={(e) => e.currentTarget.style.color = "#6b7280"}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          {step > 0 ? "Previous Step" : "Back"}
         </button>
 
+        {/* Header */}
         <div style={{ marginBottom: 32 }}>
-          <h1 style={{ fontSize: 28, fontWeight: 800, color: "#0f172a", margin: "0 0 8px", letterSpacing: "-0.5px" }}>New Application Form</h1>
-          <p style={{ fontSize: 15, color: "#64748b", margin: 0 }}>
-            Position <strong style={{ color: "#334155" }}>{positionName || "Position"}</strong> for program <strong style={{ color: "#334155" }}>{vacancy?.title} - Batch {vacancy?.batch}</strong>.
-          </p>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+            <div style={{ width: 4, height: 32, background: "linear-gradient(180deg,#1a56db,#60a5fa)", borderRadius: 4 }} />
+            <h1 style={{ margin: 0, fontSize: 26, fontWeight: 800, color: "#111827", letterSpacing: "-0.5px" }}>Application Form</h1>
+          </div>
+          {vacancy && (
+            <p style={{ margin: "0 0 0 14px", fontSize: 13.5, color: "#6b7280" }}>
+              <strong style={{ color: "#374151" }}>{vacancy.title}</strong> · Batch {vacancy.batch}
+            </p>
+          )}
         </div>
 
-        <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 16, padding: "40px", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -2px rgba(0,0,0,0.05)" }}>
-          {errorMsg && (
-            <div style={{ background: "#fef2f2", border: "1px solid #fca5a5", color: "#ef4444", padding: "14px 18px", borderRadius: 10, marginBottom: 24, fontSize: 14, fontWeight: 600 }}>
-              {errorMsg}
-            </div>
-          )}
-          {successMsg && (
-            <div style={{ background: "#f0fdf4", border: "1px solid #86efac", color: "#10b981", padding: "14px 18px", borderRadius: 10, marginBottom: 24, fontSize: 14, fontWeight: 600 }}>
-              {successMsg}
-            </div>
-          )}
+        {/* Step indicator */}
+        <StepIndicator current={step} steps={STEPS} />
 
-          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 32 }}>
+        {/* Alerts */}
+        {errorMsg && (
+          <div style={{ background: "#fef2f2", border: "1px solid #fca5a5", color: "#dc2626", padding: "12px 16px", borderRadius: 10, marginBottom: 24, fontSize: 13.5, fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            {errorMsg}
+          </div>
+        )}
+        {successMsg && (
+          <div style={{ background: "#f0fdf4", border: "1px solid #86efac", color: "#16a34a", padding: "12px 16px", borderRadius: 10, marginBottom: 24, fontSize: 13.5, fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>
+            {successMsg}
+          </div>
+        )}
 
-            {/* ── 1. Informasi Pribadi ── */}
-            <div>
-              <h3 style={{ fontSize: 16, fontWeight: 700, color: "#0f172a", margin: "0 0 16px", paddingBottom: 10, borderBottom: "1px solid #e2e8f0" }}>1. Applicant Information</h3>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-                <div>
-                  <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#475569", marginBottom: 6 }}>Name <span style={{ color: "#ef4444" }}>*</span></label>
-                  <input type="text" name="name" value={form.name} onChange={handleChange} style={{ width: "100%", background: "#fff", border: "1px solid #cbd5e1", padding: "12px 14px", borderRadius: 8, color: "#0f172a", fontSize: 14, transition: "0.2s", outline: "none" }} onFocus={e => e.target.style.borderColor = "#2d7ff3"} onBlur={e => e.target.style.borderColor = "#cbd5e1"} required />
-                  <p style={{ fontSize: 11, color: "#94a3b8", marginTop: 6 }}>Editable. Changes will be saved to your profile.</p>
+        {/* ─────────────────────────────────────────── FORM CARD */}
+        <div style={{ background: "#fff", borderRadius: 18, border: "1px solid #e5e7eb", boxShadow: "0 4px 24px rgba(0,0,0,0.06)", padding: "36px 40px", animation: "fadeUp 0.3s ease" }}>
+          <form onSubmit={handleSubmit}>
+
+            {/* ══════ STEP 0: Personal Info ══════ */}
+            {step === 0 && (
+              <Section num="1" title="Applicant Information">
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                  <Field label="Full Name" required hint="Editable — changes will be saved to your profile.">
+                    <input
+                      name="name" value={form.name} onChange={handleChange}
+                      style={inputStyle} onFocus={(e) => e.target.style.borderColor = "#1a56db"} onBlur={(e) => e.target.style.borderColor = "#d1d5db"}
+                    />
+                  </Field>
+                  <Field label="Registered Email">
+                    <input value={form.email || user?.email || ""} disabled style={{ ...inputStyle, background: "#f9fafb", color: "#9ca3af", cursor: "not-allowed" }} />
+                  </Field>
                 </div>
-                <div>
-                  <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#475569", marginBottom: 6 }}>Registered Email</label>
-                  <input type="text" value={form.email || user?.email || ""} disabled style={{ width: "100%", background: "#f8fafc", border: "1px solid #e2e8f0", padding: "12px 14px", borderRadius: 8, color: "#94a3b8", fontSize: 14, cursor: "not-allowed" }} />
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginTop: 16 }}>
+                  <Field label="University" required>
+                    <input
+                      name="university_name" value={form.university_name} onChange={handleChange}
+                      placeholder="e.g. University of Indonesia"
+                      style={inputStyle} onFocus={(e) => e.target.style.borderColor = "#1a56db"} onBlur={(e) => e.target.style.borderColor = "#d1d5db"}
+                    />
+                  </Field>
+                  <Field label="Major" required>
+                    <input
+                      name="major_name" value={form.major_name} onChange={handleChange}
+                      placeholder="e.g. Information Systems"
+                      style={inputStyle} onFocus={(e) => e.target.style.borderColor = "#1a56db"} onBlur={(e) => e.target.style.borderColor = "#d1d5db"}
+                    />
+                  </Field>
                 </div>
-              </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginTop: 16 }}>
-                <div>
-                  <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#475569", marginBottom: 6 }}>University<span style={{ color: "#ef4444" }}>*</span></label>
-                  <input type="text" name="university_name" value={form.university_name} onChange={handleChange} placeholder="Example: University of Indonesia" style={{ width: "100%", background: "#fff", border: "1px solid #cbd5e1", padding: "12px 14px", borderRadius: 8, color: "#0f172a", fontSize: 14, transition: "0.2s", outline: "none" }} onFocus={e => e.target.style.borderColor = "#2d7ff3"} onBlur={e => e.target.style.borderColor = "#cbd5e1"} required />
+                {/* ── Role / Position Dropdown ── */}
+                <div style={{ marginTop: 16 }}>
+                  <Field label="Role Applied For" required hint="Search by name to quickly find the position you want.">
+                    <SearchableSelect
+                      options={positionOptions}
+                      value={form.id_position}
+                      onChange={(val) => setForm((p) => ({ ...p, id_position: val }))}
+                      placeholder="Search and select a role…"
+                    />
+                  </Field>
                 </div>
-                <div>
-                  <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#475569", marginBottom: 6 }}>Major<span style={{ color: "#ef4444" }}>*</span></label>
-                  <input type="text" name="major_name" value={form.major_name} onChange={handleChange} placeholder="Example: Information Systems" style={{ width: "100%", background: "#fff", border: "1px solid #cbd5e1", padding: "12px 14px", borderRadius: 8, color: "#0f172a", fontSize: 14, transition: "0.2s", outline: "none" }} onFocus={e => e.target.style.borderColor = "#2d7ff3"} onBlur={e => e.target.style.borderColor = "#cbd5e1"} required />
+              </Section>
+            )}
+
+            {/* ══════ STEP 1: Documents ══════ */}
+            {step === 1 && (
+              <Section num="2" title="Upload Documents">
+                <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                  <FileCard
+                    label="CV / Resume" name="cv_file" required
+                    value={form.cv_file} error={fileErrors.cv_file}
+                    onChange={handleFile}
+                  />
+                  <FileCard
+                    label="Supporting Documents" name="cover_letter_file" required
+                    hint="Cover letter, campus recommendation, etc. If you have multiple files, please merge them into one PDF first."
+                    value={form.cover_letter_file} error={fileErrors.cover_letter_file}
+                    onChange={handleFile}
+                  />
+                  <FileCard
+                    label="Institution Letter" name="institution_letter_file"
+                    hint="Letter from your institution (optional)."
+                    value={form.institution_letter_file} error={fileErrors.institution_letter_file}
+                    onChange={handleFile}
+                  />
+                  <FileCard
+                    label="Additional Portfolio" name="portfolio_file"
+                    value={form.portfolio_file} error={fileErrors.portfolio_file}
+                    onChange={handleFile}
+                  />
                 </div>
-              </div>
-            </div>
+              </Section>
+            )}
 
-            {/* ── 2. Skema Pendaftaran (Personal/Team) ── */}
-            <div>
-              <h3 style={{ fontSize: 16, fontWeight: 700, color: "#0f172a", margin: "0 0 16px", paddingBottom: 10, borderBottom: "1px solid #e2e8f0" }}>2. Registration Type</h3>
+            {/* ══════ STEP 2: Additional Info ══════ */}
+            {step === 2 && (
+              <Section num="3" title="Additional Information">
+                <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                  <Field label="LinkedIn Profile URL">
+                    <input
+                      type="url" name="linkedin_url" value={form.linkedin_url} onChange={handleChange}
+                      placeholder="https://linkedin.com/in/username"
+                      style={inputStyle} onFocus={(e) => e.target.style.borderColor = "#1a56db"} onBlur={(e) => e.target.style.borderColor = "#d1d5db"}
+                    />
+                  </Field>
+                  <Field label="Motivation" required>
+                    <textarea
+                      name="motivation_message" value={form.motivation_message} onChange={handleChange}
+                      placeholder="Describe your motivation and why you are applying for this role…"
+                      rows={6}
+                      style={{ ...inputStyle, resize: "vertical" }}
+                      onFocus={(e) => e.target.style.borderColor = "#1a56db"} onBlur={(e) => e.target.style.borderColor = "#d1d5db"}
+                    />
+                  </Field>
 
-              <div style={{ display: "flex", gap: 16, marginBottom: 16 }}>
-                <label style={{ flex: 1, padding: "16px", border: form.apply_as === "personal" ? "2px solid #2d7ff3" : "1px solid #cbd5e1", borderRadius: 10, cursor: "pointer", background: form.apply_as === "personal" ? "#f0f7ff" : "#fff", transition: "0.2s" }} onClick={() => setForm({ ...form, apply_as: "personal" })}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <div style={{ width: 18, height: 18, borderRadius: "50%", background: "#fff", border: form.apply_as === "personal" ? "5px solid #2d7ff3" : "2px solid #cbd5e1", transition: "0.2s" }} />
-                    <span style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>Register as an Individual</span>
-                  </div>
-                  <p style={{ fontSize: 12, color: "#64748b", margin: "6px 0 0 28px" }}>Register as an individual without a team</p>
-                </label>
-
-                <label style={{ flex: 1, padding: "16px", border: form.apply_as === "team" ? "2px solid #2d7ff3" : "1px solid #cbd5e1", borderRadius: 10, cursor: "pointer", background: form.apply_as === "team" ? "#f0f7ff" : "#fff", transition: "0.2s" }} onClick={() => setForm({ ...form, apply_as: "team" })}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <div style={{ width: 18, height: 18, borderRadius: "50%", background: "#fff", border: form.apply_as === "team" ? "5px solid #2d7ff3" : "2px solid #cbd5e1", transition: "0.2s" }} />
-                    <span style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>Register as a Team</span>
-                  </div>
-                  <p style={{ fontSize: 12, color: "#64748b", margin: "6px 0 0 28px" }}>Register as a group (have a team name).</p>
-                </label>
-              </div>
-
-              {/* Ekstra form jika team */}
-              {form.apply_as === "team" && (
-                <div style={{ padding: "20px", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 10, display: "flex", flexDirection: "column", gap: 16 }}>
-                  <div>
-                    <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#475569", marginBottom: 8 }}>Your Role in the Team<span style={{ color: "#ef4444" }}>*</span></label>
-                    <div style={{ display: "flex", gap: 20 }}>
-                      <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14, color: "#334155", cursor: "pointer" }} onClick={() => setForm({ ...form, team_role: "leader" })}>
-                        <div style={{ width: 16, height: 16, borderRadius: "50%", background: "#fff", border: form.team_role === "leader" ? "5px solid #2d7ff3" : "2px solid #cbd5e1", transition: "0.2s" }} /> Team Leader (Ketua)
-                      </label>
-                      <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14, color: "#334155", cursor: "pointer" }} onClick={() => setForm({ ...form, team_role: "member" })}>
-                        <div style={{ width: 16, height: 16, borderRadius: "50%", background: "#fff", border: form.team_role === "member" ? "5px solid #2d7ff3" : "2px solid #cbd5e1", transition: "0.2s" }} /> Team Member (Anggota)
-                      </label>
+                  {/* Summary card */}
+                  <div style={{ background: "#f0f7ff", border: "1px solid #bfdbfe", borderRadius: 12, padding: "16px 18px" }}>
+                    <p style={{ margin: "0 0 10px", fontSize: 12.5, fontWeight: 700, color: "#1e40af" }}>Application Summary</p>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px 24px" }}>
+                      {[
+                        ["Name", form.name],
+                        ["University", form.university_name],
+                        ["Major", form.major_name],
+                        ["Role", positionOptions.find((o) => o.value === form.id_position)?.label || "—"],
+                        ["CV", form.cv_file?.name || "—"],
+                        ["Documents", form.cover_letter_file?.name || "—"],
+                      ].map(([k, v]) => (
+                        <div key={k}>
+                          <span style={{ fontSize: 11, color: "#6b7280", display: "block" }}>{k}</span>
+                          <span style={{ fontSize: 12.5, color: "#1e3a8a", fontWeight: 600, wordBreak: "break-all" }}>{v}</span>
+                        </div>
+                      ))}
                     </div>
                   </div>
+                </div>
+              </Section>
+            )}
 
-                  {form.team_role === "leader" && (
-                    <div>
-                      <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#475569", marginBottom: 6 }}>Team Name <span style={{ color: "#ef4444" }}>*</span></label>
-                      <input type="text" name="team_name" value={form.team_name} onChange={handleChange} placeholder="Enter your team name" style={{ width: "100%", background: "#fff", border: "1px solid #cbd5e1", padding: "12px 14px", borderRadius: 8, color: "#0f172a", fontSize: 14, outline: "none" }} />
-                    </div>
+            {/* ── Navigation Buttons ── */}
+            <div style={{ marginTop: 32, display: "flex", gap: 12, justifyContent: "flex-end" }}>
+              {step < 2 ? (
+                <button
+                  type="button" onClick={goNext}
+                  style={{
+                    padding: "13px 32px", background: "linear-gradient(135deg,#1a56db,#3b82f6)",
+                    border: "none", borderRadius: 10, color: "#fff", fontSize: 14, fontWeight: 700,
+                    cursor: "pointer", transition: "opacity 0.2s", boxShadow: "0 4px 14px rgba(26,86,219,0.35)",
+                    display: "flex", alignItems: "center", gap: 8,
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.opacity = "0.9"}
+                  onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}
+                >
+                  Continue
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                </button>
+              ) : (
+                <button
+                  type="submit" disabled={submitting}
+                  style={{
+                    padding: "13px 36px",
+                    background: submitting ? "#9ca3af" : "linear-gradient(135deg,#1a56db,#3b82f6)",
+                    border: "none", borderRadius: 10, color: "#fff", fontSize: 14, fontWeight: 700,
+                    cursor: submitting ? "not-allowed" : "pointer",
+                    boxShadow: submitting ? "none" : "0 4px 14px rgba(26,86,219,0.35)",
+                    display: "flex", alignItems: "center", gap: 10, transition: "all 0.2s",
+                  }}
+                >
+                  {submitting ? (
+                    <>
+                      <div style={{ width: 16, height: 16, border: "2px solid rgba(255,255,255,0.4)", borderTop: "2px solid #fff", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} />
+                      Submitting…
+                    </>
+                  ) : (
+                    <>
+                      Submit Application
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                    </>
                   )}
-
-                  {form.team_role === "member" && (
-                    <div>
-                      <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#475569", marginBottom: 6 }}>Team Code <span style={{ color: "#ef4444" }}>*</span></label>
-                      <input type="text" name="team_code" value={form.team_code} onChange={handleChange} placeholder="Enter team code from Team Leader" style={{ width: "100%", background: "#fff", border: "1px solid #cbd5e1", padding: "12px 14px", borderRadius: 8, color: "#0f172a", fontSize: 14, outline: "none", textTransform: "uppercase" }} />
-                      <p style={{ fontSize: 11, color: "#64748b", marginTop: 6 }}>Type the unique team code shared by your team leader.</p>
-                    </div>
-                  )}
-                </div>
+                </button>
               )}
             </div>
-
-            {/* ── 3. Berkas Pendukung ── */}
-            <div>
-              <h3 style={{ fontSize: 16, fontWeight: 700, color: "#0f172a", margin: "0 0 16px", paddingBottom: 10, borderBottom: "1px solid #e2e8f0" }}>3. Upload File</h3>
-              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-
-                {/* CV */}
-                <div style={{ background: "#f8fafc", border: "1px dashed #cbd5e1", borderRadius: 10, padding: "16px", display: "flex", flexDirection: "column", gap: 8 }}>
-                  <label style={{ fontSize: 14, fontWeight: 700, color: "#1e293b", display: "flex", justifyContent: "space-between" }}>
-                    <span>CV / Resume <span style={{ color: "#ef4444" }}>*</span></span>
-                    <span style={{ fontSize: 11, color: "#64748b", fontWeight: 500 }}>PDF Format (Max. 2MB)</span>
-                  </label>
-                  <input type="file" name="cv_file" id="cv_file" onChange={handleFileChange} accept=".pdf" style={{ display: "none" }} />
-                  <label htmlFor="cv_file" style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 14px", background: "#fff", border: "1px solid #e2e8f0", borderRadius: 6, color: "#2d7ff3", fontSize: 13, fontWeight: 600, cursor: "pointer", width: "fit-content", transition: "0.2s", boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }} onMouseEnter={e => e.currentTarget.style.borderColor = "#2d7ff3"}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-                    Select a PDF File
-                  </label>
-                  {form.cv_file && <span style={{ fontSize: 12, color: "#10b981", fontWeight: 600 }}>✓ {form.cv_file.name}</span>}
-                  {fileErrors.cv_file && <span style={{ fontSize: 12, color: "#ef4444", fontWeight: 600 }}>⚠ {fileErrors.cv_file}</span>}
-                </div>
-
-                {/* Documents */}
-                <div style={{ background: "#f8fafc", border: "1px dashed #cbd5e1", borderRadius: 10, padding: "16px", display: "flex", flexDirection: "column", gap: 8 }}>
-                  <label style={{ fontSize: 14, fontWeight: 700, color: "#1e293b", display: "flex", justifyContent: "space-between" }}>
-                    <span>Documents (Surat Pengantar & Rekomendasi Kampus) <span style={{ color: "#ef4444" }}>*</span></span>
-                    <span style={{ fontSize: 11, color: "#64748b", fontWeight: 500 }}>PDF Format (Max. 2MB)</span>
-                  </label>
-                  <p style={{ fontSize: 11.5, color: "#64748b", margin: "0 0 4px", lineHeight: "1.4" }}>
-                    Silakan unggah dokumen pendukung seperti Surat Pengantar, Surat Rekomendasi Kampus, dll. Jika memiliki lebih dari satu berkas, **harap digabungkan (merge) menjadi 1 file PDF**.
-                  </p>
-                  <input type="file" name="cover_letter_file" id="cover_letter_file" onChange={handleFileChange} accept=".pdf" style={{ display: "none" }} />
-                  <label htmlFor="cover_letter_file" style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 14px", background: "#fff", border: "1px solid #e2e8f0", borderRadius: 6, color: "#2d7ff3", fontSize: 13, fontWeight: 600, cursor: "pointer", width: "fit-content", transition: "0.2s", boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }} onMouseEnter={e => e.currentTarget.style.borderColor = "#2d7ff3"}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-                    Select a PDF File
-                  </label>
-                  {form.cover_letter_file && <span style={{ fontSize: 12, color: "#10b981", fontWeight: 600 }}>✓ {form.cover_letter_file.name}</span>}
-                  {fileErrors.cover_letter_file && <span style={{ fontSize: 12, color: "#ef4444", fontWeight: 600 }}>⚠ {fileErrors.cover_letter_file}</span>}
-                </div>
-
-                {/* Portofolio */}
-                <div style={{ background: "#f8fafc", border: "1px dashed #e2e8f0", borderRadius: 10, padding: "16px", display: "flex", flexDirection: "column", gap: 8 }}>
-                  <label style={{ fontSize: 14, fontWeight: 700, color: "#1e293b", display: "flex", justifyContent: "space-between" }}>
-                    Additional Portfolio
-                    <span style={{ fontSize: 11, color: "#64748b", fontWeight: 500 }}>PDF Format (Max. 2MB)</span>
-                  </label>
-                  <input type="file" name="portfolio_file" id="portfolio_file" onChange={handleFileChange} accept=".pdf" style={{ display: "none" }} />
-                  <label htmlFor="portfolio_file" style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 14px", background: "#fff", border: "1px solid #e2e8f0", borderRadius: 6, color: "#64748b", fontSize: 13, fontWeight: 600, cursor: "pointer", width: "fit-content", transition: "0.2s", boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }} onMouseEnter={e => e.currentTarget.style.borderColor = "#2d7ff3"}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-                    Select a PDF File
-                  </label>
-                  {form.portfolio_file && <span style={{ fontSize: 12, color: "#10b981", fontWeight: 600 }}>✓ {form.portfolio_file.name}</span>}
-                  {fileErrors.portfolio_file && <span style={{ fontSize: 12, color: "#ef4444", fontWeight: 600 }}>⚠ {fileErrors.portfolio_file}</span>}
-                </div>
-              </div>
-            </div>
-
-            {/* ── 4. Informasi Lain ── */}
-            <div>
-              <h3 style={{ fontSize: 16, fontWeight: 700, color: "#0f172a", margin: "0 0 16px", paddingBottom: 10, borderBottom: "1px solid #e2e8f0" }}>4. Additional Information</h3>
-              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                <div>
-                  <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#475569", marginBottom: 6 }}>LinkedIn Profile URL (Optional)</label>
-                  <input type="url" name="linkedin_url" value={form.linkedin_url} onChange={handleChange} placeholder="https://linkedin.com/in/username" style={{ width: "100%", background: "#fff", border: "1px solid #cbd5e1", padding: "12px 14px", borderRadius: 8, color: "#0f172a", fontSize: 14, outline: "none", transition: "0.2s" }} onFocus={e => e.target.style.borderColor = "#2d7ff3"} onBlur={e => e.target.style.borderColor = "#cbd5e1"} />
-                </div>
-
-                <div>
-                  <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#475569", marginBottom: 6 }}>
-                    Motivation<span style={{ color: "#ef4444" }}>*</span>
-                  </label>
-                  <textarea name="motivation_message" value={form.motivation_message} onChange={handleChange} placeholder="Describe your motivation and why you are applying for this position…" rows={5} style={{ width: "100%", background: "#fff", border: "1px solid #cbd5e1", padding: "12px 14px", borderRadius: 8, color: "#0f172a", fontSize: 14, outline: "none", resize: "vertical", transition: "0.2s" }} onFocus={e => e.target.style.borderColor = "#2d7ff3"} onBlur={e => e.target.style.borderColor = "#cbd5e1"}></textarea>
-                </div>
-              </div>
-            </div>
-
-            <button type="submit" disabled={submitting} style={{ margin: "16px 0 0", width: "100%", padding: "16px", background: submitting ? "#94a3b8" : "#2d7ff3", border: "none", borderRadius: "10px", color: "#fff", fontSize: "16px", fontWeight: "700", cursor: submitting ? "not-allowed" : "pointer", transition: "0.2s", boxShadow: submitting ? "none" : "0 4px 12px rgba(45,127,243,0.3)" }}>
-              {submitting ? "Processing Data…" : "Submit Registration Form"}
-            </button>
           </form>
+        </div>
+
+        {/* Progress dots */}
+        <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 24 }}>
+          {STEPS.map((_, i) => (
+            <div key={i} style={{ width: i === step ? 22 : 8, height: 8, borderRadius: 4, background: i === step ? "#1a56db" : i < step ? "#93c5fd" : "#e5e7eb", transition: "all 0.3s" }} />
+          ))}
         </div>
       </main>
     </div>

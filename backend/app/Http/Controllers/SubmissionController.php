@@ -24,7 +24,6 @@ class SubmissionController extends Controller
             'name' => 'required|string',
             'university_name' => 'required|string',
             'major_name' => 'required|string',
-            'apply_as' => 'required|in:personal,team',
             'cv_file' => 'required|file|mimes:pdf|max:2048',
             'cover_letter_file' => 'required|file|mimes:pdf|max:2048',
             'institution_letter_file' => 'nullable|file|mimes:pdf|max:2048',
@@ -32,14 +31,6 @@ class SubmissionController extends Controller
             'motivation_message' => 'required|string',
             'linkedin_url' => 'nullable|url',
         ]);
-
-        if ($request->apply_as === 'team') {
-            $request->validate([
-                'team_role' => 'required|in:leader,member',
-                'team_name' => 'required_if:team_role,leader|string|nullable',
-                'team_code' => 'required_if:team_role,member|string|nullable',
-            ]);
-        }
 
         $company = Company::where('id_company', $idCompany)->first();
         if (!$company) {
@@ -51,7 +42,7 @@ class SubmissionController extends Controller
             return response()->json(['message' => 'Unauthorized'], 401);
         }
 
-        // ✅ Validate vacancy and position belong to the same company
+        // Validate vacancy and position belong to the same company
         $vacancy = Vacancy::where('id_vacancy', $request->id_vacancy)
             ->where('id_company', $company->id_company)
             ->first();
@@ -68,7 +59,7 @@ class SubmissionController extends Controller
             return response()->json(['message' => 'Posisi tidak valid untuk perusahaan ini'], 404);
         }
 
-        // ✅ Validate position is available for this vacancy
+        // Validate position is available for this vacancy
         $positionInVacancy = DB::table('vacancy_positions')
             ->where('id_vacancy', $request->id_vacancy)
             ->where('id_position', $request->id_position)
@@ -99,53 +90,10 @@ class SubmissionController extends Controller
                 ]);
             }
 
-            // 3. Process Team
-            $teamId = null;
-            if ($request->apply_as === 'team') {
-                if ($request->team_role === 'leader') {
-                    $teamId = 'T' . strtoupper(Str::random(9));
-                    $team = Team::create([
-                        'id_team' => $teamId,
-                        'name' => $request->team_name,
-                        'team_code' => strtoupper(Str::random(6))
-                    ]);
-                } else if ($request->team_role === 'member') {
-                    $team = Team::where('team_code', $request->team_code)->first();
-                    if (!$team) {
-                        DB::rollBack();
-                        return response()->json(['success' => false, 'message' => 'Team code not found. Please make sure the code entered is valid for this program.'], 404);
-                    }
-
-                    // Verify that the team belongs to a submission for the exact same id_vacancy
-                    $teamSubmission = Submission::where('id_team', $team->id_team)
-                                    ->where('id_vacancy', $request->id_vacancy)
-                                    ->first();
-                    if (!$teamSubmission) {
-                        DB::rollBack();
-                        return response()->json(['success' => false, 'message' => 'Team code not found. Please make sure the code entered is valid for this program.'], 404);
-                    }
-
-                    $teamId = $team->id_team;
-                }
-
-                // Track user role in team members table safely
-                DB::table('team_members')->insert([
-                    'id_team' => $teamId,
-                    'id_user' => $user->id_user,
-                    'role' => $request->team_role,
-                    'created_at' => now(),
-                    'updated_at' => now()
-                ]);
-            }
-
             // 4. Update User Profile & Candidate Profile
             $user->name = $request->name;
-            // ✅ Set the company from the vacancy being applied to
+            // Set the company from the vacancy being applied to
             $user->id_company = $company->id_company;
-            if ($teamId) {
-                $user->id_team = $teamId;
-            }
-            $user->save();
 
             $candidate = Candidate::firstOrNew(['id_user' => $user->id_user]);
             if (!$candidate->exists) {
@@ -172,7 +120,6 @@ class SubmissionController extends Controller
             $submission = Submission::create([
                 'id_submission' => $submissionId,
                 'id_user' => $user->id_user,
-                'id_team' => $teamId, // can be null
                 'id_vacancy' => $request->id_vacancy,
                 'id_position' => $request->id_position,
                 'cv_file' => $cvPath,

@@ -26,4 +26,9 @@ class Role extends Model
     {
         return $this->hasMany(Employee::class, 'id_role', 'id_role');
     }
+
+    public function users()
+    {
+        return $this->hasMany(Employee::class, 'id_role', 'id_role');
+    }
 }
