@@ -3,6 +3,7 @@ import axios from "axios";
 import { SidebarMentor } from "../../components/SidebarMentor";
 import { useAuthStore } from "../../stores/authStore";
 import { CheckCircle, Clock, AlertCircle, MessageSquare, Send, ChevronDown, ChevronUp, Plus } from "lucide-react";
+import { LoadingSpinner } from "../../components/LoadingSpinner";
 
 const MONTHS_FULL = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 const MONTHS_SHORT = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
@@ -220,7 +221,17 @@ export default function AssignTasksMentor() {
     } catch (e) { alert("Failed to update"); }
   };
 
-  if (loading) return <div style={s.app}><SidebarMentor mentor={user} onLogout={() => setLogoutModal(true)} /><main style={s.main}><div style={s.content}>Loading...</div></main></div>;
+  if (loading) return (
+  <div style={s.app}>
+    <SidebarMentor mentor={user} onLogout={() => setLogoutModal(true)} />
+    <main style={s.main}>
+      <div style={s.topbar}>
+        <div style={s.bc}><span>Dashboard</span><span style={s.bcSep}>/</span><span>Assessment</span><span style={s.bcSep}>/</span><span style={s.bcActive}>Assign Tasks</span></div>
+      </div>
+      <div style={s.content}><LoadingSpinner message="Loading Assign Tasks..." /></div>
+    </main>
+  </div>
+);
 
   return (
     <div style={s.app}>

@@ -60,6 +60,9 @@ export const mentorApi = {
     api.get(`/mentor/interns/${idSubmission}/evaluation`),
 
   saveEvaluation: (idSubmission, data) => api.post(`/mentor/interns/${idSubmission}/evaluation`, data),
+  
+  // Assessment (input score page — saves narrative + evaluation_status)
+  saveAssessment: (data) => api.post(`/mentor/interns/${data.id_submission}/assessment`, data),
 
   // Certificates
   getCertificates: (search = '') => api.get('/mentor/certificates', {

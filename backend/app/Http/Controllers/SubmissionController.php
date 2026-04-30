@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Candidate;
 use App\Models\Company;
 use App\Models\Major;
 use App\Models\Position;
@@ -114,7 +115,7 @@ class SubmissionController extends Controller
                         DB::rollBack();
                         return response()->json(['success' => false, 'message' => 'Team code not found. Please make sure the code entered is valid for this program.'], 404);
                     }
-                    
+
                     // Verify that the team belongs to a submission for the exact same id_vacancy
                     $teamSubmission = Submission::where('id_team', $team->id_team)
                                     ->where('id_vacancy', $request->id_vacancy)
@@ -123,7 +124,7 @@ class SubmissionController extends Controller
                         DB::rollBack();
                         return response()->json(['success' => false, 'message' => 'Team code not found. Please make sure the code entered is valid for this program.'], 404);
                     }
-                    
+
                     $teamId = $team->id_team;
                 }
 
@@ -137,10 +138,8 @@ class SubmissionController extends Controller
                 ]);
             }
 
-            // 4. Update User Profile
+            // 4. Update User Profile & Candidate Profile
             $user->name = $request->name;
-            $user->id_university = $university->id_university;
-            $user->id_major = $major->id_major;
             // ✅ Set the company from the vacancy being applied to
             $user->id_company = $company->id_company;
             if ($teamId) {
@@ -148,6 +147,16 @@ class SubmissionController extends Controller
             }
             $user->save();
 
+            $candidate = Candidate::firstOrNew(['id_user' => $user->id_user]);
+            if (!$candidate->exists) {
+                $candidate->id_candidate = 'CDT' . strtoupper(Str::random(7));
+            }
+            $candidate->phone = $candidate->phone ?? null;
+            $candidate->institution = $request->university_name;
+            $candidate->education_level = $candidate->education_level ?? null;
+            $candidate->major = $request->major_name;
+            $candidate->save();
+          
             // 5. Upload Files
             $cvPath = $request->file('cv_file')->store('submissions/cv', 'public');
             $coverLetterPath = $request->file('cover_letter_file')->store('submissions/cover_letters', 'public');

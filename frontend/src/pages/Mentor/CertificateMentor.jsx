@@ -4,6 +4,7 @@ import { SidebarMentor } from "../../components/SidebarMentor";
 import { mentorApi } from "../../api/mentorApi";
 import { useAuthStore } from "../../stores/authStore";
 import { broadcastDataRefresh, onDataRefresh } from "../../utils/dataRefresh";
+import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { Eye, RefreshCw, Check } from 'lucide-react';
 
 const s = {
@@ -46,13 +47,20 @@ export default function CertificateMentor() {
   const [sending, setSending] = useState({});
   const [regenerateSuccess, setRegenerateSuccess] = useState({});
   const [logoutModal, setLogoutModal] = useState(false);
+  const [activeTab, setActiveTab] = useState("Individual");
+  const [interns, setInterns] = useState([]);
+  const [selectedSubmissionId, setSelectedSubmissionId] = useState(null);
 
   // ─── FETCH ───────────────────────────────────────────────────────────────
-  const applyCerts = (data) => {
+const applyCerts = (data) => {
     setStatCards(data.stats || []);
     const transformed = (data.certificates || []).map(cert => ({
       ...cert,
-      status: (cert.score === null || cert.score === 0) ? "In Progress" : cert.status,
+      status: cert.score === null
+        ? "In Progress"
+        : cert.status === "Passed"
+          ? "Done"
+          : cert.status,
     }));
     setCertList(transformed);
   };
@@ -77,6 +85,7 @@ export default function CertificateMentor() {
 
   const fetchAll = async (searchVal = '') => {
     try {
+
       setLoading(true);
       await Promise.all([
         fetchProfile(),
@@ -214,6 +223,11 @@ export default function CertificateMentor() {
     }
   };
 
+  const filteredCerts = certList.filter(cert =>
+    activeTab === "Individual" ? cert.type !== "Team" : cert.type === "Team"
+  );
+  const selectedIntern = interns.find(i => i.id_submission === selectedSubmissionId);
+
   if (loading) {
     return (
       <div style={s.app}>
@@ -226,12 +240,11 @@ export default function CertificateMentor() {
               <span style={s.bcActive}>Certificate</span>
             </div>
           </div>
-          <div style={s.content}><p>Loading...</p></div>
+          <div style={s.content}><LoadingSpinner message="Loading certificates..." /></div>
         </main>
       </div>
     );
   }
-
   return (
     <div style={s.app}>
       <style>{`* { box-sizing: border-box; margin: 0; padding: 0; } ::-webkit-scrollbar { width: 5px; } @keyframes spin { to { transform: rotate(360deg); } } ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 99px; } tr:last-child td { border-bottom: none; }`}</style>
@@ -250,17 +263,42 @@ export default function CertificateMentor() {
           <p style={s.subtitle}>Generate and manage certificates for interns who have passed all competency assessments.</p>
 
           <div style={s.card}>
-            {/* Card Header */}
-            <div style={{ ...s.ch, flexDirection: "column", alignItems: "center", textAlign: "center", gap: "8px" }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
-                <div><div style={s.ct}>Certificate List</div><div style={s.cs}>Interns who have completed all competency assessments</div></div>
-                <button style={s.btnPrimary}>Bulk Generate</button>
-              </div>
-              {/* Search Bar */}
+           {/* Card Header */}
+          <div style={{ padding: "18px 24px", borderBottom: "1px solid #f1f5f9", display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
+            
+            {/* Title - center */}
+            <div style={{ textAlign: "center" }}>
+              <div style={s.ct}>Certificate List</div>
+              <div style={s.cs}>Interns who have completed all competency assessments</div>
+            </div>
+
+            {/* Tab - center */}
+            <div style={{ display: "flex", background: "#f1f5f9", borderRadius: "10px", padding: "3px", gap: "2px" }}>
+              {["Individual", "Team"].map(tab => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  style={{
+                    padding: "6px 24px", borderRadius: "8px", border: "none",
+                    fontSize: "13px", fontWeight: activeTab === tab ? 700 : 500,
+                    color: activeTab === tab ? "#0f172a" : "#94a3b8",
+                    background: activeTab === tab ? "#fff" : "transparent",
+                    cursor: "pointer", fontFamily: "inherit",
+                    boxShadow: activeTab === tab ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
+                    transition: "all 0.15s",
+                  }}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
+
+            {/* Search + Bulk Generate - center */}
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <div style={{
                 display: "flex", alignItems: "center", gap: "8px",
                 background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px",
-                padding: "7px 14px", width: "260px", alignSelf: "flex-start", marginTop: "4px",
+                padding: "7px 14px", width: "280px",
               }}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
@@ -275,6 +313,8 @@ export default function CertificateMentor() {
                   <span onClick={() => setSearch("")} style={{ cursor: "pointer", color: "#94a3b8", fontSize: "16px", lineHeight: 1 }}>×</span>
                 )}
               </div>
+              <button style={s.btnPrimary}>Bulk Generate</button>
+            </div>
             </div>
 
             {/* Table */}
@@ -286,26 +326,96 @@ export default function CertificateMentor() {
                 </colgroup>
                 <thead style={s.thead}>
                   <tr>
-                    <th style={s.th}>INTERN</th><th style={s.th}>POSITION</th><th style={s.th}>PROGRAM</th>
-                    <th style={s.th}>FINAL SCORE</th><th style={s.th}>STATUS</th><th style={{ ...s.th, textAlign: 'center' }}>ACTION</th>
+                    {activeTab === "Team" && <th style={s.th}>TEAM</th>}
+                    <th style={s.th}>INTERN</th>
+                    <th style={s.th}>POSITION</th>
+                    <th style={s.th}>PROGRAM</th>
+                    <th style={s.th}>FINAL SCORE</th>
+                    <th style={s.th}>STATUS</th>
+                    <th style={{ ...s.th, textAlign: 'center' }}>ACTION</th>
                   </tr>
                 </thead>
-                <tbody>
-                  {loading ? (
+                                <tbody>
+                  {filteredCerts.length === 0 ? (
                     <tr>
-                      <td colSpan={6} style={{ padding: "48px 0", textAlign: "center", color: "#94a3b8", fontSize: "13px" }}>
-                        <div style={{ display: "inline-block", width: "20px", height: "20px", border: "2px solid #e2e8f0", borderTopColor: "#8b5cf6", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
-                        <div style={{ marginTop: "10px" }}>Loading...</div>
-                      </td>
-                    </tr>
-                  ) : certList.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} style={{ padding: "48px 0", textAlign: "center", color: "#94a3b8", fontSize: "13px" }}>
+                      <td colSpan={activeTab === "Team" ? 7 : 6} style={{ padding: "48px 0", textAlign: "center", color: "#94a3b8", fontSize: "13px" }}>
                         {search ? `No results for "${search}"` : "No certificates yet."}
                       </td>
                     </tr>
+                  ) : activeTab === "Team" ? (
+                    // ─── TEAM ROWS ───────────────────────────────────────────────
+                    (() => {
+                      const teamMap = {};
+                      filteredCerts.forEach(cert => {
+                        const key = cert.id_team || "unknown";
+                        if (!teamMap[key]) teamMap[key] = [];
+                        teamMap[key].push(cert);
+                      });
+                      return Object.entries(teamMap).map(([teamId, members]) =>
+                        members.map((cert, j) => (
+                          <tr key={`${teamId}-${j}`}>
+                            {j === 0 && (
+                              <td
+                                rowSpan={members.length}
+                                style={{
+                                  ...s.td, verticalAlign: "middle",
+                                  fontWeight: 700, color: "#1e40af", background: "#eff6ff",
+                                  borderRight: "1px solid #e2e8f0",
+                                }}
+                              >
+                                <span style={{ fontSize: "12px", color: "#1e40af", background: "#dbeafe", padding: "3px 8px", borderRadius: "5px" }}>
+                                  {cert.team_name ?? `Team ${teamId.slice(-4)}`}
+                                </span>
+                              </td>
+                            )}
+                            <td style={s.td}><span style={s.cname}>{cert.name}</span></td>
+                            <td style={s.td}>{cert.position}</td>
+                            <td style={s.td}>{cert.program}</td>
+                            <td style={s.td}>
+                              {cert.score != null
+                                ? <span style={{ fontWeight: 700, color: "#8b5cf6" }}>{cert.score.toFixed(1)}</span>
+                                : <span style={{ color: "#94a3b8" }}>—</span>}
+                            </td>
+                            <td style={s.td}><span style={s.badge(cert.statusBg, cert.statusColor)}>{cert.status}</span></td>
+                            <td style={{ ...s.td, textAlign: 'center' }}>
+                              <div style={{ ...s.acts, justifyContent: 'center' }}>
+                                {(cert.status === "Done" || cert.status === "Generated") && (
+                                  <>
+                                    <button style={s.btnIconBox} onClick={() => handlePreview(cert.id_submission)} disabled={previewing[cert.id_submission]} title="Preview">
+                                      <Eye size={15} />
+                                    </button>
+                                    <button style={s.btnIconBox} onClick={() => handleGenerateCertificate(cert.id_submission)} disabled={generating[cert.id_submission]} title="Regenerate">
+                                      <RefreshCw size={15} />
+                                    </button>
+                                  </>
+                                )}
+                                {cert.status === "Generated" && (
+                                  <>
+                                    <button style={{ ...s.btnIconBox, opacity: 0.5, pointerEvents: 'none' }} title="Already sent">
+                                      <Check size={15} />
+                                    </button>
+                                    <button style={s.btnSend} onClick={() => handleSendCertificate(cert.id_submission)} disabled={sending[cert.id_submission]}>
+                                      {sending[cert.id_submission] ? 'Sending...' : 'Send'}
+                                    </button>
+                                  </>
+                                )}
+                                {cert.status === "Done" && (
+                                  <button style={s.btnGenerate} onClick={() => handleGenerateCertificate(cert.id_submission)} disabled={generating[cert.id_submission]}>
+                                    {regenerateSuccess[cert.id_submission] ? '✓ Generated' : generating[cert.id_submission] ? 'Generating...' : 'Generate'}
+                                  </button>
+                                )}
+                                {(cert.status === "Not Passed" || cert.status === "In Progress" || cert.status === "Failed") && (
+                                  <span style={{ color: "#cbd5e1", fontSize: "12px" }}>—</span>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      );
+                    })()
                   ) : (
-                    certList.map((cert, i) => (
+                    // ─── INDIVIDUAL ROWS (sama seperti sebelumnya) ────────────────
+                    filteredCerts.map((cert, i) => (
                       <tr key={i}>
                         <td style={s.td}><span style={s.cname}>{cert.name}</span></td>
                         <td style={s.td}>{cert.position}</td>
@@ -318,7 +428,7 @@ export default function CertificateMentor() {
                         <td style={s.td}><span style={s.badge(cert.statusBg, cert.statusColor)}>{cert.status}</span></td>
                         <td style={{ ...s.td, textAlign: 'center' }}>
                           <div style={{ ...s.acts, justifyContent: 'center' }}>
-                            {(cert.status === "Passed" || cert.status === "Generated") && (
+                            {(cert.status === "Done" || cert.status === "Generated") && (
                               <>
                                 <button style={s.btnIconBox} onClick={() => handlePreview(cert.id_submission)} disabled={previewing[cert.id_submission]} title="Preview">
                                   <Eye size={15} />
@@ -338,12 +448,12 @@ export default function CertificateMentor() {
                                 </button>
                               </>
                             )}
-                            {cert.status === "Passed" && (
+                            {cert.status === "Done" && (
                               <button style={s.btnGenerate} onClick={() => handleGenerateCertificate(cert.id_submission)} disabled={generating[cert.id_submission]}>
                                 {regenerateSuccess[cert.id_submission] ? '✓ Generated' : generating[cert.id_submission] ? 'Generating...' : 'Generate'}
                               </button>
                             )}
-                            {(cert.status === "Not Passed" || cert.status === "In Progress") && (
+                            {(cert.status === "Not Passed" || cert.status === "In Progress" || cert.status === "Failed") && (
                               <span style={{ color: "#cbd5e1", fontSize: "12px" }}>—</span>
                             )}
                           </div>

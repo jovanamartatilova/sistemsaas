@@ -118,6 +118,8 @@ function EarlyPathDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [dashboardData, setDashboardData] = useState(null);
+  const [memberTasks, setMemberTasks] = useState([]);
+  const [tasksLoading, setTasksLoading] = useState(false);
   const [logoutModal, setLogoutModal] = useState(false);
   const { logout: globalLogout } = useAuthStore();
 
@@ -156,11 +158,36 @@ function EarlyPathDashboard() {
       const data = await response.json();
       setDashboardData(data.data);
       setError(null);
+      // Fetch member tasks after dashboard loads
+      fetchMemberTasks();
     } catch (err) {
       setError(err.message);
       console.error("Error fetching dashboard:", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchMemberTasks = async () => {
+    try {
+      setTasksLoading(true);
+      const token = localStorage.getItem("token") || localStorage.getItem("auth_token");
+      const response = await fetch(`${API_BASE_URL}/member/tasks`, {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setMemberTasks(data.data || []);
+      }
+    } catch (err) {
+      console.error("Error fetching member tasks:", err);
+      // Don't show error, just keep empty array
+    } finally {
+      setTasksLoading(false);
     }
   };
 
@@ -305,11 +332,27 @@ function EarlyPathDashboard() {
             {/* Profile Header */}
             <div className="bg-white border border-slate-200 rounded-2xl p-5 flex items-center gap-5 shadow-sm">
               <div className="relative flex-shrink-0">
-                <div className="w-16 h-16 rounded-full bg-indigo-100 flex items-center justify-center text-xl font-bold text-indigo-600">
+                {profile?.photo_url || profile?.photo_path ? (
+                  <img
+                    src={profile?.photo_url || `http://localhost:8000/storage/${profile?.photo_path}`}
+                    alt={profile?.name}
+                    className="w-16 h-16 rounded-full object-cover border-2 border-slate-200"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                      e.target.nextSibling.style.display = 'flex';
+                    }}
+                  />
+                ) : null}
+                <div
+                  className="w-16 h-16 rounded-full bg-indigo-100 items-center justify-center text-xl font-bold text-indigo-600"
+                  style={{ display: profile?.photo_url || profile?.photo_path ? 'none' : 'flex' }}
+                >
                   {profile?.name?.charAt(0).toUpperCase() || "R"}
                 </div>
                 <span className="absolute bottom-0.5 right-0.5 w-3 h-3 bg-emerald-400 rounded-full border-2 border-white" />
               </div>
+
+              {/* ← ini yang harus tetap ada */}
               <div className="flex-1 min-w-0">
                 <h1 className="text-xl font-bold text-slate-800 text-left">{profile?.name || "User"}</h1>
                 <p className="text-slate-500 text-sm mt-0.5 text-left">
@@ -321,23 +364,7 @@ function EarlyPathDashboard() {
                     Mentor: <span className="font-medium text-slate-600 ml-1">{apprentice.mentor_name}</span>
                   </p>
                 )}
-                <div className="flex items-center gap-3 mt-1.5">
-                  <span className="text-xs text-slate-400 flex items-center gap-1">
-                    <MapPin size={11} />
-                    {apprentice?.start_date && apprentice?.end_date
-                      ? `${new Date(apprentice.start_date).toLocaleDateString('en-US')} – ${new Date(apprentice.end_date).toLocaleDateString('en-US')}`
-                      : "Period not set"
-                    }
-                  </span>
-                  <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium border ${apprentice?.status === 'active'
-                    ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
-                    : 'bg-slate-50 text-slate-600 border-slate-200'
-                    }`}>
-                    ● {apprentice?.status || "Inactive"}
-                  </span>
-                </div>
               </div>
-        
             </div>
 
             {/* Main Content Grid */}
@@ -355,7 +382,7 @@ function EarlyPathDashboard() {
                         { label: "Location", value: vacancy?.location || "-" },
                         { label: "Start Date", value: vacancy?.start_date ? new Date(vacancy.start_date).toLocaleDateString('en-US') : "-" },
                         { label: "End Date", value: vacancy?.end_date ? new Date(vacancy.end_date).toLocaleDateString('en-US') : "-" },
-                        { label: "Status", value: formatStatus(apprentice?.status), badge: true, isStatus: true },
+                        { label: "Status", value: apprentice?.status === 'pending' || !apprentice ? 'Screening' : formatStatus(apprentice?.status), badge: true, isStatus: true },
                       ].map((row, i) => (
                         <div key={i} className="flex justify-between items-center text-sm py-1.5 border-b border-slate-50 last:border-0">
                         <span className="text-slate-400 font-medium">{row.label}</span>
@@ -422,34 +449,63 @@ function EarlyPathDashboard() {
 
               {/* Right Column */}
               <div className="flex flex-col gap-5">
-                  {/* My Tasks — Dummy UI */}
+                  {/* My Tasks */}
                 <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-                  <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center justify-between mb-3">
                     <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400">My Tasks</h2>
-                    <span className="text-xs bg-indigo-50 text-indigo-600 border border-indigo-200 px-2.5 py-0.5 rounded-full font-medium">3 Active</span>
+                    {memberTasks.length > 0 && (
+                      <span className="text-xs bg-indigo-50 text-indigo-600 border border-indigo-200 px-2.5 py-0.5 rounded-full font-medium">
+                        {memberTasks.length} Active
+                      </span>
+                    )}
                   </div>
-                  <div className="mt-3">
-                    <TaskItem title="Setup React Project Structure" status="Done" deadline="May 5, 2026" />
-                    <TaskItem title="Complete Onboarding Documentation" status="In Progress" deadline="May 10, 2026" />
-                    <TaskItem title="Build Landing Page Component" status="Pending" deadline="May 20, 2026" />
-                  </div>
-                  <p className="text-xs text-slate-400 mt-3 italic">* Task management feature coming soon</p>
-                </div>
-                {/* Competencies */}
-                 <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm text-left">
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400">Competencies</h2>
-                    <div className="flex gap-1 bg-slate-100 rounded-lg p-1">
-                      {["All", "Active", "Completed"].map((f) => (
-                        <button
-                          key={f}
-                          onClick={() => setSkillFilter(f === "Completed" ? "Done" : f)}
-                          className={`text-xs px-3 py-1 rounded-md font-medium transition-colors ${skillFilter === (f === "Completed" ? "Done" : f) ? "bg-indigo-600 text-white" : "text-slate-500 hover:text-slate-700 hover:bg-white"
-                            }`}
-                        >
-                          {f}
-                        </button>
+                  {tasksLoading ? (
+                    <div className="py-6 text-center">
+                      <div className="inline-block w-5 h-5 border-2 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+                      <p className="text-xs text-slate-400 mt-2">Loading My Tasks</p>
+                    </div>
+                  ) : memberTasks.length > 0 ? (
+                    <div className="mt-3 space-y-3">
+                      {memberTasks.slice(0, 3).map((task) => (
+                        <TaskItem
+                          key={task.id_task}
+                          title={task.title}
+                          status={task.status === 'in_progress' ? 'In Progress' : task.status === 'done' ? 'Done' : 'Pending'}
+                          deadline={task.deadline ? new Date(task.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : null}
+                        />
                       ))}
+                      {memberTasks.length > 3 && (
+                        <button 
+                          onClick={() => navigate(`/c/${JSON.parse(localStorage.getItem("company"))?.id_company}/member/tasks`)}
+                          className="w-full text-xs font-semibold text-indigo-600 hover:text-indigo-700 py-2"
+                        >
+                          View all tasks →
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="py-6 text-center">
+                      <p className="text-sm text-slate-500">No tasks assigned yet</p>
+                      <p className="text-xs text-slate-400 mt-1">Tasks will appear once your mentor assigns you</p>
+                    </div>
+                  )}
+                </div>
+                {/* Competencies - Only show if apprentice is accepted */}
+                 {apprentice?.status === 'active' || apprentice?.status === 'accepted' ? (
+                  <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm text-left">
+                    <div className="flex items-center justify-between mb-4">
+                      <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400">Competencies</h2>
+                      <div className="flex gap-1 bg-slate-100 rounded-lg p-1">
+                        {["All", "Active", "Completed"].map((f) => (
+                          <button
+                            key={f}
+                            onClick={() => setSkillFilter(f === "Completed" ? "Done" : f)}
+                            className={`text-xs px-3 py-1 rounded-md font-medium transition-colors ${skillFilter === (f === "Completed" ? "Done" : f) ? "bg-indigo-600 text-white" : "text-slate-500 hover:text-slate-700 hover:bg-white"
+                              }`}
+                          >
+                            {f}
+                          </button>
+                        ))}
                     </div>
                   </div>
                   <div className="space-y-3">
@@ -460,6 +516,11 @@ function EarlyPathDashboard() {
                     )}
                   </div>
                 </div>
+              ) : (
+                <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm text-center">
+                  <p className="text-slate-400 text-sm">Competencies will be available once you are accepted</p>
+                </div>
+              )}
               </div>
             </div>
 
