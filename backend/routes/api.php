@@ -38,6 +38,7 @@ use App\Http\Controllers\HR\HRScreeningController;
 use App\Http\Controllers\SuperAdmin\DashboardController as SuperAdminDashboardController;
 use App\Http\Controllers\SuperAdmin\TenantController;
 use App\Http\Controllers\SuperAdmin\UserController;
+use App\Http\Controllers\Company\CompanyConfigController;
 
 // Public routes
 Route::post('/register', [AuthController::class, 'register']);
@@ -48,6 +49,7 @@ Route::get('/c/{id_company}', [CompanyPublicController::class, 'show']);
 Route::get('/c/{id_company}/vacancies', [CompanyPublicController::class, 'vacancies']);
 Route::get('/invitation-codes/validate/{code}', [AuthController::class, 'validateInvitationCode']);
 Route::post('/auth/activate', [AuthController::class, 'activateAccount']);
+Route::options('/{any}', fn () => response()->noContent())->where('any', '.*');
 
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
@@ -66,7 +68,28 @@ Route::middleware('auth:sanctum')->group(function () {
     // Company & Candidate creation (after registration)
     Route::post('/create-company', [AuthController::class, 'createCompany']);
     Route::post('/create-candidate-profile', [AuthController::class, 'createCandidateProfile']);
+    Route::prefix('company/config')->group(function () {
+    Route::get('/roles',                  [CompanyConfigController::class, 'listRoles']);
+    Route::post('/roles',                 [CompanyConfigController::class, 'storeRole']);
+    Route::put('/roles/{id}',             [CompanyConfigController::class, 'updateRole']);
+    Route::delete('/roles/{id}',          [CompanyConfigController::class, 'destroyRole']);
+
+    Route::get('/divisions',              [CompanyConfigController::class, 'listDivisions']);
+    Route::post('/divisions',             [CompanyConfigController::class, 'storeDivision']);
+    Route::put('/divisions/{id}',         [CompanyConfigController::class, 'updateDivision']);
+    Route::delete('/divisions/{id}',      [CompanyConfigController::class, 'destroyDivision']);
+
+    Route::get('/staff-positions',        [CompanyConfigController::class, 'listStaffPositions']);
+    Route::post('/staff-positions',       [CompanyConfigController::class, 'storeStaffPosition']);
+    Route::put('/staff-positions/{id}',   [CompanyConfigController::class, 'updateStaffPosition']);
+    Route::delete('/staff-positions/{id}',[CompanyConfigController::class, 'destroyStaffPosition']);
+
+    Route::get('/job-levels',             [CompanyConfigController::class, 'listJobLevels']);
+    Route::post('/job-levels',            [CompanyConfigController::class, 'storeJobLevel']);
+    Route::put('/job-levels/{id}',        [CompanyConfigController::class, 'updateJobLevel']);
+    Route::delete('/job-levels/{id}',     [CompanyConfigController::class, 'destroyJobLevel']);
 });
+    
 
 // Test
 Route::get('/test', fn () => response()->json(['message' => 'API Laravel berhasil']));

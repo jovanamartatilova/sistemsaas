@@ -493,10 +493,11 @@ export default function ProgramsPage() {
         vacancy={selectedVacancy}
         onCancel={() => setSelectedVacancy(null)}
         onConfirm={() => {
-          const companyId = selectedVacancy.company?.id_company;
-          navigate(`/c/${companyId}`);
-          setSelectedVacancy(null);
-        }}
+        const companyId = selectedVacancy.company?.id_company;
+        const vacancyId = selectedVacancy.id_vacancy;
+        navigate(`/c/${companyId}/apply/${vacancyId}/0`);
+        setSelectedVacancy(null);
+      }}
       />
 
       {/* Logout Modal */}

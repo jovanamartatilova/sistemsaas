@@ -30,7 +30,7 @@ class CompanyUserController extends Controller
         $query = User::whereHas('employee', fn($q) => $q->where('id_company', $companyId));
 
         if ($type === 'team') {
-            $query->whereIn('role', ['admin', 'hr', 'mentor', 'staff']);
+            $query->whereRaw('LOWER(role) IN (?, ?, ?, ?, ?)', ['admin', 'hr', 'mentor', 'staff', 'finance']);
         } elseif ($type === 'candidate') {
             $query->where('role', 'candidate');
         }
@@ -62,7 +62,7 @@ class CompanyUserController extends Controller
         $validated = $request->validate([
             'name'  => 'required|string|max:50',
             'email' => 'required|email|unique:users,email',
-            'role'  => 'required|in:admin,hr,mentor,staff',
+            'role'  => 'required|in:admin,hr,mentor,staff,finance',
         ]);
 
         // Generate id_user
@@ -138,7 +138,7 @@ class CompanyUserController extends Controller
 
         $validated = $request->validate([
             'name' => 'sometimes|string|max:50',
-            'role' => 'sometimes|in:admin,hr,mentor,staff,candidate',
+            'role' => 'sometimes|in:admin,hr,mentor,staff,finance,candidate',
             'is_active' => 'sometimes|boolean',
         ]);
 

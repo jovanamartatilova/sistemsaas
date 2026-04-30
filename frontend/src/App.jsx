@@ -15,7 +15,6 @@ import Onboarding from "./components/OnboardingModal";
 import LoginCandidate           from './pages/Candidate/LoginCandidate';
 import ForgotPasswordCandidate  from './pages/Candidate/ForgotPasswordCandidate';
 import ResetPasswordCandidate   from './pages/Candidate/ResetPasswordCandidate';
-import CompanyPublicPage        from './pages/Candidate/CompanyPublic';
 import CandidateDashboard       from './pages/Candidate/CandidateDashboard';
 import LeaderDashboard          from './pages/Candidate/LeaderDashboard';
 import LeaderTeamManagement     from './pages/Candidate/LeaderTeamManagement';
@@ -99,7 +98,7 @@ export default function App() {
                 <Route path="/forgot-password-candidate" element={<ForgotPasswordCandidate />} />
 
                 {/* Company — Public */}
-                <Route path="/c/:idCompany"                   element={<CompanyPublicPage />} />
+                <Route path="/c/:idCompany"                   element={<LandingPage />} />
                 <Route path="/c/:idCompany/register"          element={<CandidateRegisterRedirect />} />
                 <Route path="/c/:idCompany/login"             element={<LoginCandidate />} />
                 <Route path="/c/:idCompany/forgot-password"   element={<ForgotPasswordCandidate />} />
