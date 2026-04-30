@@ -53,54 +53,43 @@ Route::options('/{any}', fn () => response()->noContent())->where('any', '.*');
 
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/profile', [AuthController::class, 'profile']);
-    Route::post('/logout', [AuthController::class, 'logout']);
 
-    // Company roles (for invitation code management)
-    Route::get('/company/roles', [AuthController::class, 'companyRoles']);
+    Route::get('/profile',          [AuthController::class, 'profile']);
+    Route::post('/logout',          [AuthController::class, 'logout']);
+    Route::get('/auth/profile',     [AuthController::class, 'profile']);
+    Route::post('/auth/logout',     [AuthController::class, 'logout']);
+    Route::get('/company/roles',    [AuthController::class, 'companyRoles']);
 
-    // Invitation Codes (Company Admin)
-    Route::get('/company/invitation-codes', [AuthController::class, 'listInvitationCodes']);
-    Route::post('/company/invitation-codes', [AuthController::class, 'createInvitationCode']);
-    Route::patch('/company/invitation-codes/{id}/toggle', [AuthController::class, 'toggleInvitationCode']);
-    Route::delete('/company/invitation-codes/{id}', [AuthController::class, 'deleteInvitationCode']);
+    // Invitation Codes
+    Route::get('/company/invitation-codes',                  [AuthController::class, 'listInvitationCodes']);
+    Route::post('/company/invitation-codes',                 [AuthController::class, 'createInvitationCode']);
+    Route::patch('/company/invitation-codes/{id}/toggle',    [AuthController::class, 'toggleInvitationCode']);
+    Route::delete('/company/invitation-codes/{id}',          [AuthController::class, 'deleteInvitationCode']);
 
-    // Company & Candidate creation (after registration)
-    Route::post('/create-company', [AuthController::class, 'createCompany']);
-    Route::post('/create-candidate-profile', [AuthController::class, 'createCandidateProfile']);
+    Route::post('/create-company',            [AuthController::class, 'createCompany']);
+    Route::post('/create-candidate-profile',  [AuthController::class, 'createCandidateProfile']);
+
+    // Company Config
     Route::prefix('company/config')->group(function () {
-    Route::get('/roles',                  [CompanyConfigController::class, 'listRoles']);
-    Route::post('/roles',                 [CompanyConfigController::class, 'storeRole']);
-    Route::put('/roles/{id}',             [CompanyConfigController::class, 'updateRole']);
-    Route::delete('/roles/{id}',          [CompanyConfigController::class, 'destroyRole']);
+        Route::get('/roles',                   [CompanyConfigController::class, 'listRoles']);
+        Route::post('/roles',                  [CompanyConfigController::class, 'storeRole']);
+        Route::put('/roles/{id}',              [CompanyConfigController::class, 'updateRole']);
+        Route::delete('/roles/{id}',           [CompanyConfigController::class, 'destroyRole']);
+        Route::get('/divisions',               [CompanyConfigController::class, 'listDivisions']);
+        Route::post('/divisions',              [CompanyConfigController::class, 'storeDivision']);
+        Route::put('/divisions/{id}',          [CompanyConfigController::class, 'updateDivision']);
+        Route::delete('/divisions/{id}',       [CompanyConfigController::class, 'destroyDivision']);
+        Route::get('/staff-positions',         [CompanyConfigController::class, 'listStaffPositions']);
+        Route::post('/staff-positions',        [CompanyConfigController::class, 'storeStaffPosition']);
+        Route::put('/staff-positions/{id}',    [CompanyConfigController::class, 'updateStaffPosition']);
+        Route::delete('/staff-positions/{id}', [CompanyConfigController::class, 'destroyStaffPosition']);
+        Route::get('/job-levels',              [CompanyConfigController::class, 'listJobLevels']);
+        Route::post('/job-levels',             [CompanyConfigController::class, 'storeJobLevel']);
+        Route::put('/job-levels/{id}',         [CompanyConfigController::class, 'updateJobLevel']);
+        Route::delete('/job-levels/{id}',      [CompanyConfigController::class, 'destroyJobLevel']);
+    });
 
-    Route::get('/divisions',              [CompanyConfigController::class, 'listDivisions']);
-    Route::post('/divisions',             [CompanyConfigController::class, 'storeDivision']);
-    Route::put('/divisions/{id}',         [CompanyConfigController::class, 'updateDivision']);
-    Route::delete('/divisions/{id}',      [CompanyConfigController::class, 'destroyDivision']);
-
-    Route::get('/staff-positions',        [CompanyConfigController::class, 'listStaffPositions']);
-    Route::post('/staff-positions',       [CompanyConfigController::class, 'storeStaffPosition']);
-    Route::put('/staff-positions/{id}',   [CompanyConfigController::class, 'updateStaffPosition']);
-    Route::delete('/staff-positions/{id}',[CompanyConfigController::class, 'destroyStaffPosition']);
-
-    Route::get('/job-levels',             [CompanyConfigController::class, 'listJobLevels']);
-    Route::post('/job-levels',            [CompanyConfigController::class, 'storeJobLevel']);
-    Route::put('/job-levels/{id}',        [CompanyConfigController::class, 'updateJobLevel']);
-    Route::delete('/job-levels/{id}',     [CompanyConfigController::class, 'destroyJobLevel']);
-});
-    
-
-// Test
-Route::get('/test', fn () => response()->json(['message' => 'API Laravel berhasil']));
-
-// Authenticated Routes (General)
-
-Route::middleware('auth:sanctum')->group(function () {
-
-// Auth
-Route::get('/auth/profile', [AuthController::class, 'profile']);
-Route::post('/auth/logout',  [AuthController::class, 'logout']);
+    Route::get('/test', fn () => response()->json(['message' => 'API Laravel berhasil']));
 
     // AI Proxy (Groq)
     Route::post('/ai/generate', function (Request $request) {
@@ -108,25 +97,18 @@ Route::post('/auth/logout',  [AuthController::class, 'logout']);
             if (!env('GROQ_API_KEY')) {
                 return response()->json(['error' => 'API Key belum di set. Silakan masukkan GROQ_API_KEY di file .env backend Anda.'], 500);
             }
-
-            $response = Http::withOptions([
-                'verify' => false,
-                'timeout' => 30
-            ])->withHeaders([
-                'Authorization' => 'Bearer ' . env('GROQ_API_KEY'),
-                'Content-Type' => 'application/json',
-            ])->post('https://api.groq.com/openai/v1/chat/completions', [
-                'model' => 'llama-3.3-70b-versatile',
-                'messages' => [
-                    ['role' => 'user', 'content' => $request->input('prompt')]
-                ],
-                'temperature' => 0.6,
-                'max_tokens' => 200
-            ]);
-
+            $response = Http::withOptions(['verify' => false, 'timeout' => 30])
+                ->withHeaders([
+                    'Authorization' => 'Bearer ' . env('GROQ_API_KEY'),
+                    'Content-Type'  => 'application/json',
+                ])->post('https://api.groq.com/openai/v1/chat/completions', [
+                    'model'       => 'llama-3.3-70b-versatile',
+                    'messages'    => [['role' => 'user', 'content' => $request->input('prompt')]],
+                    'temperature' => 0.6,
+                    'max_tokens'  => 200,
+                ]);
             if ($response->successful()) {
-                $content = $response->json('choices.0.message.content');
-                return response()->json(['response' => $content]);
+                return response()->json(['response' => $response->json('choices.0.message.content')]);
             }
             return response()->json(['error' => 'Groq API error', 'details' => $response->body()], 500);
         } catch (\Exception $e) {
@@ -134,49 +116,50 @@ Route::post('/auth/logout',  [AuthController::class, 'logout']);
         }
     });
 
-    // User (candidate self-service)
-    Route::get('/users/me',                         [CandidateController::class, 'getMe']);
-    Route::put('/users/{id_user}',                  [CandidateController::class, 'updateUser']);
-    Route::post('/users/{id_user}/upload-avatar',   [CandidateController::class, 'uploadAvatar']);
-    Route::get('/positions',                        [CandidateController::class, 'getPositions']);
-    Route::get('/certificates',                     [CandidateController::class, 'getCertificates']);
-    Route::post('/logout',                          [CandidateController::class, 'logout']);
+    // User / Candidate self-service
+    Route::get('/users/me',                       [CandidateController::class, 'getMe']);
+    Route::put('/users/{id_user}',                [CandidateController::class, 'updateUser']);
+    Route::post('/users/{id_user}/upload-avatar', [CandidateController::class, 'uploadAvatar']);
+    Route::get('/positions',                      [CandidateController::class, 'getPositions']);
+    Route::get('/certificates',                   [CandidateController::class, 'getCertificates']);
+    Route::post('/logout',                        [CandidateController::class, 'logout']);
 
-    // Candidate — apply
-    Route::get('/c/{id_company}/my-submission', [CompanyPublicController::class, 'mySubmission']);
-    Route::post('/c/{id_company}/apply',        [SubmissionController::class, 'apply']);
+    // Candidate apply
+    Route::get('/c/{id_company}/my-submission',   [CompanyPublicController::class, 'mySubmission']);
+    Route::post('/c/{id_company}/apply',          [SubmissionController::class, 'apply']);
 
     // Vacancies
-    Route::get('/vacancies',        [VacancyController::class, 'index']);
-    Route::post('/vacancies',       [VacancyController::class, 'store']);
-    Route::put('/vacancies/{id}',   [VacancyController::class, 'update']);
+    Route::get('/vacancies',         [VacancyController::class, 'index']);
+    Route::post('/vacancies',        [VacancyController::class, 'store']);
+    Route::put('/vacancies/{id}',    [VacancyController::class, 'update']);
     Route::delete('/vacancies/{id}', [VacancyController::class, 'destroy']);
 
     // Dashboard
-    Route::get('/dashboard/stats', [DashboardController::class, 'index']);
+    Route::get('/dashboard/stats',   [DashboardController::class, 'index']);
 
     // Programs
-    Route::get('/programs',                              [ProgramController::class, 'index']);
-    Route::get('/programs/{id_position}/competencies',   [ProgramController::class, 'getCompetencies']);
-    Route::post('/programs/{id_position}/competencies',  [ProgramController::class, 'updateCompetencies']);
+    Route::get('/programs',                               [ProgramController::class, 'index']);
+    Route::get('/programs/{id_position}/competencies',    [ProgramController::class, 'getCompetencies']);
+    Route::post('/programs/{id_position}/competencies',   [ProgramController::class, 'updateCompetencies']);
     Route::delete('/programs/{id_vacancy}/{id_position}', [ProgramController::class, 'destroy']);
 
     // Position catalog
-    Route::get('/positions/catalog',        [ProgramController::class, 'getCatalog']);
-    Route::post('/positions/catalog',       [ProgramController::class, 'storeCatalog']);
-    Route::put('/positions/catalog/{id}',   [ProgramController::class, 'updateCatalog']);
-    Route::delete('/positions/catalog/{id}', [ProgramController::class, 'destroyCatalog']);
+    Route::get('/positions/catalog',          [ProgramController::class, 'getCatalog']);
+    Route::post('/positions/catalog',         [ProgramController::class, 'storeCatalog']);
+    Route::put('/positions/catalog/{id}',     [ProgramController::class, 'updateCatalog']);
+    Route::delete('/positions/catalog/{id}',  [ProgramController::class, 'destroyCatalog']);
 
     // Company users
-    Route::get('/company-users',        [CompanyUserController::class, 'index']);
-    Route::post('/company-users',       [CompanyUserController::class, 'store']);
-    Route::put('/company-users/{id}',   [CompanyUserController::class, 'update']);
+    Route::get('/company-users',         [CompanyUserController::class, 'index']);
+    Route::post('/company-users',        [CompanyUserController::class, 'store']);
+    Route::put('/company-users/{id}',    [CompanyUserController::class, 'update']);
     Route::delete('/company-users/{id}', [CompanyUserController::class, 'destroy']);
 
     // Company profile
-    Route::put('/company/profile',   [CompanyController::class, 'updateProfile']);
-    Route::post('/company/logo',     [CompanyController::class, 'uploadLogo']);
-    Route::delete('/company/logo',   [CompanyController::class, 'removeLogo']);
+    Route::put('/company/profile',  [CompanyController::class, 'updateProfile']);
+    Route::post('/company/logo',    [CompanyController::class, 'uploadLogo']);
+    Route::delete('/company/logo',  [CompanyController::class, 'removeLogo']);
+
 });
 
 // Super Admin Routes
