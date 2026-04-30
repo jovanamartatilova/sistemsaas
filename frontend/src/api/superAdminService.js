@@ -8,7 +8,12 @@ export const superAdminService = {
     api.get(`/superadmin/tenants`, { params }).then(r => r.data),
 
   updateTenantStatus: (id, status) =>
-    api.patch(`/superadmin/tenants/${id}/status`, { status }).then(r => r.data),
+    api.patch(`/superadmin/tenants/${id}/status`, { status })
+      .then(r => r.data)
+      .catch(err => {
+        console.error("updateTenantStatus failed:", err.response?.data ?? err.message);
+        throw err;
+      }),
 
   getUsers: (params = {}) =>
     api.get(`/superadmin/users`, { params }).then(r => r.data),
