@@ -62,12 +62,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/company/invitation-codes', [AuthController::class, 'createInvitationCode']);
     Route::patch('/company/invitation-codes/{id}/toggle', [AuthController::class, 'toggleInvitationCode']);
     Route::delete('/company/invitation-codes/{id}', [AuthController::class, 'deleteInvitationCode']);
-    
+
     // Company & Candidate creation (after registration)
     Route::post('/create-company', [AuthController::class, 'createCompany']);
     Route::post('/create-candidate-profile', [AuthController::class, 'createCandidateProfile']);
-
-    
 });
 
 // Test
@@ -102,7 +100,7 @@ Route::post('/auth/logout',  [AuthController::class, 'logout']);
                 'temperature' => 0.6,
                 'max_tokens' => 200
             ]);
-            
+
             if ($response->successful()) {
                 $content = $response->json('choices.0.message.content');
                 return response()->json(['response' => $content]);
@@ -159,6 +157,34 @@ Route::post('/auth/logout',  [AuthController::class, 'logout']);
 });
 
 // Super Admin Routes
+
+Route::post('/auth/login-superadmin', function (Request $request) {
+    $validated = $request->validate([
+        'email'    => 'required|email',
+        'password' => 'required|string',
+    ]);
+
+    $user = \App\Models\User::where('email', $validated['email'])
+                ->where('role', 'super_admin')
+                ->first();
+
+    if (!$user || !\Illuminate\Support\Facades\Hash::check($validated['password'], $user->password)) {
+        return response()->json(['message' => 'Invalid credentials or not a super admin'], 401);
+    }
+
+    $token = $user->createToken('auth_token')->plainTextToken;
+
+    return response()->json([
+        'message' => 'Login successful',
+        'token'   => $token,
+        'user'    => [
+            'id_user' => $user->id_user,
+            'name'    => $user->name,
+            'email'   => $user->email,
+            'role'    => $user->role,
+        ],
+    ]);
+});
 
 Route::prefix('superadmin')->middleware(['auth:sanctum', 'superadmin'])->group(function () {
     Route::get('/dashboard/stats',      [SuperAdminDashboardController::class, 'stats']);
@@ -225,7 +251,7 @@ Route::prefix('mentor')->middleware(['auth:sanctum', 'mentorRole'])->group(funct
     // Recap & certificates
     Route::get('/score-recap',   [MentorController::class, 'getScoreRecap']);
     Route::get('/certificates',  [MentorController::class, 'getCertificates']);
-    
+
     // Tasks
     Route::get('/assign-targets', [App\Http\Controllers\MentorTaskController::class, 'getAssignTargets']);
     Route::get('/competencies', [App\Http\Controllers\MentorTaskController::class, 'getCompetencies']);
@@ -246,23 +272,14 @@ Route::middleware(['auth:sanctum'])->prefix('intern')->group(function () {
 Route::middleware(['auth:sanctum'])->prefix('hr')->group(function () {
     Route::get('/dashboard', [HRDashboardController::class, 'index']);
 
-    // Apprentices
-    Route::get('/apprentices', [HRCandidateController::class, 'apprentices']);
-
-    // Candidates
     Route::get('/candidates/export',                [HRCandidateController::class, 'exportCsv']);
-    Route::get('/candidates/all',                   [HRCandidateController::class, 'allCandidates']);
     Route::get('/candidates',                       [HRCandidateController::class, 'index']);
     Route::patch('/candidates/{id}/accept',         [HRCandidateController::class, 'accept']);
     Route::patch('/candidates/{id}/reject',         [HRCandidateController::class, 'reject']);
     Route::patch('/candidates/{id}/stage',          [HRCandidateController::class, 'updateStage']);
     Route::patch('/candidates/{id}/screening',      [HRCandidateController::class, 'screening']);
     Route::patch('/candidates/{id}/interview',      [HRCandidateController::class, 'interview']);
-    Route::patch('/candidates/{id}/notes',          [HRCandidateController::class, 'updateNotes']);   
     Route::get('/candidates/{id}/documents/{type}', [HRCandidateController::class, 'viewDocument']);
-    Route::post('/positions/{id}/test-templates',   [HRCandidateController::class, 'saveTestTemplates']);
-    Route::delete('/positions/{id}/test-templates/{template_id}', [HRCandidateController::class, 'deleteTestTemplate']);
-    Route::post('/candidates/bulk-assign-test',     [HRCandidateController::class, 'bulkAssignTest']);
 
     // Screening
     Route::get('/screening',                        [HRScreeningController::class, 'index']);

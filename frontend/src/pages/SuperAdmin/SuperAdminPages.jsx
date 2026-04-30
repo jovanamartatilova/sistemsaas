@@ -499,15 +499,17 @@ function TenantManagementPage() {
   const toggleStatus = async (id, currentStatus) => {
     const newStatus = currentStatus === "active" ? "suspended" : "active";
     try {
-      await superAdminService.updateTenantStatus(id, newStatus);
-      // Optimistically update local state immediately for instant feedback
+      const result = await superAdminService.updateTenantStatus(id, newStatus);
+      console.log("Status update result:", result);
+      // Update local state dulu untuk instant feedback
       setTenants(prev =>
         prev.map(t => t.id === id ? { ...t, status: newStatus } : t)
       );
-      // Then refetch to sync with server
-      fetchTenants();
-    } catch {
-      alert("Failed to update tenant status");
+      // Refetch untuk sync dengan server
+      await fetchTenants();
+    } catch (err) {
+      console.error("Toggle status error:", err);
+      alert("Failed to update tenant status: " + (err?.message ?? "Unknown error"));
     }
   };
 
@@ -636,7 +638,10 @@ const roleStyle = {
   peserta: { bg: "#fdf4ff", color: "#7e22ce", border: "#e9d5ff", label: "Participant" },
 };
 
+// GANTI fungsi UserManagementPage() yang lama dengan ini:
+
 function UserManagementPage() {
+  const [tab, setTab] = useState("employees");
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -644,19 +649,35 @@ function UserManagementPage() {
   const [roleFilter, setRoleFilter] = useState("all");
 
   const fetchUsers = () => {
-    setLoading(true); setError(null);
-    superAdminService.getUsers({ search, role: roleFilter })
+    setLoading(true);
+    setError(null);
+    superAdminService.getUsers({ search, role: roleFilter, tab })
       .then(res => setUsers(res.data ?? []))
       .catch(() => setError("Failed to load user data"))
       .finally(() => setLoading(false));
   };
-  useEffect(() => { fetchUsers(); }, [search, roleFilter]);
 
-  const initials = (name) => name?.split(" ").slice(0, 2).map(w => w[0]).join("").toUpperCase() ?? "?";
-  const avatarColors = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#06b6d4", "#84cc16", "#f97316", "#14b8a6"];
+  useEffect(() => { fetchUsers(); }, [search, roleFilter, tab]);
 
-  // Fixed column widths for alignment
-const colWidths = { user: "30%", role: "12%", company: "20%", phone: "16%", registered: "14%", align: { user: "left", role: "center", company: "center", phone: "center", registered: "center" } };
+  const handleTabChange = (newTab) => {
+    setTab(newTab);
+    setSearch("");
+    setRoleFilter("all");
+  };
+
+  // Kolom employees
+  const EMP_COLS = ["NAME", "EMAIL", "ROLE", "COMPANY", "PHONE", "DEPARTMENT", "POSITION", "JOB LEVEL", "STATUS", "SCHEDULE", "REGISTERED"];
+  // Kolom candidates
+  const CAND_COLS = ["NAME", "EMAIL", "PHONE", "INSTITUTION", "EDUCATION LEVEL", "MAJOR", "REGISTERED"];
+
+  const tdStyle = {
+    padding: "11px 14px",
+    fontSize: "13px",
+    color: "#475569",
+    verticalAlign: "middle",
+    whiteSpace: "nowrap",
+    borderBottom: "1px solid #f1f5f9",
+  };
 
   return (
     <main style={{ flex: 1, padding: "28px 28px 40px", overflowY: "auto", background: "#f8fafc" }}>
@@ -665,23 +686,47 @@ const colWidths = { user: "30%", role: "12%", company: "20%", phone: "16%", regi
         <div style={{ fontSize: "13px", color: "#64748b", marginTop: "3px" }}>All registered users across tenants.</div>
       </div>
 
+      {/* Tabs */}
+      <div style={{ display: "flex", gap: "4px", marginBottom: "20px", background: "#fff", borderRadius: "12px", padding: "5px", width: "fit-content", boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
+        {[{ key: "employees", label: "Employees" }, { key: "candidates", label: "Candidates" }].map(t => (
+          <button key={t.key} onClick={() => handleTabChange(t.key)}
+            style={{
+              padding: "8px 20px", borderRadius: "9px", border: "none", cursor: "pointer",
+              fontSize: "13px", fontWeight: "600", transition: "all 0.2s",
+              background: tab === t.key ? "#3b82f6" : "transparent",
+              color: tab === t.key ? "#fff" : "#64748b",
+            }}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
       {/* Filter bar */}
       <div style={{ background: "#fff", borderRadius: "16px", padding: "14px 18px", marginBottom: "20px", display: "flex", gap: "12px", alignItems: "center", boxShadow: "0 1px 4px rgba(0,0,0,0.05)", flexWrap: "wrap" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "7px", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px", padding: "7px 12px", flex: "1 1 220px" }}>
           <IC.Search />
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search name or email..."
-            style={{ border: "none", background: "transparent", outline: "none", fontSize: "13px", color: "#64748b", width: "100%" }} />
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder={tab === "employees" ? "Search name or email..." : "Search candidate name or email..."}
+            style={{ border: "none", background: "transparent", outline: "none", fontSize: "13px", color: "#64748b", width: "100%" }}
+          />
         </div>
-        <div style={{ position: "relative" }}>
-          <select value={roleFilter} onChange={e => setRoleFilter(e.target.value)}
-            style={{ appearance: "none", background: "#fff", border: "1px solid #e2e8f0", borderRadius: "10px", padding: "8px 36px 8px 14px", fontSize: "13px", color: "#475569", fontWeight: "500", cursor: "pointer", outline: "none" }}>
+
+        {/* Role filter — hanya tampil di tab employees */}
+        {tab === "employees" && (
+          <div style={{ position: "relative" }}>
+            <select value={roleFilter} onChange={e => setRoleFilter(e.target.value)}
+              style={{ appearance: "none", background: "#fff", border: "1px solid #e2e8f0", borderRadius: "10px", padding: "8px 36px 8px 14px", fontSize: "13px", color: "#475569", fontWeight: "500", cursor: "pointer", outline: "none" }}>
               <option value="all">All Roles</option>
+              <option value="admin">Admin</option>
               <option value="hr">HR</option>
               <option value="mentor">Mentor</option>
-              <option value="candidate">Candidate</option>
-          </select>
-          <span style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: "#94a3b8" }}><IC.ChevDown /></span>
-        </div>
+              <option value="employee">Employee</option>
+            </select>
+            <span style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: "#94a3b8" }}><IC.ChevDown /></span>
+          </div>
+        )}
       </div>
 
       {/* Table */}
@@ -695,50 +740,64 @@ const colWidths = { user: "30%", role: "12%", company: "20%", phone: "16%", regi
         ) : (
           <>
             <div style={{ padding: "12px 18px", borderBottom: "1px solid #f1f5f9" }}>
-              <span style={{ fontSize: "12px", color: "#64748b" }}>Showing <strong style={{ color: "#1e293b" }}>{users.length}</strong> users</span>
+              <span style={{ fontSize: "12px", color: "#64748b" }}>
+                Showing <strong style={{ color: "#1e293b" }}>{users.length}</strong> {tab}
+              </span>
             </div>
-            {/* tableLayout: fixed + defined widths = columns always align */}
-            <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
-              <thead>
-                <tr style={{ background: "#f8fafc" }}>
-                  <th style={{ ...TH, width: colWidths.user, textAlign: "center" }}>USER</th>
-                  <th style={{ ...TH, width: colWidths.role, textAlign: "center" }}>ROLE</th>
-                  <th style={{ ...TH, width: colWidths.company, textAlign: "center" }}>COMPANY</th>
-                  <th style={{ ...TH, width: colWidths.phone, textAlign: "center" }}>PHONE</th>
-                  <th style={{ ...TH, width: colWidths.registered, textAlign: "center" }}>REGISTERED</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.map((u, i) => {
-                  const roleKey = u.role?.toLowerCase();
-                  const rs = roleStyle[roleKey] ?? { bg: "#f8fafc", color: "#475569", border: "#e2e8f0", label: u.role };
-                  const ac = avatarColors[i % avatarColors.length];
-                  return (
-                    <tr key={u.id} style={{ borderBottom: "1px solid #f8fafc", transition: "background 0.15s" }}
+
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "auto" }}>
+                <thead>
+                  <tr style={{ background: "#f8fafc" }}>
+                    {(tab === "employees" ? EMP_COLS : CAND_COLS).map(h => (
+                      <th key={h} style={{ ...TH }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {users.map((u) => (
+                    <tr key={u.id}
                       onMouseEnter={e => e.currentTarget.style.background = "#fafbfc"}
                       onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-                      <td style={{ padding: "12px 16px", verticalAlign: "middle", width: colWidths.user, textAlign: "left" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                          <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: `${ac}18`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", fontWeight: "800", color: ac, flexShrink: 0 }}>{initials(u.name)}</div>
-                          <div style={{ minWidth: 0 }}>
-                            <div style={{ fontSize: "13.5px", fontWeight: "600", color: "#1e293b", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{u.name}</div>
-                            <div style={{ fontSize: "11px", color: "#94a3b8", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{u.email}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td style={{ padding: "12px 16px", verticalAlign: "middle", width: colWidths.role, textAlign: "center" }}>
-                            <span style={{ background: rs.bg, color: rs.color, border: `1px solid ${rs.border}`, borderRadius: "6px", fontSize: "11.5px", fontWeight: "700", padding: "3px 9px" }}>{rs.label}</span>
+                      {tab === "employees" ? (
+                        <>
+                          <td style={{ ...tdStyle, fontWeight: "600", color: "#1e293b" }}>
+                            <div>{u.name ?? "—"}</div>
                           </td>
-                          <td style={{ padding: "12px 16px", fontSize: "13px", color: "#475569", verticalAlign: "middle", width: colWidths.company, textAlign: "center", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{u.company ?? "—"}</td>
-                          <td style={{ padding: "12px 16px", fontSize: "13px", color: "#475569", fontFamily: "monospace", verticalAlign: "middle", width: colWidths.phone, textAlign: "center" }}>{u.phone ?? "—"}</td>
-                          <td style={{ padding: "12px 16px", fontSize: "12.5px", color: "#64748b", verticalAlign: "middle", width: colWidths.registered, textAlign: "center" }}>{u.created_at}</td>
+                          <td style={tdStyle}>{u.email ?? "—"}</td>
+                          <td style={tdStyle}>{u.role ?? "—"}</td>
+                          <td style={tdStyle}>{u.company ?? "—"}</td>
+                          <td style={tdStyle}>{u.phone ?? "—"}</td>
+                          <td style={tdStyle}>{u.department ?? "—"}</td>
+                          <td style={tdStyle}>{u.position ?? "—"}</td>
+                          <td style={tdStyle}>{u.job_level ?? "—"}</td>
+                          <td style={tdStyle}>{u.employee_status ?? "—"}</td>
+                          <td style={tdStyle}>{u.schedule ?? "—"}</td>
+                          <td style={tdStyle}>{u.registered ?? "—"}</td>
+                        </>
+                      ) : (
+                        <>
+                          <td style={{ ...tdStyle, fontWeight: "600", color: "#1e293b" }}>
+                            {u.name ?? "—"}
+                          </td>
+                          <td style={tdStyle}>{u.email ?? "—"}</td>
+                          <td style={tdStyle}>{u.phone ?? "—"}</td>
+                          <td style={tdStyle}>{u.institution ?? "—"}</td>
+                          <td style={tdStyle}>{u.education_level ?? "—"}</td>
+                          <td style={tdStyle}>{u.major ?? "—"}</td>
+                          <td style={tdStyle}>{u.registered ?? "—"}</td>
+                        </>
+                      )}
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
             {users.length === 0 && (
-              <div style={{ padding: "48px 0", textAlign: "center", color: "#94a3b8", fontSize: "13.5px" }}>No users found</div>
+              <div style={{ padding: "48px 0", textAlign: "center", color: "#94a3b8", fontSize: "13.5px" }}>
+                No {tab} found
+              </div>
             )}
           </>
         )}
