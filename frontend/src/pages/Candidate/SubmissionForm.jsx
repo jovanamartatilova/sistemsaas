@@ -143,7 +143,7 @@ export default function SubmissionForm() {
       return;
     }
 
-    if (!form.name || !form.university_name || !form.major_name || !form.cv_file || !form.cover_letter_file || !form.institution_letter_file || !form.motivation_message) {
+    if (!form.name || !form.university_name || !form.major_name || !form.cv_file || !form.cover_letter_file || !form.motivation_message) {
       setErrorMsg("Please complete all required fields!");
       return;
     }
@@ -414,12 +414,15 @@ export default function SubmissionForm() {
                   {fileErrors.cv_file && <span style={{ fontSize: 12, color: "#ef4444", fontWeight: 600 }}>⚠ {fileErrors.cv_file}</span>}
                 </div>
 
-                {/* Cover Letter */}
+                {/* Documents */}
                 <div style={{ background: "#f8fafc", border: "1px dashed #cbd5e1", borderRadius: 10, padding: "16px", display: "flex", flexDirection: "column", gap: 8 }}>
                   <label style={{ fontSize: 14, fontWeight: 700, color: "#1e293b", display: "flex", justifyContent: "space-between" }}>
-                    <span>Cover Letter <span style={{ color: "#ef4444" }}>*</span></span>
+                    <span>Documents (Surat Pengantar & Rekomendasi Kampus) <span style={{ color: "#ef4444" }}>*</span></span>
                     <span style={{ fontSize: 11, color: "#64748b", fontWeight: 500 }}>PDF Format (Max. 2MB)</span>
                   </label>
+                  <p style={{ fontSize: 11.5, color: "#64748b", margin: "0 0 4px", lineHeight: "1.4" }}>
+                    Silakan unggah dokumen pendukung seperti Surat Pengantar, Surat Rekomendasi Kampus, dll. Jika memiliki lebih dari satu berkas, **harap digabungkan (merge) menjadi 1 file PDF**.
+                  </p>
                   <input type="file" name="cover_letter_file" id="cover_letter_file" onChange={handleFileChange} accept=".pdf" style={{ display: "none" }} />
                   <label htmlFor="cover_letter_file" style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 14px", background: "#fff", border: "1px solid #e2e8f0", borderRadius: 6, color: "#2d7ff3", fontSize: 13, fontWeight: 600, cursor: "pointer", width: "fit-content", transition: "0.2s", boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }} onMouseEnter={e => e.currentTarget.style.borderColor = "#2d7ff3"}>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
@@ -427,21 +430,6 @@ export default function SubmissionForm() {
                   </label>
                   {form.cover_letter_file && <span style={{ fontSize: 12, color: "#10b981", fontWeight: 600 }}>✓ {form.cover_letter_file.name}</span>}
                   {fileErrors.cover_letter_file && <span style={{ fontSize: 12, color: "#ef4444", fontWeight: 600 }}>⚠ {fileErrors.cover_letter_file}</span>}
-                </div>
-
-                {/* Surat Fakultas */}
-                <div style={{ background: "#f8fafc", border: "1px dashed #cbd5e1", borderRadius: 10, padding: "16px", display: "flex", flexDirection: "column", gap: 8 }}>
-                  <label style={{ fontSize: 14, fontWeight: 700, color: "#1e293b", display: "flex", justifyContent: "space-between" }}>
-                    <span>Recommendation Letter from University / Faculty <span style={{ color: "#ef4444" }}>*</span></span>
-                    <span style={{ fontSize: 11, color: "#64748b", fontWeight: 500 }}>PDF Format (Max. 2MB)</span>
-                  </label>
-                  <input type="file" name="institution_letter_file" id="institution_letter_file" onChange={handleFileChange} accept=".pdf" style={{ display: "none" }} />
-                  <label htmlFor="institution_letter_file" style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 14px", background: "#fff", border: "1px solid #e2e8f0", borderRadius: 6, color: "#2d7ff3", fontSize: 13, fontWeight: 600, cursor: "pointer", width: "fit-content", transition: "0.2s", boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }} onMouseEnter={e => e.currentTarget.style.borderColor = "#2d7ff3"}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-                    Select a PDF File
-                  </label>
-                  {form.institution_letter_file && <span style={{ fontSize: 12, color: "#10b981", fontWeight: 600 }}>✓ {form.institution_letter_file.name}</span>}
-                  {fileErrors.institution_letter_file && <span style={{ fontSize: 12, color: "#ef4444", fontWeight: 600 }}>⚠ {fileErrors.institution_letter_file}</span>}
                 </div>
 
                 {/* Portofolio */}

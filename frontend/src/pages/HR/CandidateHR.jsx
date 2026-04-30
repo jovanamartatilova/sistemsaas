@@ -204,10 +204,9 @@ function DetailModal({ candidate, onClose, onViewDoc }) {
             <div style={{ fontSize: '11px', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', marginBottom: '8px' }}>Documents</div>
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
               {candidate.has_cv && <DocBtn label="CV" onClick={() => onViewDoc(candidate, 'cv')} />}
-              {candidate.has_cover_letter && <DocBtn label="Cover Letter" onClick={() => onViewDoc(candidate, 'cover_letter')} />}
-              {candidate.has_portfolio && <DocBtn label="Portfolio" onClick={() => onViewDoc(candidate, 'portfolio')} />}
-              {candidate.has_institution_letter && <DocBtn label="Institution Letter" onClick={() => onViewDoc(candidate, 'institution_letter')} />}
-              {!candidate.has_cv && !candidate.has_cover_letter && !candidate.has_portfolio && !candidate.has_institution_letter && (
+              {candidate.has_portfolio && <DocBtn label="Porto" onClick={() => onViewDoc(candidate, 'portfolio')} />}
+              {candidate.has_cover_letter && <DocBtn label="Documents" onClick={() => onViewDoc(candidate, 'cover_letter')} />}
+              {!candidate.has_cv && !candidate.has_cover_letter && !candidate.has_portfolio && (
                 <span style={{ fontSize: '12px', color: '#cbd5e1' }}>No documents uploaded</span>
               )}
             </div>
@@ -327,8 +326,8 @@ function GroupRow({ candidate, onDetail, onNotes, onViewDoc }) {
         <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
           {candidate.has_cv && <DocBtn label="CV" onClick={() => onViewDoc(candidate, 'cv')} />}
           {candidate.has_portfolio && <DocBtn label="Porto" onClick={() => onViewDoc(candidate, 'portfolio')} />}
-          {candidate.has_institution_letter && <DocBtn label="Recom" onClick={() => onViewDoc(candidate, 'institution_letter')} />}
-          {!candidate.has_cv && !candidate.has_portfolio && !candidate.has_institution_letter && (
+          {candidate.has_cover_letter && <DocBtn label="Docs" onClick={() => onViewDoc(candidate, 'cover_letter')} />}
+          {!candidate.has_cv && !candidate.has_portfolio && !candidate.has_cover_letter && (
             <span style={{ fontSize: '11.5px', color: '#cbd5e1' }}>—</span>
           )}
         </div>
@@ -408,8 +407,8 @@ function IndividualRow({ candidate, onDetail, onNotes, onViewDoc }) {
       <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
         {candidate.has_cv && <DocBtn label="CV" onClick={() => onViewDoc(candidate, 'cv')} />}
         {candidate.has_portfolio && <DocBtn label="Porto" onClick={() => onViewDoc(candidate, 'portfolio')} />}
-        {candidate.has_institution_letter && <DocBtn label="Recom" onClick={() => onViewDoc(candidate, 'institution_letter')} />}
-        {!candidate.has_cv && !candidate.has_portfolio && !candidate.has_institution_letter && (
+        {candidate.has_cover_letter && <DocBtn label="Docs" onClick={() => onViewDoc(candidate, 'cover_letter')} />}
+        {!candidate.has_cv && !candidate.has_portfolio && !candidate.has_cover_letter && (
           <span style={{ fontSize: '11.5px', color: '#cbd5e1' }}>—</span>
         )}
       </div>

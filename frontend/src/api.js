@@ -38,14 +38,22 @@ export const api = async (endpoint, options = {}) => {
     all_storage_keys: localStorage_keys
   });
   
-  const res = await fetch(url, {
+  const isFormData = options.body instanceof FormData;
+  
+  const fetchOptions = {
     ...options,
     headers: {
-      'Content-Type': 'application/json',
+      ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...options.headers,
     },
-  });
+  };
+
+  if (options.data && !options.body && !isFormData) {
+    fetchOptions.body = JSON.stringify(options.data);
+  }
+
+  const res = await fetch(url, fetchOptions);
   
   console.log(`[API] Response status: ${res.status} ${res.statusText}`);
   

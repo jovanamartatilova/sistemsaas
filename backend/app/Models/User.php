@@ -79,6 +79,11 @@ class User extends Authenticatable
         return $this->belongsTo(Company::class, 'id_company', 'id_company');
     }
 
+    public function university()
+    {
+        return $this->belongsTo(University::class, 'id_university', 'id_university');
+    }
+
     public function teamMembership()
     {
         return $this->hasOne(TeamMember::class, 'id_user', 'id_user');

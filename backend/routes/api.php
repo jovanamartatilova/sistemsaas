@@ -260,6 +260,9 @@ Route::middleware(['auth:sanctum'])->prefix('hr')->group(function () {
     Route::patch('/candidates/{id}/interview',      [HRCandidateController::class, 'interview']);
     Route::patch('/candidates/{id}/notes',          [HRCandidateController::class, 'updateNotes']);   
     Route::get('/candidates/{id}/documents/{type}', [HRCandidateController::class, 'viewDocument']);
+    Route::post('/positions/{id}/test-templates',   [HRCandidateController::class, 'saveTestTemplates']);
+    Route::delete('/positions/{id}/test-templates/{template_id}', [HRCandidateController::class, 'deleteTestTemplate']);
+    Route::post('/candidates/bulk-assign-test',     [HRCandidateController::class, 'bulkAssignTest']);
 
     // Screening
     Route::get('/screening',                        [HRScreeningController::class, 'index']);

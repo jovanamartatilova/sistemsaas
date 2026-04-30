@@ -642,6 +642,28 @@ class MentorController extends Controller
                 $period = "$start - $end";
             }
 
+            $scoredCount = count($scores);
+            $totalComps = count($scoresData);
+
+            $competencyIds = array_column($scoresData, 'id_competency');
+            $competenciesFromDb = !empty($competencyIds)
+                ? \DB::table('competencies')
+                    ->whereIn('id_competency', $competencyIds)
+                    ->select('id_competency', 'name', 'learning_hours')
+                    ->get()
+                    ->keyBy('id_competency')
+                : collect();
+
+            $competencyNames = $competenciesFromDb->pluck('name')->toArray();
+
+            $totalHours = 0;
+            foreach ($scoresData as $score) {
+                if (($score['status'] === 'passed' || $score['status'] === 'failed') && !empty($score['id_competency'])) {
+                    $comp = $competenciesFromDb->get($score['id_competency']);
+                    $totalHours += $comp ? $comp->learning_hours : ($score['learning_hours'] ?? 0);
+                }
+            }
+
             return [
                 'name' => $sub->user->name,
                 'position' => $sub->position->name ?? 'N/A',

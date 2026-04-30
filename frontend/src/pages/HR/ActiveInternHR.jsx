@@ -176,7 +176,7 @@ function DetailModal({ intern, onClose }) {
               { label: 'Start Date',      value: fmtDate(intern.start_date) },
               { label: 'End Date',        value: fmtDate(intern.end_date) },
               { label: 'Apprentice ID',   value: intern.id_apprentice || '-' },
-              { label: 'Submission Type', value: intern.id_team ? 'Group' : 'Individual' },
+              { label: 'Submission Type', value: intern.id_team ? 'Team' : 'Individual' },
             ].map(({ label, value }) => (
               <div key={label} style={{ background: '#f8fafc', borderRadius: '8px', padding: '10px 12px' }}>
                 <div style={{ fontSize: '10.5px', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', marginBottom: '3px' }}>{label}</div>
@@ -300,6 +300,7 @@ const STATUS_OPTIONS = [
 export default function ActiveInternHR() {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
+  const logout = useAuthStore((s) => s.logout);
 
   const [loading, setLoading]           = useState(true);
   const [interns, setInterns]           = useState([]);
@@ -309,12 +310,16 @@ export default function ActiveInternHR() {
   const [detailIntern, setDetailIntern] = useState(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
+  const [positionFilter, setPositionFilter] = useState('');
+  const [positions, setPositions]           = useState([]);
+
   // ── Fetch ─────────────────────────────────────────────────────────────
   const fetchInterns = (isSearch = false) => {
     if (isSearch) setTableLoading(true);
     const params = new URLSearchParams();
     if (search) params.set('search', search);
     if (statusFilter) params.set('status', statusFilter);
+    if (positionFilter) params.set('id_position', positionFilter);
 
     api(`/hr/apprentices?${params}`)
       .then(res => setInterns(res.apprentices || res.data?.apprentices || []))
@@ -322,7 +327,13 @@ export default function ActiveInternHR() {
       .finally(() => { setLoading(false); setTableLoading(false); });
   };
 
-  useEffect(() => { fetchInterns(); }, [statusFilter]);
+  useEffect(() => {
+    api('/positions/catalog')
+      .then(res => setPositions(Array.isArray(res) ? res : (res.data || [])))
+      .catch(err => console.error(err));
+  }, []);
+
+  useEffect(() => { fetchInterns(); }, [statusFilter, positionFilter]);
 
   useEffect(() => {
     const t = setTimeout(() => fetchInterns(true), 500);
@@ -337,10 +348,9 @@ export default function ActiveInternHR() {
     noMentor:  interns.filter(i => !i.mentor_name).length,
   }), [interns]);
 
-  const handleLogout = () => {
-    localStorage.clear();
-    useAuthStore.setState({ isAuthenticated: false, token: null, user: null, company: null });
-    navigate('/login');
+  const handleLogout = async () => {
+    await logout();
+    navigate('/', { replace: true });
   };
 
   if (loading) return <LoadingSpinner message="Loading interns..." />;
@@ -429,6 +439,18 @@ export default function ActiveInternHR() {
                 })}
               </div>
 
+              {/* Position Filter */}
+              <select
+                value={positionFilter}
+                onChange={e => setPositionFilter(e.target.value)}
+                style={{ padding: '6px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#fff', fontSize: '12.5px', color: '#475569', outline: 'none', cursor: 'pointer' }}
+              >
+                <option value="">All Positions</option>
+                {positions.map(pos => (
+                  <option key={pos.id_position} value={pos.id_position}>{pos.name}</option>
+                ))}
+              </select>
+
               {/* Search */}
               <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '6px 12px', minWidth: '220px' }}>
                 <IC.Search />
@@ -478,13 +500,28 @@ export default function ActiveInternHR() {
 
       {/* Logout Modal */}
       {showLogoutModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(10,22,40,0.5)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ background: '#fff', borderRadius: '16px', padding: '28px', width: '360px' }}>
-            <h3 style={{ margin: '0 0 8px 0', fontSize: '16px' }}>Sign Out?</h3>
-            <p style={{ margin: '0 0 24px 0', fontSize: '13px', color: '#64748b' }}>Are you sure you want to sign out?</p>
-            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-              <button onClick={() => setShowLogoutModal(false)} style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#fff', cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
-              <button onClick={handleLogout} style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', background: '#ef4444', color: '#fff', cursor: 'pointer', fontFamily: 'inherit' }}>Sign Out</button>
+        <div style={{ position: "fixed", inset: 0, background: "rgba(10,22,40,0.5)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{
+            background: "#fff", borderRadius: "16px", padding: "28px", width: "360px",
+            boxShadow: "0 20px 60px rgba(0,0,0,0.18)", fontFamily: "'Poppins','Segoe UI',sans-serif",
+          }}>
+            <div style={{ fontSize: "16px", fontWeight: "700", color: "#0f172a", marginBottom: "6px" }}>Sign Out?</div>
+            <div style={{ fontSize: "13px", color: "#64748b", lineHeight: 1.6, marginBottom: "24px" }}>
+              Are you sure you want to sign out from your HR account?
+            </div>
+            <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+              <button onClick={() => setShowLogoutModal(false)} style={{
+                padding: "9px 18px", borderRadius: "10px", border: "1px solid #e2e8f0",
+                background: "#fff", fontSize: "13px", fontWeight: "600", color: "#64748b", cursor: "pointer", fontFamily: "inherit",
+              }}>
+                Cancel
+              </button>
+              <button onClick={handleLogout} style={{
+                padding: "9px 18px", borderRadius: "10px", border: "none",
+                background: "#ef4444", fontSize: "13px", fontWeight: "700", color: "#fff", cursor: "pointer", fontFamily: "inherit",
+              }}>
+                Yes, Sign Out
+              </button>
             </div>
           </div>
         </div>
