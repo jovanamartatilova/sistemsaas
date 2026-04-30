@@ -21,6 +21,7 @@ class Submission extends Model
         'hr_notes', 'screening_status',
         'id_user_mentor',
         'embedding',
+        'test_details',
     ];
 
     protected $casts = [
@@ -28,6 +29,7 @@ class Submission extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'embedding'    => 'array',
+        'test_details' => 'array',
     ];
 
     public function assessment()

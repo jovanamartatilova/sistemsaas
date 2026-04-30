@@ -27,7 +27,7 @@ class SubmissionController extends Controller
             'apply_as' => 'required|in:personal,team',
             'cv_file' => 'required|file|mimes:pdf|max:2048',
             'cover_letter_file' => 'required|file|mimes:pdf|max:2048',
-            'institution_letter_file' => 'required|file|mimes:pdf|max:2048',
+            'institution_letter_file' => 'nullable|file|mimes:pdf|max:2048',
             'portfolio_file' => 'nullable|file|mimes:pdf|max:2048',
             'motivation_message' => 'required|string',
             'linkedin_url' => 'nullable|url',
@@ -160,7 +160,9 @@ class SubmissionController extends Controller
             // 5. Upload Files
             $cvPath = $request->file('cv_file')->store('submissions/cv', 'public');
             $coverLetterPath = $request->file('cover_letter_file')->store('submissions/cover_letters', 'public');
-            $institutionLetterPath = $request->file('institution_letter_file')->store('submissions/institution_letters', 'public');
+            $institutionLetterPath = $request->hasFile('institution_letter_file') 
+                ? $request->file('institution_letter_file')->store('submissions/institution_letters', 'public') 
+                : null;
             $portfolioPath = $request->hasFile('portfolio_file')
                 ? $request->file('portfolio_file')->store('submissions/portfolios', 'public')
                 : null;

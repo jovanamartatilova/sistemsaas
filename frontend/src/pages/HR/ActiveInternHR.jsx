@@ -310,12 +310,16 @@ export default function ActiveInternHR() {
   const [detailIntern, setDetailIntern] = useState(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
+  const [positionFilter, setPositionFilter] = useState('');
+  const [positions, setPositions]           = useState([]);
+
   // ── Fetch ─────────────────────────────────────────────────────────────
   const fetchInterns = (isSearch = false) => {
     if (isSearch) setTableLoading(true);
     const params = new URLSearchParams();
     if (search) params.set('search', search);
     if (statusFilter) params.set('status', statusFilter);
+    if (positionFilter) params.set('id_position', positionFilter);
 
     api(`/hr/apprentices?${params}`)
       .then(res => setInterns(res.apprentices || res.data?.apprentices || []))
@@ -323,7 +327,13 @@ export default function ActiveInternHR() {
       .finally(() => { setLoading(false); setTableLoading(false); });
   };
 
-  useEffect(() => { fetchInterns(); }, [statusFilter]);
+  useEffect(() => {
+    api('/positions/catalog')
+      .then(res => setPositions(Array.isArray(res) ? res : (res.data || [])))
+      .catch(err => console.error(err));
+  }, []);
+
+  useEffect(() => { fetchInterns(); }, [statusFilter, positionFilter]);
 
   useEffect(() => {
     const t = setTimeout(() => fetchInterns(true), 500);
@@ -428,6 +438,18 @@ export default function ActiveInternHR() {
                   );
                 })}
               </div>
+
+              {/* Position Filter */}
+              <select
+                value={positionFilter}
+                onChange={e => setPositionFilter(e.target.value)}
+                style={{ padding: '6px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#fff', fontSize: '12.5px', color: '#475569', outline: 'none', cursor: 'pointer' }}
+              >
+                <option value="">All Positions</option>
+                {positions.map(pos => (
+                  <option key={pos.id_position} value={pos.id_position}>{pos.name}</option>
+                ))}
+              </select>
 
               {/* Search */}
               <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '6px 12px', minWidth: '220px' }}>
