@@ -33,6 +33,8 @@ use App\Http\Controllers\HR\HRLoaController;
 use App\Http\Controllers\HR\HRMentorAssignmentController;
 use App\Http\Controllers\HR\HRPayrollController;
 use App\Http\Controllers\HR\HRScreeningController;
+use App\Http\Controllers\HR\SelectionAIController;
+use App\Http\Controllers\HR\TFIDFSearchController;
 
 // Controllers — Super Admin
 use App\Http\Controllers\SuperAdmin\DashboardController as SuperAdminDashboardController;
@@ -279,10 +281,12 @@ Route::middleware(['auth:sanctum'])->prefix('hr')->group(function () {
     Route::get('/dashboard', [HRDashboardController::class, 'index']);
 
     Route::get('/candidates/export',                [HRCandidateController::class, 'exportCsv']);
+    Route::get('/candidates/all',                   [HRCandidateController::class, 'allCandidates']);
     Route::get('/candidates',                       [HRCandidateController::class, 'index']);
     Route::patch('/candidates/{id}/accept',         [HRCandidateController::class, 'accept']);
     Route::patch('/candidates/{id}/reject',         [HRCandidateController::class, 'reject']);
     Route::patch('/candidates/{id}/stage',          [HRCandidateController::class, 'updateStage']);
+    Route::patch('/candidates/{id}/notes',          [HRCandidateController::class, 'updateNotes']);
     Route::patch('/candidates/{id}/screening',      [HRCandidateController::class, 'screening']);
     Route::patch('/candidates/{id}/interview',      [HRCandidateController::class, 'interview']);
     Route::get('/candidates/{id}/documents/{type}', [HRCandidateController::class, 'viewDocument']);
@@ -321,6 +325,19 @@ Route::middleware(['auth:sanctum'])->prefix('hr')->group(function () {
     Route::post('/assign-mentor',         [HRMentorAssignmentController::class, 'assign']);
     Route::post('/assign-mentor/auto',    [HRMentorAssignmentController::class, 'autoAssign']);
     Route::delete('/assign-mentor/{id}',  [HRMentorAssignmentController::class, 'unassign']);
+
+    // TF-IDF Search (legacy)
+    Route::get('candidates/tfidf-search', [TFIDFSearchController::class, 'search']);
+    Route::get('candidates/index-stats', [TFIDFSearchController::class, 'indexStats']);
+    Route::post('candidates/classify-batch', [TFIDFSearchController::class, 'classifyBatch']);
+    Route::get('candidates/{id}/classify', [TFIDFSearchController::class, 'classify']);
+
+    // Selection AI
+    Route::prefix('selection')->group(function () {
+        Route::post('/rank-stage', [SelectionAIController::class, 'rankStage']);
+        Route::get('/summarize/{id}', [SelectionAIController::class, 'summarize']);
+        Route::get('/suggest/{id}', [SelectionAIController::class, 'suggestDecision']);
+    });
 });
 
 // Development-only Routes (DEBUG mode)

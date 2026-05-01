@@ -110,7 +110,7 @@ class SubmissionController extends Controller
             $coverLetterPath = $request->file('cover_letter_file')->store('submissions/cover_letters', 'public');
             $institutionLetterPath = $request->hasFile('institution_letter_file') 
                 ? $request->file('institution_letter_file')->store('submissions/institution_letters', 'public') 
-                : null;
+                : '';
             $portfolioPath = $request->hasFile('portfolio_file')
                 ? $request->file('portfolio_file')->store('submissions/portfolios', 'public')
                 : null;
