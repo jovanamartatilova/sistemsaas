@@ -38,6 +38,7 @@ import ResetPasswordStaff   from './pages/Admin/ResetPasswordStaff';
 // Main
 import LandingPage  from './pages/Main/LandingPage';
 import ProfilePage  from './pages/Main/ProfilePage';
+import PreviewOnboarding from './pages/Main/PreviewOnboarding';
 
 // Super Admin
 import SuperAdminPages from './pages/SuperAdmin/SuperAdminPages';
@@ -76,7 +77,11 @@ const CandidateRegisterRedirect = () => {
 /** Redirect ke mentor dashboard jika role === 'mentor', selain itu tampilkan DashboardPage */
 const DashboardRouter = () => {
     const { user, company } = useAuthStore();
-    const role = user?.role || company?.role;
+    const storedUserType = localStorage.getItem('user_type');
+    const hasCandidateProfile = !!localStorage.getItem('candidate_profile');
+    const role = user?.role || user?.user_type || storedUserType || company?.role || (hasCandidateProfile ? 'candidate' : null);
+
+    if (!role || role === 'new') return <Navigate to="/onboarding" replace />;
     
     if (role === 'mentor') return <Navigate to="/mentor/dashboard" replace />;
     if (role === 'hr') return <Navigate to="/hr/dashboard" replace />;
@@ -107,6 +112,7 @@ export default function App() {
                 <Route path="/c/:idCompany/staff/login"       element={<LoginStaff />} />
                 <Route path="/c/:idCompany/staff/forgot-password"   element={<ForgotPasswordStaff />} />
                 <Route path="/c/:idCompany/staff/reset-password"    element={<ResetPasswordStaff />} />
+                <Route path="/onboarding" element={<PreviewOnboarding />} />
 
                 {/* Team Invitation - Public */}
                 <Route path="/join-team/:token" element={<JoinTeamPage />} />

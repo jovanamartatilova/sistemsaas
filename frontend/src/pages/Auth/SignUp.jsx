@@ -417,7 +417,7 @@ export default function SignUp() {
         isOpen={showOnboarding} 
         onClose={() => {
           setShowOnboarding(false);
-          navigate("/dashboard");
+          navigate("/onboarding");
         }} 
       />
     </>
