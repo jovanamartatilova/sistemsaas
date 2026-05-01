@@ -23,6 +23,7 @@ import SubmissionForm           from './pages/Candidate/SubmissionForm';
 import ProfileSettings          from './pages/Candidate/ProfileSettings';
 import CertificateCandidate     from './pages/Candidate/CertificateCandidate';
 import ProgramsPage             from './pages/Candidate/ProgramsCandidate';
+import JoinTeamPage             from './pages/Candidate/JoinTeamPage';
 
 // Admin
 import DashboardPage        from './pages/Admin/DashboardPage';
@@ -107,6 +108,10 @@ export default function App() {
                 <Route path="/c/:idCompany/staff/forgot-password"   element={<ForgotPasswordStaff />} />
                 <Route path="/c/:idCompany/staff/reset-password"    element={<ResetPasswordStaff />} />
 
+                {/* Team Invitation - Public */}
+                <Route path="/join-team/:token" element={<JoinTeamPage />} />
+                <Route path="/join/:token" element={<JoinTeamPage />} />
+
                 {/* Candidate — Private */}
                 <Route path="/candidate/dashboard"                   element={<Private><CandidateDashboard /></Private>} />
                 <Route path="/c/:idCompany/dashboard"                     element={<Private><CandidateDashboard /></Private>} />
@@ -119,6 +124,7 @@ export default function App() {
                 <Route path="/c/:idCompany/certificates"                  element={<Private><CertificateCandidate /></Private>} />
                 <Route path="/c/:idCompany/profile"                       element={<Private><ProfileSettings /></Private>} />
                 <Route path="/c/:idCompany/apply/:vacancyId/:positionId"  element={<Private><SubmissionForm /></Private>} />
+                <Route path="/candidate/programs"   element={<Private><ProgramsPage /></Private>} /> 
 
                 {/* Admin — Private */}
                 <Route path="/dashboard"  element={<Private><DashboardRouter /></Private>} />

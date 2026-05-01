@@ -24,6 +24,7 @@ use App\Http\Controllers\CandidateController;
 use App\Http\Controllers\MentorController;
 use App\Http\Controllers\MemberTaskController;
 use App\Http\Controllers\LeaderController;
+use App\Http\Controllers\TeamInvitationController;
 
 // Controllers — HR
 use App\Http\Controllers\HR\HRCandidateController;
@@ -122,9 +123,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/users/{id_user}/upload-avatar', [CandidateController::class, 'uploadAvatar']);
     Route::get('/positions',                      [CandidateController::class, 'getPositions']);
     Route::get('/certificates',                   [CandidateController::class, 'getCertificates']);
-    Route::post('/logout',                        [CandidateController::class, 'logout']);
 
     // Candidate apply
+    Route::get('/submissions',                    [SubmissionController::class, 'index']);
     Route::get('/c/{id_company}/my-submission',   [CompanyPublicController::class, 'mySubmission']);
     Route::post('/c/{id_company}/apply',          [SubmissionController::class, 'apply']);
 
@@ -214,6 +215,27 @@ Route::prefix('candidate')->middleware(['auth:sanctum', 'ensureCandidate'])->gro
     Route::get('/skills',              [CandidateController::class, 'getSkills']);
     Route::post('/skills',             [CandidateController::class, 'addSkill']);
     Route::delete('/skills/{id_skill}', [CandidateController::class, 'deleteSkill']);
+});
+
+// Team Invitation Routes (Authenticated candidates)
+
+Route::middleware('auth:sanctum')->group(function () {
+    // Public validation (no login required for some endpoints)
+    Route::get('/team-invitations/{token}/validate', [TeamInvitationController::class, 'validate']);
+    Route::post('/team-invitations/{token}/join', [TeamInvitationController::class, 'join']);
+    Route::get('/leader/program', [ProgramController::class, 'leaderProgramView']);
+    Route::get('/leader/invitations', [TeamInvitationController::class, 'getLeaderInvitations']);
+
+
+    // Protected team invitation endpoints
+    Route::post('/teams',                            [TeamInvitationController::class, 'createTeam']);
+    Route::post('/team-invitations',                  [TeamInvitationController::class, 'create']);
+    Route::post('/team-invitations/{token}/join',    [TeamInvitationController::class, 'join']);
+    Route::get('/team-invitations',                 [TeamInvitationController::class, 'getLeaderInvitations']);
+    Route::get('/my-teams',                          [TeamInvitationController::class, 'listMyTeams']);
+    Route::patch('/team-invitations/{id}/toggle',    [TeamInvitationController::class, 'toggle']);
+    Route::delete('/team-invitations/{id}',          [TeamInvitationController::class, 'revoke']);
+    Route::post('/team-invitations/{id}/regenerate', [TeamInvitationController::class, 'regenerate']);
 });
 
 // Member Routes (Team Member Tasks)
