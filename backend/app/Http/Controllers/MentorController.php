@@ -41,9 +41,9 @@ class MentorController extends Controller
             ->get();
 
         $totalInterns = $submissions->count();
-        $needsInput   = 0;
-        $passedCount  = 0;
-        $avgScores    = [];
+        $needsInput = 0;
+        $passedCount = 0;
+        $avgScores = [];
         $recentInterns = [];
 
         foreach ($submissions as $sub) {
@@ -56,7 +56,7 @@ class MentorController extends Controller
 
             $passedCount++;
 
-            $scoresData   = $assessment->scores_data ?? [];
+            $scoresData = $assessment->scores_data ?? [];
             $scoredScores = array_filter($scoresData, fn($s) => $s['score'] !== null);
 
             $avgScore = count($scoredScores) > 0
@@ -69,10 +69,10 @@ class MentorController extends Controller
 
             $recentInterns[] = [
                 'id_submission' => $sub->id_submission,
-                'name'          => $sub->user->name,
-                'email'         => $sub->user->email,
-                'position'      => $sub->position->name ?? 'N/A',
-                'avg_score'     => $avgScore,
+                'name' => $sub->user->name,
+                'email' => $sub->user->email,
+                'position' => $sub->position->name ?? 'N/A',
+                'avg_score' => $avgScore,
             ];
         }
 
@@ -83,12 +83,12 @@ class MentorController extends Controller
             : 0;
 
         return response()->json([
-            'total_interns'        => $totalInterns,
-            'needs_input'          => $needsInput,
-            'interns_passed'       => $passedCount,
+            'total_interns' => $totalInterns,
+            'needs_input' => $needsInput,
+            'interns_passed' => $passedCount,
             'ready_for_certificate' => $readyForCert,
-            'average_score'        => $avgScore,
-            'recent_interns'       => collect($recentInterns)->take(5)->toArray(),
+            'average_score' => $avgScore,
+            'recent_interns' => collect($recentInterns)->take(5)->toArray(),
         ]);
     }
 
@@ -109,15 +109,19 @@ class MentorController extends Controller
             ]);
 
         if ($search) {
-            $submissionsQuery->whereHas('user', function($q) use ($search) {
+            $submissionsQuery->whereHas('user', function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                ->orWhere('email', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%");
             });
         }
 
         $submissions = $submissionsQuery->get();
 
-        $interns = $submissions->map(function ($sub) {
+        $certificateSubIds = Certificate::whereIn('id_submission', $submissions->pluck('id_submission'))
+            ->pluck('id_submission')
+            ->toArray();
+
+        $interns = $submissions->map(function ($sub) use ($certificateSubIds) {
             $assessment = $sub->assessment;
             $scoresData = $assessment->scores_data ?? [];
             $completedComps = 0;
@@ -190,6 +194,7 @@ class MentorController extends Controller
                 'total_competencies' => $totalComps,
                 'completed_competencies' => $completedComps,
                 'hasScore' => $avgScore !== null,
+                'has_certificate' => in_array($sub->id_submission, $certificateSubIds),
             ];
         });
 
@@ -229,6 +234,8 @@ class MentorController extends Controller
                 'hours_completed' => $score ? $score['hours_completed'] : null,
                 'status' => $score ? $score['status'] : 'pending',
                 'notes' => $score ? $score['notes'] : null,
+                'achievement_description' => $score['achievement_description'] ?? null,
+                'definition' => $score['definition'] ?? null,
                 'level' => $this->getCompetencyLevel($comp->learning_hours),
             ];
         });
@@ -249,6 +256,8 @@ class MentorController extends Controller
                 'scores.*.hours_completed' => 'nullable|integer|min:0',
                 'scores.*.status' => 'nullable|in:pending,passed,failed,in_progress',
                 'scores.*.notes' => 'nullable|string',
+                'scores.*.achievement_description' => 'nullable|string',
+                'scores.*.definition' => 'nullable|string',
             ]);
 
             $mentorId = $request->user()->id_user;
@@ -315,6 +324,8 @@ class MentorController extends Controller
                         'hours_completed' => $hoursCompleted,
                         'status' => $status,
                         'notes' => $scoreData['notes'] ?? $existingScoresById[$compId]['notes'] ?? null,
+                        'achievement_description' => $scoreData['achievement_description'] ?? $existingScoresById[$compId]['achievement_description'] ?? null,
+                        'definition' => $scoreData['definition'] ?? $existingScoresById[$compId]['definition'] ?? null,
                     ];
                 } else if (isset($existingScoresById[$compId])) {
                     // Preserve existing data, but update learning_hours if needed
@@ -332,6 +343,8 @@ class MentorController extends Controller
                         'hours_completed' => $hoursCompleted,
                         'status' => $status,
                         'notes' => $existingScore['notes'] ?? null,
+                        'achievement_description' => $existingScore['achievement_description'] ?? null,
+                        'definition' => $existingScore['definition'] ?? null,
                     ];
                 } else {
                     // New competency, create with default pending status
@@ -399,9 +412,9 @@ class MentorController extends Controller
             ->with(['user', 'position', 'assessment', 'vacancy', 'team']);
 
         if ($search) {
-            $submissionsQuery->whereHas('user', function($q) use ($search) {
+            $submissionsQuery->whereHas('user', function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                ->orWhere('email', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%");
             });
         }
 
@@ -487,24 +500,24 @@ class MentorController extends Controller
                 $statusColor = '#92400e';
             }
 
-        return [
-            'name' => $sub->user->name,
-            'position' => $sub->position->name ?? 'N/A',
-            'program' => $sub->vacancy->title ?? 'Regular Batch',
-            'period' => $period,                          // ← tambah ini
-            'type' => !empty($sub->id_team) ? 'Team' : 'Individual',
-            'id_team' => $sub->id_team ?? null,           // ← untuk grouping team
-            'team_name' => $sub->team->name ?? null,
-            'scored' => "$scoredCount/$totalComps",
-            'competency_names' => $competencyNames,
-            'hours' => "$totalHours hrs",
-            'avg' => $avgScore,
-            'score' => $avgScore,
-            'id_submission' => $sub->id_submission,
-            'status' => $status,
-            'statusBg' => $statusBg,
-            'statusColor' => $statusColor,
-        ];
+            return [
+                'name' => $sub->user->name,
+                'position' => $sub->position->name ?? 'N/A',
+                'program' => $sub->vacancy->title ?? 'Regular Batch',
+                'period' => $period,                          // ← tambah ini
+                'type' => !empty($sub->id_team) ? 'Team' : 'Individual',
+                'id_team' => $sub->id_team ?? null,           // ← untuk grouping team
+                'team_name' => $sub->team->name ?? null,
+                'scored' => "$scoredCount/$totalComps",
+                'competency_names' => $competencyNames,
+                'hours' => "$totalHours hrs",
+                'avg' => $avgScore,
+                'score' => $avgScore,
+                'id_submission' => $sub->id_submission,
+                'status' => $status,
+                'statusBg' => $statusBg,
+                'statusColor' => $statusColor,
+            ];
         });
 
         return response()->json([
@@ -525,9 +538,12 @@ class MentorController extends Controller
             ->where('id_user_mentor', $mentorId)
             ->firstOrFail();
 
+        $assessment = Assessment::where('id_submission', $idSubmission)->first();
+
         return response()->json([
-            'narrative' => $submission->narrative ?? '',
-            'status' => $submission->evaluation_status ?? 'draft',
+            'narrative' => $assessment->narrative ?? '',
+            'status' => $assessment->evaluation_status ?? 'draft',
+            'has_certificate' => Certificate::where('id_submission', $idSubmission)->exists(),
         ]);
     }
 
@@ -535,31 +551,37 @@ class MentorController extends Controller
      * Save/update evaluation
      */
     public function saveEvaluation(Request $request, $idSubmission)
-{
-    $request->validate([
-        'narrative' => 'required|string',
-    ]);
-    $submission->update([
-        'narrative' => $request->narrative,
-        'evaluation_status' => 'reviewed',
-    ]);
+    {
+        $request->validate([
+            'narrative' => 'required|string',
+        ]);
 
-    if ($assessment) {
-        $assessment->update([
-            'narrative' => $request->narrative,
-            'evaluation_status' => 'reviewed',
-        ]);
-    } else {
-        Assessment::create([
-            'id_assessment' => (string) Str::uuid(),
-            'id_submission' => $idSubmission,
-            'id_user' => $submission->id_user,
-            'id_user_mentor' => $mentorId,
-            'narrative' => $request->narrative,
-            'evaluation_status' => 'reviewed',
-            'scores_data' => [],
-        ]);
-    }
+        $mentorId = $request->user()->id_user;
+
+        $submission = Submission::where('id_submission', $idSubmission)
+            ->where('id_user_mentor', $mentorId)
+            ->firstOrFail();
+
+        $assessment = Assessment::where('id_submission', $idSubmission)
+            ->where('id_user_mentor', $mentorId)
+            ->first();
+
+        if ($assessment) {
+            $assessment->update([
+                'narrative' => $request->narrative,
+                'evaluation_status' => 'reviewed',
+            ]);
+        } else {
+            Assessment::create([
+                'id_assessment' => (string) Str::uuid(),
+                'id_submission' => $idSubmission,
+                'id_user' => $submission->id_user,
+                'id_user_mentor' => $mentorId,
+                'narrative' => $request->narrative,
+                'evaluation_status' => 'reviewed',
+                'scores_data' => [],
+            ]);
+        }
 
         return response()->json(['message' => 'Evaluation saved successfully']);
     }
@@ -576,9 +598,9 @@ class MentorController extends Controller
             ->with(['user', 'position', 'vacancy', 'assessment', 'certificate']);
 
         if ($search) {
-            $submissionsQuery->whereHas('user', function($q) use ($search) {
+            $submissionsQuery->whereHas('user', function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                ->orWhere('email', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%");
             });
         }
 
@@ -593,8 +615,10 @@ class MentorController extends Controller
             $scores = array_filter($scoresData, fn($s) => $s['score'] !== null);
             $avgScore = count($scores) > 0 ? round(array_sum(array_column($scores, 'score')) / count($scores), 1) : null;
 
-            if ($avgScore !== null && $avgScore >= 75) $passed++;
-            else $notPassed++;
+            if ($avgScore !== null && $avgScore >= 75)
+                $passed++;
+            else
+                $notPassed++;
         }
 
         $stats = [
@@ -639,9 +663,15 @@ class MentorController extends Controller
 
             $cert = $sub->certificate;
             if ($cert) {
-                $status = 'Generated';
-                $statusBg = '#ccfbf1';
-                $statusColor = '#0f766e';
+                if ($cert->is_sent) {
+                    $status = 'Sent';
+                    $statusBg = '#dcfce7';
+                    $statusColor = '#166534';
+                } else {
+                    $status = 'Generated';
+                    $statusBg = '#ccfbf1';
+                    $statusColor = '#0f766e';
+                }
                 $fileUrl = $cert->file_path ? asset('storage/' . $cert->file_path) : null;
             }
 
@@ -652,34 +682,13 @@ class MentorController extends Controller
                 $period = "$start - $end";
             }
 
-            $scoredCount = count($scores);
-            $totalComps = count($scoresData);
-
-            $competencyIds = array_column($scoresData, 'id_competency');
-            $competenciesFromDb = !empty($competencyIds)
-                ? \DB::table('competencies')
-                    ->whereIn('id_competency', $competencyIds)
-                    ->select('id_competency', 'name', 'learning_hours')
-                    ->get()
-                    ->keyBy('id_competency')
-                : collect();
-
-            $competencyNames = $competenciesFromDb->pluck('name')->toArray();
-
-            $totalHours = 0;
-            foreach ($scoresData as $score) {
-                if (($score['status'] === 'passed' || $score['status'] === 'failed') && !empty($score['id_competency'])) {
-                    $comp = $competenciesFromDb->get($score['id_competency']);
-                    $totalHours += $comp ? $comp->learning_hours : ($score['learning_hours'] ?? 0);
-                }
-            }
-
             return [
                 'name' => $sub->user->name,
                 'position' => $sub->position->name ?? 'N/A',
                 'program' => $sub->vacancy->title ?? 'Regular Batch 3',
                 'type' => !empty($sub->id_team) ? 'Team' : 'Individual',
                 'id_team' => $sub->id_team ?? null,
+                'team_name' => $sub->team->name ?? null,
                 'period' => $period,
                 'scored' => "$scoredCount/$totalComps",
                 'competency_names' => $competencyNames,
@@ -690,6 +699,7 @@ class MentorController extends Controller
                 'status' => $status,
                 'statusBg' => $statusBg,
                 'statusColor' => $statusColor,
+                'file_url' => $fileUrl,
             ];
         });
 
@@ -729,22 +739,12 @@ class MentorController extends Controller
         foreach ($scores as $s) {
             $comp = $positionComps->get($s['id_competency']);
             if ($comp) {
-                // Determine predicate based on score
-                $predicate = 'Kurang';
-                if ($s['score'] >= 85) {
-                    $predicate = 'Sangat Baik';
-                } elseif ($s['score'] >= 75) {
-                    $predicate = 'Baik';
-                } elseif ($s['score'] >= 65) {
-                    $predicate = 'Cukup';
-                }
-
                 $competenciesData[] = [
                     'name' => $comp->name,
-                    'description' => $comp->description,
+                    'description' => $s['definition'] ?? $comp->description,
+                    'achievement_description' => $s['achievement_description'] ?? '',
                     'hours' => $comp->learning_hours,
                     'score' => $s['score'],
-                    'predicate' => $predicate,
                 ];
             }
         }
@@ -793,6 +793,7 @@ class MentorController extends Controller
             'issuedDate' => now()->translatedFormat('d F Y'),
             'competencies' => $competenciesData,
             'avgScore' => $avgScore,
+            'evaluation' => $assessment->narrative ?? '',
         ];
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('certificate.template', $data)->setPaper('a4', 'landscape');
@@ -810,9 +811,73 @@ class MentorController extends Controller
             ]
         );
 
+        // Otomatis ubah status Apprentice jadi completed
+        \App\Models\Apprentice::where('id_submission', $idSubmission)->update(['status' => 'completed']);
+
         return response()->json([
             'message' => 'Certificate generated successfully',
             'file_url' => asset('storage/' . $filePath)
+        ]);
+    }
+
+    /**
+     * Bulk generate certificates
+     */
+    public function bulkGenerateCertificates(Request $request)
+    {
+        $request->validate([
+            'submission_ids' => 'required|array',
+            'submission_ids.*' => 'string'
+        ]);
+
+        $submissionIds = $request->submission_ids;
+        $results = [];
+
+        foreach ($submissionIds as $idSubmission) {
+            try {
+                $this->generateCertificate($request, $idSubmission);
+                $results[] = ['id' => $idSubmission, 'success' => true];
+            } catch (\Exception $e) {
+                $results[] = ['id' => $idSubmission, 'success' => false, 'error' => $e->getMessage()];
+            }
+        }
+
+        return response()->json([
+            'message' => 'Bulk generation process completed',
+            'results' => $results
+        ]);
+    }
+
+    /**
+     * Bulk send certificates
+     */
+    public function bulkSendCertificates(Request $request)
+    {
+        $request->validate([
+            'submission_ids' => 'required|array',
+            'submission_ids.*' => 'string'
+        ]);
+
+        $submissionIds = $request->submission_ids;
+        $results = [];
+
+        foreach ($submissionIds as $idSubmission) {
+            try {
+                $cert = Certificate::where('id_submission', $idSubmission)->first();
+                if ($cert) {
+                    $cert->update(['is_sent' => true]);
+                    $results[] = ['id' => $idSubmission, 'success' => true];
+                } else {
+                    $results[] = ['id' => $idSubmission, 'success' => false, 'error' => 'Certificate not found'];
+                }
+            } catch (\Exception $e) {
+                $results[] = ['id' => $idSubmission, 'success' => false, 'error' => $e->getMessage()];
+            }
+        }
+
+        return response()->json([
+            'message' => 'Bulk send process completed',
+            'results' => $results
         ]);
     }
 
@@ -843,17 +908,12 @@ class MentorController extends Controller
         foreach ($scores as $s) {
             $comp = $positionComps->get($s['id_competency']);
             if ($comp) {
-                $predicate = 'Kurang';
-                if ($s['score'] >= 85) $predicate = 'Sangat Baik';
-                elseif ($s['score'] >= 75) $predicate = 'Baik';
-                elseif ($s['score'] >= 65) $predicate = 'Cukup';
-
                 $competenciesData[] = [
                     'name' => $comp->name,
-                    'description' => $comp->description,
+                    'description' => $s['definition'] ?? $comp->description,
+                    'achievement_description' => $s['achievement_description'] ?? '',
                     'hours' => $comp->learning_hours,
                     'score' => $s['score'],
-                    'predicate' => $predicate,
                 ];
             }
         }
@@ -891,6 +951,7 @@ class MentorController extends Controller
             'issuedDate' => now()->translatedFormat('d F Y'),
             'competencies' => $competenciesData,
             'avgScore' => $avgScore,
+            'evaluation' => $assessment->narrative ?? '',
         ];
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('certificate.template', $data)->setPaper('a4', 'landscape');
@@ -928,8 +989,10 @@ class MentorController extends Controller
      */
     private function getCompetencyLevel($hours)
     {
-        if ($hours <= 20) return 'Beginner';
-        if ($hours <= 40) return 'Intermediate';
+        if ($hours <= 20)
+            return 'Beginner';
+        if ($hours <= 40)
+            return 'Intermediate';
         return 'Advanced';
     }
 }

@@ -1,5 +1,5 @@
 import { LayoutDashboard, BookOpen, User, Award, LogOut, Users, CheckSquare } from "lucide-react";
-import { Link, useLocation, useParams } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useAuthStore } from "../stores/authStore";
 import { getScopedRole } from "../utils/roleUtils";
 
@@ -10,7 +10,7 @@ export default function SidebarCandidate({ userName, userPhoto, company, onLogou
 
   // Get scoped role from user object using utility function
   const scopedRole = getScopedRole(user) || "member";
-  
+
   console.log("SidebarCandidate - resolved scopedRole:", scopedRole);
 
   // Base navigation items (common for all)
@@ -22,22 +22,22 @@ export default function SidebarCandidate({ userName, userPhoto, company, onLogou
   ];
 
   // Role-specific items
-  const roleSpecificItems = scopedRole === "leader" 
+  const roleSpecificItems = scopedRole === "leader"
     ? [
-        { label: "My Tasks", icon: <CheckSquare size={16} />, to: `/c/${resolvedCompanyId}/leader/tasks` },
-        { label: "Team Management", icon: <Users size={16} />, to: `/c/${resolvedCompanyId}/leader/team` },
-      ]
+      { label: "My Tasks", icon: <CheckSquare size={16} />, to: `/c/${resolvedCompanyId}/leader/tasks` },
+      { label: "Team Management", icon: <Users size={16} />, to: `/c/${resolvedCompanyId}/leader/team` },
+    ]
     : scopedRole === "member"
-    ? [
+      ? [
         { label: "My Tasks", icon: <CheckSquare size={16} />, to: `/c/${resolvedCompanyId}/member/tasks` },
       ]
-    : [];
+      : [];
 
   const navItems = [...baseNavItems, ...roleSpecificItems];
 
   return (
     <aside className="w-56 min-h-screen bg-[#0f1e3a] text-white flex flex-col px-4 py-6 fixed top-0 left-0 z-10" style={{ fontFamily: 'Poppins, sans-serif' }}>
-      
+
       {/* 1. Company Logo at the TOP (Added) */}
       {company?.logo_path && (
         <div className="flex justify-center mb-6">

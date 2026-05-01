@@ -69,6 +69,7 @@ export default function InputScoreMentor() {
   const [generatingId, setGeneratingId] = useState(null);
   const [certificateGenerated, setCertificateGenerated] = useState(false);
   const [generatingCert, setGeneratingCert] = useState(false);
+  const [generatingEval, setGeneratingEval] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -137,7 +138,11 @@ console.log('unscored count:', internsRes.data.filter(i =>
 
     const fetchCompetencies = async (idSubmission) => {
         try {
-          const res = await mentorApi.getCompetencies(idSubmission);
+          const [res, evalRes] = await Promise.all([
+            mentorApi.getCompetencies(idSubmission),
+            mentorApi.getEvaluation(idSubmission).catch(() => ({ data: { narrative: '' } }))
+          ]);
+          
           setCompetencies(res.data);
           
           const newScores = {};
@@ -152,8 +157,8 @@ console.log('unscored count:', internsRes.data.filter(i =>
             };
           });
           setScores(newScores);
-          setCertificateGenerated(false);
-          setEvaluation('');
+          setCertificateGenerated(evalRes.data.has_certificate || false);
+          setEvaluation(evalRes.data.narrative || '');
         } catch (error) {
           console.error('Error fetching competencies:', error);
         }
@@ -166,6 +171,7 @@ console.log('unscored count:', internsRes.data.filter(i =>
     setSelectedInternName(selected.name);
     setScores({});
     setEvaluation('');
+    setCertificateGenerated(selected.has_certificate || false);
     fetchCompetencies(idSubmission);
   }
 };
@@ -240,7 +246,6 @@ console.log('unscored count:', internsRes.data.filter(i =>
       setSuccessModal(true);
       await fetchCompetencies(selectedSubmissionId);
       await fetchData(true);
-      setScores({});
     } catch (error) {
       console.error('Error saving scores:', error);
       console.error('Response data:', error.response?.data);
@@ -275,14 +280,9 @@ console.log('unscored count:', internsRes.data.filter(i =>
     if (!comp) return;
     setGeneratingId(compId);
     try {
-      const prompt = `You are an internship assessment assistant. Write a concise, professional achievement description (2-3 sentences) for an intern who completed the competency below.\n\nCompetency: ${comp.name}\nDefinition: ${sc?.definition || comp.definition || comp.description || 'Not specified'}\nScore: ${sc?.score ?? 'Not yet scored'}\nStatus: ${sc?.status ?? 'pending'}\nRequired hours: ${comp.hours}\n\nWrite a positive, specific, and factual achievement description in English. Do not include a score number. Keep it under 60 words.`;
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 200, messages: [{ role: "user", content: prompt }] }),
-      });
-      const data = await response.json();
-      const text = data.content?.find(b => b.type === 'text')?.text?.trim() || '';
+      const prompt = `Anda adalah asisten penilaian magang. Tuliskan deskripsi pencapaian profesional yang singkat (2-3 kalimat) untuk pemagang yang telah menyelesaikan kompetensi di bawah ini.\n\nKompetensi: ${comp.name}\nDefinisi: ${sc?.definition || comp.definition || comp.description || 'Tidak ditentukan'}\nSkor: ${sc?.score ?? 'Belum dinilai'}\nStatus: ${sc?.status ?? 'pending'}\nJam yang dibutuhkan: ${comp.hours}\n\nTuliskan deskripsi pencapaian yang positif, spesifik, dan faktual dalam Bahasa Indonesia yang profesional. Jangan sertakan angka skor. Jaga agar tetap di bawah 60 kata.`;
+      const response = await mentorApi.aiGenerate(prompt);
+      const text = response.data.response?.trim() || '';
       if (text) updateScore(compId, 'achievement_description', text);
     } catch (e) {
       console.error('AI generation error:', e);
@@ -296,20 +296,36 @@ console.log('unscored count:', internsRes.data.filter(i =>
     for (const comp of competencies) {
       const sc = scores[comp.id_competency];
       if (sc?.achievement_description) continue;
-      const prompt = `You are an internship assessment assistant. Write a concise, professional achievement description (2-3 sentences) for an intern who completed the competency below.\n\nCompetency: ${comp.name}\nDefinition: ${sc?.definition || comp.definition || comp.description || 'Not specified'}\nScore: ${sc?.score ?? 'Not yet scored'}\nStatus: ${sc?.status ?? 'pending'}\nRequired hours: ${comp.hours}\n\nWrite a positive, specific, and factual achievement description in English. Do not include a score number. Keep it under 60 words.`;
+      const prompt = `Anda adalah asisten penilaian magang. Tuliskan deskripsi pencapaian profesional yang singkat (2-3 kalimat) untuk pemagang yang telah menyelesaikan kompetensi di bawah ini.\n\nKompetensi: ${comp.name}\nDefinisi: ${sc?.definition || comp.definition || comp.description || 'Tidak ditentukan'}\nSkor: ${sc?.score ?? 'Belum dinilai'}\nStatus: ${sc?.status ?? 'pending'}\nJam yang dibutuhkan: ${comp.hours}\n\nTuliskan deskripsi pencapaian yang positif, spesifik, dan faktual dalam Bahasa Indonesia yang profesional. Jangan sertakan angka skor. Jaga agar tetap di bawah 60 kata.`;
       try {
-        const response = await fetch("https://api.anthropic.com/v1/messages", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 200, messages: [{ role: "user", content: prompt }] }),
-        });
-        const data = await response.json();
-        const text = data.content?.find(b => b.type === 'text')?.text?.trim() || '';
+        const response = await mentorApi.aiGenerate(prompt);
+        const text = response.data.response?.trim() || '';
         if (text) setScores(prev => ({ ...prev, [comp.id_competency]: { ...prev[comp.id_competency], achievement_description: text } }));
       } catch {}
       await new Promise(r => setTimeout(r, 300));
     }
     setGeneratingAll(false);
+  };
+
+  const generateEvaluation = async () => {
+    if (!selectedSubmissionId || competencies.length === 0) return;
+    setGeneratingEval(true);
+    try {
+      const summary = competencies.map(c => {
+        const sc = scores[c.id_competency];
+        return `- ${c.name}: ${sc?.score ?? 'N/A'} (${sc?.achievement_description || 'Tidak ada deskripsi'})`;
+      }).join('\n');
+
+      const prompt = `Anda adalah asisten penilaian magang. Berdasarkan performa pemagang berikut ini:\n\nNama: ${selectedInternName}\n\nRingkasan Kompetensi:\n${summary}\n\nTuliskan sebuah evaluasi keseluruhan (narasi evaluasi) dalam 3-4 kalimat profesional dalam Bahasa Indonesia. Evaluasi harus merangkum kekuatan pemagang dan memberikan kesan akhir yang positif. Jaga agar tetap di bawah 100 kata.`;
+      
+      const response = await mentorApi.aiGenerate(prompt);
+      const text = response.data.response?.trim() || '';
+      if (text) setEvaluation(text);
+    } catch (e) {
+      console.error('AI evaluation error:', e);
+    } finally {
+      setGeneratingEval(false);
+    }
   };
 
   const handleGenerateCertificate = async () => {
@@ -439,9 +455,9 @@ console.log('unscored count:', internsRes.data.filter(i =>
                 </div>
 
                 {/* Scored check or pending dot */}
-                {isFullyScored
+                {intern.has_certificate
                   ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" style={{ flexShrink: 0 }}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                  : <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#e2e8f0", flexShrink: 0 }} />
+                  : <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: isFullyScored ? "#10b981" : "#e2e8f0", flexShrink: 0 }} />
                 }
               </div>
                 );
@@ -572,16 +588,44 @@ console.log('unscored count:', internsRes.data.filter(i =>
               </div>
             </div>
 
-{/* Evaluation Notes */}
             <div style={{ padding: "16px 24px", borderBottom: "1px solid #f1f5f9" }}>
               <div style={{ fontSize: "13px", fontWeight: 700, color: "#0f172a", marginBottom: "2px" }}>Evaluation</div>
               <div style={{ fontSize: "11px", color: "#94a3b8", marginBottom: "8px" }}>Overall evaluation and feedback for this intern's performance</div>
-              <textarea
-                placeholder="Write your overall evaluation for this intern (e.g., the intern showed significant progress in team collaboration...)"
-                style={{ ...s.fieldInput, resize: "vertical", lineHeight: "1.6", minHeight: "80px", width: "100%", marginBottom: "16px" }}
-                value={evaluation}
-                onChange={(e) => setEvaluation(e.target.value)}
-              />
+              <div style={{ position: "relative" }}>
+                <textarea
+                  placeholder="Write your overall evaluation for this intern (e.g., the intern showed significant progress in team collaboration...)"
+                  style={{ ...s.fieldInput, resize: "vertical", lineHeight: "1.6", minHeight: "80px", width: "100%", marginBottom: "16px", paddingRight: "34px" }}
+                  value={evaluation}
+                  onChange={(e) => setEvaluation(e.target.value)}
+                />
+                <button
+                  title="Generate Evaluation with AI"
+                  onClick={generateEvaluation}
+                  disabled={generatingEval}
+                  style={{ 
+                    position: "absolute", 
+                    right: "8px", 
+                    top: "8px", 
+                    width: "24px", 
+                    height: "24px", 
+                    border: "1px solid #ede9fe", 
+                    background: generatingEval ? "#ede9fe" : "#faf5ff", 
+                    cursor: generatingEval ? "not-allowed" : "pointer", 
+                    padding: 0, 
+                    display: "flex", 
+                    alignItems: "center", 
+                    justifyContent: "center", 
+                    color: "#8b5cf6", 
+                    borderRadius: "6px" 
+                  }}
+                >
+                  {generatingEval ? (
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: "spin 1s linear infinite" }}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                  ) : (
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
+                  )}
+                </button>
+              </div>
             </div>
 
             {/* Action buttons */}

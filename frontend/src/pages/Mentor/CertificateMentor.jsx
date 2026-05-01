@@ -50,6 +50,8 @@ export default function CertificateMentor() {
   const [activeTab, setActiveTab] = useState("Individual");
   const [interns, setInterns] = useState([]);
   const [selectedSubmissionId, setSelectedSubmissionId] = useState(null);
+  const [bulkGenerating, setBulkGenerating] = useState(false);
+  const [bulkSending, setBulkSending] = useState(false);
 
   // ─── FETCH ───────────────────────────────────────────────────────────────
 const applyCerts = (data) => {
@@ -155,6 +157,62 @@ const applyCerts = (data) => {
   }, [search]);
 
   // ─── ACTIONS ─────────────────────────────────────────────────────────────
+  const handleBulkGenerate = async () => {
+    const eligibleIds = filteredCerts
+      .filter(cert => cert.score !== null)
+      .map(cert => cert.id_submission);
+
+    if (eligibleIds.length === 0) {
+      alert("No eligible interns to generate certificates for.");
+      return;
+    }
+
+    if (!window.confirm(`Are you sure you want to generate/regenerate certificates for ${eligibleIds.length} interns?`)) {
+        return;
+    }
+
+    try {
+      setBulkGenerating(true);
+      await mentorApi.bulkGenerateCertificates(eligibleIds);
+      broadcastDataRefresh('certificate');
+      await fetchCerts(search);
+      alert(`Bulk generation successful for ${eligibleIds.length} interns.`);
+    } catch (error) {
+      console.error('Bulk generation error:', error);
+      alert('Failed to process bulk generation');
+    } finally {
+      setBulkGenerating(false);
+    }
+  };
+
+  const handleBulkSend = async () => {
+    const sendableIds = filteredCerts
+      .filter(cert => cert.status === "Generated")
+      .map(cert => cert.id_submission);
+
+    if (sendableIds.length === 0) {
+      alert("No certificates ready to be sent. Generate them first.");
+      return;
+    }
+
+    if (!window.confirm(`Are you sure you want to send certificates to ${sendableIds.length} interns?`)) {
+        return;
+    }
+
+    try {
+      setBulkSending(true);
+      await mentorApi.bulkSendCertificates(sendableIds);
+      broadcastDataRefresh('certificate');
+      await fetchCerts(search);
+      alert(`Bulk send successful for ${sendableIds.length} interns.`);
+    } catch (error) {
+      console.error('Bulk send error:', error);
+      alert('Failed to process bulk send');
+    } finally {
+      setBulkSending(false);
+    }
+  };
+
   const handleGenerateCertificate = async (idSubmission) => {
     try {
       setGenerating(prev => ({ ...prev, [idSubmission]: true }));
@@ -313,7 +371,33 @@ const applyCerts = (data) => {
                   <span onClick={() => setSearch("")} style={{ cursor: "pointer", color: "#94a3b8", fontSize: "16px", lineHeight: 1 }}>×</span>
                 )}
               </div>
-              <button style={s.btnPrimary}>Bulk Generate</button>
+              <div style={{ display: "flex", gap: "8px" }}>
+                <button 
+                  style={{ ...s.btnPrimary, opacity: bulkGenerating ? 0.7 : 1, cursor: bulkGenerating ? "not-allowed" : "pointer" }}
+                  onClick={handleBulkGenerate}
+                  disabled={bulkGenerating}
+                >
+                  {bulkGenerating ? "Generating..." : "Bulk Generate / Regenerate"}
+                </button>
+                <button 
+                  style={{ 
+                    padding: "7px 16px", 
+                    background: "#eff6ff", 
+                    color: "#2563eb", 
+                    border: "1px solid #93c5fd", 
+                    borderRadius: "8px", 
+                    fontSize: "13px", 
+                    fontWeight: 600, 
+                    cursor: bulkSending ? "not-allowed" : "pointer", 
+                    fontFamily: "inherit",
+                    opacity: bulkSending ? 0.7 : 1
+                  }}
+                  onClick={handleBulkSend}
+                  disabled={bulkSending}
+                >
+                  {bulkSending ? "Sending..." : "Bulk Send"}
+                </button>
+              </div>
             </div>
             </div>
 

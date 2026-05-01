@@ -223,8 +223,10 @@ Route::prefix('mentor')->middleware(['auth:sanctum', 'mentorRole'])->group(funct
     Route::post('/interns/{id_submission}/send-certificate',        [MentorController::class, 'sendCertificate']);
 
     // Recap & certificates
-    Route::get('/score-recap',   [MentorController::class, 'getScoreRecap']);
-    Route::get('/certificates',  [MentorController::class, 'getCertificates']);
+    Route::get('/score-recap',              [MentorController::class, 'getScoreRecap']);
+    Route::get('/certificates',             [MentorController::class, 'getCertificates']);
+    Route::post('/certificates/bulk-generate', [MentorController::class, 'bulkGenerateCertificates']);
+    Route::post('/certificates/bulk-send',     [MentorController::class, 'bulkSendCertificates']);
     
     // Tasks
     Route::get('/assign-targets', [App\Http\Controllers\MentorTaskController::class, 'getAssignTargets']);
@@ -289,8 +291,10 @@ Route::middleware(['auth:sanctum'])->prefix('hr')->group(function () {
 
     // Payroll
     Route::get('/payroll',              [HRPayrollController::class, 'index']);
-    Route::post('/payroll',             [HRPayrollController::class, 'store']);
-    Route::patch('/payroll/{id}/pay',   [HRPayrollController::class, 'pay']);
+    Route::post('/payroll/stipend',     [HRPayrollController::class, 'updateProgramStipend']);
+    Route::post('/payroll/pay',         [HRPayrollController::class, 'pay']);
+    Route::post('/payroll/rollback',    [HRPayrollController::class, 'rollback']);
+    Route::post('/payroll/terminate',   [HRPayrollController::class, 'terminate']);
     Route::get('/payroll/export',       [HRPayrollController::class, 'exportCsv']);
 
     // Mentor assignment

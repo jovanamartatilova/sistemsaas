@@ -98,4 +98,12 @@ export const useAuthStore = create((set) => ({
 
   // Clear error
   clearError: () => set({ error: null }),
+
+  // Set user data manually
+  setUser: (userData) => {
+    const currentUser = useAuthStore.getState().user;
+    const updatedUser = { ...currentUser, ...userData };
+    localStorage.setItem('user', JSON.stringify(updatedUser));
+    set({ user: updatedUser });
+  },
 }));

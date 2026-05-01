@@ -2,12 +2,12 @@ import { useState, useEffect, useRef, Fragment } from "react";
 import axios from "axios";
 import { SidebarMentor } from "../../components/SidebarMentor";
 import { useAuthStore } from "../../stores/authStore";
-import { CheckCircle, Clock, AlertCircle, MessageSquare, Send, ChevronDown, ChevronUp, Plus } from "lucide-react";
+import { CheckCircle, Clock, AlertCircle, MessageSquare, Send, ChevronDown, ChevronUp, Plus, Edit, Trash } from "lucide-react";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 
-const MONTHS_FULL = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-const MONTHS_SHORT = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-const DAYS_SHORT = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+const MONTHS_FULL = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+const MONTHS_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const DAYS_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 function CalendarPicker({ value, onChange }) {
   const [open, setOpen] = useState(false);
@@ -22,6 +22,16 @@ function CalendarPicker({ value, onChange }) {
     document.addEventListener("mousedown", fn);
     return () => document.removeEventListener("mousedown", fn);
   }, []);
+
+  useEffect(() => {
+    if (value) {
+      const d = new Date(value);
+      if (!isNaN(d.getTime())) {
+        setYear(d.getFullYear());
+        setMonth(d.getMonth());
+      }
+    }
+  }, [value]);
 
   const handleOpen = () => {
     if (open) { setOpen(false); return; }
@@ -46,7 +56,7 @@ function CalendarPicker({ value, onChange }) {
   };
 
   const displayValue = value
-    ? (() => { const [y, m, d] = value.split('-'); return `${parseInt(d)} ${MONTHS_SHORT[parseInt(m)-1]} ${y}`; })()
+    ? (() => { const [y, m, d] = value.split('-'); return `${d}/${m}/${y}`; })()
     : null;
 
   const days = [];
@@ -152,8 +162,9 @@ const s = {
 export default function AssignTasksMentor() {
   const { user, logout } = useAuthStore();
   const [tasks, setTasks] = useState([]);
-  const [targets, setTargets] = useState([]);
-  const [competencies, setCompetencies] = useState([]);
+  const [assignTargets, setAssignTargets] = useState([]);
+  const [competencies, setCompetencies] = useState([]); // This will be filtered for the modal
+  const [allCompetencies, setAllCompetencies] = useState([]); // This is for name resolution in the table
   const [internInfo, setInternInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
@@ -161,34 +172,96 @@ export default function AssignTasksMentor() {
   const [logoutModal, setLogoutModal] = useState(false);
   const [expandedTask, setExpandedTask] = useState(null);
   const [noteMap, setNoteMap] = useState({});
+  const [isEditing, setIsEditing] = useState(false);
+  const [editId, setEditId] = useState(null);
+
+  const [formData, setFormData] = useState({
+    title: "",
+    description: "",
+    targetVal: "",
+    frequency: "daily",
+    startDate: new Date().toISOString().split('T')[0],
+    projectTargets: [{ title: "", description: "", competencyIds: [] }],
+  });
 
   const fetchData = async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
-      const [resTasks, resTargets] = await Promise.all([
+      const [resTasks, resAssignTargets, resComp] = await Promise.all([
         axios.get("http://localhost:8000/api/mentor/tasks", { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get("http://localhost:8000/api/mentor/assign-targets", { headers: { Authorization: `Bearer ${token}` } })
+        axios.get("http://localhost:8000/api/mentor/assign-targets", { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get("http://localhost:8000/api/mentor/competencies", { headers: { Authorization: `Bearer ${token}` } })
       ]);
       setTasks(resTasks.data.data || []);
-      setTargets(resTargets.data.data || []);
+      setAssignTargets(resAssignTargets.data.data || []);
+      setAllCompetencies(resComp.data.data || []);
     } catch (e) { console.error(e); } finally { setLoading(false); }
   };
 
   useEffect(() => { fetchData(); }, []);
 
-  const [formData, setFormData] = useState({ title: "", description: "", targetVal: "", deadline: "", competencyIds: [] });
-
   const handleOpenModal = () => {
-    setFormData({ title: "", description: "", targetVal: "", deadline: "", competencyIds: [] });
+    setIsEditing(false);
+    setEditId(null);
+    setFormData({
+      title: "",
+      description: "",
+      targetVal: "",
+      frequency: "daily",
+      startDate: new Date().toISOString().split('T')[0],
+      projectTargets: [{ title: "", description: "", competencyIds: [] }],
+    });
     setInternInfo(null);
     setCompetencies([]);
     setModalOpen(true);
   };
 
+  const handleEdit = (project) => {
+    console.log("Debug Edit - Project:", project);
+    console.log("Debug Edit - AssignTargets:", assignTargets);
+
+    setIsEditing(true);
+    setEditId(project.id_task);
+
+    // Perbandingan ID yang lebih fleksibel (pakai String)
+    const target = assignTargets.find(t =>
+      String(t.id_target) === String(project.id_intern) &&
+      String(t.id_team || "") === String(project.id_team || "")
+    );
+
+    const targetVal = target ? `${target.id_target}|${target.id_team || ''}` : "";
+
+    setFormData({
+      title: project.title || "",
+      description: project.description || "",
+      targetVal: targetVal,
+      frequency: project.frequency === '-' ? 'daily' : project.frequency,
+      startDate: project.created_at ? String(project.created_at).split('T')[0] : new Date().toISOString().split('T')[0],
+      projectTargets: (project.subtasks || []).map(st => ({
+        id: st.id,
+        title: st.title || "",
+        description: st.description || "",
+        competencyIds: st.competency_ids || [],
+        deadlineAt: st.deadline_at ? String(st.deadline_at).split('T')[0] : null
+      })),
+    });
+
+    if (target) {
+      setInternInfo({ position: target.position, program: target.program });
+      if (target.id_position) {
+        const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
+        axios.get(`http://localhost:8000/api/mentor/competencies?id_position=${target.id_position}`, { headers: { Authorization: `Bearer ${token}` } })
+          .then(res => setCompetencies(res.data.data || []))
+          .catch(err => console.error("Failed to load competencies for edit:", err));
+      }
+    }
+    setModalOpen(true);
+  };
+
   const handleTargetChange = async (val) => {
-    setFormData(f => ({ ...f, targetVal: val, competencyIds: [] }));
-    const target = targets.find(t => `${t.id_target}|${t.id_team || ''}` === val);
+    setFormData(f => ({ ...f, targetVal: val }));
+    const target = assignTargets.find(t => `${t.id_target}|${t.id_team || ''}` === val);
     if (!target) return;
     setInternInfo({ position: target.position, program: target.program });
     if (target.id_position) {
@@ -198,18 +271,109 @@ export default function AssignTasksMentor() {
     }
   };
 
-  const handleSubmit = async (status) => {
-    if (!formData.title || !formData.targetVal || !formData.deadline) return alert("Please fill all required fields");
+  const recalculateDeadlines = (baseDate, freq, targets) => {
+    const start = new Date(baseDate);
+    return targets.map((t, idx) => {
+      const nextDate = new Date(start);
+      const count = idx + 1;
+      if (freq === 'daily') nextDate.setDate(nextDate.getDate() + count);
+      else if (freq === 'weekly') nextDate.setDate(nextDate.getDate() + (count * 7));
+      else if (freq === 'bi-weekly') nextDate.setDate(nextDate.getDate() + (count * 14));
+      else if (freq === 'monthly') nextDate.setMonth(nextDate.getMonth() + count);
+      return { ...t, deadlineAt: nextDate.toISOString().split('T')[0] };
+    });
+  };
+
+  const handleFrequencyChange = (val) => {
+    setFormData(prev => ({
+      ...prev,
+      frequency: val,
+      projectTargets: recalculateDeadlines(prev.startDate, val, prev.projectTargets)
+    }));
+  };
+
+  const handleStartDateChange = (val) => {
+    setFormData(prev => ({
+      ...prev,
+      startDate: val,
+      projectTargets: recalculateDeadlines(val, prev.frequency, prev.projectTargets)
+    }));
+  };
+
+  const addProjectTarget = () => {
+    setFormData(f => {
+      const newList = [...f.projectTargets, { title: "", description: "", competencyIds: [], deadlineAt: "" }];
+      return { ...f, projectTargets: recalculateDeadlines(f.startDate, f.frequency, newList) };
+    });
+  };
+
+  const removeProjectTarget = (idx) => {
+    if (formData.projectTargets.length <= 1) return;
+    const newList = [...formData.projectTargets];
+    newList.splice(idx, 1);
+    setFormData(f => ({ ...f, projectTargets: newList }));
+  };
+
+  const handleProjectTargetChange = (idx, field, val) => {
+    const newList = [...formData.projectTargets];
+    newList[idx][field] = val;
+    setFormData(f => ({ ...f, projectTargets: newList }));
+  };
+
+  const toggleTargetCompetency = (targetIdx, compId) => {
+    setFormData(prev => ({
+      ...prev,
+      projectTargets: prev.projectTargets.map((t, idx) => {
+        if (idx === targetIdx) {
+          const exists = t.competencyIds.some(id => String(id) === String(compId));
+          const competencyIds = exists
+            ? t.competencyIds.filter(id => String(id) !== String(compId))
+            : [...t.competencyIds, compId];
+          return { ...t, competencyIds };
+        }
+        return t;
+      })
+    }));
+  };
+
+  const handleSubmit = async () => {
+    if (!formData.title || !formData.targetVal || !formData.startDate) return alert("Please fill all required fields");
+    if (formData.projectTargets.some(t => !t.title || !t.description)) return alert("Please fill all target titles and instructions");
+
     setSubmitting(true);
     try {
-      const targetObj = targets.find(t => `${t.id_target}|${t.id_team || ''}` === formData.targetVal);
+      const targetObj = assignTargets.find(t => `${t.id_target}|${t.id_team || ''}` === formData.targetVal);
       const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
-      await axios.post("http://localhost:8000/api/mentor/tasks", {
-        ...formData, id_target: targetObj.id_target, id_team: targetObj.id_team, deadline_at: formData.deadline, status
-      }, { headers: { Authorization: `Bearer ${token}` } });
+
+      const payload = {
+        id_target: targetObj.id_target,
+        id_team: targetObj.id_team,
+        title: formData.title,
+        description: formData.description,
+        frequency: formData.frequency,
+        start_date: formData.startDate,
+        targets: formData.projectTargets.map(t => ({
+          id: t.id,
+          title: t.title,
+          description: t.description,
+          competency_ids: t.competencyIds,
+          deadline_at: t.deadlineAt
+        }))
+      };
+
+      if (isEditing) {
+        await axios.put(`http://localhost:8000/api/mentor/tasks/${editId}`, payload, { headers: { Authorization: `Bearer ${token}` } });
+      } else {
+        await axios.post("http://localhost:8000/api/mentor/tasks", payload, { headers: { Authorization: `Bearer ${token}` } });
+      }
+
       setModalOpen(false);
       fetchData();
-    } catch (e) { alert("Failed to create task"); } finally { setSubmitting(false); }
+      alert(isEditing ? "Project updated!" : "Project created!");
+    } catch (e) {
+      const msg = e.response?.data?.message || "Failed to save project";
+      alert(msg);
+    } finally { setSubmitting(false); }
   };
 
   const handleUpdateTask = async (taskId, payload) => {
@@ -217,21 +381,29 @@ export default function AssignTasksMentor() {
       const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
       await axios.put(`http://localhost:8000/api/mentor/tasks/${taskId}`, payload, { headers: { Authorization: `Bearer ${token}` } });
       fetchData();
-      alert("Task updated!");
+      alert("Success!");
     } catch (e) { alert("Failed to update"); }
   };
 
+  const handleDeleteTask = async (taskId) => {
+    if (!window.confirm("Are you sure you want to delete this project and all its targets?")) return;
+    try {
+      const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
+      await axios.delete(`http://localhost:8000/api/mentor/tasks/${taskId}`, { headers: { Authorization: `Bearer ${token}` } });
+      fetchData();
+      alert("Project deleted!");
+    } catch (e) { alert("Failed to delete project"); }
+  };
+
   if (loading) return (
-  <div style={s.app}>
-    <SidebarMentor mentor={user} onLogout={() => setLogoutModal(true)} />
-    <main style={s.main}>
-      <div style={s.topbar}>
-        <div style={s.bc}><span>Dashboard</span><span style={s.bcSep}>/</span><span>Assessment</span><span style={s.bcSep}>/</span><span style={s.bcActive}>Assign Tasks</span></div>
-      </div>
-      <div style={s.content}><LoadingSpinner message="Loading Assign Tasks..." /></div>
-    </main>
-  </div>
-);
+    <div style={s.app}>
+      <SidebarMentor mentor={user} onLogout={() => setLogoutModal(true)} />
+      <main style={s.main}>
+        <div style={s.topbar}><div style={s.bc}><span>Dashboard</span><span style={s.bcSep}>/</span><span>Assessment</span><span style={s.bcSep}>/</span><span style={s.bcActive}>Assign Tasks</span></div></div>
+        <div style={s.content}><LoadingSpinner message="Loading Assign Tasks..." /></div>
+      </main>
+    </div>
+  );
 
   return (
     <div style={s.app}>
@@ -246,104 +418,149 @@ export default function AssignTasksMentor() {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
             <div>
               <h1 style={s.h1}>Assign Tasks</h1>
-              <p style={s.subtitle}>Review intern submissions and delegate tasks.</p>
+              <p style={s.subtitle}>Create projects, set daily/weekly targets, and review intern submissions.</p>
             </div>
-            <button style={s.btnNew} onClick={handleOpenModal}><Plus size={16} /> New Task</button>
+            <button style={s.btnNew} onClick={handleOpenModal}><Plus size={16} /> New Project</button>
           </div>
 
           <div style={s.card}>
             <table style={s.table}>
               <colgroup><col style={{ width: "35%" }} /><col style={{ width: "20%" }} /><col style={{ width: "15%" }} /><col style={{ width: "15%" }} /><col style={{ width: "15%" }} /></colgroup>
-              <thead style={s.thead}><tr><th style={s.th}>Task</th><th style={s.th}>Assigned To</th><th style={s.th}>Deadline</th><th style={s.th}>Type</th><th style={s.th}>Status</th></tr></thead>
+              <thead style={s.thead}><tr><th style={s.th}>Project / Task</th><th style={s.th}>Assigned To</th><th style={s.th}>Frequency</th><th style={s.th}>Details</th><th style={s.th}>Status</th></tr></thead>
               <tbody>
-                {tasks.length === 0 ? <tr><td colSpan={5} style={{ padding: "40px", color: "#94a3b8" }}>No tasks created yet.</td></tr> : tasks.map(task => {
-                  const isEx = expandedTask === task.id_task;
+                {tasks.length === 0 ? <tr><td colSpan={5} style={{ padding: "40px", color: "#94a3b8" }}>No projects created yet.</td></tr> : tasks.map(project => {
+                  const isEx = expandedTask === project.id_task;
+                  const isIndependent = project.task_type === 'independent';
                   return (
-                    <Fragment key={task.id_task}>
-                      <tr style={{ cursor: "pointer", background: isEx ? "#f8fafc" : "transparent" }} onClick={() => setExpandedTask(isEx ? null : task.id_task)}>
-
-                        <td style={s.td}><span style={s.cname}>{task.title}</span><span style={s.cdesc}>{task.description}</span></td>
-                        <td style={s.td}><span style={{ fontWeight: 500 }}>{task.target_name}</span></td>
-                        <td style={s.td}>{new Date(task.deadline_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
-                        <td style={s.td}><span style={s.typeBadge(task.type === "Team")}>{task.type}</span></td>
-                        <td style={s.td}><span style={s.statusBadge(task.status)}>{task.status.replace("_", " ")}</span></td>
+                    <Fragment key={project.id_task}>
+                      <tr style={{ cursor: "pointer", background: isEx ? "#f8fafc" : "transparent" }} onClick={() => setExpandedTask(isEx ? null : project.id_task)}>
+                        <td style={s.td}>
+                          <span style={s.cname}>{project.title}</span>
+                          <span style={s.cdesc}>{project.description}</span>
+                          {isIndependent && <span style={{ fontSize: '10px', color: '#94a3b8', background: '#f1f5f9', padding: '2px 6px', borderRadius: '4px', marginTop: '4px', display: 'inline-block' }}>Independent Task</span>}
+                        </td>
+                        <td style={s.td}><span style={{ fontWeight: 500 }}>{project.target_name}</span></td>
+                        <td style={s.td}><span style={{ textTransform: "capitalize", fontWeight: 600, color: isIndependent ? "#94a3b8" : "#4f46e5" }}>{project.frequency}</span></td>
+                        <td style={s.td}><span style={{ fontWeight: 600 }}>{isIndependent ? "1 Submission" : `${project.subtasks.length} Targets`}</span></td>
+                        <td style={s.td}>
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                            <span style={s.statusBadge(project.status)}>{project.status.replace("_", " ")}</span>
+                            <div style={{ display: "flex", gap: "8px" }}>
+                              <button onClick={(e) => { e.stopPropagation(); handleEdit(project); }} style={{ background: "none", border: "none", color: "#64748b", cursor: "pointer", padding: "4px" }} title="Edit Project"><Edit size={16} /></button>
+                              <button onClick={(e) => { e.stopPropagation(); handleDeleteTask(project.id_task); }} style={{ background: "none", border: "none", color: "#ef4444", cursor: "pointer", padding: "4px" }} title="Delete Project"><Trash size={16} /></button>
+                            </div>
+                          </div>
+                        </td>
                       </tr>
                       {isEx && (
                         <tr>
-                          <td colSpan={5} style={{ background: "#f8fafc", padding: "20px 32px", borderBottom: "1px solid #e2e8f0" }}>
-                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px", textAlign: "left" }}>
-                              {/* Team Progress / Subtasks */}
-                              <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                                <p style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase" }}>Team Jobdesc & Progress</p>
-                                {task.subtasks?.length > 0 ? (
-                                  <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                                    {task.subtasks.map(st => (
-                                      <div key={st.id} style={{ background: "#fff", border: "1px solid #e2e8f0", padding: "14px", borderRadius: "12px", boxShadow: "0 1px 2px rgba(0,0,0,0.02)" }}>
-                                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "6px" }}>
-                                          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                            <div style={{ width: "24px", height: "24px", background: "#f1f5f9", borderRadius: "12px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: 700, color: "#4f46e5" }}>{st.assignee.charAt(0)}</div>
-                                            <span style={{ fontSize: "13px", fontWeight: 700, color: "#0f172a" }}>{st.assignee}</span>
+                          <td colSpan={5} style={{ background: "#f8fafc", padding: "24px 32px", borderBottom: "1px solid #e2e8f0" }}>
+                            <div style={{ display: "flex", flexDirection: "column", gap: "20px", textAlign: "left" }}>
+                              <p style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                                {isIndependent ? "Task Details & Submission" : "Project Targets & Submissions"}
+                              </p>
+
+                              <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "16px" }}>
+                                {isIndependent ? (
+                                  <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: "16px", padding: "20px", boxShadow: "0 1px 3px rgba(0,0,0,0.02)" }}>
+                                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                                      <div style={{ flex: 1 }}>
+                                        <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "8px" }}>
+                                          <div style={{ fontSize: "12px", color: "#64748b", display: "flex", alignItems: "center", gap: "4px" }}><Clock size={14} /> Deadline: {project.deadline_at ? new Date(project.deadline_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '-'}</div>
+                                          <span style={s.statusBadge(project.status)}>{project.status.toUpperCase()}</span>
+                                        </div>
+                                        <p style={{ fontSize: "13px", color: "#334155" }}>{project.description}</p>
+                                      </div>
+                                      <div style={{ width: "350px", borderLeft: "1px solid #f1f5f9", paddingLeft: "24px", display: "flex", flexDirection: "column", gap: "12px" }}>
+                                        <p style={{ fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase" }}>Submission & Feedback</p>
+                                        {project.work_attachments?.length > 0 ? (
+                                          <>
+                                            <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                                              {project.work_attachments.map((att, i) => (
+                                                <a key={i} href={att.value} target="_blank" rel="noopener noreferrer" style={{ padding: "4px 10px", background: "#f8fafc", borderRadius: "6px", fontSize: "12px", color: "#4f46e5", textDecoration: "none", border: "1px solid #e2e8f0", display: "flex", alignItems: "center", gap: "4px" }}>{att.label}</a>
+                                              ))}
+                                            </div>
+                                            <textarea
+                                              style={{ ...s.textarea, minHeight: "80px", padding: "10px", fontSize: "12px" }}
+                                              placeholder="Feedback..."
+                                              value={noteMap[project.id_task] || project.feedback_notes || ""}
+                                              onChange={e => setNoteMap({ ...noteMap, [project.id_task]: e.target.value })}
+                                            />
+                                            <div style={{ display: "flex", gap: "8px" }}>
+                                              <button onClick={() => handleUpdateTask(project.id_task, { feedback_notes: noteMap[project.id_task], status: "in_progress" })} style={{ ...s.btnCancel, padding: "6px 12px", flex: 1, fontSize: "12px" }}>Revision</button>
+                                              {project.status !== 'done' && <button onClick={() => handleUpdateTask(project.id_task, { status: "done" })} style={{ ...s.btnSubmit, padding: "6px 12px", flex: 1, fontSize: "12px", background: "#059669" }}>Approve</button>}
+                                            </div>
+                                          </>
+                                        ) : <div style={{ fontSize: "12px", color: "#94a3b8" }}>No submission yet</div>}
+                                      </div>
+                                    </div>
+                                  </div>
+                                ) : project.subtasks.map((st, idx) => (
+                                  <div key={st.id} style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: "16px", overflow: "hidden", boxShadow: "0 1px 3px rgba(0,0,0,0.02)" }}>
+                                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "20px" }}>
+                                      <div style={{ flex: 1 }}>
+                                        <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "6px" }}>
+                                          <div style={{ width: "24px", height: "24px", background: "#eef2ff", color: "#4f46e5", borderRadius: "6px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: 700 }}>{idx + 1}</div>
+                                          <span style={{ fontSize: "15px", fontWeight: 700, color: "#0f172a" }}>{st.title}</span>
+                                        </div>
+                                        <p style={{ fontSize: "13px", color: "#64748b", margin: "0 0 12px 0", lineHeight: "1.5" }}>{st.description}</p>
+
+                                        {st.competency_ids?.length > 0 && (
+                                          <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginBottom: "12px" }}>
+                                            {st.competency_ids.map(cid => {
+                                              const c = allCompetencies.find(x => x.id_competency === cid);
+                                              return <span key={cid} style={{ fontSize: "10px", background: "#f1f5f9", color: "#475569", padding: "2px 8px", borderRadius: "99px", border: "1px solid #e2e8f0" }}>{c?.name || cid}</span>
+                                            })}
+                                          </div>
+                                        )}
+
+                                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                                          <div style={{ fontSize: "12px", color: "#64748b", display: "flex", alignItems: "center", gap: "8px" }}>
+                                            <div style={{ display: "flex", alignItems: "center", gap: "4px" }}><Clock size={14} /> Deadline:</div>
+                                            <CalendarPicker 
+                                              value={st.deadline_at ? String(st.deadline_at).split('T')[0] : ""} 
+                                              onChange={(val) => handleUpdateTask(st.id, { deadline_at: val })}
+                                            />
                                           </div>
                                           <span style={s.statusBadge(st.status)}>{st.status.toUpperCase()}</span>
                                         </div>
-                                        <p style={{ fontSize: "12px", fontWeight: 600, color: "#334155", margin: "0 0 4px 0" }}>{st.title}</p>
-                                        {st.description && <p style={{ fontSize: "11px", color: "#64748b", margin: "0 0 10px 0", fontStyle: "italic", lineHeight: "1.4" }}>{st.description}</p>}
-                                        
-                                        {st.work?.length > 0 && (
-                                          <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", paddingTop: "8px", borderTop: "1px solid #f8fafc" }}>
-                                            {st.work.map((w, idx) => (
-                                              <a key={idx} href={w.value} target="_blank" rel="noopener noreferrer" style={{ fontSize: "10px", color: "#4f46e5", background: "#f0f0ff", padding: "2px 6px", borderRadius: "4px", textDecoration: "none" }}>{w.label}</a>
-                                            ))}
+                                      </div>
+
+                                      <div style={{ width: "350px", borderLeft: "1px solid #f1f5f9", paddingLeft: "24px", display: "flex", flexDirection: "column", gap: "12px" }}>
+                                        <p style={{ fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase" }}>Submission & Feedback</p>
+
+                                        {st.work_attachments?.length > 0 ? (
+                                          <>
+                                            <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                                              {st.work_attachments.map((att, i) => (
+                                                <a key={i} href={att.value} target="_blank" rel="noopener noreferrer" style={{ padding: "4px 10px", background: "#f8fafc", borderRadius: "6px", fontSize: "12px", color: "#4f46e5", textDecoration: "none", border: "1px solid #e2e8f0", display: "flex", alignItems: "center", gap: "4px" }}>
+                                                  <AlertCircle size={12} /> {att.label}
+                                                </a>
+                                              ))}
+                                            </div>
+
+                                            <div style={{ marginTop: "8px" }}>
+                                              <textarea
+                                                style={{ ...s.textarea, minHeight: "80px", padding: "10px", fontSize: "12px", borderRadius: "8px" }}
+                                                placeholder="Give feedback or revision instructions..."
+                                                value={noteMap[st.id] || st.feedback_notes || ""}
+                                                onChange={e => setNoteMap({ ...noteMap, [st.id]: e.target.value })}
+                                              />
+                                              <div style={{ display: "flex", gap: "8px", marginTop: "10px" }}>
+                                                <button onClick={() => handleUpdateTask(st.id, { feedback_notes: noteMap[st.id], status: "in_progress" })} style={{ ...s.btnCancel, padding: "6px 12px", flex: 1, fontSize: "12px" }}>Revision</button>
+                                                {st.status !== 'done' && <button onClick={() => handleUpdateTask(st.id, { status: "done" })} style={{ ...s.btnSubmit, padding: "6px 12px", flex: 1, fontSize: "12px", background: "#059669" }}>Approve</button>}
+                                              </div>
+                                            </div>
+                                          </>
+                                        ) : (
+                                          <div style={{ padding: "12px", background: "#f8fafc", borderRadius: "8px", border: "1px dashed #cbd5e1", textAlign: "center", color: "#94a3b8", fontSize: "12px" }}>
+                                            No submission yet
                                           </div>
                                         )}
                                       </div>
-                                    ))}
-                                  </div>
-                                ) : <p style={{ fontSize: "12px", color: "#94a3b8 italic" }}>No member breakdown yet.</p>}
-                              </div>
-
-                              {/* Leader Submission & Review */}
-                              <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                                <p style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase" }}>Leader Submission</p>
-                                {task.work_attachments?.length > 0 ? (
-                                  <div style={{ background: "#fff", border: "1px solid #e2e8f0", padding: "16px", borderRadius: "12px", spaceY: 4 }}>
-                                    <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
-                                      {task.work_attachments.map((att, i) => (
-                                        <a key={i} href={att.value} target="_blank" rel="noopener noreferrer" style={{ padding: "6px 12px", background: "#f1f5f9", borderRadius: "6px", fontSize: "12px", color: "#4f46e5", textDecoration: "none", border: "1px solid #e2e8f0" }}>{att.label}</a>
-                                      ))}
-                                    </div>
-                                    <p style={{ fontSize: "10px", color: "#94a3b8", marginTop: "10px" }}>Submitted: {new Date(task.submitted_at).toLocaleDateString()}</p>
-                                    
-                                    {/* Action Buttons */}
-                                    <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "16px", paddingTop: "16px", borderTop: "1px solid #f1f5f9" }}>
-                                      <div>
-                                        <label style={{ fontSize: "11px", fontWeight: 600, color: "#64748b", marginBottom: "6px", display: "block" }}>Revision Note (Optional)</label>
-                                        <textarea 
-                                          style={{ ...s.textarea, minHeight: "80px", padding: "10px", fontSize: "13px" }}
-                                          placeholder="Type notes for leader..."
-                                          value={noteMap[task.id_task] || ""}
-                                          onChange={e => setNoteMap({...noteMap, [task.id_task]: e.target.value})}
-                                        />
-                                      </div>
-                                      <div style={{ display: "flex", gap: "10px" }}>
-                                        <button 
-                                          onClick={() => handleUpdateTask(task.id_task, { feedback_notes: noteMap[task.id_task], status: "in_progress" })}
-                                          style={{ ...s.btnCancel, padding: "8px 16px", flex: 1 }}
-                                        >
-                                          Send Notes (Revision)
-                                        </button>
-                                        {task.status !== 'done' && (
-                                          <button 
-                                            onClick={() => handleUpdateTask(task.id_task, { status: "done" })}
-                                            style={{ ...s.btnSubmit, padding: "8px 16px", flex: 1, background: "#059669" }}
-                                          >
-                                            Accept Task
-                                          </button>
-                                        )}
-                                      </div>
                                     </div>
                                   </div>
-                                ) : <p style={{ fontSize: "12px", color: "#94a3b8 italic" }}>Waiting for leader to submit...</p>}
+                                ))}
                               </div>
                             </div>
                           </td>
@@ -358,35 +575,95 @@ export default function AssignTasksMentor() {
         </div>
       </main>
 
-      {/* Modal & Logout (reused) */}
+      {/* Modal */}
       {modalOpen && (
-        <div style={s.modalOverlay}><div style={s.modal}>
-          <div style={s.mhead}><h2 style={s.mtitle}>Create New Task</h2><button onClick={() => setModalOpen(false)} style={{ background: "none", border: "none", fontSize: "20px", cursor: "pointer", color: "#94a3b8" }}>&times;</button></div>
-          <div style={s.mbody}>
-            <div><label style={s.label}>Assign To (Intern / Team Leader)</label>
-              <select style={s.select} value={formData.targetVal} onChange={(e) => handleTargetChange(e.target.value)}>
-                <option value="" disabled>Select Target</option>
-                {targets.map((t, idx) => <option key={idx} value={`${t.id_target}|${t.id_team || ''}`}>{t.type === 'Team' ? `${t.name} (Team: ${t.team_name})` : t.name}</option>)}
-              </select>
-            </div>
-            {internInfo && <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", textAlign: "left" }}>
-              <div style={{ textAlign: "left" }}><label style={{ ...s.label, color: "#94a3b8", textAlign: "left" }}>Position</label><div style={{ ...s.input, background: "#f8fafc", color: "#64748b", textAlign: "left" }}>{internInfo.position || "—"}</div></div>
-              <div style={{ textAlign: "left" }}><label style={{ ...s.label, color: "#94a3b8", textAlign: "left" }}>Program</label><div style={{ ...s.input, background: "#f8fafc", color: "#64748b", textAlign: "left" }}>{internInfo.program || "—"}</div></div>
-            </div>}
-
-            <div><label style={s.label}>Task Title</label><input type="text" style={s.input} value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} /></div>
-            <div><label style={s.label}>Description</label><textarea style={s.textarea} value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} /></div>
-            {competencies.length > 0 && <div><label style={s.label}>Competencies</label><div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-              {competencies.map(c => (
-                <button key={c.id_competency} onClick={() => setFormData(f => ({ ...f, competencyIds: f.competencyIds.includes(c.id_competency) ? f.competencyIds.filter(x => x !== c.id_competency) : [...f.competencyIds, c.id_competency] }))}
-                  style={{ background: formData.competencyIds.includes(c.id_competency) ? "#4f46e5" : "#fff", color: formData.competencyIds.includes(c.id_competency) ? "#fff" : "#334155", border: "1.5px solid #cbd5e1", borderRadius: "999px", padding: "4px 12px", fontSize: "12px", cursor: "pointer" }}>{c.name}</button>
-              ))}
-            </div></div>}
-            <div><label style={s.label}>Deadline</label><CalendarPicker value={formData.deadline} onChange={val => setFormData({...formData, deadline: val})} /></div>
+        <div style={s.modalOverlay}><div style={{ ...s.modal, width: "1000px" }}>
+          <div style={s.mhead}>
+            <h2 style={s.mtitle}>{isEditing ? "Edit Project Tasks" : "Assign New Project Tasks"}</h2>
+            <button onClick={() => setModalOpen(false)} style={{ background: "none", border: "none", fontSize: "20px", cursor: "pointer", color: "#94a3b8" }}>&times;</button>
           </div>
-          <div style={s.mfoot}><button style={s.btnCancel} onClick={() => setModalOpen(false)}>Cancel</button><button style={s.btnSubmit} onClick={() => handleSubmit('pending')}>Send Task</button></div>
+          <div style={{ ...s.mbody, display: "grid", gridTemplateColumns: "1fr 1.5fr", gap: "32px" }}>
+
+            {/* Left: Project Settings */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+              <p style={{ fontSize: "12px", fontWeight: 700, color: "#4f46e5", textTransform: "uppercase", marginBottom: "-10px" }}>Project Header</p>
+              <div><label style={s.label}>Assign To</label>
+                <select style={s.select} value={formData.targetVal} onChange={(e) => handleTargetChange(e.target.value)}>
+                  <option value="" disabled>Select Intern / Team</option>
+                  {assignTargets.map((t, idx) => <option key={idx} value={`${t.id_target}|${t.id_team || ''}`}>{t.type === 'Team' ? `${t.name} (Team: ${t.team_name})` : t.name}</option>)}
+                </select>
+              </div>
+              <div><label style={s.label}>Project Title</label><input type="text" style={s.input} placeholder="e.g. Website Development" value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} /></div>
+              <div><label style={s.label}>Brief Description</label><textarea style={{ ...s.textarea, minHeight: "100px" }} value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} /></div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "15px" }}>
+                <div><label style={s.label}>Frequency</label>
+                  <select style={s.select} value={formData.frequency} onChange={e => handleFrequencyChange(e.target.value)}>
+                    <option value="daily">Daily</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="bi-weekly">2 Weeks (Bi-weekly)</option>
+                    <option value="monthly">Monthly</option>
+                  </select>
+                </div>
+                <div><label style={s.label}>Start Date</label><CalendarPicker value={formData.startDate} onChange={handleStartDateChange} /></div>
+              </div>
+            </div>
+
+            {/* Right: Targets List */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <p style={{ fontSize: "12px", fontWeight: 700, color: "#4f46e5", textTransform: "uppercase" }}>Targets & Instructions</p>
+                <button onClick={addProjectTarget} style={{ background: "#eef2ff", color: "#4f46e5", border: "none", padding: "6px 12px", borderRadius: "8px", fontSize: "12px", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: "4px" }}><Plus size={14} /> Add Target</button>
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "12px", maxHeight: "500px", overflowY: "auto", paddingRight: "8px" }}>
+                {formData.projectTargets.map((target, idx) => (
+                  <div key={idx} style={{ padding: "20px", background: "#f8fafc", borderRadius: "16px", border: "1px solid #e2e8f0", position: "relative" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                      <span style={{ fontSize: "11px", fontWeight: 800, color: "#94a3b8", textTransform: "uppercase" }}>Target #{idx + 1}</span>
+                      {formData.projectTargets.length > 1 && <button onClick={() => removeProjectTarget(idx)} style={{ color: "#ef4444", background: "none", border: "none", fontSize: "11px", fontWeight: 700, cursor: "pointer" }}>Remove</button>}
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                      <input type="text" style={{ ...s.input, padding: "10px 14px", fontSize: "14px" }} placeholder="Target Title" value={target.title} onChange={e => handleProjectTargetChange(idx, 'title', e.target.value)} />
+                      <textarea style={{ ...s.textarea, minHeight: "80px", padding: "10px 14px", fontSize: "13px" }} placeholder="Instructions & Details..." value={target.description} onChange={e => handleProjectTargetChange(idx, 'description', e.target.value)} />
+
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "4px 0" }}>
+                        <div style={{ fontSize: "12px", color: "#64748b" }}>
+                          Auto Deadline: <span style={{ fontWeight: 700, color: "#4f46e5" }}>{target.deadlineAt ? new Date(target.deadlineAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : "-"}</span>
+                        </div>
+                      </div>
+
+                      {competencies.length > 0 && (
+                        <div style={{ marginTop: '4px' }}>
+                          <label style={{ ...s.label, fontSize: '11px', color: '#94a3b8' }}>Relevant Competencies</label>
+                          <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                            {competencies.map(c => (
+                              <button key={c.id_competency} onClick={() => toggleTargetCompetency(idx, c.id_competency)}
+                                style={{
+                                  background: target.competencyIds.some(id => String(id) === String(c.id_competency)) ? "#4f46e5" : "#fff",
+                                  color: target.competencyIds.some(id => String(id) === String(c.id_competency)) ? "#fff" : "#334155",
+                                  border: "1.5px solid #cbd5e1", borderRadius: "999px", padding: "3px 10px", fontSize: "10px", cursor: "pointer"
+                                }}>{c.name}</button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+          </div>
+          <div style={s.mfoot}>
+            <button style={s.btnCancel} onClick={() => setModalOpen(false)}>Cancel</button>
+            <button style={s.btnSubmit} disabled={submitting} onClick={handleSubmit}>
+              {submitting ? "Saving..." : (isEditing ? "Update Project" : "Assign Project & Targets")}
+            </button>
+          </div>
         </div></div>
       )}
+
       {logoutModal && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(10,22,40,0.5)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center" }}>
           <div style={{ background: "#fff", borderRadius: "16px", padding: "28px", width: "340px", textAlign: "left" }}>
@@ -394,7 +671,7 @@ export default function AssignTasksMentor() {
             <p style={{ fontSize: "14px", color: "#64748b", marginBottom: "20px" }}>Are you sure you want to exit?</p>
             <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
               <button onClick={() => setLogoutModal(false)} style={{ border: "none", background: "none", color: "#64748b", fontWeight: 700, cursor: "pointer" }}>Cancel</button>
-                            <button onClick={() => { localStorage.clear(); window.location.href = "/"; }} style={{ background: "#ef4444", color: "#fff", border: "none", padding: "8px 16px", borderRadius: "8px", fontWeight: 700, cursor: "pointer" }}>Yes, Logout</button>
+              <button onClick={() => { localStorage.clear(); window.location.href = "/"; }} style={{ background: "#ef4444", color: "#fff", border: "none", padding: "8px 16px", borderRadius: "8px", fontWeight: 700, cursor: "pointer" }}>Yes, Logout</button>
             </div>
           </div>
         </div>

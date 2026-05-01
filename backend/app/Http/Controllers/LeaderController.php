@@ -19,8 +19,9 @@ class LeaderController extends Controller
     {
         try {
             $user = $request->user();
+            $teamId = TeamMember::where('id_user', $user->id_user)->value('id_team');
 
-            if (!$user || !$user->id_team) {
+            if (!$user || !$teamId) {
                 return response()->json([
                     'message' => 'User is not part of a team'
                 ], 403);
@@ -28,7 +29,7 @@ class LeaderController extends Controller
 
             // Check if user is team leader
             $teamMember = TeamMember::where('id_user', $user->id_user)
-                ->where('id_team', $user->id_team)
+                ->where('id_team', $teamId)
                 ->first();
 
             if (!$teamMember || $teamMember->role !== 'leader') {
@@ -38,12 +39,12 @@ class LeaderController extends Controller
             }
 
             // Get team info
-            $team = Team::find($user->id_team);
-            $teamMembers = TeamMember::where('id_team', $user->id_team)->get();
+            $team = Team::find($teamId);
+            $teamMembers = TeamMember::where('id_team', $teamId)->get();
             $memberCount = $teamMembers->where('role', 'member')->count();
 
             // Get team tasks stats
-            $tasks = Task::where('id_team', $user->id_team)->where('status', '!=', 'draft')->get();
+            $tasks = Task::where('id_team', $teamId)->where('status', '!=', 'draft')->get();
 
             return response()->json([
                 'message' => 'Dashboard data retrieved successfully',
@@ -72,8 +73,9 @@ class LeaderController extends Controller
     {
         try {
             $user = $request->user();
+            $teamId = TeamMember::where('id_user', $user->id_user)->value('id_team');
 
-            if (!$user || !$user->id_team) {
+            if (!$user || !$teamId) {
                 return response()->json([
                     'message' => 'User is not part of a team',
                     'data' => []
@@ -82,7 +84,7 @@ class LeaderController extends Controller
 
             // Check if user is team leader
             $teamMember = TeamMember::where('id_user', $user->id_user)
-                ->where('id_team', $user->id_team)
+                ->where('id_team', $teamId)
                 ->first();
 
             if (!$teamMember || $teamMember->role !== 'leader') {
@@ -92,7 +94,7 @@ class LeaderController extends Controller
             }
 
             // Get all team members except leader
-            $members = TeamMember::where('id_team', $user->id_team)
+            $members = TeamMember::where('id_team', $teamId)
                 ->where('role', 'member')
                 ->with('user')
                 ->get()
@@ -125,16 +127,17 @@ class LeaderController extends Controller
     {
         try {
             $user = $request->user();
+            $teamId = TeamMember::where('id_user', $user->id_user)->value('id_team');
 
-            if (!$user || !$user->id_team) {
+            if (!$user || !$teamId) {
                 return response()->json(['message' => 'User is not part of a team', 'data' => []], 200);
             }
 
             // Get leader's tasks (primary tasks assigned to this leader/team)
-            $tasks = Task::where('id_team', $user->id_team)
+            $tasks = Task::where('id_team', $teamId)
                 ->whereNull('parent_id_task')
                 ->where('status', '!=', 'draft')
-                ->with(['mentor', 'subTasks.intern'])
+                ->with(['mentor', 'subTasks.intern', 'subTasks.subTasks.intern'])
                 ->get()
                 ->map(function ($task) {
                     $competencyNames = [];
@@ -143,28 +146,42 @@ class LeaderController extends Controller
                             ->pluck('name')->toArray();
                     }
                     return [
-                        'id'               => $task->id_task,
-                        'id_task'          => $task->id_task,
-                        'title'            => $task->title,
-                        'description'      => $task->description,
-                        'status'           => $task->status,
-                        'assignedBy'       => $task->mentor?->name ?? 'Mentor',
-                        'deadline'         => $task->deadline_at,
-                        'competencies'     => $competencyNames,
+                        'id' => $task->id_task,
+                        'id_task' => $task->id_task,
+                        'title' => $task->title,
+                        'description' => $task->description,
+                        'status' => $task->status,
+                        'assignedBy' => $task->mentor?->name ?? 'Mentor',
+                        'deadline' => $task->deadline_at,
+                        'competencies' => $competencyNames,
                         'work_attachments' => $task->work_attachments ?? [],
-                        'submitted_at'     => $task->submitted_at,
-                        'feedback_notes'   => $task->feedback_notes,
-                        'subtasks'         => $task->subTasks->map(fn($st) => [
-                            'id'           => $st->id_task,
-                            'title'        => $st->title,
-                            'description'  => $st->description,
-                            'assignee'     => $st->intern?->name ?? 'Unknown',
-                            'id_assignee'  => $st->id_intern,
-                            'deadline'     => $st->deadline_at,
-                            'status'       => $st->status,
-                            'work'         => $st->work_attachments,
+                        'submitted_at' => $task->submitted_at,
+                        'feedback_notes' => $task->feedback_notes,
+                        'subtasks' => $task->subTasks->map(fn($st) => [
+                            'id' => $st->id_task,
+                            'id_task' => $st->id_task,
+                            'title' => $st->title,
+                            'description' => $st->description,
+                            'assignee' => $st->intern?->name ?? 'Unknown',
+                            'id_assignee' => $st->id_intern,
+                            'deadline' => $st->deadline_at,
+                            'status' => $st->status,
+                            'work' => $st->work_attachments,
                             'submitted_at' => $st->submitted_at,
-                            'feedback'     => $st->feedback_notes,
+                            'feedback' => $st->feedback_notes,
+                            'delegations' => $st->subTasks->map(fn($d) => [
+                                'id' => $d->id_task,
+                                'id_task' => $d->id_task,
+                                'title' => $d->title,
+                                'description' => $d->description,
+                                'assignee' => $d->intern?->name ?? 'Unknown',
+                                'id_assignee' => $d->id_intern,
+                                'deadline' => $d->deadline_at,
+                                'status' => $d->status,
+                                'work' => $d->work_attachments,
+                                'submitted_at' => $d->submitted_at,
+                                'feedback' => $d->feedback_notes,
+                            ]),
                         ]),
                     ];
                 });
@@ -182,25 +199,27 @@ class LeaderController extends Controller
     {
         try {
             $user = $request->user();
+            $teamId = TeamMember::where('id_user', $user->id_user)->value('id_team');
+
             $validated = $request->validate([
-                'memberUserId'  => 'required|string',
-                'parent_id'     => 'nullable|string',
-                'title'         => 'required|string',
-                'description'   => 'nullable|string',
-                'deadline'      => 'nullable|date',
+                'memberUserId' => 'required|string',
+                'parent_id' => 'nullable|string',
+                'title' => 'required|string',
+                'description' => 'nullable|string',
+                'deadline' => 'nullable|date',
             ]);
 
             $task = Task::create([
-                'id_task'        => (string) Str::uuid(),
-                'id_mentor'      => $user->id_user,
-                'id_intern'      => $validated['memberUserId'],
-                'id_team'        => $user->id_team,
+                'id_task' => (string) Str::uuid(),
+                'id_mentor' => $user->id_user,
+                'id_intern' => $validated['memberUserId'],
+                'id_team' => $teamId,
                 'parent_id_task' => $validated['parent_id'] ?? null,
-                'delegated_by'   => $user->id_user,
-                'title'          => $validated['title'],
-                'description'    => $validated['description'],
-                'status'         => 'pending',
-                'deadline_at'    => $validated['deadline'] ?? null
+                'delegated_by' => $user->id_user,
+                'title' => $validated['title'],
+                'description' => $validated['description'],
+                'status' => 'pending',
+                'deadline_at' => $validated['deadline'] ?? null
             ]);
 
             return response()->json(['message' => 'Task assigned successfully', 'data' => $task], 201);
@@ -217,10 +236,10 @@ class LeaderController extends Controller
         try {
             $user = $request->user();
             $validated = $request->validate([
-                'memberUserId'  => 'required|string',
-                'title'         => 'required|string',
-                'description'   => 'nullable|string',
-                'deadline'      => 'nullable|date',
+                'memberUserId' => 'required|string',
+                'title' => 'required|string',
+                'description' => 'nullable|string',
+                'deadline' => 'nullable|date',
             ]);
 
             $task = Task::where('id_task', $taskId)
@@ -228,8 +247,8 @@ class LeaderController extends Controller
                 ->firstOrFail();
 
             $task->update([
-                'id_intern'   => $validated['memberUserId'],
-                'title'       => $validated['title'],
+                'id_intern' => $validated['memberUserId'],
+                'title' => $validated['title'],
                 'description' => $validated['description'],
                 'deadline_at' => $validated['deadline'] ?? null
             ]);
@@ -266,25 +285,25 @@ class LeaderController extends Controller
         try {
             $user = $request->user();
             $validated = $request->validate([
-                'notes'  => 'required|string',
+                'notes' => 'required|string',
                 'status' => 'nullable|in:pending,in_progress,done'
             ]);
 
             // Allow review if user is the delegator (Leader) OR if they are in the same team (Peer)
             $task = Task::where('id_task', $taskId)
-                ->where(function($q) use ($user) {
+                ->where(function ($q) use ($user) {
                     $q->where('delegated_by', $user->id_user)
-                      ->orWhere('id_team', $user->id_team);
+                        ->orWhere('id_team', $user->id_team);
                 })
                 ->firstOrFail();
 
             $task->feedback_notes = $validated['notes'];
-            
+
             // Only update status if status is provided AND user is the delegator (Leader)
             if (isset($validated['status']) && $task->delegated_by === $user->id_user) {
                 $task->status = $validated['status'];
             }
-            
+
             $task->save();
 
             return response()->json(['message' => 'Feedback sent successfully', 'data' => $task]);

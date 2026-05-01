@@ -24,6 +24,7 @@ class Vacancy extends Model
         'start_date',
         'end_date',
         'payment_type',
+        'stipend_amount',
         'batch',
         'status',
         'publish_date',

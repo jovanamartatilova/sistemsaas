@@ -41,14 +41,14 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
-    'id_user',
-    'id_company',
-    'name',
-    'email',
-    'password',
-    'role',
-    'is_active',
-    'activation_token',
+        'id_user',
+        'id_company',
+        'name',
+        'email',
+        'password',
+        'role',
+        'is_active',
+        'activation_token',
     ];
 
     /**
@@ -104,10 +104,6 @@ class User extends Authenticatable
         return $this->hasOne(Candidate::class, 'id_user', 'id_user');
     }
 
-    public function university()
-    {
-        return $this->belongsTo(University::class, 'id_university', 'id_university');
-    }
 
     public function major()
     {
@@ -123,26 +119,20 @@ class User extends Authenticatable
      * Get scoped role (leader or member) based on team membership
      * Returns: 'leader', 'member', or null if not in a team
      */
-    public function getScopedRole()
+    public function getScopedRoleAttribute()
     {
-        if (!$this->id_team) {
-            return null; // Independent, no team
-        }
-
-        // Check if user is team leader in team_members table
+        // Check if user has team membership in team_members table
         $teamMember = \App\Models\TeamMember::where('id_user', $this->id_user)
-            ->where('id_team', $this->id_team)
             ->first();
 
-        if ($teamMember && $teamMember->role === 'leader') {
+        if (!$teamMember) {
+            return null; // Not in any team
+        }
+
+        if ($teamMember->role === 'leader') {
             return 'leader';
         }
 
-        // If in team but not leader role, they're a member
-        if ($this->id_team) {
-            return 'member';
-        }
-
-        return null;
+        return 'member';
     }
 }

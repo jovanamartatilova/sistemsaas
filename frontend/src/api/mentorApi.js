@@ -70,11 +70,16 @@ export const mentorApi = {
   }),
 
   generateCertificate: (idSubmission) => api.post(`/mentor/interns/${idSubmission}/generate-certificate`),
+  bulkGenerateCertificates: (submissionIds) => api.post('/mentor/certificates/bulk-generate', { submission_ids: submissionIds }),
+  bulkSendCertificates: (submissionIds) => api.post('/mentor/certificates/bulk-send', { submission_ids: submissionIds }),
   sendCertificate: (idSubmission) => api.post(`/mentor/interns/${idSubmission}/send-certificate`),
   previewCertificate: async (idSubmission) => {
     const response = await api.get(`/mentor/interns/${idSubmission}/preview-certificate`, {responseType:'blob'});
     return URL.createObjectURL(response.data);
-  }
+  },
+
+  // AI Generation
+  aiGenerate: (prompt) => api.post('/ai/generate', { prompt }),
 };
 
 export default api;

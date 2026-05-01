@@ -22,6 +22,8 @@ class Candidate extends Model
         'address',
         'gender',
         'about',
+        'bank_name',
+        'bank_account_number',
     ];
 
     public function user()

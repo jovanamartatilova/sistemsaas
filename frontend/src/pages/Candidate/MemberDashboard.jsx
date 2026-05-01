@@ -10,18 +10,18 @@ import { getScopedRole } from "../../utils/roleUtils";
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
 
 const STATUS_CONFIG = {
-  pending:     { label: "Pending",     cls: "bg-amber-50 text-amber-600 border-amber-200" },
+  pending: { label: "Pending", cls: "bg-amber-50 text-amber-600 border-amber-200" },
   in_progress: { label: "In Progress", cls: "bg-blue-50 text-blue-600 border-blue-200" },
-  done:        { label: "Done",        cls: "bg-emerald-50 text-emerald-600 border-emerald-200" },
+  done: { label: "Done", cls: "bg-emerald-50 text-emerald-600 border-emerald-200" },
 };
 
 function StatusIcon({ status }) {
-  if (status === "done")        return <CheckCircle size={15} className="text-emerald-500 flex-shrink-0" />;
+  if (status === "done") return <CheckCircle size={15} className="text-emerald-500 flex-shrink-0" />;
   if (status === "in_progress") return <Clock size={15} className="text-blue-500 flex-shrink-0" />;
   return <AlertCircle size={15} className="text-amber-500 flex-shrink-0" />;
 }
 
-function TaskCard({ task, onStatusChange, onWorkSubmitted, onReviewSibling, currentUserId, isLeader }) {
+function TaskCard({ task, onStatusChange, onWorkSubmitted, onReviewSibling, currentUserId, isLeader, children }) {
   const [expanded, setExpanded] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [showSubmitForm, setShowSubmitForm] = useState(false);
@@ -30,7 +30,7 @@ function TaskCard({ task, onStatusChange, onWorkSubmitted, onReviewSibling, curr
   const [submitting, setSubmitting] = useState(false);
 
   const norm = task.status?.toLowerCase().replace(" ", "_") || "pending";
-  const cfg  = STATUS_CONFIG[norm] || STATUS_CONFIG.pending;
+  const cfg = STATUS_CONFIG[norm] || STATUS_CONFIG.pending;
   const isSubmitted = !!task.submitted_at;
   const token = localStorage.getItem("token") || localStorage.getItem("auth_token");
 
@@ -102,7 +102,7 @@ function TaskCard({ task, onStatusChange, onWorkSubmitted, onReviewSibling, curr
 
   return (
     <div className="bg-white border border-slate-200 rounded-xl overflow-hidden text-left w-full">
-      <div 
+      <div
         className="flex items-center gap-3 px-5 py-3.5 cursor-pointer select-none"
         onClick={() => setExpanded(!expanded)}
       >
@@ -191,7 +191,7 @@ function TaskCard({ task, onStatusChange, onWorkSubmitted, onReviewSibling, curr
                           </div>
                         )}
                         <div className="flex gap-2 pt-2 border-t border-slate-50">
-                          <button onClick={() => { const note = prompt("Feedback:"); if(note) onReviewSibling(sib.id_task, note); }} className="text-[10px] font-bold text-slate-400 hover:text-indigo-600 flex items-center gap-1"><MessageSquare size={10} /> Notes</button>
+                          <button onClick={() => { const note = prompt("Feedback:"); if (note) onReviewSibling(sib.id_task, note); }} className="text-[10px] font-bold text-slate-400 hover:text-indigo-600 flex items-center gap-1"><MessageSquare size={10} /> Notes</button>
                           <div className="flex-1" />
                           {sib.status !== 'done' && (
                             <div className="flex gap-1">
@@ -219,12 +219,12 @@ function TaskCard({ task, onStatusChange, onWorkSubmitted, onReviewSibling, curr
                 )}
               </div>
               <div className="space-y-2">
-                 {task.subtasks.map(st => (
-                   <div key={st.id} className="bg-white border border-indigo-100 rounded-lg p-2.5 flex justify-between items-center">
-                     <span className="text-[11px] font-bold">{st.assignee} — <span className="font-normal text-slate-500">{st.title}</span></span>
-                     <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${st.status === 'done' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>{st.status.toUpperCase()}</span>
-                   </div>
-                 ))}
+                {task.subtasks.map(st => (
+                  <div key={st.id} className="bg-white border border-indigo-100 rounded-lg p-2.5 flex justify-between items-center">
+                    <span className="text-[11px] font-bold">{st.assignee} — <span className="font-normal text-slate-500">{st.title}</span></span>
+                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${st.status === 'done' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>{st.status.toUpperCase()}</span>
+                  </div>
+                ))}
               </div>
             </div>
           )}
@@ -253,7 +253,7 @@ function TaskCard({ task, onStatusChange, onWorkSubmitted, onReviewSibling, curr
             <div className="pt-2 border-t border-slate-100">
               {!showSubmitForm ? (
                 <button onClick={() => setShowSubmitForm(true)} className="flex items-center gap-2 text-xs font-bold text-indigo-600 hover:bg-indigo-50 px-4 py-2 rounded-lg transition-all border border-indigo-100">
-                   <Plus size={14} /> {task.feedback_notes ? "Resubmit Work" : "Submit Work"}
+                  <Plus size={14} /> {task.feedback_notes ? "Resubmit Work" : "Submit Work"}
                 </button>
               ) : (
                 <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-4">
@@ -273,8 +273,8 @@ function TaskCard({ task, onStatusChange, onWorkSubmitted, onReviewSibling, curr
                           <input value={att.value} onChange={e => updateAttachment(i, "value", e.target.value)} placeholder="URL" className="flex-1 text-xs border border-slate-100 rounded px-2 py-1.5 outline-none" />
                         ) : (
                           <label className="flex-1 text-center border border-dashed rounded py-1.5 text-[10px] cursor-pointer">
-                             {att.value ? "✓ Uploaded" : "Upload File"}
-                             <input type="file" className="hidden" onChange={e => e.target.files[0] && handleFileUpload(i, e.target.files[0])} />
+                            {att.value ? "✓ Uploaded" : "Upload File"}
+                            <input type="file" className="hidden" onChange={e => e.target.files[0] && handleFileUpload(i, e.target.files[0])} />
                           </label>
                         )}
                         <button onClick={() => setAttachments(prev => prev.filter((_, idx) => idx !== i))} className="text-rose-400"><Trash2 size={13} /></button>
@@ -287,6 +287,12 @@ function TaskCard({ task, onStatusChange, onWorkSubmitted, onReviewSibling, curr
                   </div>
                 </div>
               )}
+            </div>
+          )}
+
+          {children && (
+            <div className="pt-4 border-t border-slate-100 mt-4 space-y-4">
+              {children}
             </div>
           )}
         </div>
@@ -302,7 +308,7 @@ export default function MemberDashboard() {
   const [error, setError] = useState(null);
   const [userPhoto, setUserPhoto] = useState(null);
 
-  useEffect(() => { 
+  useEffect(() => {
     fetchMemberTasks();
     fetchUserProfile();
   }, []);
@@ -320,6 +326,12 @@ export default function MemberDashboard() {
         if (data.data?.photo_url) {
           setUserPhoto(data.data.photo_url);
         }
+        if (data.data?.scoped_role || data.data?.is_leader !== undefined) {
+          useAuthStore.getState().setUser({ 
+            scoped_role: data.data.scoped_role,
+            is_leader: data.data.is_leader
+          });
+        }
       }
     } catch (err) {
       console.error("Failed to fetch user profile:", err);
@@ -330,8 +342,7 @@ export default function MemberDashboard() {
     try {
       setLoading(true);
       const token = localStorage.getItem("token") || localStorage.getItem("auth_token");
-      const scopedRole = getScopedRole(user);
-      const endpoint = scopedRole === "leader" ? `/leader/tasks` : `/member/tasks`;
+      const endpoint = `/member/tasks`;
       const res = await fetch(`${API_BASE_URL}${endpoint}`, { headers: { Authorization: `Bearer ${token}` } });
       if (!res.ok) throw new Error("Fetch failed");
       const data = await res.json();
@@ -378,22 +389,58 @@ export default function MemberDashboard() {
         <h1 className="text-2xl font-bold text-slate-900">My Tasks</h1>
         {error && <div className="p-4 bg-rose-50 text-rose-600 rounded-xl border border-rose-200">{error}</div>}
         <div className="space-y-4">
-          {tasks.length > 0 ? tasks.map(task => (
-            <TaskCard 
-              key={task.id_task} 
-              task={task} 
-              onStatusChange={handleStatusChange} 
-              onWorkSubmitted={handleWorkSubmitted} 
-              onReviewSibling={handleReviewSibling} 
-              currentUserId={user?.id_user}
-              isLeader={getScopedRole(user) === 'leader'}
-            />
-          )) : (
-            <div className="p-10 bg-white border border-slate-200 rounded-xl text-center">
-              <CheckCircle size={40} className="mx-auto text-slate-200 mb-3" />
-              <p className="text-slate-500 font-medium">No tasks assigned yet</p>
-            </div>
-          )}
+          {(() => {
+            // 1. Identify true projects (no parent)
+            const rootProjects = tasks.filter(t => !t.parent_task);
+            
+            // 2. Identify everything else
+            const nonRoot = tasks.filter(t => t.parent_task);
+
+            // 3. Build hierarchy: Project -> Target -> Delegation
+            const buildHierarchy = (items) => {
+              return items.map(item => {
+                // Find children for this item
+                const children = nonRoot.filter(child => child.parent_task?.id_task === item.id_task);
+                return {
+                  ...item,
+                  children: children.length > 0 ? buildHierarchy(children) : []
+                };
+              });
+            };
+
+            // 4. Determine orphans (tasks whose parent is NOT in our list at all)
+            const orphans = nonRoot.filter(t => !tasks.find(p => p.id_task === t.parent_task.id_task));
+            
+            const finalDisplayList = buildHierarchy([...rootProjects, ...orphans]);
+
+            const renderTaskTree = (item, level = 0) => (
+              <TaskCard
+                key={item.id_task}
+                task={item}
+                onStatusChange={handleStatusChange}
+                onWorkSubmitted={handleWorkSubmitted}
+                onReviewSibling={handleReviewSibling}
+                currentUserId={user?.id_user}
+                isLeader={getScopedRole(user) === 'leader'}
+              >
+                {item.children && item.children.length > 0 && (
+                  <div className="space-y-3">
+                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest pl-2">
+                      {level === 0 ? "Project Targets" : "Assignments"}
+                    </p>
+                    {item.children.map(child => renderTaskTree(child, level + 1))}
+                  </div>
+                )}
+              </TaskCard>
+            );
+
+            return finalDisplayList.length > 0 ? finalDisplayList.map(item => renderTaskTree(item)) : (
+              <div className="p-10 bg-white border border-slate-200 rounded-xl text-center">
+                <CheckCircle size={40} className="mx-auto text-slate-200 mb-3" />
+                <p className="text-slate-500 font-medium">No tasks assigned yet</p>
+              </div>
+            );
+          })()}
         </div>
       </div>
     </DashboardLayout>

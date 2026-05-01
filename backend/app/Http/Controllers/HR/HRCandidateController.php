@@ -485,6 +485,8 @@ class HRCandidateController extends Controller
             'phone'         => $s?->user?->phone,
             'university'    => $s?->user?->candidate?->institution ?? '-',
             'id_team'       => $s?->id_team,
+            'bank_name'     => $s?->user?->candidate?->bank_name ?? '-',
+            'bank_account'  => $s?->user?->candidate?->bank_account_number ?? '-',
     
             // Program info
             'position'      => $s?->position?->name,

@@ -89,6 +89,10 @@ class CandidateController extends Controller
                         'university' => '-',
                         'major' => '-',
                         'overall_progress' => $overallProgress,
+                        'scoped_role' => $user->getScopedRoleAttribute(),
+                        'is_leader' => \App\Models\TeamMember::where('id_user', $user->id_user)
+                            ->where('role', 'leader')
+                            ->exists(),
                     ],
                     'apprentice' => ($apprentice || $submission) ? [
                         'id_apprentice' => $apprentice->id_apprentice ?? null,
@@ -191,12 +195,18 @@ class CandidateController extends Controller
                     'university' => $universityName,
                     'major' => $majorName,
                     'team' => $user->team?->name,
+                    'scoped_role' => $user->getScopedRoleAttribute(),
+                    'is_leader' => \App\Models\TeamMember::where('id_user', $user->id_user)
+                        ->where('role', 'leader')
+                        ->exists(),
                     'company' => $company ? [
                         'id_company' => $company->id_company,
                         'name' => $company->name,
                     ] : null,
                     'has_submissions' => $hasSubmissions,
                     'submissions' => $submissions,
+                    'bank_name' => $candidate->bank_name ?? null,
+                    'bank_account_number' => $candidate->bank_account_number ?? null,
                 ],
             ]);
         } catch (\Exception $e) {
@@ -217,6 +227,8 @@ class CandidateController extends Controller
             'phone' => 'sometimes|string|max:13',
             'university_name' => 'sometimes|string|max:100',
             'major_name' => 'sometimes|string|max:100',
+            'bank_name' => 'sometimes|string|max:50',
+            'bank_account_number' => 'sometimes|string|max:50',
         ]);
 
         try {
@@ -239,6 +251,12 @@ class CandidateController extends Controller
                 }
                 if ($request->filled('major_name')) {
                     $candidate->major = $request->major_name;
+                }
+                if ($request->has('bank_name')) {
+                    $candidate->bank_name = $request->bank_name;
+                }
+                if ($request->has('bank_account_number')) {
+                    $candidate->bank_account_number = $request->bank_account_number;
                 }
                 $candidate->save();
             }
@@ -263,6 +281,8 @@ class CandidateController extends Controller
                     'photo_url' => $photoPath ? asset('storage/' . $photoPath) : null,
                     'university' => $universityName,
                     'major' => $majorName,
+                    'bank_name' => $candidate->bank_name ?? null,
+                    'bank_account_number' => $candidate->bank_account_number ?? null,
                 ],
             ]);
         } catch (\Exception $e) {
@@ -407,6 +427,12 @@ class CandidateController extends Controller
                     'major_id' => '',
                     'profile_picture' => $photoPath ? asset('storage/' . $photoPath) : null,
                     'role' => $user->role ?? 'Apprentice',
+                    'scoped_role' => $user->getScopedRoleAttribute(),
+                    'is_leader' => \App\Models\TeamMember::where('id_user', $user->id_user)
+                        ->where('role', 'leader')
+                        ->exists(),
+                    'bank_name' => $candidate->bank_name ?? '',
+                    'bank_account_number' => $candidate->bank_account_number ?? '',
                 ]
             ]);
         } catch (\Exception $e) {
@@ -435,6 +461,8 @@ class CandidateController extends Controller
                 'phone_number' => 'sometimes|string|max:20',
                 'university_name' => 'sometimes|string|max:100',
                 'major_name' => 'sometimes|string|max:100',
+                'bank_name' => 'sometimes|string|max:50',
+                'bank_account_number' => 'sometimes|string|max:50',
             ]);
 
             // Update user fields (name, email)
@@ -462,6 +490,12 @@ class CandidateController extends Controller
                 if (!empty($validated['major_name'])) {
                     $candidate->major = $validated['major_name'];
                 }
+                if (isset($validated['bank_name'])) {
+                    $candidate->bank_name = $validated['bank_name'];
+                }
+                if (isset($validated['bank_account_number'])) {
+                    $candidate->bank_account_number = $validated['bank_account_number'];
+                }
                 $candidate->save();
             }
 
@@ -485,6 +519,8 @@ class CandidateController extends Controller
                     'university_id' => '',
                     'major' => $major,
                     'major_id' => '',
+                    'bank_name' => $candidate->bank_name ?? '',
+                    'bank_account_number' => $candidate->bank_account_number ?? '',
                     'profile_picture' => $photoPath ? asset('storage/' . $photoPath) : null,
                     'role' => $user->role ?? 'Apprentice',
                 ]
@@ -678,7 +714,6 @@ class CandidateController extends Controller
         return response()->json(['success' => true, 'data' => $data]);
     }
 
-    /** POST /api/logout */
     public function logout(Request $request)
     {
         $request->user()->tokens()->delete();
