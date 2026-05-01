@@ -320,9 +320,9 @@ function EarlyPathDashboard() {
                     <span className="text-white font-bold text-sm">!</span>
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-semibold text-amber-900 mb-1">Application Under Review</h3>
+                    <h3 className="font-semibold text-amber-900 mb-1">Start by Joining a Program</h3>
                     <p className="text-sm text-amber-800">
-                      Thank you for applying! Your application is currently being reviewed by our HR team. We will send you an update via email. Please wait for further notification.
+                      You’re now in the candidate dashboard. To get started, please register for a program first. Once you’ve joined a program, you will be able to access your team, track your progress, and explore available features.
                     </p>
                   </div>
                 </div>

@@ -65,10 +65,12 @@ export default function LeaderDashboard() {
   const [dashboardData, setDashboardData] = useState(null);
   const [error, setError] = useState(null);
   const [userPhoto, setUserPhoto] = useState(null);
+  const [history, setHistory] = useState([]);
 
   useEffect(() => {
     fetchLeaderData();
     fetchUserProfile();
+    fetchHistory();
   }, []);
 
   const fetchUserProfile = async () => {
@@ -140,6 +142,23 @@ export default function LeaderDashboard() {
       setLoading(false);
     }
   };
+
+  const fetchHistory = async () => {
+  try {
+    const token = localStorage.getItem("token") || localStorage.getItem("auth_token");
+
+    const res = await fetch(`${API_BASE_URL}/my-teams`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const data = await res.json();
+    setHistory(data.data || []);
+  } catch (err) {
+    console.error("Failed to fetch history:", err);
+  }
+};
 
   const handleViewTasks = (memberId) => {
     navigate(`/c/${company?.id_company}/member/tasks?team=${memberId}`);
@@ -236,6 +255,56 @@ export default function LeaderDashboard() {
             </div>
           )}
         </div>
+        {/* History Section */}
+<div className="space-y-4 mt-10">
+  <div>
+    <h2 className="text-xl font-bold text-slate-900">Team History</h2>
+    <p className="text-sm text-slate-600 mt-1">
+      All your team invitations and joined history
+    </p>
+  </div>
+
+  {history.length > 0 ? (
+    <div className="space-y-3">
+      {history.map((team) => (
+        <div key={team.id_team} className="bg-white border rounded-xl p-4">
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="font-semibold text-slate-900">{team.name}</p>
+              <p className="text-sm text-slate-500">
+                Role: {team.role} • Members: {team.member_count}
+              </p>
+            </div>
+
+            {team.invitation?.invitation_link && (
+              <div className="flex gap-2 items-center">
+                <a
+                  href={team.invitation.invitation_link}
+                  target="_blank"
+                  className="text-indigo-600 text-sm font-medium"
+                >
+                  Open
+                </a>
+
+                <button
+                  onClick={() =>
+                    navigator.clipboard.writeText(team.invitation.invitation_link)
+                  }
+                  className="text-sm text-white bg-indigo-600 px-3 py-1 rounded-md"
+                >
+                  Copy
+                </button>
+
+              </div>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  ) : (
+    <p className="text-slate-500 text-sm">No history found</p>
+  )}
+</div>
       </div>
     </DashboardLayout>
   );

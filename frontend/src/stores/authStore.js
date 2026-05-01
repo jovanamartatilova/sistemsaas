@@ -2,8 +2,8 @@ import { create } from 'zustand';
 import { authService } from '../api/authService';
 
 export const useAuthStore = create((set) => ({
-  company: JSON.parse(localStorage.getItem('company')) || null,
-  user: JSON.parse(localStorage.getItem('user')) || null,
+  company: (() => { try { return JSON.parse(localStorage.getItem('company')) || null; } catch { return null; } })(),
+user: (() => { try { return JSON.parse(localStorage.getItem('user')) || null; } catch { return null; } })(),
   token: localStorage.getItem('auth_token') || null,
   isAuthenticated: !!localStorage.getItem('auth_token'),
   loading: false,
@@ -55,20 +55,25 @@ export const useAuthStore = create((set) => ({
 
   // Logout
   logout: async () => {
-    try {
-      await authService.logout();
-    } catch (error) {
-      console.warn('Silent logout error (already cleared locally):', error);
-    } finally {
-      set({
-        company: null,
-        user: null,
-        token: null,
-        isAuthenticated: false,
-        loading: false,
-        error: null,
-      });
-    }
+      try {
+          await authService.logout();
+      } catch (error) {
+          console.warn('Silent logout error:', error);
+      } finally {
+          // Tambahkan ini:
+          localStorage.removeItem('auth_token');
+          localStorage.removeItem('company');
+          localStorage.removeItem('user');
+          
+          set({
+              company: null,
+              user: null,
+              token: null,
+              isAuthenticated: false,
+              loading: false,
+              error: null,
+          });
+      }
   },
 
   // Check auth status

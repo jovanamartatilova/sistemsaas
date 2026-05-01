@@ -104,13 +104,13 @@ class SubmissionController extends Controller
             $candidate->education_level = $candidate->education_level ?? null;
             $candidate->major = $request->major_name;
             $candidate->save();
-          
+
             // 5. Upload Files
             $cvPath = $request->file('cv_file')->store('submissions/cv', 'public');
             $coverLetterPath = $request->file('cover_letter_file')->store('submissions/cover_letters', 'public');
-            $institutionLetterPath = $request->hasFile('institution_letter_file') 
-                ? $request->file('institution_letter_file')->store('submissions/institution_letters', 'public') 
-                : '';
+            $institutionLetterPath = $request->hasFile('institution_letter_file')
+                ? $request->file('institution_letter_file')->store('submissions/institution_letters', 'public')
+                : null;
             $portfolioPath = $request->hasFile('portfolio_file')
                 ? $request->file('portfolio_file')->store('submissions/portfolios', 'public')
                 : null;
@@ -148,4 +148,62 @@ class SubmissionController extends Controller
             ], 500);
         }
     }
+    public function index(Request $request)
+{
+    $user = $request->user();
+
+    $submissions = Submission::with([
+            'position.competencies',
+            'vacancy.company',
+            'team',
+        ])
+        ->where('id_user', $user->id_user)
+        ->get()
+        ->map(function ($sub) use ($user) {
+            // Cari role user di team ini
+            $teamMember = null;
+            $team       = null;
+
+        $teamMember = DB::table('team_members')
+            ->where('id_user', $user->id_user)
+            ->first();
+
+        if ($teamMember) {
+            $teamData = DB::table('teams')
+                ->where('id_team', $teamMember->id_team)
+                ->first();
+
+            $team = [
+                'id'        => $teamData->id_team ?? null,
+                'name'      => $teamData->name ?? null,
+                'team_name' => $teamData->name ?? null,
+                'role'      => $teamMember->role,
+            ];
+        }
+
+            $company   = $sub->vacancy?->company;
+            $position  = $sub->position;
+
+            return [
+                'id_submission'    => $sub->id_submission,
+                'name'             => $position?->name ?? '-',
+                'description'      => $position?->description,
+                'company'          => $company?->name ?? '-',
+                'batch'            => $sub->vacancy?->batch ?? $sub->vacancy?->title,
+                'status'           => $sub->status,
+                'has_loa'          => !is_null($sub->loa_file),
+                'loa_file_url'     => $sub->loa_file
+                    ? asset('storage/' . $sub->loa_file)
+                    : null,
+                'team'             => $team,
+                'competencies'     => $position?->competencies?->map(fn ($c) => [
+                    'name'           => $c->name,
+                    'description'    => $c->description,
+                    'learning_hours' => $c->learning_hours ?? $c->hours ?? 0,
+                ]) ?? [],
+            ];
+        });
+
+    return response()->json(['data' => $submissions]);
+}
 }

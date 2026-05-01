@@ -351,13 +351,15 @@ function PositionModal({ open, item, onClose, onSave }) {
                                         <div>
                                             <label style={{ fontSize: 10, fontWeight: 700, color: "#64748b", textTransform: "uppercase", marginBottom: 4, display: "block" }}>Stage Type</label>
                                             <select style={inp} value={f.type} onChange={e => {
-                                                const newType = e.target.value;
-                                                handleFlowChange(i, "type", newType);
-                                                if (newType === "screening") {
-                                                    handleFlowChange(i, "name", "Screening CV & Portfolio");
-                                                    handleFlowChange(i, "description", "");
-                                                }
-                                            }}>
+                                                        const newType = e.target.value;
+                                                        handleFlowChange(i, "type", newType);
+                                                        if (newType === "screening") {
+                                                            handleFlowChange(i, "name", "Screening CV & Portfolio");
+                                                            handleFlowChange(i, "description", "");
+                                                        } else {
+                                                            handleFlowChange(i, "name", ""); // ← tambah ini
+                                                        }
+                                                    }}>
                                                 <option value="">-- Select Type --</option>
                                                 <option value="screening">Screening (CV/Porto)</option>
                                                 <option value="test">Test / Assessment</option>
@@ -679,18 +681,18 @@ export default function PositionsManagement() {
             <PositionModal 
                 open={posModalOpen} item={editingCatalogItem} onClose={() => { setPosModalOpen(false); setEditingCatalogItem(null); }}
                 onSave={async (id, data) => {
-                    const isDup = catalog.some(item => 
-                        item.name.toLowerCase() === data.name.toLowerCase() && 
-                        item.id_position !== id
-                    );
-                    if (isDup) {
-                        showToast("A position with this name already exists.", "error"); return;
-                    }
                     try {
                         const url = id ? `http://127.0.0.1:8000/api/positions/catalog/${id}` : "http://127.0.0.1:8000/api/positions/catalog";
-                        await axios[id ? "put" : "post"](url, data, { headers: { Authorization: `Bearer ${token}` } });
-                        showToast(`Position ${id ? "updated" : "created"}.`); fetchCatalog(); setPosModalOpen(false);
-                    } catch (e) { showToast(e.response?.data?.error || "Error saving.", "error"); }
+                        const res = await axios[id ? "put" : "post"](url, data, { headers: { Authorization: `Bearer ${token}` } });
+                        showToast(`Position ${id ? "updated" : "created"}.`); 
+                        fetchCatalog(); 
+                        setPosModalOpen(false);
+                    } catch (e) { 
+                        // Tambah ini untuk debug
+                        console.log("FULL ERROR:", e.response?.data);
+                        console.log("STATUS:", e.response?.status);
+                        alert(JSON.stringify(e.response?.data)); // ← ini akan show error aslinya
+                    }
                 }}
             />
 
