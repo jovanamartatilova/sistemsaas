@@ -217,6 +217,29 @@ class TeamInvitationController extends Controller
         'role' => 'member',
     ]);
 
+    // UPDATE: Juga update submission member dengan id_team dari leader
+    // Get leader's submission to get id_team and id_user_mentor
+    $leaderMember = DB::table('team_members')
+        ->where('id_team', $invitation->id_team)
+        ->where('role', 'leader')
+        ->first();
+
+    if ($leaderMember) {
+        $leaderSubmission = DB::table('submissions')
+            ->where('id_user', $leaderMember->id_user)
+            ->first();
+
+        // Update member's submission dengan id_team dan id_user_mentor dari leader
+        if ($leaderSubmission && $leaderSubmission->id_team) {
+            DB::table('submissions')
+                ->where('id_user', $user->id_user)
+                ->update([
+                    'id_team' => $leaderSubmission->id_team,
+                    'id_user_mentor' => $leaderSubmission->id_user_mentor,
+                ]);
+        }
+    }
+
     $team = DB::table('teams')
         ->where('id_team', $invitation->id_team)
         ->first();
