@@ -390,86 +390,108 @@ class AuthController extends Controller
     public function activateAccount(Request $request)
     {
         try {
+            $existingAuthUser = auth('sanctum')->user();
+
+            $emailRule = $existingAuthUser
+                ? 'required|email|max:100'
+                : 'required|email|max:100|unique:users,email';
+
             $validated = $request->validate([
                 'invitation_code' => 'required|string',
-                'first_name' => 'required|string|max:100',
-                'last_name' => 'nullable|string|max:100',
-                'email' => 'required|email|max:100|unique:users,email',
-                'password' => 'required|string|min:8|confirmed',
+                'first_name'      => 'required|string|max:100',
+                'last_name'       => 'nullable|string|max:100',
+                'email'           => $emailRule,
+                'password'        => 'required|string|min:8|confirmed',
             ]);
 
             $invitation = \App\Models\InvitationCode::where('code', $validated['invitation_code'])
-                ->where('is_active', true)
-                ->with('company')
-                ->first();
+                ->where('is_active', true)->with('company')->first();
 
             if (!$invitation) {
                 return response()->json(['message' => 'Invalid or inactive invitation code.'], 422);
             }
 
-            // Ambil role name dari tabel roles berdasarkan id_role di invitation
             $roleName = 'employee';
             if ($invitation->id_role) {
                 $role = \App\Models\Role::find($invitation->id_role);
-                if ($role)
-                    $roleName = $role->name; // 'hr', 'mentor', 'admin', etc
+                if ($role) $roleName = $role->name;
             }
 
             DB::beginTransaction();
             try {
-                do {
-                    $idUser = 'USR' . strtoupper(substr(uniqid(), -7));
-                } while (User::where('id_user', $idUser)->exists());
+                if ($existingAuthUser) {
+                    $user = $existingAuthUser;
+                    $user->update([
+                        'id_company' => $invitation->id_company,
+                        'role'       => $roleName,
+                        'password'   => Hash::make($validated['password']),
+                    ]);
+                    $nameParts = explode(' ', $user->name, 2);
+                    $firstName = $nameParts[0];
+                    $lastName  = $nameParts[1] ?? '';
+                } else {
+                    do {
+                        $idUser = 'USR' . strtoupper(substr(uniqid(), -7));
+                    } while (User::where('id_user', $idUser)->exists());
 
-                $user = User::create([
-                    'id_user' => $idUser,
-                    'name' => trim($validated['first_name'] . ' ' . ($validated['last_name'] ?? '')),
-                    'email' => $validated['email'],
-                    'password' => Hash::make($validated['password']),
-                    'id_company' => $invitation->id_company,
-                    'role' => $roleName, // ← pakai nama role yang beneran
-                    'is_active' => true,
-                ]);
+                    $user = User::create([
+                        'id_user'    => $idUser,
+                        'name'       => trim($validated['first_name'] . ' ' . ($validated['last_name'] ?? '')),
+                        'email'      => $validated['email'],
+                        'password'   => Hash::make($validated['password']),
+                        'id_company' => $invitation->id_company,
+                        'role'       => $roleName,
+                        'is_active'  => true,
+                    ]);
+                    $firstName = $validated['first_name'];
+                    $lastName  = $validated['last_name'] ?? '';
+                }
 
-                do {
-                    $idEmployee = 'EMP' . strtoupper(substr(uniqid(), -7));
-                } while (\App\Models\Employee::where('id_employee', $idEmployee)->exists());
+                $existingEmployee = \App\Models\Employee::where('id_user', $user->id_user)
+                    ->where('id_company', $invitation->id_company)->first();
 
-                \App\Models\Employee::create([
-                    'id_employee' => $idEmployee,
-                    'id_user' => $user->id_user,
-                    'id_company' => $invitation->id_company,
-                    'id_role' => $invitation->id_role, // ← relasi ke tabel roles
-                    'first_name' => $validated['first_name'],
-                    'last_name' => $validated['last_name'] ?? '',
-                    'department' => $invitation->division,
-                    'position' => $invitation->position,
-                    'employee_status' => $invitation->employee_status,
-                    'schedule' => $invitation->schedule,
-                    'job_level' => $invitation->job_level,
-                    'joined_at' => now(),
-                ]);
+                if (!$existingEmployee) {
+                    do {
+                        $idEmployee = 'EMP' . strtoupper(substr(uniqid(), -7));
+                    } while (\App\Models\Employee::where('id_employee', $idEmployee)->exists());
+
+                    \App\Models\Employee::create([
+                        'id_employee'     => $idEmployee,
+                        'id_user'         => $user->id_user,
+                        'id_company'      => $invitation->id_company,
+                        'id_role'         => $invitation->id_role,
+                        'first_name'      => $firstName,
+                        'last_name'       => $lastName,
+                        'department'      => $invitation->division,
+                        'position'        => $invitation->position,
+                        'employee_status' => $invitation->employee_status,
+                        'schedule'        => $invitation->schedule,
+                        'job_level'       => $invitation->job_level,
+                        'joined_at'       => now(),
+                    ]);
+                }
 
                 DB::commit();
-
+                $user->tokens()->delete();
                 $token = $user->createToken('auth_token')->plainTextToken;
 
+                $redirectPath = match ($roleName) {
+                    'mentor'                             => '/mentor/dashboard',
+                    'hr'                                 => '/hr/dashboard',
+                    'admin', 'super_admin', 'superadmin' => '/dashboard',
+                    default                              => '/candidate/dashboard',
+                };
+
                 return response()->json([
-                    'message' => 'Account activated successfully.',
-                    'token' => $token,
+                    'message'       => 'Account activated successfully.',
+                    'token'         => $token,
                     'redirect_role' => $roleName,
-                    'redirect_path' => $roleName === 'mentor'
-                        ? '/mentor/dashboard'
-                        : ($roleName === 'hr'
-                            ? '/hr/dashboard'
-                            : ($roleName === 'admin' || $roleName === 'super_admin' || $roleName === 'superadmin'
-                                ? '/dashboard'
-                                : '/candidate/dashboard')),
-                    'user' => [
-                        'id_user' => $user->id_user,
-                        'name' => $user->name,
-                        'email' => $user->email,
-                        'role' => $user->role,
+                    'redirect_path' => $redirectPath,
+                    'user'          => [
+                        'id_user'    => $user->id_user,
+                        'name'       => $user->name,
+                        'email'      => $user->email,
+                        'role'       => $user->role,
                         'id_company' => $user->id_company,
                     ],
                     'company' => $invitation->company,
@@ -482,160 +504,25 @@ class AuthController extends Controller
 
         } catch (ValidationException $e) {
             return response()->json(['message' => 'Validation failed', 'errors' => $e->errors()], 422);
-{
-    try {
-        // ── Deteksi apakah ada user yang sudah login via Bearer token ──
-        // Token ini dikirim dari frontend kalau localStorage punya auth_token
-        $existingAuthUser = auth('sanctum')->user();
- 
-        // ── Validasi: aturan email berbeda tergantung ada/tidaknya user login ──
-        $emailRule = $existingAuthUser
-            ? 'required|email|max:100'                       // user sudah ada → skip unique
-            : 'required|email|max:100|unique:users,email';  // user baru → harus unique
- 
-        $validated = $request->validate([
-            'invitation_code' => 'required|string',
-            'first_name'      => 'required|string|max:100',
-            'last_name'       => 'nullable|string|max:100',
-            'email'           => $emailRule,
-            'password'        => 'required|string|min:8|confirmed',
-        ]);
- 
-        // ── Cek invitation code valid & aktif ──
-        $invitation = \App\Models\InvitationCode::where('code', $validated['invitation_code'])
-            ->where('is_active', true)
-            ->with('company')
-            ->first();
- 
-        if (!$invitation) {
-            return response()->json(['message' => 'Invalid or inactive invitation code.'], 422);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Activation failed.', 'error' => $e->getMessage()], 500);
         }
- 
-        // ── Ambil nama role dari tabel roles ──
-        $roleName = 'employee';
-        if ($invitation->id_role) {
-            $role = \App\Models\Role::find($invitation->id_role);
-            if ($role) $roleName = $role->name;
-        }
- 
-        DB::beginTransaction();
-        try {
-            if ($existingAuthUser) {
-                // ════════════════════════════════════════
-                // KASUS A: User sudah punya akun (sudah login)
-                // → update role, id_company, dan password-nya
-                // → nama & email TIDAK diubah (pakai yang sudah ada di DB)
-                // ════════════════════════════════════════
-                $user = $existingAuthUser;
- 
-                $user->update([
-                    'id_company' => $invitation->id_company,
-                    'role'       => $roleName,
-                    'password'   => \Illuminate\Support\Facades\Hash::make($validated['password']),
-                ]);
- 
-                // Pecah name jadi first_name & last_name untuk employee record
-                $nameParts = explode(' ', $user->name, 2);
-                $firstName = $nameParts[0];
-                $lastName  = $nameParts[1] ?? '';
- 
-            } else {
-                // ════════════════════════════════════════
-                // KASUS B: User belum punya akun → buat baru
-                // ════════════════════════════════════════
-                do {
-                    $idUser = 'USR' . strtoupper(substr(uniqid(), -7));
-                } while (User::where('id_user', $idUser)->exists());
- 
-                $user = User::create([
-                    'id_user'    => $idUser,
-                    'name'       => trim($validated['first_name'] . ' ' . ($validated['last_name'] ?? '')),
-                    'email'      => $validated['email'],
-                    'password'   => \Illuminate\Support\Facades\Hash::make($validated['password']),
-                    'id_company' => $invitation->id_company,
-                    'role'       => $roleName,
-                    'is_active'  => true,
-                ]);
- 
-                $firstName = $validated['first_name'];
-                $lastName  = $validated['last_name'] ?? '';
-            }
- 
-            // ── Buat employee record (sama untuk kedua kasus) ──
-            // Cek dulu kalau user ini sudah punya employee record di company yang sama
-            $existingEmployee = \App\Models\Employee::where('id_user', $user->id_user)
-                ->where('id_company', $invitation->id_company)
-                ->first();
- 
-            if (!$existingEmployee) {
-                do {
-                    $idEmployee = 'EMP' . strtoupper(substr(uniqid(), -7));
-                } while (\App\Models\Employee::where('id_employee', $idEmployee)->exists());
- 
-                \App\Models\Employee::create([
-                    'id_employee'     => $idEmployee,
-                    'id_user'         => $user->id_user,
-                    'id_company'      => $invitation->id_company,
-                    'id_role'         => $invitation->id_role,
-                    'first_name'      => $firstName,
-                    'last_name'       => $lastName,
-                    'department'      => $invitation->division,
-                    'position'        => $invitation->position,
-                    'employee_status' => $invitation->employee_status,
-                    'schedule'        => $invitation->schedule,
-                    'job_level'       => $invitation->job_level,
-                    'joined_at'       => now(),
-                ]);
-            }
- 
-            DB::commit();
- 
-            // Buat token baru (hapus token lama kalau ada)
-            $user->tokens()->delete();
-            $token = $user->createToken('auth_token')->plainTextToken;
- 
-            $redirectPath = match ($roleName) {
-                'mentor'                              => '/mentor/dashboard',
-                'hr'                                  => '/hr/dashboard',
-                'admin', 'super_admin', 'superadmin'  => '/dashboard',
-                default                               => '/candidate/dashboard',
-            };
- 
-            return response()->json([
-                'message'       => 'Account activated successfully.',
-                'token'         => $token,
-                'redirect_role' => $roleName,
-                'redirect_path' => $redirectPath,
-                'user'          => [
-                    'id_user'    => $user->id_user,
-                    'name'       => $user->name,
-                    'email'      => $user->email,
-                    'role'       => $user->role,
-                    'id_company' => $user->id_company,
-                ],
-                'company' => $invitation->company,
-            ], 201);
- 
-    } catch (ValidationException $e) {
-        return response()->json(['message' => 'Validation failed', 'errors' => $e->errors()], 422);
-    } catch (\Exception $e) {
-        return response()->json(['message' => 'Activation failed.', 'error' => $e->getMessage()], 500);
     }
 
-    /**
-     * 10. LIST INVITATION CODES (HR/Admin)
-     * GET /api/company/invitation-codes
-     */
-    public function listInvitationCodes(Request $request)
-    {
-        $user = $request->user();
+        /**
+         * 10. LIST INVITATION CODES (HR/Admin)
+         * GET /api/company/invitation-codes
+         */
+        public function listInvitationCodes(Request $request)
+        {
+            $user = $request->user();
 
-        $codes = \App\Models\InvitationCode::where('id_company', $user->id_company)
-            ->orderBy('created_at', 'desc')
-            ->get();
+            $codes = \App\Models\InvitationCode::where('id_company', $user->id_company)
+                ->orderBy('created_at', 'desc')
+                ->get();
 
-        return response()->json($codes);
-    }
+            return response()->json($codes);
+        }
 
     /**
      * 11. CREATE INVITATION CODE (HR/Admin)
