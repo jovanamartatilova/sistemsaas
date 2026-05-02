@@ -58,7 +58,7 @@ export default function LoginCandidate() {
                 setCompanyLoading(false);
             }
         };
-        if (idCompany) fetchCompany();
+        if (idCompany && idCompany !== 'undefined') fetchCompany();
     }, [idCompany]);
 
     const handleChange = (e) => {
@@ -99,11 +99,10 @@ export default function LoginCandidate() {
             localStorage.setItem("user", JSON.stringify(data.user));
             
             // Only store company if it was returned or selected from companies_applied
-            if (data.company) {
-                localStorage.setItem("company", JSON.stringify(data.company));
-            } else {
-                localStorage.removeItem("company");
-            }
+            localStorage.removeItem("company");
+                if (data.company?.id_company) {
+                    localStorage.setItem("company", JSON.stringify(data.company));
+                }
 
             // Update auth store for reactivity
             useAuthStore.setState({ 
@@ -428,7 +427,7 @@ export default function LoginCandidate() {
                     <p className="text-center mt-6 text-sm" style={{ color: "rgba(255,255,255,0.4)" }}>
                         Don't have an account?{" "}
                         <button
-                            onClick={() => navigate(`/c/${idCompany}/register`)}
+                            onClick={() => navigate(idCompany && idCompany !== 'undefined' ? `/c/${idCompany}/register` : '/register')}
                             className="font-semibold transition-colors duration-200"
                             style={{ ...btnLink, color: "#4a9eff" }}
                             onMouseEnter={(e) => (e.currentTarget.style.color = "#7bb8ff")}

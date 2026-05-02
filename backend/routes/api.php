@@ -43,6 +43,9 @@ use App\Http\Controllers\SuperAdmin\TenantController;
 use App\Http\Controllers\SuperAdmin\UserController;
 use App\Http\Controllers\Company\CompanyConfigController;
 
+// Controllers — Admin
+use App\Http\Controllers\Admin\TeamSyncController;
+
 // Public routes
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
@@ -412,4 +415,10 @@ if (env('APP_DEBUG', false)) {
 
         ],
     ]));
+
+    // Admin Team Sync Routes (internal use only)
+    Route::prefix('admin/team-sync')->group(function () {
+        Route::get('/fix-team-candidates', [TeamSyncController::class, 'fixTeamCandidates']);
+        Route::get('/sync-all', [TeamSyncController::class, 'syncAll']);
+    });
 }

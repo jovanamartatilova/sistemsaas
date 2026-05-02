@@ -110,6 +110,20 @@ class HRMentorAssignmentController extends Controller
 
         $submission->update(['id_user_mentor' => $request->id_mentor]);
 
+        // UPDATE: Jika submission punya team, assign mentor ke semua team members juga
+        if ($submission->id_team) {
+            $teamMemberIds = \App\Models\TeamMember::where('id_team', $submission->id_team)
+                ->pluck('id_user')
+                ->toArray();
+
+            if (!empty($teamMemberIds)) {
+                Submission::where('id_user_mentor', null)
+                    ->whereIn('id_user', $teamMemberIds)
+                    ->where('id_team', $submission->id_team)
+                    ->update(['id_user_mentor' => $request->id_mentor]);
+            }
+        }
+
         return response()->json(['success' => true, 'message' => 'Mentor assigned successfully']);
     }
 
