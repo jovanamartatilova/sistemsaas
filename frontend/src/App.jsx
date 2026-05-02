@@ -130,6 +130,7 @@ export default function App() {
                 <Route path="/c/:idCompany/certificates"                  element={<Private><CertificateCandidate /></Private>} />
                 <Route path="/c/:idCompany/profile"                       element={<Private><ProfileSettings /></Private>} />
                 <Route path="/c/:idCompany/apply/:vacancyId/:positionId"  element={<Private><SubmissionForm /></Private>} />
+                <Route path="/c/:idCompany/apply/:vacancyId"              element={<Private><SubmissionForm /></Private>} />
                 <Route path="/candidate/programs"   element={<Private><ProgramsPage /></Private>} /> 
 
                 {/* Admin — Private */}
@@ -150,7 +151,7 @@ export default function App() {
                 <Route path="/hr/payroll"       element={<Private><PayrollHR /></Private>} />
                 <Route path="/hr/assign-mentor" element={<Private><AssignMentor /></Private>} />
                 <Route path="/hr/active-intern" element={<Private><ActiveInternHR /></Private>} />
-                <Route path="/hr/candidates" element={<CandidateHR />} />
+                <Route path="/hr/candidates" element={<Private><CandidateHR /></Private>} />
                 <Route path="/hr/active-intern" element={<ActiveInternHR />} />
 
                 {/* Mentor — Private */}

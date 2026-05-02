@@ -353,7 +353,14 @@ export default function ActiveInternHR() {
     navigate('/', { replace: true });
   };
 
-  if (loading) return <LoadingSpinner message="Loading interns..." />;
+  if (loading) return (
+  <div style={{ display: "flex", minHeight: "100vh", background: "#f8fafc", fontFamily: "'Poppins', 'Segoe UI', sans-serif" }}>
+    <SidebarHR user={user} onLogout={() => setShowLogout(true)} />
+    <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <LoadingSpinner fullScreen={false} message="Loading interns.." />
+    </div>
+  </div>
+);
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#f8fafc', fontFamily: "'Poppins', sans-serif" }}>

@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use App\Models\User;
+use App\Http\Controllers\ContactMessageController;
 
 // Controllers — Auth & Public
 use App\Http\Controllers\AuthController;
@@ -55,6 +56,7 @@ Route::get('/c/{id_company}', [CompanyPublicController::class, 'show']);
 Route::get('/c/{id_company}/vacancies', [CompanyPublicController::class, 'vacancies']);
 Route::get('/invitation-codes/validate/{code}', [AuthController::class, 'validateInvitationCode']);
 Route::post('/auth/activate', [AuthController::class, 'activateAccount']);
+Route::post('/contact', [ContactMessageController::class, 'store']);
 Route::options('/{any}', fn () => response()->noContent())->where('any', '.*');
 
 // Protected routes
@@ -165,7 +167,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/company/profile',  [CompanyController::class, 'updateProfile']);
     Route::post('/company/logo',    [CompanyController::class, 'uploadLogo']);
     Route::delete('/company/logo',  [CompanyController::class, 'removeLogo']);
-
 });
 
 // Super Admin Routes
@@ -204,6 +205,9 @@ Route::prefix('superadmin')->middleware(['auth:sanctum', 'superadmin'])->group(f
     Route::get('/tenants/{id}',         [TenantController::class, 'show']);
     Route::patch('/tenants/{id}/status', [TenantController::class, 'updateStatus']);
     Route::get('/users',                [UserController::class, 'index']);
+    Route::get('/messages',          [\App\Http\Controllers\ContactMessageController::class, 'index']);
+    Route::patch('/messages/{id}/read', [\App\Http\Controllers\ContactMessageController::class, 'markRead']);
+    Route::delete('/messages/{id}',  [\App\Http\Controllers\ContactMessageController::class, 'destroy']);
 });
 
 // Candidate Routes
@@ -293,6 +297,7 @@ Route::prefix('mentor')->middleware(['auth:sanctum', 'mentorRole'])->group(funct
     Route::get('/tasks',          [App\Http\Controllers\MentorTaskController::class, 'index']);
     Route::post('/tasks',         [App\Http\Controllers\MentorTaskController::class, 'store']);
     Route::put('/tasks/{id}',     [App\Http\Controllers\MentorTaskController::class, 'update']);
+    Route::put('/tasks/{id}/approve-logbook', [App\Http\Controllers\MentorTaskController::class, 'approveLogbook']);
     Route::delete('/tasks/{id}',  [App\Http\Controllers\MentorTaskController::class, 'destroy']);
 });
 

@@ -318,7 +318,14 @@ export default function AssignMentorHR() {
     },
   ];
 
-  if (loading) return <LoadingSpinner message="Loading assignment..." />;
+  if (loading) return (
+  <div style={{ display: "flex", minHeight: "100vh", background: "#f8fafc", fontFamily: "'Poppins', 'Segoe UI', sans-serif" }}>
+    <SidebarHR user={user} onLogout={() => setShowLogout(true)} />
+    <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <LoadingSpinner fullScreen={false} message="Loading assignment..." />
+    </div>
+  </div>
+);
 
   return (
     <div style={{

@@ -53,12 +53,21 @@ class UserController extends Controller
 
         return response()->json(['data' => $users, 'total' => $users->count()]);
     }
-
     private function getCandidates(Request $request)
     {
         $query = User::query()
             ->where('role', 'candidate')
-            ->with(['candidate']);
+            ->with([
+                'candidate',
+                'submissions' => function($q) {
+                    $q->with([
+                        'vacancy.company:id_company,name',
+                        'position:id_position,name',
+                        'vacancy:id_vacancy,title,id_company',
+                        'team',
+                    ]);
+                }
+            ]);
 
         if (!empty($request->search)) {
             $search = $request->search;
@@ -67,7 +76,24 @@ class UserController extends Controller
         }
 
         $users = $query->latest()->get()->map(function ($u) {
-            $cand = $u->candidate;
+            $cand       = $u->candidate;
+            $submission = $u->submissions?->first();
+            $company    = $submission?->vacancy?->company?->name ?? '—';
+            $position   = $submission?->position?->name ?? '—';
+            $program    = $submission?->vacancy?->title ?? '—';
+
+            // Cek team type dari relasi team di submission
+            $team = $submission?->team;
+            if ($team) {
+                // Cek apakah user ini leader atau member
+                $teamMember = \App\Models\TeamMember::where('id_team', $team->id_team)
+                    ->where('id_user', $u->id_user)
+                    ->first();
+                $teamType = $teamMember?->role === 'leader' ? 'Leader' : 'Member';
+            } else {
+                $teamType = 'Individu';
+            }
+
             return [
                 'id'              => $u->id_user,
                 'name'            => $u->name,
@@ -76,6 +102,10 @@ class UserController extends Controller
                 'institution'     => $cand?->institution ?? null,
                 'education_level' => $cand?->education_level ?? null,
                 'major'           => $cand?->major ?? null,
+                'company'         => $company,
+                'position'        => $position,
+                'program'         => $program,
+                'team_type'       => $teamType,
                 'registered'      => $u->created_at->format('d M Y'),
             ];
         });

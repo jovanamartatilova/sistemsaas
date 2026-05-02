@@ -690,8 +690,9 @@ export default function CandidateHR() {
 
   // ── Fetch regular candidates ───────────────────────────────────────────────
   const fetchCandidates = (isSearch = false) => {
-    if (isSearch) setTableLoading(true);
-    const params = new URLSearchParams();
+  if (isSearch) setTableLoading(true);
+  else setLoading(true);
+  const params = new URLSearchParams();
     if (statusFilter) params.set('status', statusFilter);
     if (typeFilter !== 'all') params.set('type', typeFilter);
 
@@ -805,8 +806,6 @@ export default function CandidateHR() {
 
   const handleLogout = async () => { await logout(); navigate('/', { replace: true }); };
 
-  if (loading) return <LoadingSpinner message="Loading candidates..." />;
-
   const irActive = irResults !== null;
 
   // Table header columns — tambah kolom "Relevance" saat IR aktif
@@ -840,7 +839,7 @@ export default function CandidateHR() {
             <div>
               <h1 style={{ fontSize: '22px', fontWeight: '800', color: '#0f172a', margin: 0 }}>Candidate Management</h1>
               <p style={{ fontSize: '13px', color: '#64748b', marginTop: '4px' }}>
-                View and manage all applicants. Cari kandidat terbaik atau cari berdasarkan kata kunci.
+                View and manage all applicants. Search for top candidates or search by keywords.
               </p>
             </div>
 
@@ -856,14 +855,14 @@ export default function CandidateHR() {
                 fontSize: '12.5px', fontWeight: '700', cursor: 'pointer', fontFamily: 'inherit',
                 transition: 'all 0.15s', opacity: classifyLoading ? 0.7 : 1,
               }}
-              title="Mengelompokkan kandidat secara otomatis berdasarkan kelengkapan data dan kecocokan profil"
+              title="Automatically group candidates based on profile compatibility and data completeness"
             >
               <IC.Cpu />
               {classifyLoading
-                ? 'Mengelompokkan...'
+                ? 'Grouping...'
                 : Object.keys(classifyCache).length > 0
-                  ? `Sudah dikelompokkan (${Object.keys(classifyCache).length})`
-                  : 'Kelompokkan Kandidat'}
+                  ? `Grouped (${Object.keys(classifyCache).length})`
+                  : 'Group Candidates'}
             </button>
           </div>
 
@@ -936,7 +935,7 @@ export default function CandidateHR() {
                     : <IC.Search />
                   }
                   <input
-                    placeholder={searchMode === 'tfidf' ? 'Cari kandidat terbaik...' : 'Cari dengan kata kunci, mis. python NOT java...'}
+                    placeholder={searchMode === 'tfidf' ? 'Searching for top candidates...' : 'Search by keywords, e.g. Python NOT java...'}
                     value={search}
                     onChange={e => setSearch(e.target.value)}
                     style={{ border: 'none', outline: 'none', fontSize: '12.5px', width: '100%', background: 'transparent', color: '#1e293b', fontFamily: 'inherit' }}
@@ -979,10 +978,14 @@ export default function CandidateHR() {
 
             {/* Table Body */}
             <div style={{ minHeight: '300px' }}>
-              {(tableLoading || irLoading) ? (
-                <div style={{ padding: '40px', textAlign: 'center', color: '#94a3b8', fontSize: '13px' }}>
-                  {irLoading ? 'Calculating Smart Search similarity...' : 'Loading...'}
-                </div>
+              {loading ? (
+              <div style={{ padding: '48px 0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <LoadingSpinner fullScreen={false} message="Loading candidates..." />
+              </div>
+            ) : (tableLoading || irLoading) ? (
+              <div style={{ padding: '40px', textAlign: 'center', color: '#94a3b8', fontSize: '13px' }}>
+                {irLoading ? 'Calculating Smart Search similarity...' : 'Loading...'}
+              </div>
               ) : rows.length === 0 ? (
                 <div style={{ padding: '60px 20px', textAlign: 'center' }}>
                   <div style={{ fontSize: '13.5px', color: '#94a3b8' }}>

@@ -241,6 +241,7 @@ function ManageStipendModal({ programs, onClose, onSave }) {
 export default function PayrollHR() {
   const navigate = useNavigate();
   const logoutUser = useAuthStore(state => state.logout);
+  const user = useAuthStore(state => state.user);
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState({ stats: {}, payrolls: [], programs: [] });
   const [period, setPeriod] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
@@ -338,11 +339,18 @@ export default function PayrollHR() {
     addToast("Exporting payroll data...");
   };
 
-  if (loading && !data.payrolls.length) return <LoadingSpinner />;
+  if (loading && !data.payrolls.length) return (
+  <div style={{ display: "flex", minHeight: "100vh", background: "#f8fafc" }}>
+    <SidebarHR user={user} onLogout={() => setShowLogoutModal(true)} />
+    <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <LoadingSpinner fullScreen={false} message="Loading payroll..." />
+    </div>
+  </div>
+);
 
   return (
     <div style={{ display: "flex", minHeight: "100vh", background: "#f8fafc" }}>
-      <SidebarHR onLogout={() => setShowLogoutModal(true)} />
+      <SidebarHR user={user} onLogout={() => setShowLogoutModal(true)} />
 
       <main style={{ flex: 1, padding: "32px 40px", overflowY: "auto" }}>
         {/* Header */}

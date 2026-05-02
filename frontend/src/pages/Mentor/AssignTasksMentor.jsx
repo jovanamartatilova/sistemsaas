@@ -163,14 +163,20 @@ export default function AssignTasksMentor() {
   const { user, logout } = useAuthStore();
   const [tasks, setTasks] = useState([]);
   const [assignTargets, setAssignTargets] = useState([]);
-  const [competencies, setCompetencies] = useState([]); // This will be filtered for the modal
-  const [allCompetencies, setAllCompetencies] = useState([]); // This is for name resolution in the table
+  const [competencies, setCompetencies] = useState([]);
+  const [allCompetencies, setAllCompetencies] = useState([]);
   const [internInfo, setInternInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [logoutModal, setLogoutModal] = useState(false);
   const [expandedTask, setExpandedTask] = useState(null);
+  const [logbookModal, setLogbookModal] = useState(null);
+  const [toast, setToast] = useState(null);
+  const showToast = (msg, type = "success") => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 3000);
+  };
   const [noteMap, setNoteMap] = useState({});
   const [isEditing, setIsEditing] = useState(false);
   const [editId, setEditId] = useState(null);
@@ -395,6 +401,21 @@ export default function AssignTasksMentor() {
     } catch (e) { alert("Failed to delete project"); }
   };
 
+  const handleApproveLogbook = async (taskId) => {
+    try {
+      const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
+      await axios.put(`http://localhost:8000/api/mentor/tasks/${taskId}/approve-logbook`,
+        { logbook_approved: true },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      fetchData();
+      setLogbookModal(null);
+      showToast("Logbook approved! Candidate can now download their logbook.");
+    } catch (e) {
+      showToast("Failed to approve logbook.", "error");
+    }
+  };
+
   if (loading) return (
     <div style={s.app}>
       <SidebarMentor mentor={user} onLogout={() => setLogoutModal(true)} />
@@ -425,10 +446,10 @@ export default function AssignTasksMentor() {
 
           <div style={s.card}>
             <table style={s.table}>
-              <colgroup><col style={{ width: "35%" }} /><col style={{ width: "20%" }} /><col style={{ width: "15%" }} /><col style={{ width: "15%" }} /><col style={{ width: "15%" }} /></colgroup>
-              <thead style={s.thead}><tr><th style={s.th}>Project / Task</th><th style={s.th}>Assigned To</th><th style={s.th}>Frequency</th><th style={s.th}>Details</th><th style={s.th}>Status</th></tr></thead>
+              <colgroup><col style={{ width: "30%" }} /><col style={{ width: "18%" }} /><col style={{ width: "13%" }} /><col style={{ width: "13%" }} /><col style={{ width: "14%" }} /><col style={{ width: "12%" }} /></colgroup>
+              <thead style={s.thead}><tr><th style={s.th}>Project / Task</th><th style={s.th}>Assigned To</th><th style={s.th}>Frequency</th><th style={s.th}>Details</th><th style={s.th}>Status</th><th style={s.th}>Logbook</th></tr></thead>
               <tbody>
-                {tasks.length === 0 ? <tr><td colSpan={5} style={{ padding: "40px", color: "#94a3b8" }}>No projects created yet.</td></tr> : tasks.map(project => {
+                {tasks.length === 0 ? <tr><td colSpan={6} style={{ padding: "40px", color: "#94a3b8" }}>No projects created yet.</td></tr> : tasks.map(project => {
                   const isEx = expandedTask === project.id_task;
                   const isIndependent = project.task_type === 'independent';
                   return (
@@ -451,10 +472,18 @@ export default function AssignTasksMentor() {
                             </div>
                           </div>
                         </td>
+                        <td style={s.td} onClick={e => e.stopPropagation()}>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setLogbookModal(project); }}
+                            style={{ background: "#eef2ff", color: "#4f46e5", border: "1px solid #c7d2fe", borderRadius: "6px", padding: "5px 10px", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}
+                          >
+                            See Logbook
+                          </button>
+                        </td>
                       </tr>
                       {isEx && (
                         <tr>
-                          <td colSpan={5} style={{ background: "#f8fafc", padding: "24px 32px", borderBottom: "1px solid #e2e8f0" }}>
+                          <td colSpan={6} style={{ background: "#f8fafc", padding: "24px 32px", borderBottom: "1px solid #e2e8f0" }}>
                             <div style={{ display: "flex", flexDirection: "column", gap: "20px", textAlign: "left" }}>
                               <p style={{ fontSize: "11px", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>
                                 {isIndependent ? "Task Details & Submission" : "Project Targets & Submissions"}
@@ -663,6 +692,85 @@ export default function AssignTasksMentor() {
           </div>
         </div></div>
       )}
+
+      {logbookModal && (
+        <div style={s.modalOverlay}>
+          <div style={{ ...s.modal, width: "800px" }}>
+            <div style={s.mhead}>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <h2 style={s.mtitle}>Logbook — {logbookModal.target_name}</h2>
+                {logbookModal.logbook_approved && (
+                  <span style={{ fontSize: "11px", fontWeight: 700, color: "#059669", background: "#dcfce7", padding: "3px 10px", borderRadius: "99px", border: "1px solid #bbf7d0" }}>
+                    ✓ Approved
+                  </span>
+                )}
+              </div>
+              <button onClick={() => setLogbookModal(null)} style={{ background: "none", border: "none", fontSize: "20px", cursor: "pointer", color: "#94a3b8" }}>&times;</button>
+            </div>
+            <div style={{ ...s.mbody, gap: "12px" }}>
+              {(() => {
+                const submitted = (logbookModal.subtasks || []).filter(st => st.work_attachments?.length > 0);
+                if (!submitted.length) return <p style={{ color: "#94a3b8", fontSize: "13px" }}>No submitted tasks yet.</p>;
+                return submitted.map((st, idx) => (
+                  <div key={st.id} style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "16px", display: "flex", flexDirection: "column", gap: "8px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <span style={{ fontWeight: 700, fontSize: "14px", color: "#0f172a" }}>{idx + 1}. {st.title}</span>
+                      <span style={s.statusBadge(st.status)}>{st.status}</span>
+                    </div>
+                    <p style={{ fontSize: "12px", color: "#64748b", margin: 0 }}>{st.description}</p>
+                    <div style={{ display: "flex", gap: "8px", fontSize: "12px", color: "#64748b" }}>
+                      <span>Deadline: <b>{st.deadline_at ? new Date(st.deadline_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "-"}</b></span>
+                    </div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                      {st.work_attachments.map((att, i) => (
+                        <a key={i} href={att.value} target="_blank" rel="noopener noreferrer"
+                          style={{ padding: "4px 10px", background: "#fff", border: "1px solid #e2e8f0", borderRadius: "6px", fontSize: "12px", color: "#4f46e5", textDecoration: "none" }}>
+                          🔗 {att.label}
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                ));
+              })()}
+            </div>
+            <div style={s.mfoot}>
+              <button style={s.btnCancel} onClick={() => setLogbookModal(null)}>Close</button>
+              {!logbookModal.logbook_approved ? (
+                <button
+                  onClick={() => handleApproveLogbook(logbookModal.id_task)}
+                  style={{ ...s.btnSubmit, background: "#059669", display: "flex", alignItems: "center", gap: "8px" }}
+                >
+                  ✓ Approve Logbook
+                </button>
+              ) : (
+                <span style={{ fontSize: "13px", fontWeight: 700, color: "#059669", display: "flex", alignItems: "center", gap: "6px" }}>
+                  ✓ Logbook Already Approved
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+      {toast && (
+        <div style={{
+          position: "fixed", bottom: "28px", right: "28px", zIndex: 9999,
+          background: toast.type === "error" ? "#ef4444" : "#059669",
+          color: "#fff", padding: "14px 20px", borderRadius: "12px",
+          boxShadow: "0 8px 24px rgba(0,0,0,0.15)", fontSize: "13px", fontWeight: 600,
+          display: "flex", alignItems: "center", gap: "10px",
+          animation: "slideIn 0.2s ease"
+        }}>
+          <span>{toast.type === "error" ? "✕" : "✓"}</span>
+          {toast.msg}
+        </div>
+      )}
+
+      <style>{`
+        @keyframes slideIn {
+          from { opacity: 0; transform: translateY(12px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
 
       {logoutModal && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(10,22,40,0.5)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center" }}>

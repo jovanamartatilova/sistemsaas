@@ -300,7 +300,14 @@ export default function DashboardHR() {
       barColors: ["#fb923c", "#fdba74", "#fb923c", "#fdba74", "#fb923c", "#fed7aa", "#fb923c"],
     },
   ];
-  if (loading) return <LoadingSpinner message="Loading dashboard..." />;
+  if (loading) return (
+    <div style={{ display: "flex", minHeight: "100vh", background: "#f8fafc", fontFamily: "'Poppins', 'Segoe UI', sans-serif" }}>
+      <SidebarHR user={user} onLogout={() => setShowLogout(true)} />
+      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <LoadingSpinner fullScreen={false} message="Loading dashboard..." />
+      </div>
+    </div>
+  );
 
   return (
     <div style={{
