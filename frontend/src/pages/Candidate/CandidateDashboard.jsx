@@ -106,7 +106,7 @@ function CandidateDashboardWithRedirect() {
   // FOR NOW: Just show base dashboard
   // Backend doesn't have scoped_role field or member/leader endpoints yet
   console.log("DEBUG: Backend role detection pending - showing base dashboard");
-  
+
   return <EarlyPathDashboard />;
 }
 
@@ -157,6 +157,15 @@ function EarlyPathDashboard() {
 
       const data = await response.json();
       setDashboardData(data.data);
+      
+      // Sync role to store
+      if (data.data?.profile?.scoped_role || data.data?.profile?.is_leader !== undefined) {
+        useAuthStore.getState().setUser({ 
+          scoped_role: data.data.profile.scoped_role,
+          is_leader: data.data.profile.is_leader
+        });
+      }
+
       setError(null);
       // Fetch member tasks after dashboard loads
       fetchMemberTasks();
@@ -182,6 +191,12 @@ function EarlyPathDashboard() {
       if (response.ok) {
         const data = await response.json();
         setMemberTasks(data.data || []);
+        if (data.data?.scoped_role || data.data?.is_leader !== undefined) {
+          useAuthStore.getState().setUser({ 
+            scoped_role: data.data.scoped_role,
+            is_leader: data.data.is_leader
+          });
+        }
       }
     } catch (err) {
       console.error("Error fetching member tasks:", err);
@@ -224,11 +239,11 @@ function EarlyPathDashboard() {
   if (error || !dashboardData) {
     return (
       <div className="min-h-screen bg-gray-50 flex" style={{ fontFamily: 'Poppins, sans-serif' }}>
-        <SidebarCandidate 
-          userName={userData.profile?.name} 
+        <SidebarCandidate
+          userName={userData.profile?.name}
           userPhoto={userData.profile?.photo_url || userData.profile?.photo_path}
           company={JSON.parse(localStorage.getItem("company"))}
-          onLogout={handleLogout} 
+          onLogout={handleLogout}
         />
         <main className="ml-56 flex-1 flex items-center justify-center">
           {loading ? (
@@ -296,11 +311,11 @@ function EarlyPathDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex" style={{ fontFamily: 'Poppins, sans-serif' }}>
-      <SidebarCandidate 
-        userName={profile?.name} 
+      <SidebarCandidate
+        userName={profile?.name}
         userPhoto={profile?.photo_url || profile?.photo_path}
         company={JSON.parse(localStorage.getItem("company"))}
-        onLogout={handleLogoutClick} 
+        onLogout={handleLogoutClick}
       />
 
       <main className="ml-56 flex-1 px-6 py-6 space-y-5 min-w-0">
@@ -385,7 +400,7 @@ function EarlyPathDashboard() {
                         { label: "Status", value: apprentice?.status === 'pending' || !apprentice ? 'Screening' : formatStatus(apprentice?.status), badge: true, isStatus: true },
                       ].map((row, i) => (
                         <div key={i} className="flex justify-between items-center text-sm py-1.5 border-b border-slate-50 last:border-0">
-                        <span className="text-slate-400 font-medium">{row.label}</span>
+                          <span className="text-slate-400 font-medium">{row.label}</span>
                           {row.badge ? (
                             <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium border ${getStatusColor(apprentice?.status)}`}>
                               ● {row.value}
@@ -415,12 +430,12 @@ function EarlyPathDashboard() {
                           : 'TBD';
 
                         return (
-                        <div key={idx} className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2">
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <p className="text-xs font-bold text-indigo-500 uppercase tracking-widest">Interview {idx + 1}</p>
-                              <p className="text-sm font-semibold text-slate-700 mt-1">{interviewDateTime}</p>
-                            </div>
+                          <div key={idx} className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2">
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <p className="text-xs font-bold text-indigo-500 uppercase tracking-widest">Interview {idx + 1}</p>
+                                <p className="text-sm font-semibold text-slate-700 mt-1">{interviewDateTime}</p>
+                              </div>
                               <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium border whitespace-nowrap ${interview.status === 'passed' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' :
                                 interview.status === 'failed' ? 'bg-rose-50 text-rose-600 border-rose-200' :
                                   'bg-blue-50 text-blue-600 border-blue-200'
@@ -449,7 +464,7 @@ function EarlyPathDashboard() {
 
               {/* Right Column */}
               <div className="flex flex-col gap-5">
-                  {/* My Tasks */}
+                {/* My Tasks */}
                 <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
                   <div className="flex items-center justify-between mb-3">
                     <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400">My Tasks</h2>
@@ -475,7 +490,7 @@ function EarlyPathDashboard() {
                         />
                       ))}
                       {memberTasks.length > 3 && (
-                        <button 
+                        <button
                           onClick={() => navigate(`/c/${JSON.parse(localStorage.getItem("company"))?.id_company}/member/tasks`)}
                           className="w-full text-xs font-semibold text-indigo-600 hover:text-indigo-700 py-2"
                         >
@@ -491,7 +506,7 @@ function EarlyPathDashboard() {
                   )}
                 </div>
                 {/* Competencies - Only show if apprentice is accepted */}
-                 {apprentice?.status === 'active' || apprentice?.status === 'accepted' ? (
+                {apprentice?.status === 'active' || apprentice?.status === 'accepted' ? (
                   <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm text-left">
                     <div className="flex items-center justify-between mb-4">
                       <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400">Competencies</h2>
@@ -506,21 +521,21 @@ function EarlyPathDashboard() {
                             {f}
                           </button>
                         ))}
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      {filtered.length > 0 ? (
+                        filtered.map((c, i) => <CompetencyCard key={i} {...c} />)
+                      ) : (
+                        <p className="text-slate-500 text-sm">No competencies available</p>
+                      )}
                     </div>
                   </div>
-                  <div className="space-y-3">
-                    {filtered.length > 0 ? (
-                      filtered.map((c, i) => <CompetencyCard key={i} {...c} />)
-                    ) : (
-                      <p className="text-slate-500 text-sm">No competencies available</p>
-                    )}
+                ) : (
+                  <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm text-center">
+                    <p className="text-slate-400 text-sm">Competencies will be available once you are accepted</p>
                   </div>
-                </div>
-              ) : (
-                <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm text-center">
-                  <p className="text-slate-400 text-sm">Competencies will be available once you are accepted</p>
-                </div>
-              )}
+                )}
               </div>
             </div>
 

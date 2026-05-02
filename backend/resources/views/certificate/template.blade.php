@@ -84,13 +84,13 @@
     }
 
     .signature-section-flow {
-        margin-top: 40px;
+        margin-top: 20px;
         text-align: right;
         page-break-inside: avoid;
     }
 
-    .signature-date { font-size: 11pt; margin-bottom: 5px; }
-    .signature-title { font-size: 11pt; font-weight: bold; margin-bottom: 110px; }
+    .signature-date { font-size: 10pt; margin-bottom: 3px; }
+    .signature-title { font-size: 10pt; font-weight: bold; margin-bottom: 85px; }
     .signature-name {
         font-size: 12pt;
         font-weight: bold;
@@ -106,33 +106,56 @@
         text-align: center;
     }
     .table-title {
-        font-size: 20pt;
+        font-size: 18pt;
         font-weight: bold;
-        margin-bottom: 30px;
+        margin-bottom: 20px;
         color: #0f172a;
         text-transform: uppercase;
     }
     .competency-table {
         width: 100%;
         border-collapse: collapse;
-        margin-bottom: 30px;
-        font-size: 11pt;
+        margin-bottom: 15px;
+        font-size: 10pt;
     }
     .competency-table th {
         background-color: #f8fafc;
         border: 1px solid #cbd5e1;
-        padding: 12px;
+        padding: 8px 10px;
         font-weight: bold;
         color: #0f172a;
     }
     .competency-table td {
         border: 1px solid #cbd5e1;
-        padding: 10px 12px;
+        padding: 6px 10px;
         vertical-align: middle;
         color: #334155;
     }
     .text-center { text-align: center; }
     .text-left { text-align: left; }
+    .evaluation-section {
+        margin-top: 10px;
+        text-align: left;
+        padding: 10px 15px;
+        border: 1px solid #cbd5e1;
+        background-color: #f8fafc;
+        border-radius: 6px;
+    }
+    .evaluation-title {
+        font-weight: bold;
+        font-size: 10pt;
+        margin-bottom: 4px;
+        color: #0f172a;
+        border-bottom: 1px solid #cbd5e1;
+        padding-bottom: 3px;
+        text-transform: uppercase;
+    }
+    .evaluation-text {
+        font-size: 9.5pt;
+        line-height: 1.4;
+        color: #334155;
+        font-style: italic;
+    }
 </style>
 </head>
 <body>
@@ -184,22 +207,22 @@
             <thead>
                 <tr>
                     <th style="width: 5%">No</th>
-                    <th style="width: 25%">Kompetensi</th>
-                    <th style="width: 35%">Definisi Kompetensi</th>
+                    <th style="width: 20%">Kompetensi</th>
+                    <th style="width: 25%">Definisi Kompetensi</th>
+                    <th style="width: 30%">Deskripsi Nilai Capaian</th>
                     <th style="width: 10%">Jam</th>
                     <th style="width: 10%">Nilai Capaian</th>
-                    <th style="width: 15%">Deskripsi Nilai Capaian</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach($competencies as $index => $comp)
                 <tr>
                     <td class="text-center">{{ $index + 1 }}</td>
-                    <td class="text-left font-bold">{{ $comp['name'] }}</td>
-                    <td class="text-left">{{ $comp['description'] }}</td>
+                    <td class="text-left" style="font-weight: bold;">{{ $comp['name'] }}</td>
+                    <td class="text-left" style="font-size: 9pt;">{{ $comp['description'] }}</td>
+                    <td class="text-left" style="font-size: 9pt;">{{ $comp['achievement_description'] }}</td>
                     <td class="text-center">{{ $comp['hours'] }}</td>
                     <td class="text-center" style="font-weight: bold;">{{ $comp['score'] }}</td>
-                    <td class="text-center">{{ $comp['predicate'] }}</td>
                 </tr>
                 @endforeach
                 @if(count($competencies) === 0)
@@ -209,6 +232,13 @@
                 @endif
             </tbody>
         </table>
+
+        @if(isset($evaluation) && $evaluation)
+        <div class="evaluation-section">
+            <div class="evaluation-title">EVALUASI KESELURUHAN MENTOR</div>
+            <div class="evaluation-text">"{{ $evaluation }}"</div>
+        </div>
+        @endif
 
         <!-- Signature follows right after table -->
         <div class="signature-section-flow">

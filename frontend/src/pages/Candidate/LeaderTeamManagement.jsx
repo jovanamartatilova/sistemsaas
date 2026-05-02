@@ -7,9 +7,9 @@ import { LoadingSpinner } from "../../components/LoadingSpinner";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
 
-const MONTHS_FULL = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-const MONTHS_SHORT = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-const DAYS_SHORT = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+const MONTHS_FULL = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+const MONTHS_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const DAYS_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 function CalendarPicker({ value, onChange }) {
   const [open, setOpen] = useState(false);
@@ -48,7 +48,7 @@ function CalendarPicker({ value, onChange }) {
   };
 
   const displayValue = value
-    ? (() => { const [y, m, d] = value.split('-'); return `${parseInt(d)} ${MONTHS_SHORT[parseInt(m)-1]} ${y}`; })()
+    ? (() => { const [y, m, d] = value.split('-'); return `${parseInt(d)} ${MONTHS_SHORT[parseInt(m) - 1]} ${y}`; })()
     : null;
 
   const days = [];
@@ -186,17 +186,17 @@ function DelegatedWorkRow({ st, teamMembers, onReview, onUpdate, onDelete }) {
               </button>
             ) : (
               <div className="flex-1 space-y-2">
-                <textarea 
-                  value={note} 
-                  onChange={e => setNote(e.target.value)} 
+                <textarea
+                  value={note}
+                  onChange={e => setNote(e.target.value)}
                   placeholder="Review teammate's work..."
                   className="w-full text-xs p-2 border border-slate-300 rounded outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
                   rows="2"
                 />
                 <div className="flex gap-2 justify-end">
                   <button onClick={() => setShowNote(false)} className="text-[10px] text-slate-400">Cancel</button>
-                  <button 
-                    onClick={() => { onReview(st.id, note); setShowNote(false); setNote(""); }} 
+                  <button
+                    onClick={() => { onReview(st.id, note); setShowNote(false); setNote(""); }}
                     className="text-[10px] font-semibold bg-indigo-600 text-white px-3 py-1 rounded flex items-center gap-1 hover:bg-indigo-700 transition-colors"
                   >
                     <Send size={10} /> Send Note
@@ -207,49 +207,49 @@ function DelegatedWorkRow({ st, teamMembers, onReview, onUpdate, onDelete }) {
           </div>
         </>
       ) : (
-         <div className="border border-indigo-100 rounded-lg p-4 bg-white space-y-4">
-            <p className="text-[11px] font-bold text-indigo-600 uppercase tracking-widest">Edit Subtask for {st.assignee}</p>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="col-span-2">
-                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Task Title</label>
-                <input 
-                  value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})}
-                  className="w-full text-xs px-3 py-2 border border-slate-300 rounded bg-white text-slate-700 outline-none focus:ring-1 focus:ring-indigo-500"
+        <div className="border border-indigo-100 rounded-lg p-4 bg-white space-y-4">
+          <p className="text-[11px] font-bold text-indigo-600 uppercase tracking-widest">Edit Subtask for {st.assignee}</p>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="col-span-2">
+              <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Task Title</label>
+              <input
+                value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })}
+                className="w-full text-xs px-3 py-2 border border-slate-300 rounded bg-white text-slate-700 outline-none focus:ring-1 focus:ring-indigo-500"
+              />
+            </div>
+            <div className="col-span-2">
+              <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Instructions / Specifics</label>
+              <textarea
+                value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })}
+                className="w-full text-xs px-3 py-2 border border-slate-300 rounded bg-white text-slate-700 outline-none focus:ring-1 focus:ring-indigo-500 min-h-[80px]"
+              />
+            </div>
+            <div className="flex flex-col md:flex-row gap-4 col-span-2">
+              <div className="flex-[2] min-w-0">
+                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Assign To</label>
+                <select
+                  value={formData.memberUserId} onChange={e => setFormData({ ...formData, memberUserId: e.target.value })}
+                  className="w-full text-xs px-3 py-2 border border-slate-300 rounded bg-white text-slate-700 outline-none focus:ring-1 focus:ring-indigo-500 min-h-[40px]"
+                >
+                  {teamMembers.map(m => (
+                    <option key={m.id} value={m.userId}>{m.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex-1 min-w-0">
+                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Deadline</label>
+                <CalendarPicker
+                  value={formData.deadline}
+                  onChange={val => setFormData({ ...formData, deadline: val })}
                 />
               </div>
-              <div className="col-span-2">
-                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Instructions / Specifics</label>
-                <textarea 
-                  value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})}
-                  className="w-full text-xs px-3 py-2 border border-slate-300 rounded bg-white text-slate-700 outline-none focus:ring-1 focus:ring-indigo-500 min-h-[80px]"
-                />
-              </div>
-              <div className="flex flex-col md:flex-row gap-4 col-span-2">
-                <div className="flex-[2] min-w-0">
-                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Assign To</label>
-                  <select 
-                    value={formData.memberUserId} onChange={e => setFormData({...formData, memberUserId: e.target.value})}
-                    className="w-full text-xs px-3 py-2 border border-slate-300 rounded bg-white text-slate-700 outline-none focus:ring-1 focus:ring-indigo-500 min-h-[40px]"
-                  >
-                    {teamMembers.map(m => (
-                      <option key={m.id} value={m.userId}>{m.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Deadline</label>
-                  <CalendarPicker 
-                    value={formData.deadline} 
-                    onChange={val => setFormData({...formData, deadline: val})}
-                  />
-                </div>
-              </div>
             </div>
-            <div className="flex gap-2 justify-end pt-2">
-              <button onClick={() => setIsEditing(false)} className="text-xs text-slate-400 px-3">Cancel</button>
-              <button onClick={handleSaveEdit} className="text-xs font-bold bg-indigo-600 text-white px-5 py-2 rounded-lg hover:bg-indigo-700">Update Task</button>
-            </div>
-         </div>
+          </div>
+          <div className="flex gap-2 justify-end pt-2">
+            <button onClick={() => setIsEditing(false)} className="text-xs text-slate-400 px-3">Cancel</button>
+            <button onClick={handleSaveEdit} className="text-xs font-bold bg-indigo-600 text-white px-5 py-2 rounded-lg hover:bg-indigo-700">Update Task</button>
+          </div>
+        </div>
       )}
     </div>
   );
@@ -257,117 +257,152 @@ function DelegatedWorkRow({ st, teamMembers, onReview, onUpdate, onDelete }) {
 
 function TaskShareCard({ task, teamMembers, onAssign, onUpdate, onDelete, onReview }) {
   const [expanded, setExpanded] = useState(false);
-  const [showAssignForm, setShowAssignForm] = useState(false);
+  const [assigningToTarget, setAssigningToTarget] = useState(null); // ID of target being delegated
   const [formData, setFormData] = useState({ title: "", description: "", memberUserId: "", deadline: "" });
 
-  const handleAssign = () => {
+  const handleAssign = (targetId) => {
     if (!formData.title || !formData.memberUserId) return alert("Title and Assignee are required");
-    onAssign({ ...formData, parent_id: task.id_task });
-    setShowAssignForm(false);
+    onAssign({ ...formData, parent_id: targetId });
+    setAssigningToTarget(null);
     setFormData({ title: "", description: "", memberUserId: "", deadline: "" });
   };
 
   return (
-    <div className="bg-white border border-slate-200 rounded-xl overflow-hidden text-left w-full">
-      <div className="px-5 py-4 cursor-pointer flex justify-between items-center" onClick={() => setExpanded(!expanded)}>
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
-            <Users size={18} />
+    <div className="bg-white border border-slate-200 rounded-xl overflow-hidden text-left w-full shadow-sm">
+      {/* Project Header */}
+      <div 
+        className="px-6 py-4 cursor-pointer flex justify-between items-center bg-slate-50/50 hover:bg-slate-50 transition-colors" 
+        onClick={() => setExpanded(!expanded)}
+      >
+        <div className="flex items-center gap-4">
+          <div className="w-10 h-10 bg-indigo-600 text-white rounded-xl flex items-center justify-center shadow-indigo-100 shadow-lg">
+            <Users size={20} />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-slate-900">{task.title}</h3>
-            <p className="text-[11px] text-slate-500">Manage team delegation for this task</p>
+            <h3 className="text-base font-bold text-slate-900">{task.title}</h3>
+            <p className="text-xs text-slate-500">Project Overview & Team Delegation</p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <span className={`text-[10px] font-bold px-2 py-1 rounded ${task.status === 'done' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+        <div className="flex items-center gap-4">
+          <span className={`text-[10px] font-bold px-3 py-1 rounded-full border ${task.status === 'done' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'}`}>
             {task.status.replace('_', ' ').toUpperCase()}
           </span>
-          {expanded ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
+          {expanded ? <ChevronUp size={18} className="text-slate-400" /> : <ChevronDown size={18} className="text-slate-400" />}
         </div>
       </div>
 
       {expanded && (
-        <div className="px-5 pb-5 pt-2 space-y-4 border-t border-slate-50">
-          <div className="space-y-1">
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Main Details</p>
-            <p className="text-xs text-slate-700 leading-relaxed">{task.description}</p>
-          </div>
+        <div className="px-6 pb-6 pt-4 space-y-6">
+          {/* Project Description */}
+          {task.description && (
+            <div className="bg-white border border-slate-100 rounded-lg p-3">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Project Description</p>
+              <p className="text-sm text-slate-600 leading-relaxed">{task.description}</p>
+            </div>
+          )}
 
-          <div className="space-y-2">
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Teammate Delegations</p>
+          {/* Targets Section */}
+          <div className="space-y-6">
+            <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
+              <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Mentor-Defined Targets</h4>
+              <div className="h-px flex-1 bg-slate-50" />
+            </div>
+
             {task.subtasks && task.subtasks.length > 0 ? (
-              <div className="space-y-2">
-                {task.subtasks.map(st => (
-                  <DelegatedWorkRow 
-                    key={st.id} st={st} 
-                    teamMembers={teamMembers}
-                    onReview={onReview} 
-                    onUpdate={onUpdate} 
-                    onDelete={onDelete} 
-                  />
+              <div className="space-y-8">
+                {task.subtasks.map(target => (
+                  <div key={target.id} className="space-y-4">
+                    {/* Target Header */}
+                    <div className="flex items-start justify-between bg-slate-50 p-4 rounded-xl border border-slate-100">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-indigo-500" />
+                          <h5 className="text-sm font-bold text-slate-800">{target.title}</h5>
+                        </div>
+                        <p className="text-xs text-slate-500 italic pl-4">{target.description}</p>
+                      </div>
+                      <button 
+                        onClick={() => setAssigningToTarget(assigningToTarget === target.id ? null : target.id)}
+                        className="text-[11px] font-bold text-indigo-600 hover:bg-white px-3 py-1.5 rounded-lg border border-indigo-100 transition-all flex items-center gap-2 shadow-sm"
+                      >
+                        <Plus size={14} /> Delegate Parts
+                      </button>
+                    </div>
+
+                    {/* Assign Form for this Target */}
+                    {assigningToTarget === target.id && (
+                      <div className="ml-4 bg-white border-2 border-indigo-100 rounded-xl p-5 space-y-4 shadow-xl animate-in fade-in slide-in-from-top-2">
+                        <div className="flex justify-between items-center">
+                          <p className="text-xs font-bold text-indigo-600">Assign Member for: {target.title}</p>
+                          <button onClick={() => setAssigningToTarget(null)} className="text-slate-400 hover:text-rose-500"><Plus size={16} className="rotate-45" /></button>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="col-span-2">
+                            <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Part Title / Task Name</label>
+                            <input
+                              value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })}
+                              placeholder="e.g., Database Schema Design"
+                              className="w-full text-xs px-3 py-2.5 border border-slate-200 rounded-lg bg-slate-50 focus:bg-white outline-none focus:ring-2 focus:ring-indigo-500/20"
+                            />
+                          </div>
+                          <div className="col-span-2">
+                            <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Instructions</label>
+                            <textarea
+                              value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })}
+                              placeholder="Specific details for this member..."
+                              className="w-full text-xs px-3 py-2.5 border border-slate-200 rounded-lg bg-slate-50 focus:bg-white outline-none focus:ring-2 focus:ring-indigo-500/20 min-h-[70px]"
+                            />
+                          </div>
+                          <div className="flex flex-col md:flex-row gap-4 col-span-2">
+                            <div className="flex-[2]">
+                              <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Assign To Member</label>
+                              <select
+                                value={formData.memberUserId} onChange={e => setFormData({ ...formData, memberUserId: e.target.value })}
+                                className="w-full text-xs px-3 py-2.5 border border-slate-200 rounded-lg bg-slate-50 focus:bg-white outline-none focus:ring-2 focus:ring-indigo-500/20"
+                              >
+                                <option value="">Select Member</option>
+                                {teamMembers.map(m => (
+                                  <option key={m.id} value={m.userId}>{m.name}</option>
+                                ))}
+                              </select>
+                            </div>
+                            <div className="flex-1">
+                              <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Due Date</label>
+                              <CalendarPicker value={formData.deadline} onChange={val => setFormData({ ...formData, deadline: val })} />
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex gap-2 justify-end pt-2">
+                          <button onClick={() => setAssigningToTarget(null)} className="text-xs text-slate-400 px-4">Cancel</button>
+                          <button onClick={() => handleAssign(target.id)} className="text-xs font-bold bg-indigo-600 text-white px-6 py-2.5 rounded-xl shadow-lg shadow-indigo-100">Assign Member</button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Member Delegations for this Target */}
+                    <div className="ml-6 space-y-3 pl-4 border-l-2 border-slate-100">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Teammate Delegations</p>
+                      {target.delegations && target.delegations.length > 0 ? (
+                        <div className="space-y-3">
+                          {target.delegations.map(st => (
+                            <DelegatedWorkRow
+                              key={st.id} st={st}
+                              teamMembers={teamMembers}
+                              onReview={onReview}
+                              onUpdate={onUpdate}
+                              onDelete={onDelete}
+                            />
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-[11px] text-slate-300 italic">No members assigned to this target yet.</p>
+                      )}
+                    </div>
+                  </div>
                 ))}
               </div>
             ) : (
-              <p className="text-[11px] text-slate-400 italic">No tasks shared with members yet.</p>
-            )}
-          </div>
-
-          <div className="pt-2 border-t border-slate-100">
-            {!showAssignForm ? (
-              <button 
-                onClick={() => { setFormData({title:"", description:"", memberUserId:"", deadline:""}); setShowAssignForm(true); }}
-                className="flex items-center gap-2 text-xs font-bold text-indigo-600 hover:text-indigo-700 transition-colors"
-              >
-                <Plus size={14} /> Assign New Task to Member
-              </button>
-            ) : (
-              <div className="bg-slate-50 border border-slate-200 rounded-lg p-5 space-y-4">
-                <p className="text-xs font-bold text-slate-700">Assign New Subtask</p>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="col-span-2">
-                    <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Task Title for Member</label>
-                    <input 
-                      value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})}
-                      placeholder="e.g., Drafting the ERD Diagram"
-                      className="w-full text-xs px-3 py-2 border border-slate-300 rounded bg-white text-slate-700 outline-none focus:ring-1 focus:ring-indigo-500"
-                    />
-                  </div>
-                  <div className="col-span-2">
-                    <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Task Detail / Instructions</label>
-                    <textarea 
-                      value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})}
-                      placeholder="Type specific instructions for this member..."
-                      className="w-full text-xs px-3 py-2 border border-slate-300 rounded bg-white text-slate-700 outline-none focus:ring-1 focus:ring-indigo-500 min-h-[80px]"
-                    />
-                  </div>
-                  <div className="flex flex-col md:flex-row gap-4 col-span-2">
-                    <div className="flex-[2] min-w-0">
-                      <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Assign To</label>
-                      <select 
-                        value={formData.memberUserId} onChange={e => setFormData({...formData, memberUserId: e.target.value})}
-                        className="w-full text-xs px-3 py-2 border border-slate-300 rounded bg-white text-slate-700 outline-none focus:ring-1 focus:ring-indigo-500 min-h-[40px]"
-                      >
-                        <option value="">Select Member</option>
-                        {teamMembers.map(m => (
-                          <option key={m.id} value={m.userId}>{m.name}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Deadline</label>
-                      <CalendarPicker 
-                        value={formData.deadline} 
-                        onChange={val => setFormData({...formData, deadline: val})}
-                      />
-                    </div>
-                  </div>
-                </div>
-                <div className="flex gap-2 justify-end pt-2">
-                  <button onClick={() => { setShowAssignForm(false); }} className="text-xs text-slate-400 px-3">Cancel</button>
-                  <button onClick={handleAssign} className="text-xs font-bold bg-indigo-600 text-white px-5 py-2 rounded-lg hover:bg-indigo-700 shadow-md">Assign Member</button>
-                </div>
-              </div>
+              <p className="text-[11px] text-slate-400 italic">No targets defined by mentor yet.</p>
             )}
           </div>
         </div>
@@ -475,13 +510,13 @@ export default function LeaderTeamManagement() {
           {tasksToShare.length > 0 ? (
             <div className="space-y-3 w-full">
               {tasksToShare.map(task => (
-                <TaskShareCard 
-                  key={task.id_task} 
-                  task={task} 
+                <TaskShareCard
+                  key={task.id_task}
+                  task={task}
                   teamMembers={[
                     { id: 'leader', userId: user?.id_user, name: user?.name + " (You)" },
                     ...teamMembers
-                  ]} 
+                  ]}
                   onAssign={handleAssignTask}
                   onUpdate={handleUpdateSubTask}
                   onDelete={handleDeleteSubTask}

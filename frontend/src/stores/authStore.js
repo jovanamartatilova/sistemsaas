@@ -103,4 +103,12 @@ user: (() => { try { return JSON.parse(localStorage.getItem('user')) || null; } 
 
   // Clear error
   clearError: () => set({ error: null }),
+
+  // Set user data manually
+  setUser: (userData) => {
+    const currentUser = useAuthStore.getState().user;
+    const updatedUser = { ...currentUser, ...userData };
+    localStorage.setItem('user', JSON.stringify(updatedUser));
+    set({ user: updatedUser });
+  },
 }));

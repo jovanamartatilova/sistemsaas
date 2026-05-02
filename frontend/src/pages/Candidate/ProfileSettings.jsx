@@ -16,6 +16,8 @@ function ProfileContent({ userData, setUserData }) {
     phone_number: userData?.phone || "",
     university_name: userData?.university || "",
     major_name: userData?.major || "",
+    bank_name: userData?.bank_name || "",
+    bank_account_number: userData?.bank_account_number || "",
   });
 
   const [loading, setLoading] = useState(false);
@@ -32,6 +34,8 @@ function ProfileContent({ userData, setUserData }) {
         phone_number: userData?.phone || "",
         university_name: userData?.university || "",
         major_name: userData?.major || "",
+        bank_name: userData?.bank_name || "",
+        bank_account_number: userData?.bank_account_number || "",
       });
       setAvatarPreview(userData?.photo_url || null);
     }
@@ -80,6 +84,8 @@ function ProfileContent({ userData, setUserData }) {
           phone: formData.phone_number,
           university_name: formData.university_name,
           major_name: formData.major_name,
+          bank_name: formData.bank_name,
+          bank_account_number: formData.bank_account_number,
         }),
       });
 
@@ -127,6 +133,8 @@ function ProfileContent({ userData, setUserData }) {
           phone_number: updatedUser?.phone || "",
           university_name: updatedUser?.university || "",
           major_name: updatedUser?.major || "",
+          bank_name: updatedUser?.bank_name || "",
+          bank_account_number: updatedUser?.bank_account_number || "",
         });
 
         if (updatedUser?.photo_url) {
@@ -150,6 +158,8 @@ function ProfileContent({ userData, setUserData }) {
       phone_number: userData?.phone || "",
       university_name: userData?.university || "",
       major_name: userData?.major || "",
+      bank_name: userData?.bank_name || "",
+      bank_account_number: userData?.bank_account_number || "",
     });
     setAvatarFile(null);
     setAvatarPreview(userData?.photo_url || null);
@@ -307,6 +317,54 @@ function ProfileContent({ userData, setUserData }) {
               placeholder="Your Major"
               className="bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-sm text-gray-800 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
             />
+          </div>
+        </div>
+
+        {/* Bank Information */}
+        <div className="mt-8">
+          <p className="text-xs font-semibold text-gray-400 tracking-widest mb-5 uppercase">Bank Account Information</p>
+          <div className="grid grid-cols-2 gap-x-5 gap-y-4">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs text-gray-500 font-medium text-left">Bank Name</label>
+              <select
+                name="bank_name"
+                value={formData.bank_name}
+                onChange={handleInputChange}
+                disabled={loading}
+                className="bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-sm text-gray-800 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 transition-all disabled:bg-gray-100 disabled:cursor-not-allowed appearance-none"
+                style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'%236b7280\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M19 9l-7 7-7-7\'%3E%3C/path%3E%3C/svg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1rem center', backgroundSize: '1em' }}
+              >
+                <option value="">Select Bank</option>
+                <option value="BCA">Bank Central Asia (BCA)</option>
+                <option value="Mandiri">Bank Mandiri</option>
+                <option value="BNI">Bank Negara Indonesia (BNI)</option>
+                <option value="BRI">Bank Rakyat Indonesia (BRI)</option>
+                <option value="BTPN">Bank BTPN / Jenius</option>
+                <option value="CIMB">CIMB Niaga</option>
+                <option value="Danamon">Bank Danamon</option>
+                <option value="Permata">Bank Permata</option>
+                <option value="BSI">Bank Syariah Indonesia (BSI)</option>
+                <option value="OCBC">OCBC NISP</option>
+                <option value="Maybank">Maybank Indonesia</option>
+                <option value="Panin">Panin Bank</option>
+                <option value="Bank Jago">Bank Jago</option>
+                <option value="Allo Bank">Allo Bank</option>
+                <option value="SeaBank">SeaBank Indonesia</option>
+                <option value="Other">Other Bank</option>
+              </select>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs text-gray-500 font-medium text-left">Account Number</label>
+              <input
+                type="text"
+                name="bank_account_number"
+                value={formData.bank_account_number}
+                onChange={handleInputChange}
+                disabled={loading}
+                placeholder="Example: 1234567890"
+                className="bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-sm text-gray-800 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200 transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
+              />
+            </div>
           </div>
         </div>
 

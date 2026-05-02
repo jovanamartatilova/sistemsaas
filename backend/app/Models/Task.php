@@ -21,6 +21,8 @@ class Task extends Model
         'title',
         'description',
         'competency_ids',
+        'frequency',
+        'task_type',
         'status',
         'deadline_at',
         'work_attachments',
