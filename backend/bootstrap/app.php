@@ -35,15 +35,15 @@ return Application::configure(basePath: dirname(__DIR__))
                         'message' => 'Unauthenticated',
                     ], 401);
                 }
-                
-                // Handle authorization exceptions  
+
+                // Handle authorization exceptions
                 if ($e instanceof \Illuminate\Auth\Access\AuthorizationException) {
                     return response()->json([
                         'success' => false,
                         'message' => 'Unauthorized',
                     ], 403);
                 }
-                
+
                 // Don't try to redirect on API routes
                 if ($e instanceof \Symfony\Component\Routing\Exception\RouteNotFoundException) {
                     return response()->json([
@@ -51,7 +51,7 @@ return Application::configure(basePath: dirname(__DIR__))
                         'message' => 'Route not found'
                     ], 404);
                 }
-                
+
                 // Return error details for API requests
                 return response()->json([
                     'success' => false,

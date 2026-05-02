@@ -15,7 +15,6 @@ import Onboarding from "./components/OnboardingModal";
 import LoginCandidate           from './pages/Candidate/LoginCandidate';
 import ForgotPasswordCandidate  from './pages/Candidate/ForgotPasswordCandidate';
 import ResetPasswordCandidate   from './pages/Candidate/ResetPasswordCandidate';
-import CompanyPublicPage        from './pages/Candidate/CompanyPublic';
 import CandidateDashboard       from './pages/Candidate/CandidateDashboard';
 import LeaderDashboard          from './pages/Candidate/LeaderDashboard';
 import LeaderTeamManagement     from './pages/Candidate/LeaderTeamManagement';
@@ -24,6 +23,7 @@ import SubmissionForm           from './pages/Candidate/SubmissionForm';
 import ProfileSettings          from './pages/Candidate/ProfileSettings';
 import CertificateCandidate     from './pages/Candidate/CertificateCandidate';
 import ProgramsPage             from './pages/Candidate/ProgramsCandidate';
+import JoinTeamPage             from './pages/Candidate/JoinTeamPage';
 
 // Admin
 import DashboardPage        from './pages/Admin/DashboardPage';
@@ -38,6 +38,7 @@ import ResetPasswordStaff   from './pages/Admin/ResetPasswordStaff';
 // Main
 import LandingPage  from './pages/Main/LandingPage';
 import ProfilePage  from './pages/Main/ProfilePage';
+import PreviewOnboarding from './pages/Main/PreviewOnboarding';
 
 // Super Admin
 import SuperAdminPages from './pages/SuperAdmin/SuperAdminPages';
@@ -76,7 +77,11 @@ const CandidateRegisterRedirect = () => {
 /** Redirect ke mentor dashboard jika role === 'mentor', selain itu tampilkan DashboardPage */
 const DashboardRouter = () => {
     const { user, company } = useAuthStore();
-    const role = user?.role || company?.role;
+    const storedUserType = localStorage.getItem('user_type');
+    const hasCandidateProfile = !!localStorage.getItem('candidate_profile');
+    const role = user?.role || user?.user_type || storedUserType || company?.role || (hasCandidateProfile ? 'candidate' : null);
+
+    if (!role || role === 'new') return <Navigate to="/onboarding" replace />;
     
     if (role === 'mentor') return <Navigate to="/mentor/dashboard" replace />;
     if (role === 'hr') return <Navigate to="/hr/dashboard" replace />;
@@ -99,7 +104,7 @@ export default function App() {
                 <Route path="/forgot-password-candidate" element={<ForgotPasswordCandidate />} />
 
                 {/* Company — Public */}
-                <Route path="/c/:idCompany"                   element={<CompanyPublicPage />} />
+                <Route path="/c/:idCompany"                   element={<LandingPage />} />
                 <Route path="/c/:idCompany/register"          element={<CandidateRegisterRedirect />} />
                 <Route path="/c/:idCompany/login"             element={<LoginCandidate />} />
                 <Route path="/c/:idCompany/forgot-password"   element={<ForgotPasswordCandidate />} />
@@ -107,6 +112,11 @@ export default function App() {
                 <Route path="/c/:idCompany/staff/login"       element={<LoginStaff />} />
                 <Route path="/c/:idCompany/staff/forgot-password"   element={<ForgotPasswordStaff />} />
                 <Route path="/c/:idCompany/staff/reset-password"    element={<ResetPasswordStaff />} />
+                <Route path="/onboarding" element={<PreviewOnboarding />} />
+
+                {/* Team Invitation - Public */}
+                <Route path="/join-team/:token" element={<JoinTeamPage />} />
+                <Route path="/join/:token" element={<JoinTeamPage />} />
 
                 {/* Candidate — Private */}
                 <Route path="/candidate/dashboard"                   element={<Private><CandidateDashboard /></Private>} />
@@ -120,6 +130,7 @@ export default function App() {
                 <Route path="/c/:idCompany/certificates"                  element={<Private><CertificateCandidate /></Private>} />
                 <Route path="/c/:idCompany/profile"                       element={<Private><ProfileSettings /></Private>} />
                 <Route path="/c/:idCompany/apply/:vacancyId/:positionId"  element={<Private><SubmissionForm /></Private>} />
+                <Route path="/candidate/programs"   element={<Private><ProgramsPage /></Private>} /> 
 
                 {/* Admin — Private */}
                 <Route path="/dashboard"  element={<Private><DashboardRouter /></Private>} />

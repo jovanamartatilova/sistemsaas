@@ -31,7 +31,6 @@ class SuperAdminTestSeeder extends Seeder
             [
                 'name' => 'Super Admin',
                 'email' => 'superadmin@earlypath.id',
-                'phone' => '081234567890',
                 'password' => bcrypt('password123'),
                 'role' => 'super_admin',
                 'is_active' => true,
@@ -40,11 +39,11 @@ class SuperAdminTestSeeder extends Seeder
 
         // Create test regular users
         $users = [
-            ['id_user' => 'user0001', 'id_company' => 'comp_001', 'name' => 'John Doe', 'email' => 'john@tech-solutions.com', 'phone' => '081111111111', 'role' => 'admin'],
-            ['id_user' => 'user0002', 'id_company' => 'comp_001', 'name' => 'Jane Smith', 'email' => 'jane@tech-solutions.com', 'phone' => '081111111112', 'role' => 'hr'],
-            ['id_user' => 'user0003', 'id_company' => 'comp_002', 'name' => 'Bob Wilson', 'email' => 'bob@digital-innovations.com', 'phone' => '082222222222', 'role' => 'mentor'],
-            ['id_user' => 'user0004', 'id_company' => 'comp_002', 'name' => 'Alice Brown', 'email' => 'alice@digital-innovations.com', 'phone' => '082222222223', 'role' => 'peserta'],
-            ['id_user' => 'user0005', 'id_company' => 'comp_003', 'name' => 'Charlie Davis', 'email' => 'charlie@global-services.com', 'phone' => '083333333333', 'role' => 'admin'],
+            ['id_user' => 'user0001', 'id_company' => 'comp_001', 'name' => 'John Doe', 'email' => 'john@tech-solutions.com', 'role' => 'admin'],
+            ['id_user' => 'user0002', 'id_company' => 'comp_001', 'name' => 'Jane Smith', 'email' => 'jane@tech-solutions.com',  'role' => 'hr'],
+            ['id_user' => 'user0003', 'id_company' => 'comp_002', 'name' => 'Bob Wilson', 'email' => 'bob@digital-innovations.com', 'role' => 'mentor'],
+            ['id_user' => 'user0004', 'id_company' => 'comp_002', 'name' => 'Alice Brown', 'email' => 'alice@digital-innovations.com', 'role' => 'peserta'],
+            ['id_user' => 'user0005', 'id_company' => 'comp_003', 'name' => 'Charlie Davis', 'email' => 'charlie@global-services.com', 'role' => 'admin'],
         ];
 
         foreach ($users as $user_data) {

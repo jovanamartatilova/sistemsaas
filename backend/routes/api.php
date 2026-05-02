@@ -24,6 +24,7 @@ use App\Http\Controllers\CandidateController;
 use App\Http\Controllers\MentorController;
 use App\Http\Controllers\MemberTaskController;
 use App\Http\Controllers\LeaderController;
+use App\Http\Controllers\TeamInvitationController;
 
 // Controllers — HR
 use App\Http\Controllers\HR\HRCandidateController;
@@ -33,11 +34,14 @@ use App\Http\Controllers\HR\HRLoaController;
 use App\Http\Controllers\HR\HRMentorAssignmentController;
 use App\Http\Controllers\HR\HRPayrollController;
 use App\Http\Controllers\HR\HRScreeningController;
+use App\Http\Controllers\HR\SelectionAIController;
+use App\Http\Controllers\HR\TFIDFSearchController;
 
 // Controllers — Super Admin
 use App\Http\Controllers\SuperAdmin\DashboardController as SuperAdminDashboardController;
 use App\Http\Controllers\SuperAdmin\TenantController;
 use App\Http\Controllers\SuperAdmin\UserController;
+use App\Http\Controllers\Company\CompanyConfigController;
 
 // Public routes
 Route::post('/register', [AuthController::class, 'register']);
@@ -48,38 +52,47 @@ Route::get('/c/{id_company}', [CompanyPublicController::class, 'show']);
 Route::get('/c/{id_company}/vacancies', [CompanyPublicController::class, 'vacancies']);
 Route::get('/invitation-codes/validate/{code}', [AuthController::class, 'validateInvitationCode']);
 Route::post('/auth/activate', [AuthController::class, 'activateAccount']);
+Route::options('/{any}', fn () => response()->noContent())->where('any', '.*');
 
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/profile', [AuthController::class, 'profile']);
-    Route::post('/logout', [AuthController::class, 'logout']);
 
-    // Company roles (for invitation code management)
-    Route::get('/company/roles', [AuthController::class, 'companyRoles']);
+    Route::get('/profile',          [AuthController::class, 'profile']);
+    Route::post('/logout',          [AuthController::class, 'logout']);
+    Route::get('/auth/profile',     [AuthController::class, 'profile']);
+    Route::post('/auth/logout',     [AuthController::class, 'logout']);
+    Route::get('/company/roles',    [AuthController::class, 'companyRoles']);
 
-    // Invitation Codes (Company Admin)
-    Route::get('/company/invitation-codes', [AuthController::class, 'listInvitationCodes']);
-    Route::post('/company/invitation-codes', [AuthController::class, 'createInvitationCode']);
-    Route::patch('/company/invitation-codes/{id}/toggle', [AuthController::class, 'toggleInvitationCode']);
-    Route::delete('/company/invitation-codes/{id}', [AuthController::class, 'deleteInvitationCode']);
-    
-    // Company & Candidate creation (after registration)
-    Route::post('/create-company', [AuthController::class, 'createCompany']);
-    Route::post('/create-candidate-profile', [AuthController::class, 'createCandidateProfile']);
+    // Invitation Codes
+    Route::get('/company/invitation-codes',                  [AuthController::class, 'listInvitationCodes']);
+    Route::post('/company/invitation-codes',                 [AuthController::class, 'createInvitationCode']);
+    Route::patch('/company/invitation-codes/{id}/toggle',    [AuthController::class, 'toggleInvitationCode']);
+    Route::delete('/company/invitation-codes/{id}',          [AuthController::class, 'deleteInvitationCode']);
 
-    
-});
+    Route::post('/create-company',            [AuthController::class, 'createCompany']);
+    Route::post('/create-candidate-profile',  [AuthController::class, 'createCandidateProfile']);
 
-// Test
-Route::get('/test', fn () => response()->json(['message' => 'API Laravel berhasil']));
+    // Company Config
+    Route::prefix('company/config')->group(function () {
+        Route::get('/roles',                   [CompanyConfigController::class, 'listRoles']);
+        Route::post('/roles',                  [CompanyConfigController::class, 'storeRole']);
+        Route::put('/roles/{id}',              [CompanyConfigController::class, 'updateRole']);
+        Route::delete('/roles/{id}',           [CompanyConfigController::class, 'destroyRole']);
+        Route::get('/divisions',               [CompanyConfigController::class, 'listDivisions']);
+        Route::post('/divisions',              [CompanyConfigController::class, 'storeDivision']);
+        Route::put('/divisions/{id}',          [CompanyConfigController::class, 'updateDivision']);
+        Route::delete('/divisions/{id}',       [CompanyConfigController::class, 'destroyDivision']);
+        Route::get('/staff-positions',         [CompanyConfigController::class, 'listStaffPositions']);
+        Route::post('/staff-positions',        [CompanyConfigController::class, 'storeStaffPosition']);
+        Route::put('/staff-positions/{id}',    [CompanyConfigController::class, 'updateStaffPosition']);
+        Route::delete('/staff-positions/{id}', [CompanyConfigController::class, 'destroyStaffPosition']);
+        Route::get('/job-levels',              [CompanyConfigController::class, 'listJobLevels']);
+        Route::post('/job-levels',             [CompanyConfigController::class, 'storeJobLevel']);
+        Route::put('/job-levels/{id}',         [CompanyConfigController::class, 'updateJobLevel']);
+        Route::delete('/job-levels/{id}',      [CompanyConfigController::class, 'destroyJobLevel']);
+    });
 
-// Authenticated Routes (General)
-
-Route::middleware('auth:sanctum')->group(function () {
-
-// Auth
-Route::get('/auth/profile', [AuthController::class, 'profile']);
-Route::post('/auth/logout',  [AuthController::class, 'logout']);
+    Route::get('/test', fn () => response()->json(['message' => 'API Laravel berhasil']));
 
     // AI Proxy (Groq)
     Route::post('/ai/generate', function (Request $request) {
@@ -87,25 +100,18 @@ Route::post('/auth/logout',  [AuthController::class, 'logout']);
             if (!env('GROQ_API_KEY')) {
                 return response()->json(['error' => 'API Key belum di set. Silakan masukkan GROQ_API_KEY di file .env backend Anda.'], 500);
             }
-
-            $response = Http::withOptions([
-                'verify' => false,
-                'timeout' => 30
-            ])->withHeaders([
-                'Authorization' => 'Bearer ' . env('GROQ_API_KEY'),
-                'Content-Type' => 'application/json',
-            ])->post('https://api.groq.com/openai/v1/chat/completions', [
-                'model' => 'llama-3.3-70b-versatile',
-                'messages' => [
-                    ['role' => 'user', 'content' => $request->input('prompt')]
-                ],
-                'temperature' => 0.6,
-                'max_tokens' => 200
-            ]);
-            
+            $response = Http::withOptions(['verify' => false, 'timeout' => 30])
+                ->withHeaders([
+                    'Authorization' => 'Bearer ' . env('GROQ_API_KEY'),
+                    'Content-Type'  => 'application/json',
+                ])->post('https://api.groq.com/openai/v1/chat/completions', [
+                    'model'       => 'llama-3.3-70b-versatile',
+                    'messages'    => [['role' => 'user', 'content' => $request->input('prompt')]],
+                    'temperature' => 0.6,
+                    'max_tokens'  => 200,
+                ]);
             if ($response->successful()) {
-                $content = $response->json('choices.0.message.content');
-                return response()->json(['response' => $content]);
+                return response()->json(['response' => $response->json('choices.0.message.content')]);
             }
             return response()->json(['error' => 'Groq API error', 'details' => $response->body()], 500);
         } catch (\Exception $e) {
@@ -113,52 +119,81 @@ Route::post('/auth/logout',  [AuthController::class, 'logout']);
         }
     });
 
-    // User (candidate self-service)
-    Route::get('/users/me',                         [CandidateController::class, 'getMe']);
-    Route::put('/users/{id_user}',                  [CandidateController::class, 'updateUser']);
-    Route::post('/users/{id_user}/upload-avatar',   [CandidateController::class, 'uploadAvatar']);
-    Route::get('/positions',                        [CandidateController::class, 'getPositions']);
-    Route::get('/certificates',                     [CandidateController::class, 'getCertificates']);
-    Route::post('/logout',                          [CandidateController::class, 'logout']);
+    // User / Candidate self-service
+    Route::get('/users/me',                       [CandidateController::class, 'getMe']);
+    Route::put('/users/{id_user}',                [CandidateController::class, 'updateUser']);
+    Route::post('/users/{id_user}/upload-avatar', [CandidateController::class, 'uploadAvatar']);
+    Route::get('/positions',                      [CandidateController::class, 'getPositions']);
+    Route::get('/certificates',                   [CandidateController::class, 'getCertificates']);
 
-    // Candidate — apply
-    Route::get('/c/{id_company}/my-submission', [CompanyPublicController::class, 'mySubmission']);
-    Route::post('/c/{id_company}/apply',        [SubmissionController::class, 'apply']);
+    // Candidate apply
+    Route::get('/submissions',                    [SubmissionController::class, 'index']);
+    Route::get('/c/{id_company}/my-submission',   [CompanyPublicController::class, 'mySubmission']);
+    Route::post('/c/{id_company}/apply',          [SubmissionController::class, 'apply']);
 
     // Vacancies
-    Route::get('/vacancies',        [VacancyController::class, 'index']);
-    Route::post('/vacancies',       [VacancyController::class, 'store']);
-    Route::put('/vacancies/{id}',   [VacancyController::class, 'update']);
+    Route::get('/vacancies',         [VacancyController::class, 'index']);
+    Route::post('/vacancies',        [VacancyController::class, 'store']);
+    Route::put('/vacancies/{id}',    [VacancyController::class, 'update']);
     Route::delete('/vacancies/{id}', [VacancyController::class, 'destroy']);
 
     // Dashboard
-    Route::get('/dashboard/stats', [DashboardController::class, 'index']);
+    Route::get('/dashboard/stats',   [DashboardController::class, 'index']);
 
     // Programs
-    Route::get('/programs',                              [ProgramController::class, 'index']);
-    Route::get('/programs/{id_position}/competencies',   [ProgramController::class, 'getCompetencies']);
-    Route::post('/programs/{id_position}/competencies',  [ProgramController::class, 'updateCompetencies']);
+    Route::get('/programs',                               [ProgramController::class, 'index']);
+    Route::get('/programs/{id_position}/competencies',    [ProgramController::class, 'getCompetencies']);
+    Route::post('/programs/{id_position}/competencies',   [ProgramController::class, 'updateCompetencies']);
     Route::delete('/programs/{id_vacancy}/{id_position}', [ProgramController::class, 'destroy']);
 
     // Position catalog
-    Route::get('/positions/catalog',        [ProgramController::class, 'getCatalog']);
-    Route::post('/positions/catalog',       [ProgramController::class, 'storeCatalog']);
-    Route::put('/positions/catalog/{id}',   [ProgramController::class, 'updateCatalog']);
-    Route::delete('/positions/catalog/{id}', [ProgramController::class, 'destroyCatalog']);
+    Route::get('/positions/catalog',          [ProgramController::class, 'getCatalog']);
+    Route::post('/positions/catalog',         [ProgramController::class, 'storeCatalog']);
+    Route::put('/positions/catalog/{id}',     [ProgramController::class, 'updateCatalog']);
+    Route::delete('/positions/catalog/{id}',  [ProgramController::class, 'destroyCatalog']);
 
     // Company users
-    Route::get('/company-users',        [CompanyUserController::class, 'index']);
-    Route::post('/company-users',       [CompanyUserController::class, 'store']);
-    Route::put('/company-users/{id}',   [CompanyUserController::class, 'update']);
+    Route::get('/company-users',         [CompanyUserController::class, 'index']);
+    Route::post('/company-users',        [CompanyUserController::class, 'store']);
+    Route::put('/company-users/{id}',    [CompanyUserController::class, 'update']);
     Route::delete('/company-users/{id}', [CompanyUserController::class, 'destroy']);
 
     // Company profile
-    Route::put('/company/profile',   [CompanyController::class, 'updateProfile']);
-    Route::post('/company/logo',     [CompanyController::class, 'uploadLogo']);
-    Route::delete('/company/logo',   [CompanyController::class, 'removeLogo']);
+    Route::put('/company/profile',  [CompanyController::class, 'updateProfile']);
+    Route::post('/company/logo',    [CompanyController::class, 'uploadLogo']);
+    Route::delete('/company/logo',  [CompanyController::class, 'removeLogo']);
+
 });
 
 // Super Admin Routes
+
+Route::post('/auth/login-superadmin', function (Request $request) {
+    $validated = $request->validate([
+        'email'    => 'required|email',
+        'password' => 'required|string',
+    ]);
+
+    $user = \App\Models\User::where('email', $validated['email'])
+                ->where('role', 'super_admin')
+                ->first();
+
+    if (!$user || !\Illuminate\Support\Facades\Hash::check($validated['password'], $user->password)) {
+        return response()->json(['message' => 'Invalid credentials or not a super admin'], 401);
+    }
+
+    $token = $user->createToken('auth_token')->plainTextToken;
+
+    return response()->json([
+        'message' => 'Login successful',
+        'token'   => $token,
+        'user'    => [
+            'id_user' => $user->id_user,
+            'name'    => $user->name,
+            'email'   => $user->email,
+            'role'    => $user->role,
+        ],
+    ]);
+});
 
 Route::prefix('superadmin')->middleware(['auth:sanctum', 'superadmin'])->group(function () {
     Route::get('/dashboard/stats',      [SuperAdminDashboardController::class, 'stats']);
@@ -182,6 +217,27 @@ Route::prefix('candidate')->middleware(['auth:sanctum', 'ensureCandidate'])->gro
     Route::get('/skills',              [CandidateController::class, 'getSkills']);
     Route::post('/skills',             [CandidateController::class, 'addSkill']);
     Route::delete('/skills/{id_skill}', [CandidateController::class, 'deleteSkill']);
+});
+
+// Team Invitation Routes (Authenticated candidates)
+
+Route::middleware('auth:sanctum')->group(function () {
+    // Public validation (no login required for some endpoints)
+    Route::get('/team-invitations/{token}/validate', [TeamInvitationController::class, 'validate']);
+    Route::post('/team-invitations/{token}/join', [TeamInvitationController::class, 'join']);
+    Route::get('/leader/program', [ProgramController::class, 'leaderProgramView']);
+    Route::get('/leader/invitations', [TeamInvitationController::class, 'getLeaderInvitations']);
+
+
+    // Protected team invitation endpoints
+    Route::post('/teams',                            [TeamInvitationController::class, 'createTeam']);
+    Route::post('/team-invitations',                  [TeamInvitationController::class, 'create']);
+    Route::post('/team-invitations/{token}/join',    [TeamInvitationController::class, 'join']);
+    Route::get('/team-invitations',                 [TeamInvitationController::class, 'getLeaderInvitations']);
+    Route::get('/my-teams',                          [TeamInvitationController::class, 'listMyTeams']);
+    Route::patch('/team-invitations/{id}/toggle',    [TeamInvitationController::class, 'toggle']);
+    Route::delete('/team-invitations/{id}',          [TeamInvitationController::class, 'revoke']);
+    Route::post('/team-invitations/{id}/regenerate', [TeamInvitationController::class, 'regenerate']);
 });
 
 // Member Routes (Team Member Tasks)
@@ -227,7 +283,7 @@ Route::prefix('mentor')->middleware(['auth:sanctum', 'mentorRole'])->group(funct
     Route::get('/certificates',             [MentorController::class, 'getCertificates']);
     Route::post('/certificates/bulk-generate', [MentorController::class, 'bulkGenerateCertificates']);
     Route::post('/certificates/bulk-send',     [MentorController::class, 'bulkSendCertificates']);
-    
+
     // Tasks
     Route::get('/assign-targets', [App\Http\Controllers\MentorTaskController::class, 'getAssignTargets']);
     Route::get('/competencies', [App\Http\Controllers\MentorTaskController::class, 'getCompetencies']);
@@ -248,23 +304,16 @@ Route::middleware(['auth:sanctum'])->prefix('intern')->group(function () {
 Route::middleware(['auth:sanctum'])->prefix('hr')->group(function () {
     Route::get('/dashboard', [HRDashboardController::class, 'index']);
 
-    // Apprentices
-    Route::get('/apprentices', [HRCandidateController::class, 'apprentices']);
-
-    // Candidates
     Route::get('/candidates/export',                [HRCandidateController::class, 'exportCsv']);
     Route::get('/candidates/all',                   [HRCandidateController::class, 'allCandidates']);
     Route::get('/candidates',                       [HRCandidateController::class, 'index']);
     Route::patch('/candidates/{id}/accept',         [HRCandidateController::class, 'accept']);
     Route::patch('/candidates/{id}/reject',         [HRCandidateController::class, 'reject']);
     Route::patch('/candidates/{id}/stage',          [HRCandidateController::class, 'updateStage']);
+    Route::patch('/candidates/{id}/notes',          [HRCandidateController::class, 'updateNotes']);
     Route::patch('/candidates/{id}/screening',      [HRCandidateController::class, 'screening']);
     Route::patch('/candidates/{id}/interview',      [HRCandidateController::class, 'interview']);
-    Route::patch('/candidates/{id}/notes',          [HRCandidateController::class, 'updateNotes']);   
     Route::get('/candidates/{id}/documents/{type}', [HRCandidateController::class, 'viewDocument']);
-    Route::post('/positions/{id}/test-templates',   [HRCandidateController::class, 'saveTestTemplates']);
-    Route::delete('/positions/{id}/test-templates/{template_id}', [HRCandidateController::class, 'deleteTestTemplate']);
-    Route::post('/candidates/bulk-assign-test',     [HRCandidateController::class, 'bulkAssignTest']);
 
     // Screening
     Route::get('/screening',                        [HRScreeningController::class, 'index']);
@@ -302,6 +351,19 @@ Route::middleware(['auth:sanctum'])->prefix('hr')->group(function () {
     Route::post('/assign-mentor',         [HRMentorAssignmentController::class, 'assign']);
     Route::post('/assign-mentor/auto',    [HRMentorAssignmentController::class, 'autoAssign']);
     Route::delete('/assign-mentor/{id}',  [HRMentorAssignmentController::class, 'unassign']);
+
+    // TF-IDF Search (legacy)
+    Route::get('candidates/tfidf-search', [TFIDFSearchController::class, 'search']);
+    Route::get('candidates/index-stats', [TFIDFSearchController::class, 'indexStats']);
+    Route::post('candidates/classify-batch', [TFIDFSearchController::class, 'classifyBatch']);
+    Route::get('candidates/{id}/classify', [TFIDFSearchController::class, 'classify']);
+
+    // Selection AI
+    Route::prefix('selection')->group(function () {
+        Route::post('/rank-stage', [SelectionAIController::class, 'rankStage']);
+        Route::get('/summarize/{id}', [SelectionAIController::class, 'summarize']);
+        Route::get('/suggest/{id}', [SelectionAIController::class, 'suggestDecision']);
+    });
 });
 
 // Development-only Routes (DEBUG mode)

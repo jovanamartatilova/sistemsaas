@@ -290,6 +290,10 @@ class HRCandidateController extends Controller
             'has_cover_letter'=> !empty($s->cover_letter_file),
             'has_portfolio'   => !empty($s->portfolio_file),
             'has_institution_letter' => !empty($s->institution_letter_file),
+            'cv_url'          => $s->cv_file ? asset('storage/' . $s->cv_file) : null,
+            'cover_letter_url'=> $s->cover_letter_file ? asset('storage/' . $s->cover_letter_file) : null,
+            'portfolio_url'   => $s->portfolio_file ? asset('storage/' . $s->portfolio_file) : null,
+            'institution_letter_url' => $s->institution_letter_file ? asset('storage/' . $s->institution_letter_file) : null,
         ];
     }
 
@@ -423,6 +427,10 @@ class HRCandidateController extends Controller
             'has_cover_letter'       => !empty($s->cover_letter_file),
             'has_portfolio'          => !empty($s->portfolio_file),
             'has_institution_letter' => !empty($s->institution_letter_file),
+            'cv_url'                 => $s->cv_file ? asset('storage/' . $s->cv_file) : null,
+            'cover_letter_url'       => $s->cover_letter_file ? asset('storage/' . $s->cover_letter_file) : null,
+            'portfolio_url'          => $s->portfolio_file ? asset('storage/' . $s->portfolio_file) : null,
+            'institution_letter_url' => $s->institution_letter_file ? asset('storage/' . $s->institution_letter_file) : null,
         ];
     }
 

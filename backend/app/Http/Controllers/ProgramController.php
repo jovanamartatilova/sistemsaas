@@ -31,7 +31,7 @@ class ProgramController extends Controller
             foreach ($vacancy->positions as $position) {
                 // Determine applicants for THIS specific program and position linkage
                 $linkApplicants = $position->submissions->where('id_vacancy', $vacancy->id_vacancy);
-                
+
                 $programs[] = [
                     'id_vacancy' => $vacancy->id_vacancy,
                     'vacancy_title' => $vacancy->title,
@@ -79,7 +79,7 @@ class ProgramController extends Controller
             'competencies.*.description' => 'nullable|string|max:255',
             'selection_flow' => 'nullable|array',
             'selection_flow.*.type' => 'required|string|max:50',
-            'selection_flow.*.name' => 'required|string|max:100',
+            'selection_flow.*.name' => 'nullable|string|max:100',
             'selection_flow.*.description' => 'nullable|string|max:1000',
         ]);
 
@@ -87,7 +87,7 @@ class ProgramController extends Controller
         $exists = Position::where('id_company', $id_company)
             ->where('name', $validated['name'])
             ->exists();
-        
+
         if ($exists) {
             return response()->json(['error' => 'A position with this name already exists in your catalog.'], 422);
         }
@@ -134,7 +134,7 @@ class ProgramController extends Controller
     {
         $id_company = $request->user()->id_company;
         $position = Position::where('id_position', $id)->where('id_company', $id_company)->firstOrFail();
-        
+
         $validated = $request->validate([
             'name' => 'required|string|max:100',
             'competencies' => 'nullable|array',
@@ -143,7 +143,7 @@ class ProgramController extends Controller
             'competencies.*.description' => 'nullable|string|max:255',
             'selection_flow' => 'nullable|array',
             'selection_flow.*.type' => 'required|string|max:50',
-            'selection_flow.*.name' => 'required|string|max:100',
+            'selection_flow.*.name' => 'nullable|string|max:100',
             'selection_flow.*.description' => 'nullable|string|max:1000',
         ]);
 
@@ -152,7 +152,7 @@ class ProgramController extends Controller
             ->where('name', $validated['name'])
             ->where('id_position', '!=', $id)
             ->exists();
-        
+
         if ($exists) {
             return response()->json(['error' => 'Another position with this name already exists in your catalog.'], 422);
         }
@@ -258,6 +258,43 @@ class ProgramController extends Controller
             return response()->json(['error' => 'Failed to save competencies'], 500);
         }
     }
+
+    public function leaderProgramView(Request $request)
+{
+    $user = $request->user();
+
+    $team = TeamMember::where('id_user', $user->id_user)
+        ->with('team')
+        ->first();
+
+    if (!$team) {
+        return response()->json([
+            'success' => true,
+            'data' => null
+        ]);
+    }
+
+    $invitation = TeamInvitation::where('id_team', $team->id_team)
+        ->where('is_active', true)
+        ->first();
+
+    $program = Submission::where('id_team', $team->id_team)
+        ->first();
+
+    return response()->json([
+        'success' => true,
+        'data' => [
+            'team_name' => $team->team->name ?? null,
+            'role' => $team->role,
+            'invitation_link' => $invitation
+                ? env('APP_URL', 'http://localhost:3000') . "/join/{$invitation->token}"
+                : null,
+            'competencies' => $program?->competencies ?? [],
+            'program_name' => $program?->position_name ?? null,
+            'status' => $program?->status ?? null,
+        ]
+    ]);
+}
 
     /**
      * Remove a position from a vacancy.
