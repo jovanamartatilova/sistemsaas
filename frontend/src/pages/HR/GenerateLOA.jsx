@@ -344,7 +344,14 @@ export default function GenerateLoAHR() {
     },
   ];
 
-  if (pageLoading) return <LoadingSpinner message="Loading generate LoA..." />;
+  if (pageLoading) return (
+  <div style={{ display: "flex", minHeight: "100vh", background: "#f8fafc", fontFamily: "'Poppins', 'Segoe UI', sans-serif" }}>
+    <SidebarHR user={user} onLogout={() => setShowLogout(true)} />
+    <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <LoadingSpinner fullScreen={false} message="Loading generate LoA..." />
+    </div>
+  </div>
+);
 
   return (
     <div style={{

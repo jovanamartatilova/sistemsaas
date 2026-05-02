@@ -563,7 +563,14 @@ export default function SelectionHR() {
     } catch { alert('Document not found'); }
   };
 
-  if (loading) return <LoadingSpinner message='Loading...' />;
+  if (loading) return (
+  <div style={{ display: "flex", minHeight: "100vh", background: "#f8fafc", fontFamily: "'Poppins', sans-serif" }}>
+    <SidebarHR user={user} onLogout={() => setShowLogoutModal(true)} />
+    <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <LoadingSpinner fullScreen={false} message="Loading selection..." />
+    </div>
+  </div>
+);
 
   const currentGroup = stageGroups.find(g => g.type === activeTab);
 

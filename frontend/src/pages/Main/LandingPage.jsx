@@ -183,19 +183,19 @@ const formatDate = (dateStr) => {
 };
 
 // ── VacancyDetailModal ────────────────────────────────────────────────────────
+
 const VacancyDetailModal = ({ vacancy, onClose }) => {
   if (!vacancy) return null;
   const navigate = useNavigate();
   const companyId = vacancy.company?.id_company || "";
 
-  const handleApply = (position) => {
-    if (!companyId || !position?.id_position) {
-      alert("Perusahaan belum lengkap profilnya.");
+  const handleApply = () => {
+    if (!companyId) {
+      alert("Company profile is incomplete.");
       return;
     }
-
     onClose();
-    navigate(`/c/${companyId}/apply/${vacancy.id_vacancy}/${position.id_position}`);
+    navigate(`/c/${companyId}/apply/${vacancy.id_vacancy}`);
   };
 
   return (
@@ -207,7 +207,7 @@ const VacancyDetailModal = ({ vacancy, onClose }) => {
           <p style={{ fontSize: "14px", fontWeight: "600", color: "#4a9eff", marginBottom: "8px" }}>{vacancy.company?.name}</p>
           <h2 style={{ fontSize: "28px", fontWeight: "800", color: "#fff", margin: "0 0 16px" }}>{vacancy.title}</h2>
           <div style={{ marginBottom: "28px" }}>
-            <h4 style={{ fontSize: "15px", fontWeight: "700", color: "rgba(255,255,255,0.9)", margin: "0 0 8px" }}>Deskripsi</h4>
+            <h4 style={{ fontSize: "15px", fontWeight: "700", color: "rgba(255,255,255,0.9)", margin: "0 0 8px" }}>Description</h4>
             <div style={{ fontSize: "15px", color: "rgba(255,255,255,0.6)", lineHeight: "1.7", margin: 0, whiteSpace: "pre-wrap" }}>{vacancy.description}</div>
           </div>
           <div style={{ marginBottom: "28px" }}>
@@ -215,16 +215,10 @@ const VacancyDetailModal = ({ vacancy, onClose }) => {
             <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
               {(vacancy.positions || []).map((p, idx) => (
                 <div key={idx} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 12px", background: "rgba(255,255,255,0.03)", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.05)" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "15px", color: "rgba(255,255,255,0.8)" }}><IconDot /> <span>{p.name || p}</span></div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                    <span style={{ fontSize: "12px", fontWeight: "700", color: "#4a9eff", background: "rgba(74,158,255,0.1)", padding: "2px 8px", borderRadius: "6px" }}>{p.pivot?.quota || 0} Quota</span>
-                    <button
-                      onClick={() => handleApply(p)}
-                      style={{ padding: "7px 12px", borderRadius: "8px", border: "none", background: "linear-gradient(135deg, #2d7dd2 0%, #4a9eff 100%)", color: "#fff", fontSize: "12px", fontWeight: "700", cursor: "pointer", fontFamily: "inherit" }}
-                    >
-                      Apply
-                    </button>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "15px", color: "rgba(255,255,255,0.8)" }}>
+                    <IconDot /><span>{p.name || p}</span>
                   </div>
+                  <span style={{ fontSize: "12px", fontWeight: "700", color: "#4a9eff", background: "rgba(74,158,255,0.1)", padding: "2px 8px", borderRadius: "6px" }}>{p.pivot?.quota || 0} Quota</span>
                 </div>
               ))}
             </div>
@@ -239,9 +233,17 @@ const VacancyDetailModal = ({ vacancy, onClose }) => {
             <span style={{ fontSize: "12px", fontWeight: "700", textTransform: "capitalize", padding: "6px 14px", borderRadius: "8px", background: "rgba(16,185,129,0.1)", color: "#10b981" }}>{vacancy.payment_type}</span>
             <span style={{ fontSize: "11px", fontWeight: "700", background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.5)", padding: "6px 14px", borderRadius: "8px", marginLeft: "auto" }}>{vacancy.total_quota || 0} Total Quota</span>
           </div>
-          <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.55)", lineHeight: "1.6", margin: 0 }}>
-            Pilih salah satu posisi di atas untuk lanjut ke submission form.
+          <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.55)", lineHeight: "1.6", margin: "0 0 16px" }}>
+            You will choose your desired position in the application form.
           </p>
+          <button
+            onClick={handleApply}
+            style={{ width: "100%", padding: "14px", borderRadius: "12px", border: "none", background: "linear-gradient(135deg, #2d7dd2 0%, #4a9eff 100%)", color: "#fff", fontSize: "15px", fontWeight: "700", cursor: "pointer", fontFamily: "inherit", transition: "all 0.2s", boxShadow: "0 4px 16px rgba(74,158,255,0.35)" }}
+            onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 6px 24px rgba(74,158,255,0.5)"; }}
+            onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 4px 16px rgba(74,158,255,0.35)"; }}
+          >
+            Apply Now
+          </button>
         </div>
       </div>
     </div>
@@ -272,13 +274,29 @@ export default function LandingPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
 
-  const handleEmailSubmit = (e) => {
+  const handleEmailSubmit = async (e) => {
     e.preventDefault();
-    setEmailSent(true);
-    setTimeout(() => setEmailSent(false), 4000);
-    setEmailForm({ name: "", email: "", message: "" });
+    try {
+      const res = await fetch("http://localhost:8000/api/contact", {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          "Accept": "application/json",  // ← tambah ini
+        },
+        body: JSON.stringify({
+          name: emailForm.name,
+          email: emailForm.email,
+          message: emailForm.message,
+        }),
+      });
+      if (!res.ok) throw new Error("Failed");
+      setEmailSent(true);
+      setTimeout(() => setEmailSent(false), 4000);
+      setEmailForm({ name: "", email: "", message: "" });
+    } catch {
+      alert("Failed to send message. Please try again.");
+    }
   };
-
   // ── Boolean Retrieval Search ──────────────────────────────────────────────────
   const booleanSearch = (query, data) => {
     if (!query.trim()) return data;
@@ -337,7 +355,7 @@ export default function LandingPage() {
   const handleSearchReset = () => { setSearchQuery(""); setSearchResults(null); setCurrentPage(1); };
 
   // Vacancies yang ditampilkan: hasil search atau semua data
-  const displayedVacancies = searchResults !== null ? searchResults : vacancies;
+  const displayedVacancies = (searchResults !== null ? searchResults : vacancies).filter(v => v.company?.status !== "suspended");
 
   // Dashboard link logic
   const getDashboardPath = () => {
@@ -403,8 +421,8 @@ export default function LandingPage() {
         </Link>
 
         <div style={{ display: "flex", alignItems: "center", gap: "32px" }} className="hidden-mobile">
-          {["Features", "How It Works", "Open Programs"].map((item) => (
-            <a key={item} href={`#${item.toLowerCase().replace(/\s+/g, "-")}`}
+              {["Features", "How It Works", "Open Programs"].map((item) => (
+                <a key={item} href={item === "Open Programs" ? "#open-positions" : `#${item.toLowerCase().replace(/\s+/g, "-")}`}
               style={{ color: "rgba(255,255,255,0.65)", textDecoration: "none", fontSize: "14px", fontWeight: "500", transition: "color 0.2s" }}
               onMouseEnter={(e) => (e.currentTarget.style.color = "#fff")}
               onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.65)")}
@@ -464,7 +482,7 @@ export default function LandingPage() {
       {mobileOpen && (
         <div style={{ position: "fixed", top: "64px", left: 0, right: 0, zIndex: 99, background: "rgba(6,16,30,0.97)", backdropFilter: "blur(16px)", borderBottom: "1px solid rgba(255,255,255,0.08)", padding: "20px 24px", display: "flex", flexDirection: "column", gap: "16px" }}>
           {["Features", "How It Works", "Open Programs"].map((item) => (
-            <a key={item} href={`#${item.toLowerCase().replace(/\s+/g, "-")}`} onClick={() => setMobileOpen(false)}
+            <a key={item} href={item === "Open Programs" ? "#open-positions" : `#${item.toLowerCase().replace(/\s+/g, "-")}`} onClick={() => setMobileOpen(false)}
               style={{ color: "rgba(255,255,255,0.75)", textDecoration: "none", fontSize: "15px", fontWeight: "500" }}
             >{item}</a>
           ))}
@@ -543,7 +561,7 @@ export default function LandingPage() {
                   onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 6px 20px rgba(74,158,255,0.55)"; e.currentTarget.style.transform = "translateY(-1px)"; }}
                   onMouseLeave={e => { e.currentTarget.style.boxShadow = "0 4px 14px rgba(74,158,255,0.35)"; e.currentTarget.style.transform = "translateY(0)"; }}
                 >
-                  <IconSearch />Cari
+                  <IconSearch />Search
                 </button>
               </div>
             </form>
@@ -769,7 +787,12 @@ export default function LandingPage() {
                   onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-6px)"; e.currentTarget.style.background = "rgba(255,255,255,0.05)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)"; }}
                   onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.background = "rgba(255,255,255,0.03)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; }}
                 >
-                  <div style={{ width: "100%", height: "180px", position: "relative", overflow: "hidden", background: pos.photo ? `url(http://127.0.0.1:8000/storage/${pos.photo}) center/cover` : "rgba(255,255,255,0.05)" }} />
+                  {pos.photo ? (<img
+                      src={`http://127.0.0.1:8000/storage/${pos.photo}`}
+                      alt={pos.title}
+                      style={{ width: "100%", height: "auto", display: "block", objectFit: "contain" }}/>) : ( <div style={{ width: "100%", height: "180px", background: "rgba(255,255,255,0.05)" }} />
+                  )}
+          
                   <div style={{ padding: "20px 24px", flex: 1, display: "flex", flexDirection: "column" }}>
                     <p style={{ fontSize: "12px", fontWeight: "600", color: "#4a9eff", marginBottom: "4px" }}>{pos.company?.name}</p>
                     <h3 style={{ fontSize: "19px", fontWeight: "800", color: "#fff", margin: "0 0 14px", lineHeight: "1.3" }}>{pos.title} - Batch {pos.batch}</h3>
@@ -853,13 +876,6 @@ export default function LandingPage() {
                 onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; }}
               >Sign In</button>
             </div>
-            <div style={{ display: "flex", justifyContent: "center", gap: "24px", marginTop: "36px", flexWrap: "wrap" }}>
-              {["No credit card required", "Free 14-day trial", "Cancel anytime"].map((txt) => (
-                <div key={txt} style={{ display: "flex", alignItems: "center", gap: "7px", fontSize: "13px", color: "rgba(255,255,255,0.4)" }}>
-                  <IconCheck color="rgba(74,158,255,0.8)" />{txt}
-                </div>
-              ))}
-            </div>
           </div>
         </section>
       )}
@@ -879,9 +895,6 @@ export default function LandingPage() {
               <div style={{ display: "flex", flexDirection: "column", gap: "16px", alignItems: "center" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "13px", color: "rgba(255,255,255,0.6)" }}>
                   <span style={{ color: "#4a9eff" }}><IconLocation /></span>Surabaya, Indonesia
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "13px", color: "rgba(255,255,255,0.6)" }}>
-                  <span style={{ color: "#4a9eff" }}><IconMail /></span>support@earlypath.com
                 </div>
               </div>
             </div>

@@ -8,69 +8,87 @@ use Illuminate\Http\Request;
 
 class MemberTaskController extends Controller
 {
-    /**
-     * Get all tasks assigned to the authenticated member
-     */
     public function getTasks(Request $request)
-    {
-        try {
-            $user = $request->user();
+{
+    try {
+        $user = $request->user();
 
-            // Members should only see tasks assigned specifically to them as an individual
-            // They should NOT see team-level tasks directly unless they are the id_intern
-            $tasksQuery = Task::where('id_intern', $user->id_user)->whereHas('mentor');
+        $tasks = Task::where('id_intern', $user->id_user)
+            ->whereHas('mentor')
+            ->where('status', '!=', 'draft')
+            ->with(['mentor', 'parentTask.subTasks.intern'])
+            ->get();
 
-            // Exclude draft tasks, only show tasks that are sent (pending, in_progress, done)
-            $tasks = $tasksQuery->where('status', '!=', 'draft')
-                ->with(['mentor', 'parentTask.subTasks.intern'])
-                ->get()
-                ->map(fn($task) => [
-                    'id'               => $task->id_task,
-                    'id_task'          => $task->id_task,
-                    'title'            => $task->title ?? 'Task',
-                    'description'      => $task->description ?? '',
-                    'status'           => $task->status ?? 'pending',
-                    'assignedBy'       => $task->mentor?->name ?? 'Mentor',
-                    'deadline'         => $task->deadline_at,
-                    'feedback_notes'   => $task->feedback_notes,
-                    'parent_task'      => $task->parentTask ? [
-                        'id_task'     => $task->parentTask->id_task,
-                        'title'       => $task->parentTask->title,
-                        'description' => $task->parentTask->description,
-                        'siblings'    => $task->parentTask->subTasks
-                            ->where('id_task', '!=', $task->id_task) // exclude self
-                            ->map(fn($st) => [
-                                'id'           => $st->id_task,
-                                'id_task'      => $st->id_task,
-                                'title'        => $st->title,
-                                'description'  => $st->description,
-                                'assignee'     => $st->intern?->name ?? 'Unknown',
-                                'status'       => $st->status,
-                                'deadline'     => $st->deadline_at,
-                                'work'         => $st->work_attachments,
-                                'feedback_notes' => $st->feedback_notes,
-                            ])->values()
-                    ] : null,
-                    'work_attachments' => $task->work_attachments ?? [],
-                    'submitted_at'     => $task->submitted_at,
-                    'created_at'       => $task->created_at,
-                    'updated_at'       => $task->updated_at,
-                ]);
+        // Ambil data candidate & submission sekali aja
+        $candidate = \App\Models\Candidate::where('id_user', $user->id_user)->first();
+        $submission = \App\Models\Submission::where('id_user', $user->id_user)
+            ->where('status', 'accepted')
+            ->with(['position', 'vacancy.company'])
+            ->first();
 
+        // Ambil competencies dari task competency_ids
+        $allCompetencyIds = $tasks->pluck('competency_ids')->flatten()->filter()->unique()->values();
+        $competencies = \App\Models\Competency::whereIn('id_competency', $allCompetencyIds)
+            ->get(['id_competency', 'name', 'description', 'learning_hours']);
 
-            return response()->json([
-                'message' => 'Tasks retrieved successfully',
-                'data' => $tasks
-            ], 200);
+        $internInfo = [
+            'institution'     => $candidate?->institution,
+            'education_level' => $candidate?->education_level,
+            'major'           => $candidate?->major,
+            'position'        => $submission?->position?->name,
+            'company'         => $submission?->vacancy?->company?->name ?? $submission?->vacancy?->title,
+            'mentor_name'     => $tasks->first()?->mentor?->name,
+        ];
 
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Failed to retrieve tasks',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+        $mapped = $tasks->map(fn($task) => [
+            'id'               => $task->id_task,
+            'id_task'          => $task->id_task,
+            'title'            => $task->title ?? 'Task',
+            'description'      => $task->description ?? '',
+            'status'           => $task->status ?? 'pending',
+            'assignedBy'       => $task->mentor?->name ?? 'Mentor',
+            'deadline'         => $task->deadline_at,
+            'feedback_notes'   => $task->feedback_notes,
+            'parent_task'      => $task->parentTask ? [
+                'id_task'     => $task->parentTask->id_task,
+                'title'       => $task->parentTask->title,
+                'description' => $task->parentTask->description,
+                'siblings'    => $task->parentTask->subTasks
+                    ->where('id_task', '!=', $task->id_task)
+                    ->map(fn($st) => [
+                        'id'             => $st->id_task,
+                        'id_task'        => $st->id_task,
+                        'title'          => $st->title,
+                        'description'    => $st->description,
+                        'assignee'       => $st->intern?->name ?? 'Unknown',
+                        'status'         => $st->status,
+                        'deadline'       => $st->deadline_at,
+                        'work'           => $st->work_attachments,
+                        'feedback_notes' => $st->feedback_notes,
+                    ])->values()
+            ] : null,
+            'work_attachments'  => $task->work_attachments ?? [],
+            'submitted_at'      => $task->submitted_at,
+            'logbook_approved'  => $task->logbook_approved ?? false,
+            'created_at'        => $task->created_at,
+            'updated_at'        => $task->updated_at,
+            'competency_ids'    => $task->competency_ids ?? [],
+        ]);
+
+        return response()->json([
+            'message' => 'Tasks retrieved successfully',
+            'data'    => $mapped,
+            'intern_info'  => $internInfo,
+            'competencies' => $competencies,
+        ], 200);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'message' => 'Failed to retrieve tasks',
+            'error'   => $e->getMessage()
+        ], 500);
     }
-
+}
     /**
      * Update task status (pending, in_progress, done)
      */

@@ -113,6 +113,8 @@ const IC = {
   MapPin: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>,
   Phone: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.06 6.06l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" /></svg>,
   FileText: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /></svg>,
+  // Tambah di object IC:
+Inbox: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>,
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -153,6 +155,134 @@ function ErrorState({ message, onRetry }) {
         <button onClick={onRetry} style={{ padding: "8px 18px", borderRadius: "9px", border: "1px solid #e2e8f0", background: "#fff", fontSize: "13px", fontWeight: "600", color: "#475569", cursor: "pointer" }}>Retry</button>
       </div>
     </div>
+  );
+}
+
+// Message
+function MessagesPage({ onUnreadChange }) {
+  const [messages, setMessages] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState(null);
+
+  const fetchMessages = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("http://localhost:8000/api/superadmin/messages", {
+        headers: { Authorization: `Bearer ${localStorage.getItem("auth_token")}` },
+      });
+      const data = await res.json();
+      setMessages(data);
+      onUnreadChange?.(data.filter(m => !m.is_read).length);
+    } catch {
+      setMessages([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchMessages(); }, []);
+
+  const markRead = async (msg) => {
+    setSelected(msg);
+    if (!msg.is_read) {
+      await fetch(`http://localhost:8000/api/superadmin/messages/${msg.id}/read`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${localStorage.getItem("auth_token")}` },
+      });
+      fetchMessages();
+    }
+  };
+
+  const deleteMsg = async (id) => {
+    await fetch(`http://localhost:8000/api/superadmin/messages/${id}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${localStorage.getItem("auth_token")}` },
+    });
+    setSelected(null);
+    fetchMessages();
+  };
+
+  const formatDate = (str) => new Date(str).toLocaleDateString("en-GB", {
+    day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit"
+  });
+
+  return (
+    <main style={{ flex: 1, padding: "28px 28px 40px", overflowY: "auto", background: "#f8fafc" }}>
+      <div style={{ marginBottom: "22px" }}>
+        <div style={{ fontSize: "20px", fontWeight: "800", color: "#0f172a" }}>Messages</div>
+        <div style={{ fontSize: "13px", color: "#64748b", marginTop: "3px" }}>
+          Incoming messages from the landing page contact form.
+        </div>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1.4fr", gap: "20px", alignItems: "start" }}>
+        {/* List */}
+        <div style={{ background: "#fff", borderRadius: "16px", boxShadow: "0 1px 4px rgba(0,0,0,0.05)", overflow: "hidden" }}>
+          <div style={{ padding: "14px 18px", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span style={{ fontSize: "13px", fontWeight: "700", color: "#1e293b" }}>Inbox</span>
+            <span style={{ fontSize: "12px", color: "#64748b" }}>{messages.filter(m => !m.is_read).length} unread</span>
+          </div>
+          {loading ? <LoadingPage /> : messages.length === 0 ? (
+            <div style={{ padding: "48px 0", textAlign: "center", color: "#94a3b8", fontSize: "13.5px" }}>No messages yet</div>
+          ) : (
+            <div>
+              {messages.map(msg => (
+                <div key={msg.id} onClick={() => markRead(msg)}
+                  style={{
+                    padding: "14px 18px", borderBottom: "1px solid #f8fafc", cursor: "pointer",
+                    background: selected?.id === msg.id ? "#eff6ff" : msg.is_read ? "#fff" : "#fafbff",
+                    borderLeft: msg.is_read ? "3px solid transparent" : "3px solid #3b82f6",
+                    transition: "background 0.15s",
+                  }}
+                  onMouseEnter={e => { if (selected?.id !== msg.id) e.currentTarget.style.background = "#f8fafc"; }}
+                  onMouseLeave={e => { if (selected?.id !== msg.id) e.currentTarget.style.background = msg.is_read ? "#fff" : "#fafbff"; }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "8px" }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: "13.5px", fontWeight: msg.is_read ? "500" : "700", color: "#1e293b", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {msg.name}
+                      </div>
+                      <div style={{ fontSize: "12px", color: "#94a3b8", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{msg.email}</div>
+                      <div style={{ fontSize: "12px", color: "#64748b", marginTop: "4px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{msg.message}</div>
+                    </div>
+                    <div style={{ flexShrink: 0, textAlign: "right" }}>
+                      <div style={{ fontSize: "10.5px", color: "#94a3b8", whiteSpace: "nowrap" }}>{formatDate(msg.created_at)}</div>
+                      {!msg.is_read && <div style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#3b82f6", marginLeft: "auto", marginTop: "6px" }} />}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Detail */}
+        <div style={{ background: "#fff", borderRadius: "16px", boxShadow: "0 1px 4px rgba(0,0,0,0.05)", overflow: "hidden", position: "sticky", top: "76px" }}>
+          {!selected ? (
+            <div style={{ padding: "60px 0", textAlign: "center", color: "#94a3b8", fontSize: "13.5px" }}>
+              Select a message to read
+            </div>
+          ) : (
+            <>
+              <div style={{ padding: "20px 24px", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div>
+                  <div style={{ fontSize: "15px", fontWeight: "700", color: "#1e293b" }}>{selected.name}</div>
+                  <div style={{ fontSize: "12px", color: "#94a3b8", marginTop: "2px" }}>{selected.email}</div>
+                </div>
+                <button onClick={() => deleteMsg(selected.id)}
+                  style={{ padding: "7px 14px", borderRadius: "9px", border: "1px solid #fecdd3", background: "#fff1f2", fontSize: "12px", fontWeight: "700", color: "#be123c", cursor: "pointer" }}>
+                  Delete
+                </button>
+              </div>
+              <div style={{ padding: "24px" }}>
+                <div style={{ fontSize: "11px", color: "#94a3b8", marginBottom: "12px" }}>{formatDate(selected.created_at)}</div>
+                <div style={{ fontSize: "14px", color: "#475569", lineHeight: "1.75", whiteSpace: "pre-wrap" }}>{selected.message}</div>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </main>
   );
 }
 
@@ -250,15 +380,15 @@ function SideItem({ icon, label, active, onClick }) {
   );
 }
 
-// ── Sidebar ───────────────────────────────────────────────────────────────────
-// NOTE: Exported so it can be used as a standalone component if needed
-export function SuperAdminSidebar({ onLogout }) {
+// Ganti SuperAdminSidebar:
+export function SuperAdminSidebar({ onLogout, unreadCount = 0 }) {
   const navigate = useNavigate();
   const location = useLocation();
   const nav = [
-    { label: "Dashboard", icon: <IC.Dashboard />, path: "/superadmin/dashboard" },
-    { label: "Tenant Management", icon: <IC.Tenant />, path: "/superadmin/tenants" },
-    { label: "User Management", icon: <IC.Users />, path: "/superadmin/users" },
+    { label: "Dashboard",         icon: <IC.Dashboard />, path: "/superadmin/dashboard" },
+    { label: "Tenant Management", icon: <IC.Tenant />,    path: "/superadmin/tenants" },
+    { label: "User Management",   icon: <IC.Users />,     path: "/superadmin/users" },
+    { label: "Messages",          icon: <IC.Inbox />,     path: "/superadmin/messages", badge: unreadCount },
   ];
   const isActive = (path) => location.pathname.includes(path.split("/").pop());
 
@@ -270,20 +400,37 @@ export function SuperAdminSidebar({ onLogout }) {
       height: "100vh", position: "sticky", top: 0,
       padding: "20px 12px", gap: "4px", overflowY: "auto",
     }}>
-      {/* Logo */}
       <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "4px 6px 20px" }}>
         <img src="/assets/images/logo.png" alt="Logo" style={{ height: "46px", objectFit: "contain", flexShrink: 0 }} />
         <span style={{ fontSize: "15px", fontWeight: "800", color: "#fff", letterSpacing: "-0.3px", whiteSpace: "nowrap" }}>EarlyPath</span>
       </div>
 
       <p style={{ fontSize: "10px", fontWeight: "700", color: "rgba(255,255,255,0.25)", letterSpacing: "1.2px", padding: "0 14px 4px", textTransform: "uppercase" }}>Main Menu</p>
+      
       {nav.map(n => (
-        <SideItem key={n.label} icon={n.icon} label={n.label} active={isActive(n.path)} onClick={() => navigate(n.path)} />
+        <button key={n.label} onClick={() => navigate(n.path)}
+          onMouseEnter={e => { if (!isActive(n.path)) e.currentTarget.style.background = "rgba(255,255,255,0.05)"; }}
+          onMouseLeave={e => { if (!isActive(n.path)) e.currentTarget.style.background = "transparent"; }}
+          style={{
+            display: "flex", alignItems: "center", gap: "11px",
+            width: "100%", padding: "10px 14px", borderRadius: "10px",
+            background: isActive(n.path) ? "rgba(74,158,255,0.12)" : "transparent",
+            border: isActive(n.path) ? "1px solid rgba(74,158,255,0.22)" : "1px solid transparent",
+            color: isActive(n.path) ? "#4a9eff" : "rgba(255,255,255,0.6)",
+            fontSize: "13.5px", fontWeight: isActive(n.path) ? "600" : "500",
+            cursor: "pointer", transition: "all 0.2s", textAlign: "left",
+          }}>
+          <span style={{ opacity: isActive(n.path) ? 1 : 0.75, flexShrink: 0 }}>{n.icon}</span>
+          <span style={{ flex: 1 }}>{n.label}</span>
+          {n.badge > 0 && (
+            <span style={{ background: "#ef4444", color: "#fff", borderRadius: "99px", fontSize: "10px", fontWeight: "700", padding: "1px 6px", minWidth: "18px", textAlign: "center" }}>
+              {n.badge}
+            </span>
+          )}
+        </button>
       ))}
 
       <div style={{ flex: 1 }} />
-
-      {/* Profile bottom */}
       <div style={{ borderTop: "1px solid rgba(255,255,255,0.07)", paddingTop: "14px", display: "flex", alignItems: "center", gap: "10px" }}>
         <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: "linear-gradient(135deg,#2d7dd2,#4a9eff)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: "800", color: "#fff", flexShrink: 0 }}>SA</div>
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -580,14 +727,27 @@ function TenantManagementPage() {
                       onMouseEnter={e => e.currentTarget.style.background = "#fafbfc"}
                       onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
                       <td style={{ padding: "12px 16px", verticalAlign: "middle", textAlign: "left" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                        <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: `${ac}18`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", fontWeight: "800", color: ac, flexShrink: 0 }}>{initials(t.name)}</div>
-                        <div style={{ minWidth: 0 }}>
-                          <div style={{ fontSize: "13.5px", fontWeight: "600", color: "#1e293b", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.name}</div>
-                          <div style={{ fontSize: "11px", color: "#94a3b8", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.email}</div>
+                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                          {/* Ganti icon initials dengan logo */}
+                          {t.logo_path
+                            ? <img
+                                src={`http://127.0.0.1:8000/storage/${t.logo_path}`}
+                                alt={t.name}
+                                style={{ width: "32px", height: "32px", borderRadius: "8px", objectFit: "cover", flexShrink: 0, border: "1px solid #f1f5f9" }}
+                                onError={e => { e.target.style.display = "none"; e.target.nextSibling.style.display = "flex"; }}
+                              />
+                            : null
+                          }
+                          {/* Fallback initials kalau logo tidak ada */}
+                          <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: `${ac}18`, display: t.logo_path ? "none" : "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", fontWeight: "800", color: ac, flexShrink: 0 }}>
+                            {initials(t.name)}
+                          </div>
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontSize: "13.5px", fontWeight: "600", color: "#1e293b", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.name}</div>
+                            <div style={{ fontSize: "11px", color: "#94a3b8", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.email}</div>
+                          </div>
                         </div>
-                      </div>
-                    </td>
+                      </td>
                     <td style={{ padding: "12px 16px", fontSize: "13.5px", fontWeight: "600", color: "#1e293b", verticalAlign: "middle", textAlign: "center" }}>{t.users_count ?? 0}</td>
                     <td style={{ padding: "12px 16px", fontSize: "13.5px", fontWeight: "600", color: "#1e293b", verticalAlign: "middle", textAlign: "center" }}>{t.vacancies_count ?? 0}</td>
                     <td style={{ padding: "12px 16px", fontSize: "12.5px", color: "#64748b", verticalAlign: "middle", textAlign: "center" }}>{t.created_at}</td>
@@ -664,11 +824,8 @@ function UserManagementPage() {
     setSearch("");
     setRoleFilter("all");
   };
-
-  // Kolom employees
-  const EMP_COLS = ["NAME", "EMAIL", "ROLE", "COMPANY", "PHONE", "DEPARTMENT", "POSITION", "JOB LEVEL", "STATUS", "SCHEDULE", "REGISTERED"];
-  // Kolom candidates
-  const CAND_COLS = ["NAME", "EMAIL", "PHONE", "INSTITUTION", "EDUCATION LEVEL", "MAJOR", "REGISTERED"];
+  const EMP_COLS = ["NAME", "EMAIL", "ROLE", "COMPANY", "DEPARTMENT", "POSITION", "JOB LEVEL", "STATUS", "SCHEDULE", "REGISTERED"];
+  const CAND_COLS = ["NAME", "EMAIL", "PHONE", "INSTITUTION", "EDUCATION LEVEL", "MAJOR", "COMPANY", "POSITION", "PROGRAM", "TYPE", "REGISTERED"];
 
   const tdStyle = {
     padding: "11px 14px",
@@ -759,35 +916,42 @@ function UserManagementPage() {
                     <tr key={u.id}
                       onMouseEnter={e => e.currentTarget.style.background = "#fafbfc"}
                       onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-                      {tab === "employees" ? (
-                        <>
-                          <td style={{ ...tdStyle, fontWeight: "600", color: "#1e293b" }}>
-                            <div>{u.name ?? "—"}</div>
-                          </td>
-                          <td style={tdStyle}>{u.email ?? "—"}</td>
-                          <td style={tdStyle}>{u.role ?? "—"}</td>
-                          <td style={tdStyle}>{u.company ?? "—"}</td>
-                          <td style={tdStyle}>{u.phone ?? "—"}</td>
-                          <td style={tdStyle}>{u.department ?? "—"}</td>
-                          <td style={tdStyle}>{u.position ?? "—"}</td>
-                          <td style={tdStyle}>{u.job_level ?? "—"}</td>
-                          <td style={tdStyle}>{u.employee_status ?? "—"}</td>
-                          <td style={tdStyle}>{u.schedule ?? "—"}</td>
-                          <td style={tdStyle}>{u.registered ?? "—"}</td>
-                        </>
-                      ) : (
-                        <>
-                          <td style={{ ...tdStyle, fontWeight: "600", color: "#1e293b" }}>
-                            {u.name ?? "—"}
-                          </td>
-                          <td style={tdStyle}>{u.email ?? "—"}</td>
-                          <td style={tdStyle}>{u.phone ?? "—"}</td>
-                          <td style={tdStyle}>{u.institution ?? "—"}</td>
-                          <td style={tdStyle}>{u.education_level ?? "—"}</td>
-                          <td style={tdStyle}>{u.major ?? "—"}</td>
-                          <td style={tdStyle}>{u.registered ?? "—"}</td>
-                        </>
-                      )}
+                        {tab === "employees" ? (
+                          <>
+                            <td style={{ ...tdStyle, fontWeight: "600", color: "#1e293b" }}>{u.name ?? "—"}</td>
+                            <td style={tdStyle}>{u.email ?? "—"}</td>
+                            <td style={tdStyle}>{u.role ?? "—"}</td>
+                            <td style={tdStyle}>{u.company ?? "—"}</td>
+                            <td style={tdStyle}>{u.department ?? "—"}</td>
+                            <td style={tdStyle}>{u.position ?? "—"}</td>
+                            <td style={tdStyle}>{u.job_level ?? "—"}</td>
+                            <td style={tdStyle}>{u.employee_status ?? "—"}</td>
+                            <td style={tdStyle}>{u.schedule ?? "—"}</td>
+                            <td style={tdStyle}>{u.registered ?? "—"}</td>
+                          </>
+                        ) : (
+                          <>
+                            <td style={{ ...tdStyle, fontWeight: "600", color: "#1e293b" }}>{u.name ?? "—"}</td>
+                            <td style={tdStyle}>{u.email ?? "—"}</td>
+                            <td style={tdStyle}>{u.phone ?? "—"}</td>
+                            <td style={tdStyle}>{u.institution ?? "—"}</td>
+                            <td style={tdStyle}>{u.education_level ?? "—"}</td>
+                            <td style={tdStyle}>{u.major ?? "—"}</td>
+                            <td style={tdStyle}>{u.company ?? "—"}</td>
+                            <td style={tdStyle}>{u.position ?? "—"}</td>
+                            <td style={tdStyle}>{u.program ?? "—"}</td>
+                            <td style={tdStyle}>
+                              <span style={{
+                                fontSize: "11px", fontWeight: "700", padding: "3px 9px", borderRadius: "6px",
+                                background: u.team_type === "Leader" ? "rgba(74,158,255,0.1)" : u.team_type === "Member" ? "rgba(167,139,250,0.1)" : "rgba(255,255,255,0.05)",
+                                color: u.team_type === "Leader" ? "#4a9eff" : u.team_type === "Member" ? "#a78bfa" : "#94a3b8",
+                              }}>
+                                {u.team_type ?? "—"}
+                              </span>
+                            </td>
+                            <td style={tdStyle}>{u.registered ?? "—"}</td>
+                          </>
+                        )}
                     </tr>
                   ))}
                 </tbody>
@@ -812,6 +976,7 @@ function UserManagementPage() {
 export default function SuperAdminPages() {
   const navigate = useNavigate();
   const [logoutModal, setLogoutModal] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("auth_token"));
 
   useEffect(() => { setIsLoggedIn(!!localStorage.getItem("auth_token")); }, []);
@@ -829,6 +994,7 @@ export default function SuperAdminPages() {
     dashboard: { title: "Dashboard", sub: "Overview" },
     tenant: { title: "Tenant Management", sub: "Tenant List" },
     users: { title: "User Management", sub: "User List" },
+    messages:  { title: "Messages",          sub: "Inbox" },
   };
 
   const DashboardLayout = ({ children, pageTitle }) => (
@@ -842,13 +1008,12 @@ export default function SuperAdminPages() {
         @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
         .fade-in { animation: fadeIn 0.35s ease both; }
       `}</style>
-      <SuperAdminSidebar onLogout={() => setLogoutModal(true)} />
+
+       <SuperAdminSidebar onLogout={() => setLogoutModal(true)} unreadCount={unreadCount} />
       <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
         <Topbar title={pageTitle.title} sub={pageTitle.sub} />
         {children}
       </div>
-
-      {/* Logout modal */}
       {logoutModal && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(10,22,40,0.5)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center" }}>
           <div style={{ background: "#fff", borderRadius: "16px", padding: "28px", width: "340px", boxShadow: "0 20px 60px rgba(0,0,0,0.18)", textAlign: "left" }}>
@@ -868,10 +1033,11 @@ export default function SuperAdminPages() {
   return (
     <Routes>
       <Route path="/login" element={isLoggedIn ? <Navigate to="/superadmin/dashboard" replace /> : <LoginForm onLoginSuccess={() => { setIsLoggedIn(true); navigate("/superadmin/dashboard"); }} />} />
-      <Route path="/" element={isLoggedIn ? <DashboardLayout pageTitle={pageConfig.dashboard}><DashboardPage /></DashboardLayout> : <Navigate to="/superadmin/login" replace />} />
+      <Route path="/"         element={isLoggedIn ? <DashboardLayout pageTitle={pageConfig.dashboard}><DashboardPage /></DashboardLayout> : <Navigate to="/superadmin/login" replace />} />
       <Route path="/dashboard" element={isLoggedIn ? <DashboardLayout pageTitle={pageConfig.dashboard}><DashboardPage /></DashboardLayout> : <Navigate to="/superadmin/login" replace />} />
-      <Route path="/tenants" element={isLoggedIn ? <DashboardLayout pageTitle={pageConfig.tenant}><TenantManagementPage /></DashboardLayout> : <Navigate to="/superadmin/login" replace />} />
-      <Route path="/users" element={isLoggedIn ? <DashboardLayout pageTitle={pageConfig.users}><UserManagementPage /></DashboardLayout> : <Navigate to="/superadmin/login" replace />} />
+      <Route path="/tenants"   element={isLoggedIn ? <DashboardLayout pageTitle={pageConfig.tenant}><TenantManagementPage /></DashboardLayout> : <Navigate to="/superadmin/login" replace />} />
+      <Route path="/users"     element={isLoggedIn ? <DashboardLayout pageTitle={pageConfig.users}><UserManagementPage /></DashboardLayout> : <Navigate to="/superadmin/login" replace />} />
+      <Route path="/messages"  element={isLoggedIn ? <DashboardLayout pageTitle={pageConfig.messages}><MessagesPage onUnreadChange={setUnreadCount} /></DashboardLayout> : <Navigate to="/superadmin/login" replace />} />
     </Routes>
   );
 }

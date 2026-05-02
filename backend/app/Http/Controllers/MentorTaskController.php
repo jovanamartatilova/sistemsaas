@@ -445,4 +445,11 @@ class MentorTaskController extends Controller
             'url' => asset("storage/{$path}"),
         ]);
     }
+    public function approveLogbook($id)
+    {
+        $task = Task::findOrFail($id);
+        $task->logbook_approved = true;
+        $task->save();
+        return response()->json(['message' => 'Logbook approved', 'data' => $task]);
+    }
 }

@@ -18,11 +18,11 @@ class VacancyController extends Controller
      */
     public function publicIndex()
     {
-        // Auto-close vacancies past deadline
-        Vacancy::closeExpired();
-
         $vacancies = Vacancy::with(['company', 'positions'])
             ->where('status', 'published')
+            ->whereHas('company', function ($q) {
+                $q->where('status', 'active');
+            })
             ->get();
 
         return response()->json($vacancies);
@@ -75,7 +75,7 @@ class VacancyController extends Controller
             'province' => 'required|string|max:50',
             'address' => 'required|string|max:100',
             'type' => 'required|string|max:20',
-            'deadline' => 'required|string|max:30', 
+            'deadline' => 'required|string|max:30',
             'start_date' => 'required|string|max:30',
             'end_date' => 'required|string|max:30',
             'payment_type' => 'required|string|max:15',
@@ -95,7 +95,7 @@ class VacancyController extends Controller
             $posId = $posData['id_position'] ?? null;
             $posName = $posData['name'] ?? '';
             $posQuota = (int)($posData['quota'] ?? 0);
-            
+
             if ($posId) {
                 $position = Position::where('id_position', $posId)->first();
             } else if ($posName) {

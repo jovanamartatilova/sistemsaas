@@ -253,7 +253,14 @@ function JobCard({ job, onEdit, onDelete }) {
             onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
         >
             {/* Poster / Image Banner */}
-            <div style={{ width: "100%", height: 180, background: job.photo ? `url(http://127.0.0.1:8000/storage/${job.photo}) center/cover` : (job.image ? `url(${job.image}) center/cover` : "#e2e8f0"), position: "relative" }}>
+            <div style={{ width: "100%", position: "relative", backgroundColor: "#f1f5f9", height: 280, overflow: "hidden" }}>
+                {(job.photo || job.image) && (
+                    <img 
+                        src={job.photo ? `http://127.0.0.1:8000/storage/${job.photo}` : job.image} 
+                        alt="poster"
+                        style={{ width: "100%", height: "auto", display: "block", objectFit: "cover" }}
+                    />
+                )}
                 {job.status === "draft" && (
                     <div style={{ position: "absolute", top: 12, left: 12, background: "rgba(255,255,255,0.9)", backdropFilter: "blur(4px)", padding: "4px 10px", borderRadius: 20, fontSize: 11, fontWeight: 700, color: "#64748b", border: "1px solid rgba(0,0,0,0.1)" }}>
                         DRAFT
@@ -1106,11 +1113,6 @@ export default function ProgramManagement() {
                         <span style={{ fontSize: "13px", color: "#94a3b8", margin: "0 6px" }}>/</span>
                         <span style={{ fontSize: "13px", color: "#94a3b8" }}>Management</span>
                     </div>
-
-                    {/* Bell */}
-                    <button style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px", width: "38px", height: "38px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#64748b", position: "relative" }}>
-                        <Icon.Bell />
-                    </button>
                 </header>
 
                 {/* PAGE BODY */}

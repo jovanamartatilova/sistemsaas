@@ -30,6 +30,7 @@ class Task extends Model
         'parent_id_task',
         'delegated_by',
         'feedback_notes',
+        'logbook_approved',
     ];
 
     protected $casts = [

@@ -13,4 +13,9 @@ class Team extends Model
     public $timestamps = false;
 
     protected $fillable = ['id_team', 'name', 'team_code', 'created_at'];
+
+    public function members()
+    {
+        return $this->hasMany(TeamMember::class, 'id_team', 'id_team');
+    }
 }

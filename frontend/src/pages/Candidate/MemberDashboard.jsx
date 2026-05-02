@@ -6,6 +6,9 @@ import { useAuthStore } from "../../stores/authStore";
 import DashboardLayout from "../../components/DashboardLayout";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { getScopedRole } from "../../utils/roleUtils";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import * as XLSX from "xlsx";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
 
@@ -307,6 +310,8 @@ export default function MemberDashboard() {
   const [tasks, setTasks] = useState([]);
   const [error, setError] = useState(null);
   const [userPhoto, setUserPhoto] = useState(null);
+  const [internInfo, setInternInfo] = useState({});
+  const [competencies, setCompetencies] = useState([]);
 
   useEffect(() => {
     fetchMemberTasks();
@@ -342,11 +347,14 @@ export default function MemberDashboard() {
     try {
       setLoading(true);
       const token = localStorage.getItem("token") || localStorage.getItem("auth_token");
-      const endpoint = `/member/tasks`;
-      const res = await fetch(`${API_BASE_URL}${endpoint}`, { headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch(`${API_BASE_URL}/member/tasks`, { 
+        headers: { Authorization: `Bearer ${token}` } 
+      });
       if (!res.ok) throw new Error("Fetch failed");
       const data = await res.json();
       setTasks(data.data || []);
+      setInternInfo(data.intern_info || {});
+      setCompetencies(data.competencies || []);
     } catch (err) { setError(err.message); }
     finally { setLoading(false); }
   };
@@ -381,12 +389,250 @@ export default function MemberDashboard() {
     fetchMemberTasks();
   };
 
+  const flattenTasksForLogbook = () => {
+  const rows = [];
+  const traverse = (taskList) => {
+    taskList.forEach(task => {
+      if (task.submitted_at || task.work_attachments?.length > 0) {
+        rows.push({
+          title: task.title || "-",
+          description: task.description || "-",
+          status: task.status || "-",
+          deadline: task.deadline ? new Date(task.deadline).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "-",
+          submitted_at: task.submitted_at ? new Date(task.submitted_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "-",
+          attachments: task.work_attachments?.map(a => `${a.label}: ${a.value}`).join("\n") || "-",
+        });
+      }
+      if (task.children?.length > 0) traverse(task.children);
+    });
+  };
+  traverse(tasks);
+  return rows;
+};
+
+const exportPDF = () => {
+  const rows = flattenTasksForLogbook();
+  if (!rows.length) return alert("No submitted tasks to export.");
+  const isApproved = tasks.some(t => t.logbook_approved);
+  if (!isApproved) return alert("Your logbook hasn't been approved by your mentor yet.");
+
+  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+
+  // Header bar
+  doc.setFillColor(30, 41, 59);
+  doc.rect(0, 0, pageW, 38, "F");
+  doc.setFillColor(79, 70, 229);
+  doc.rect(0, 34, pageW, 4, "F");
+
+  // Title
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(16);
+  doc.setFont("helvetica", "bold");
+  doc.text("INTERNSHIP LOGBOOK", pageW / 2, 16, { align: "center" });
+  doc.setFontSize(8);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(148, 163, 184);
+  doc.text((internInfo.company || "").toUpperCase(), pageW / 2, 24, { align: "center" });
+
+  // Info grid — 2 columns
+  const boxY = 44;
+  const boxH = 44;
+  doc.setFillColor(248, 250, 252);
+  doc.setDrawColor(226, 232, 240);
+  doc.rect(14, boxY, pageW - 28, boxH, "FD");
+
+  const col1x = 18, col2x = pageW / 2 + 4;
+  const fields = [
+    ["NAME", user?.name || "-"],
+    ["INSTITUTION", internInfo.institution || "-"],
+    ["MAJOR", `${internInfo.education_level || ""} - ${internInfo.major || ""}`],
+  ];
+  const fields2 = [
+    ["POSITION", internInfo.position || "-"],
+    ["MENTOR", internInfo.mentor_name || user?.mentor_name || "-"],
+    ["PRINTED ON", new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })],
+  ];
+
+  fields.forEach((f, i) => {
+    const y = boxY + 9 + i * 13;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7);
+    doc.setTextColor(100, 116, 139);
+    doc.text(f[0], col1x, y);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(15, 23, 42);
+    doc.text(f[1], col1x, y + 5);
+  });
+
+  fields2.forEach((f, i) => {
+    const y = boxY + 9 + i * 13;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7);
+    doc.setTextColor(100, 116, 139);
+    doc.text(f[0], col2x, y);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(15, 23, 42);
+    doc.text(f[1], col2x, y + 5);
+  });
+
+  // Activity Table
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  doc.setTextColor(30, 41, 59);
+  doc.text("ACTIVITY LOG", 14, boxY + boxH + 10);
+  doc.setDrawColor(79, 70, 229);
+  doc.setLineWidth(0.5);
+  doc.line(14, boxY + boxH + 12, 55, boxY + boxH + 12);
+
+  autoTable(doc, {
+    startY: boxY + boxH + 16,
+    head: [["No", "Activity", "Description", "Deadline", "Submitted"]],
+    body: rows.map((r, i) => [i + 1, r.title, r.description, r.deadline, r.submitted_at]),
+    styles: { fontSize: 8, cellPadding: 3.5, overflow: "linebreak", textColor: [30, 41, 59] },
+    headStyles: { fillColor: [30, 41, 59], textColor: [255, 255, 255], fontStyle: "bold", fontSize: 7.5 },
+    alternateRowStyles: { fillColor: [248, 250, 252] },
+    tableLineColor: [226, 232, 240],
+    tableLineWidth: 0.2,
+    columnStyles: {
+      0: { cellWidth: 8, halign: "center" },
+      1: { cellWidth: 38 },
+      2: { cellWidth: 78 },
+      3: { cellWidth: 24, halign: "center" },
+      4: { cellWidth: 24, halign: "center" },
+    },
+    margin: { left: 14, right: 14 },
+  });
+
+  // Competencies section (if any)
+  if (competencies.length > 0) {
+    const finalY = doc.lastAutoTable.finalY + 10;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8);
+    doc.setTextColor(30, 41, 59);
+    doc.text("COMPETENCIES COVERED", 14, finalY);
+    doc.setDrawColor(79, 70, 229);
+    doc.line(14, finalY + 2, 72, finalY + 2);
+
+    autoTable(doc, {
+      startY: finalY + 6,
+      head: [["Competency", "Description", "Learning Hours"]],
+      body: competencies.map(c => [c.name, c.description || "-", c.learning_hours ? `${c.learning_hours} hrs` : "-"]),
+      styles: { fontSize: 7.5, cellPadding: 3, overflow: "linebreak", textColor: [30, 41, 59] },
+      headStyles: { fillColor: [79, 70, 229], textColor: [255, 255, 255], fontStyle: "bold", fontSize: 7.5 },
+      alternateRowStyles: { fillColor: [248, 250, 252] },
+      tableLineColor: [226, 232, 240],
+      tableLineWidth: 0.2,
+      columnStyles: {
+        0: { cellWidth: 45 },
+        1: { cellWidth: 110 },
+        2: { cellWidth: 27, halign: "center" },
+      },
+      margin: { left: 14, right: 14 },
+    });
+  }
+
+  // Footer per page
+  const totalPages = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= totalPages; i++) {
+    doc.setPage(i);
+    doc.setFillColor(30, 41, 59);
+    doc.rect(0, pageH - 10, pageW, 10, "F");
+    doc.setTextColor(148, 163, 184);
+    doc.setFontSize(7);
+    doc.text(`Page ${i} of ${totalPages}`, pageW / 2, pageH - 3.5, { align: "center" });
+    doc.text(internInfo.company || "", 14, pageH - 3.5);
+    doc.text(new Date().getFullYear().toString(), pageW - 14, pageH - 3.5, { align: "right" });
+  }
+
+  doc.save(`logbook_${user?.name || "intern"}_${new Date().toISOString().split("T")[0]}.pdf`);
+};
+
+const exportExcel = () => {
+  const rows = flattenTasksForLogbook();
+  if (!rows.length) return alert("No submitted tasks to export.");
+  const isApproved = tasks.some(t => t.logbook_approved);
+  if (!isApproved) return alert("Your logbook hasn't been approved by your mentor yet.");
+
+  const wb = XLSX.utils.book_new();
+
+  // Sheet 1: Intern Info
+  const infoData = [
+    ["INTERNSHIP LOGBOOK"],
+    [],
+    ["Name", user?.name || "-"],
+    ["Institution", internInfo.institution || "-"],
+    ["Education Level", internInfo.education_level || "-"],
+    ["Major", internInfo.major || "-"],
+    ["Position", internInfo.position || "-"],
+    ["Company", internInfo.company || "-"],
+    ["Mentor", internInfo.mentor_name || "-"],
+    ["Printed On", new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })],
+  ];
+  const wsInfo = XLSX.utils.aoa_to_sheet(infoData);
+  wsInfo["!cols"] = [{ wch: 20 }, { wch: 40 }];
+  XLSX.utils.book_append_sheet(wb, wsInfo, "Intern Info");
+
+  // Sheet 2: Activity Log
+  const activityData = [
+    ["No", "Activity", "Description", "Deadline", "Submitted At"],
+    ...rows.map((r, i) => [i + 1, r.title, r.description, r.deadline, r.submitted_at]),
+  ];
+  const wsActivity = XLSX.utils.aoa_to_sheet(activityData);
+  wsActivity["!cols"] = [{ wch: 5 }, { wch: 30 }, { wch: 50 }, { wch: 15 }, { wch: 15 }];
+  XLSX.utils.book_append_sheet(wb, wsActivity, "Activity Log");
+
+  // Sheet 3: Competencies
+  if (competencies.length > 0) {
+    const compData = [
+      ["Competency", "Description", "Learning Hours"],
+      ...competencies.map(c => [c.name, c.description || "-", c.learning_hours || "-"]),
+    ];
+    const wsComp = XLSX.utils.aoa_to_sheet(compData);
+    wsComp["!cols"] = [{ wch: 30 }, { wch: 60 }, { wch: 15 }];
+    XLSX.utils.book_append_sheet(wb, wsComp, "Competencies");
+  }
+
+  XLSX.writeFile(wb, `logbook_${user?.name || "intern"}_${new Date().toISOString().split("T")[0]}.xlsx`);
+};
+
   if (loading) return <DashboardLayout company={company}><LoadingSpinner message="Loading My Tasks" /></DashboardLayout>;
 
   return (
     <DashboardLayout userName={user?.name} userPhoto={userPhoto || user?.photo} company={company}>
       <div className="space-y-6 w-full text-left">
-        <h1 className="text-2xl font-bold text-slate-900">My Tasks</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-slate-900">My Tasks</h1>
+          <div className="flex gap-2">
+            <button
+              onClick={exportPDF}
+              disabled={!tasks.some(t => t.logbook_approved)}
+              className={`flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-lg border transition-all ${
+                tasks.some(t => t.logbook_approved)
+                  ? "bg-indigo-50 text-indigo-600 border-indigo-200 hover:bg-indigo-100 cursor-pointer"
+                  : "bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed"
+              }`}
+              title={!tasks.some(t => t.logbook_approved) ? "Waiting for mentor approval" : "Download Logbook PDF"}
+            >
+              {tasks.some(t => t.logbook_approved) ? "Logbook (PDF)" : "🔒 Logbook (Pending Approval)"}
+            </button>
+            <button
+              onClick={exportExcel}
+              disabled={!tasks.some(t => t.logbook_approved)}
+              className={`flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-lg border transition-all ${
+                tasks.some(t => t.logbook_approved)
+                  ? "bg-indigo-50 text-indigo-600 border-indigo-200 hover:bg-indigo-100 cursor-pointer"
+                  : "bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed"
+              }`}
+              title={!tasks.some(t => t.logbook_approved) ? "Waiting for mentor approval" : "Download Logbook Excel"}
+            >
+              {tasks.some(t => t.logbook_approved) ? "Logbook (Excel)" : "🔒 Logbook (Pending Approval)"}
+            </button>
+          </div>
+        </div>
         {error && <div className="p-4 bg-rose-50 text-rose-600 rounded-xl border border-rose-200">{error}</div>}
         <div className="space-y-4">
           {(() => {

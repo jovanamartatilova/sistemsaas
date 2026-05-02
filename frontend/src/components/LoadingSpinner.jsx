@@ -1,22 +1,28 @@
-// Consistent Loading Spinner for all Candidate pages
 export function LoadingSpinner({ fullScreen = true, message = "Loading..." }) {
   const content = (
-    <div className="flex items-center justify-center gap-3">
-      <div className="animate-spin rounded-full h-12 w-12 border-4 border-slate-200 border-t-indigo-600" />
-      <span className="text-slate-600 font-medium">{message}</span>
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12 }}>
+      <div style={{
+        width: 40, height: 40, borderRadius: "50%",
+        border: "4px solid #e2e8f0",
+        borderTopColor: "#6366f1",
+        animation: "spin 0.7s linear infinite",
+        flexShrink: 0,
+      }} />
+      <span style={{ fontSize: 14, fontWeight: 500, color: "#64748b" }}>{message}</span>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 
   if (fullScreen) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div style={{ minHeight: "100vh", background: "#f8fafc", display: "flex", alignItems: "center", justifyContent: "center" }}>
         {content}
       </div>
     );
   }
 
   return (
-    <div className="py-12 flex items-center justify-center">
+    <div style={{ padding: "48px 0", display: "flex", alignItems: "center", justifyContent: "center" }}>
       {content}
     </div>
   );

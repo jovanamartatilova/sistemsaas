@@ -26,7 +26,7 @@ class TenantController extends Controller
             $query->where('status', $request->status);
         }
 
-        $tenants = $query->select('id_company as id', 'name', 'email', 'address', 'phone', 'description', 'status', 'created_at')
+        $tenants = $query->select('id_company as id', 'name', 'email', 'address', 'phone', 'description', 'status', 'logo_path', 'created_at')
             ->withCount(['users', 'vacancies'])
             ->get()
             ->map(function ($tenant) {
@@ -38,6 +38,7 @@ class TenantController extends Controller
                     'phone' => $tenant->phone,
                     'description' => $tenant->description,
                     'status' => $tenant->status,
+                    'logo_path' => $tenant->logo_path,
                     'created_at' => $tenant->created_at->format('Y-m-d'),
                     'users_count' => $tenant->users_count,
                     'vacancies_count' => $tenant->vacancies_count,
