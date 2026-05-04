@@ -311,7 +311,7 @@ Route::middleware(['auth:sanctum'])->prefix('intern')->group(function () {
 
 Route::middleware(['auth:sanctum'])->prefix('hr')->group(function () {
     Route::get('/dashboard', [HRDashboardController::class, 'index']);
-
+    Route::get('/apprentices',                      [HRCandidateController::class, 'apprentices']);
     Route::get('/candidates/export',                [HRCandidateController::class, 'exportCsv']);
     Route::get('/candidates/all',                   [HRCandidateController::class, 'allCandidates']);
     Route::get('/candidates',                       [HRCandidateController::class, 'index']);
@@ -321,6 +321,8 @@ Route::middleware(['auth:sanctum'])->prefix('hr')->group(function () {
     Route::patch('/candidates/{id}/notes',          [HRCandidateController::class, 'updateNotes']);
     Route::patch('/candidates/{id}/screening',      [HRCandidateController::class, 'screening']);
     Route::patch('/candidates/{id}/interview',      [HRCandidateController::class, 'interview']);
+    Route::patch('/candidates/{id}/assign-test',    [HRCandidateController::class, 'assignTest']);
+    Route::patch('/candidates/{id}/assign-interview', [HRCandidateController::class, 'assignInterview']);
     Route::get('/candidates/{id}/documents/{type}', [HRCandidateController::class, 'viewDocument']);
 
     // Screening

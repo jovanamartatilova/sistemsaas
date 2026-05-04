@@ -232,8 +232,7 @@ export default function SubmissionForm() {
     major_name: "",
     id_position: positionId || "",  // searchable dropdown
     cv_file: null,
-    cover_letter_file: null,
-    institution_letter_file: null,
+    supporting_document_file: null,
     portfolio_file: null,
     linkedin_url: "",
     motivation_message: "",
@@ -325,7 +324,7 @@ export default function SubmissionForm() {
       }
     }
     if (s === 1) {
-      if (!form.cv_file || !form.cover_letter_file) {
+      if (!form.cv_file || !form.supporting_document_file) {
         setErrorMsg("CV and Documents are required.");
         return false;
       }
@@ -364,8 +363,7 @@ export default function SubmissionForm() {
       fd.append("university_name", form.university_name);
       fd.append("major_name", form.major_name);
       fd.append("cv_file", form.cv_file);
-      fd.append("cover_letter_file", form.cover_letter_file);
-      if (form.institution_letter_file) fd.append("institution_letter_file", form.institution_letter_file);
+      fd.append("supporting_document_file", form.supporting_document_file);
       if (form.portfolio_file) fd.append("portfolio_file", form.portfolio_file);
       fd.append("linkedin_url", form.linkedin_url);
       fd.append("motivation_message", form.motivation_message);
@@ -432,9 +430,9 @@ export default function SubmissionForm() {
   const STEPS = ["Personal Info", "Documents", "Final Details"];
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f9fafb", fontFamily: "'DM Sans', 'Segoe UI', sans-serif" }}>
+    <div style={{ minHeight: "100vh", background: "#f9fafb", fontFamily: "'Poppins', 'Segoe UI', sans-serif" }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
         @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes fadeUp { from { opacity:0; transform:translateY(16px) } to { opacity:1; transform:translateY(0) } }
         input:focus, textarea:focus { border-color: #1a56db !important; box-shadow: 0 0 0 3px rgba(26,86,219,0.08); }
@@ -567,15 +565,9 @@ export default function SubmissionForm() {
                     onChange={handleFile}
                   />
                   <FileCard
-                    label="Supporting Documents" name="cover_letter_file" required
-                    hint="Cover letter, campus recommendation, etc. If you have multiple files, please merge them into one PDF first."
-                    value={form.cover_letter_file} error={fileErrors.cover_letter_file}
-                    onChange={handleFile}
-                  />
-                  <FileCard
-                    label="Institution Letter" name="institution_letter_file"
-                    hint="Letter from your institution (optional)."
-                    value={form.institution_letter_file} error={fileErrors.institution_letter_file}
+                    label="Supporting Document" name="supporting_document_file" required
+                    hint="May include: Institution Letter, proposal, recommendation letter, etc. If you have multiple files, please merge them into one PDF first."
+                    value={form.supporting_document_file} error={fileErrors.supporting_document_file}
                     onChange={handleFile}
                   />
                   <FileCard
@@ -618,7 +610,7 @@ export default function SubmissionForm() {
                         ["Major", form.major_name],
                         ["Role", positionOptions.find((o) => o.value === form.id_position)?.label || "—"],
                         ["CV", form.cv_file?.name || "—"],
-                        ["Documents", form.cover_letter_file?.name || "—"],
+                        ["Documents", form.supporting_document_file?.name|| "—"],
                       ].map(([k, v]) => (
                         <div key={k}>
                           <span style={{ fontSize: 11, color: "#6b7280", display: "block" }}>{k}</span>

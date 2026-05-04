@@ -347,7 +347,9 @@ export default function MemberDashboard() {
     try {
       setLoading(true);
       const token = localStorage.getItem("token") || localStorage.getItem("auth_token");
-      const res = await fetch(`${API_BASE_URL}/member/tasks`, { 
+      const scopedRole = getScopedRole(user);
+      const endpoint = scopedRole === "leader" ? `/leader/tasks` : `/member/tasks`;
+      const res = await fetch(`${API_BASE_URL}${endpoint}`, { 
         headers: { Authorization: `Bearer ${token}` } 
       });
       if (!res.ok) throw new Error("Fetch failed");

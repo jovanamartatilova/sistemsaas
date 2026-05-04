@@ -41,10 +41,14 @@ class CandidateController extends Controller
             $submission = null;
             if (isset($user->id_user)) {
                 $submission = Submission::where('id_user', $user->id_user)
-                    ->whereIn('status', ['pending', 'accepted'])
+                    ->whereNotIn('status', ['rejected', 'draft'])
                     ->with(['vacancy', 'position.competencies', 'mentor', 'interviews'])
                     ->latest('submitted_at')
                     ->first();
+
+                if ($submission) {
+                    \Log::info("Dashboard Submission found for user {$user->id_user}: status={$submission->status}, test_details=" . json_encode($submission->test_details));
+                }
             }
 
             $apprentice = null;
@@ -116,8 +120,17 @@ class CandidateController extends Controller
                         'interview_date' => $interview->interview_date,
                         'interview_time' => $interview->interview_time,
                         'link' => $interview->link,
+                        'notes' => $interview->notes,
                         'status' => $interview->result ?? 'pending',
                     ])->toArray() : [],
+                    'test' => ($submission && !empty($submission->test_details) && is_array($submission->test_details)) ? [
+                        'test_name' => $submission->test_details['test_name'] ?? null,
+                        'test_link' => $submission->test_details['test_link'] ?? null,
+                        'test_date' => $submission->test_details['test_date'] ?? null,
+                        'test_time' => $submission->test_details['test_time'] ?? null,
+                        'test_score' => $submission->test_details['test_score'] ?? null,
+                        'test_notes' => $submission->test_details['test_notes'] ?? null,
+                    ] : null,
                     'learning_progress' => [
                         'total_learning_hours' => 240,
                         'target_learning_hours' => 320,

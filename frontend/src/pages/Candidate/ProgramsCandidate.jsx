@@ -241,15 +241,15 @@ function RoleChoiceModal({ program, onClose, onSelectLeader, onSelectMember }) {
           {/* Leader Option */}
           <button
             onClick={onSelectLeader}
-            className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-yellow-200 bg-yellow-50 hover:bg-yellow-100 transition-colors cursor-pointer text-left"
+            className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-indigo-200 bg-indigo-50 hover:bg-indigo-100 transition-colors cursor-pointer text-left"
             style={{ fontFamily: "Poppins, sans-serif" }}
           >
-            <div className="w-10 h-10 rounded-xl bg-yellow-100 border border-yellow-200 flex items-center justify-center flex-shrink-0">
-              <Crown size={20} className="text-yellow-600" />
+            <div className="w-10 h-10 rounded-xl bg-indigo-100 border border-indigo-200 flex items-center justify-center flex-shrink-0">
+              <Crown size={20} className="text-indigo-600" />
             </div>
             <div>
-              <div className="text-sm font-bold text-yellow-800">Create Team (Leader)</div>
-              <div className="text-[11px] text-yellow-600 mt-0.5">
+              <div className="text-sm font-bold text-indigo-800">Create Team (Leader)</div>
+              <div className="text-[11px] text-indigo-600 mt-0.5">
                 Create a team & generate an invitation link for members.
               </div>
             </div>
@@ -258,15 +258,15 @@ function RoleChoiceModal({ program, onClose, onSelectLeader, onSelectMember }) {
           {/* Member Option */}
           <button
             onClick={onSelectMember}
-            className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-green-200 bg-green-50 hover:bg-green-100 transition-colors cursor-pointer text-left"
+            className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-emerald-200 bg-emerald-50 hover:bg-emerald-100 transition-colors cursor-pointer text-left"
             style={{ fontFamily: "Poppins, sans-serif" }}
           >
-            <div className="w-10 h-10 rounded-xl bg-green-100 border border-green-200 flex items-center justify-center flex-shrink-0">
-              <Users size={20} className="text-green-600" />
+            <div className="w-10 h-10 rounded-xl bg-emerald-100 border border-emerald-200 flex items-center justify-center flex-shrink-0">
+              <Users size={20} className="text-emerald-600" />
             </div>
             <div>
-              <div className="text-sm font-bold text-green-800">Join Team (Member)</div>
-              <div className="text-[11px] text-green-600 mt-0.5">
+              <div className="text-sm font-bold text-emerald-800">Join Team (Member)</div>
+              <div className="text-[11px] text-emerald-600 mt-0.5">
                 Join an existing team using an invitation link from your leader.
               </div>
             </div>
@@ -327,7 +327,7 @@ function JoinTeamModal({ onClose, onJoined }) {
       style={{ background: "rgba(10,22,40,.6)", backdropFilter: "blur(6px)" }}>
       <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden">
         <div className="flex items-center justify-between p-5 border-b border-slate-100"
-          style={{ background: "linear-gradient(135deg, #10b981, #059669)" }}>
+          style={{ background: "linear-gradient(135deg, #047857, #059669)" }}>
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "rgba(255,255,255,.2)" }}>
               <Users size={18} color="#fff" />
@@ -455,170 +455,139 @@ function ProgramCard({ program, onOpenInvitation, onChooseRole }) {
   };
 
   return (
-    <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col relative transition-all">
-      <div className={`absolute top-0 bottom-0 left-0 w-1.5 ${isAccepted ? "bg-emerald-500" : isPending ? "bg-amber-400" : isRejected ? "bg-rose-500" : "bg-slate-300"}`} />
+  <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col relative transition-all">
+    <div className={`absolute top-0 bottom-0 left-0 w-1.5 ${isAccepted ? "bg-emerald-500" : isPending ? "bg-amber-400" : isRejected ? "bg-rose-500" : "bg-slate-300"}`} />
 
-      <div className="p-4 ml-1.5 flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
-        {/* Left: Program details */}
-        <div className="flex-1 text-left min-w-0">
-          <div className="flex flex-wrap items-center gap-3 mb-1">
-            <h3 className="text-lg font-bold text-slate-800 break-words">{name}</h3>
-            {getStatusBadge()}
-          </div>
-          <div className="flex items-center gap-2 mb-1.5">
-            <span className="text-xs font-bold text-indigo-600 truncate">{company}</span>
-            {batch && <><span className="text-slate-300">•</span><span className="text-xs font-medium text-slate-500">{batch}</span></>}
-          </div>
-          {description && (
-            <p className="text-xs text-slate-500 line-clamp-1 leading-relaxed max-w-xl">Focus on {description}</p>
-          )}
-
-          {/* Team badge */}
-          <div className="flex items-center gap-2 mt-2 flex-wrap">
-            {hasTeam ? (
-              <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border ${isLeader ? "bg-yellow-50 text-yellow-700 border-yellow-200" : "bg-green-50 text-green-700 border-green-200"}`}>
-                {isLeader ? <Crown size={11} /> : <Users size={11} />}
-                {team.name || team.team_name} · as {isLeader ? "Leader" : "Member"}
-              </div>
-            ) : (
-              isAccepted ? (
-                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold text-amber-500 bg-amber-50 border border-amber-200">
-                  <Shield size={11} /> Not joined a team yet
-                </div>
-              ) : null
-            )}
-          </div>
+    {/* ROW 1: Info kiri + Actions kanan */}
+    <div className="px-6 pt-5 pb-4 ml-1.5 flex flex-row items-start justify-between gap-6">
+      {/* Kiri: nama, badge, company, team */}
+      <div className="flex-1 min-w-0">
+        <div className="flex flex-wrap items-center gap-3 mb-2">
+          <h3 className="text-lg font-bold text-slate-800">{name}</h3>
+          {getStatusBadge()}
         </div>
-        {/* Invitation link history — hanya untuk leader */}
-        {isLeader && (
-          <div className="mt-3 w-full md:w-auto">
-            {invLinks.length > 0 ? (
-              <div className="flex flex-col gap-1.5">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-                  Invitation Links
-                </p>
-                {invLinks.map((inv, i) => {
-                  const link = `${window.location.origin}/join-team/${inv.token}`;
-                  return (
-                    <div key={i} className="flex items-center gap-2 bg-indigo-50 border border-indigo-100 rounded-xl px-3 py-2">
-                      <Link2 size={11} className="text-indigo-400 flex-shrink-0" />
-                      <div className="flex flex-col flex-1 min-w-0">
-                        <span className="text-[11px] font-bold text-indigo-700 truncate">
-                          {inv.team_name || "Team"}
-                        </span>
-                        <span className="text-[10px] text-slate-400 truncate">
-                           {`${window.location.origin}/join-team/${inv.token}`}
-                        </span>
-                      </div>
-                      <button
-                        onClick={() => copyInvLink(link, inv.token)}
-                        className="flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-lg border-0 cursor-pointer transition-all flex-shrink-0"
-                        style={{
-                          background: copiedLink === inv.token ? "#10b981" : "#4f46e5",
-                          color: "#fff",
-                        }}
-                      >
-                        {copiedLink === inv.token ? (
-                          <><Check size={10} /> Copied</>
-                        ) : (
-                          <><Copy size={10} /> Copy</>
-                        )}
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-100 rounded-xl">
-                <Link2 size={11} className="text-amber-400 flex-shrink-0" />
-                <span className="text-[11px] text-amber-600 font-semibold">
-                  No invitation link yet — click <strong>Manage Team</strong> to create one
-                </span>
-              </div>
-            )}
-          </div>
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-xs font-bold text-indigo-600">{company}</span>
+          {batch && <><span className="text-slate-300">•</span><span className="text-xs text-slate-500">{batch}</span></>}
+        </div>
+        {description && (
+          <p className="text-xs text-slate-500 line-clamp-1 max-w-lg mb-3">Focus on {description}</p>
         )}
-
-        {/* Right: Actions */}
-        <div className="flex flex-col md:items-end gap-2 w-full md:w-auto shrink-0">
-          <div className="flex gap-2 flex-wrap md:justify-end">
-            {/* LoA */}
-            <button
-              disabled={!isAccepted || !has_loa}
-              onClick={() => { if (has_loa && loa_file_url) downloadFile(loa_file_url, `LoA_${company}.pdf`); }}
-              className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border-0
-                ${isAccepted && has_loa
-                  ? "bg-indigo-600 text-white hover:bg-indigo-700 shadow-md shadow-indigo-100 cursor-pointer"
-                  : "bg-slate-100 text-slate-400 cursor-not-allowed"}`}
-            >
-              <Download size={13} />
-              {isAccepted && has_loa ? "Download LoA" : "LoA Not Available"}
-            </button>
-
-            {/* Create / Manage Team — only accepted, not a member */}
-            {isAccepted && (
-            <>
-              {isLeader && (
-                <button
-                  onClick={() => onOpenInvitation(program)}
-                  className="px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-2 cursor-pointer border transition-colors"
-                  style={{ background: "#fff", borderColor: "#e2e8f0", color: "#4f46e5" }}
-                  onMouseEnter={e => e.currentTarget.style.background = "#eff6ff"}
-                  onMouseLeave={e => e.currentTarget.style.background = "#fff"}
-                >
-                  <Link2 size={13} />
-                  Manage Team
-                </button>
-              )}
-              {!hasTeam && (
-                <button
-                  onClick={() => onChooseRole(program)}
-                  className="px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-2 cursor-pointer border transition-colors"
-                  style={{ background: "#fff", borderColor: "#e2e8f0", color: "#4f46e5" }}
-                  onMouseEnter={e => e.currentTarget.style.background = "#eff6ff"}
-                  onMouseLeave={e => e.currentTarget.style.background = "#fff"}
-                >
-                  <Link2 size={13} />
-                  Join / Create Team
-                </button>
-              )}
-            </>
-          )}
-          </div>
-
-          {/* Competencies toggle */}
-          {isAccepted && competencies?.length > 0 && (
-            <button
-              onClick={() => setExpanded(!expanded)}
-              className="mt-1 flex items-center justify-end gap-1.5 text-xs font-bold text-slate-400 hover:text-slate-600 transition-colors cursor-pointer border-0 bg-transparent"
-            >
-              {expanded ? "Hide" : "View"} Competencies
-              {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-            </button>
-          )}
+        <div className="flex items-center gap-2 flex-wrap">
+          {hasTeam ? (
+            <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border ${isLeader ? "bg-yellow-50 text-yellow-700 border-yellow-200" : "bg-green-50 text-green-700 border-green-200"}`}>
+              {isLeader ? <Crown size={11} /> : <Users size={11} />}
+              {team.name || team.team_name} · as {isLeader ? "Leader" : "Member"}
+            </div>
+          ) : isAccepted ? (
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold text-amber-500 bg-amber-50 border border-amber-200">
+              <Shield size={11} /> Not joined a team yet
+            </div>
+          ) : null}
         </div>
       </div>
 
-      {/* Expandable competencies */}
-      {expanded && isAccepted && (
-        <div className="ml-1.5 px-6 pb-6 pt-4 border-t border-slate-100 bg-slate-50/50">
-          <h4 className="text-[11px] font-bold text-slate-500 mb-3 uppercase tracking-widest flex items-center gap-1.5">
-            <Target size={14} className="text-indigo-400" /> Target Competencies & Modules
-          </h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {competencies.map((comp, i) => (
-              <CompetencyItem key={i} {...comp} />
-            ))}
-            {competencies.length === 0 && (
-              <div className="col-span-full py-4 text-center text-xs font-medium text-slate-400">
-                No competencies yet for this position.
-              </div>
-            )}
-          </div>
+      {/* Kanan: tombol aksi */}
+      <div className="flex flex-col items-end gap-2 shrink-0">
+        <div className="flex items-center gap-2">
+          <button
+            disabled={!isAccepted || !has_loa}
+            onClick={() => { if (has_loa && loa_file_url) downloadFile(loa_file_url, `LoA_${company}.pdf`); }}
+            className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border-0
+              ${isAccepted && has_loa
+                ? "bg-indigo-600 text-white hover:bg-indigo-700 shadow-md shadow-indigo-100 cursor-pointer"
+                : "bg-slate-100 text-slate-400 cursor-not-allowed"}`}
+          >
+            <Download size={13} />
+            {isAccepted && has_loa ? "Download LoA" : "LoA Not Available"}
+          </button>
+          {isAccepted && isLeader && (
+            <button
+              onClick={() => onOpenInvitation(program)}
+              className="px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-2 cursor-pointer border transition-colors"
+              style={{ background: "#fff", borderColor: "#e2e8f0", color: "#4f46e5" }}
+              onMouseEnter={e => e.currentTarget.style.background = "#eff6ff"}
+              onMouseLeave={e => e.currentTarget.style.background = "#fff"}
+            >
+              <Link2 size={13} /> Manage Team
+            </button>
+          )}
+          {isAccepted && !hasTeam && (
+            <button
+              onClick={() => onChooseRole(program)}
+              className="px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-2 cursor-pointer border transition-colors"
+              style={{ background: "#fff", borderColor: "#e2e8f0", color: "#4f46e5" }}
+              onMouseEnter={e => e.currentTarget.style.background = "#eff6ff"}
+              onMouseLeave={e => e.currentTarget.style.background = "#fff"}
+            >
+              <Link2 size={13} /> Join / Create Team
+            </button>
+          )}
         </div>
-      )}
+        {isAccepted && competencies?.length > 0 && (
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className="flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-slate-600 transition-colors cursor-pointer border-0 bg-transparent"
+          >
+            {expanded ? "Hide" : "View"} Competencies
+            {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+          </button>
+        )}
+      </div>
     </div>
-  );
+
+    {/* ROW 2: Invitation Links — full width, hanya leader */}
+    {isLeader && (
+      <div className="mx-6 ml-7 mb-5 p-4 bg-slate-50 border border-slate-200 rounded-xl">
+        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3">Invitation Links</p>
+        {invLinks.length > 0 ? (
+          <div className="flex flex-col gap-2">
+            {invLinks.map((inv, i) => {
+              const link = `${window.location.origin}/join-team/${inv.token}`;
+              return (
+                <div key={i} className="flex items-center gap-3 bg-white border border-indigo-100 rounded-xl px-4 py-3">
+                  <div className="w-7 h-7 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center flex-shrink-0">
+                    <Link2 size={12} className="text-indigo-400" />
+                  </div>
+                  <div className="flex flex-col flex-1 min-w-0">
+                    <span className="text-[12px] font-bold text-indigo-700">{inv.team_name || "Team"}</span>
+                    <span className="text-[11px] text-slate-400 truncate">{link}</span>
+                  </div>
+                  <button
+                    onClick={() => copyInvLink(link, inv.token)}
+                    className="flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-lg border-0 cursor-pointer transition-all flex-shrink-0"
+                    style={{ background: copiedLink === inv.token ? "#10b981" : "#4f46e5", color: "#fff" }}
+                  >
+                    {copiedLink === inv.token ? <><Check size={11} /> Copied</> : <><Copy size={11} /> Copy</>}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 px-4 py-3 bg-amber-50 border border-amber-100 rounded-xl">
+            <Link2 size={12} className="text-amber-400 flex-shrink-0" />
+            <span className="text-[11px] text-amber-600 font-semibold">
+              No invitation link yet — click <strong>Manage Team</strong> to create one
+            </span>
+          </div>
+        )}
+      </div>
+    )}
+
+    {/* ROW 3: Expandable competencies */}
+    {expanded && isAccepted && (
+      <div className="ml-1.5 px-6 pb-6 pt-4 border-t border-slate-100 bg-slate-50/50">
+        <h4 className="text-[11px] font-bold text-slate-500 mb-3 uppercase tracking-widest flex items-center gap-1.5">
+          <Target size={14} className="text-indigo-400" /> Target Competencies & Modules
+        </h4>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          {competencies.map((comp, i) => <CompetencyItem key={i} {...comp} />)}
+        </div>
+      </div>
+    )}
+  </div>
+);
 }
 
 // ── Main Page ─────────────────────────────────────────────────────
@@ -729,7 +698,8 @@ useEffect(() => { fetchData(); }, [fetchData]);
               </div>
 
               {/* Search */}
-              <div className="flex items-center justify-end gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+              <div className="flex items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider hidden md:block">Filter</span>
                 <div className="relative w-full md:w-80 group">
                   <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
                   <input
@@ -748,7 +718,7 @@ useEffect(() => { fetchData(); }, [fetchData]);
                       PROGRAMS ({filtered.length})
                     </span>
                   </div>
-                  <div className="flex flex-col gap-4 w-full">
+                  <div className="flex flex-col gap-5 w-full">
                     {filtered.map((p, i) => (
                       <ProgramCard
                         key={p.id_submission || p.id_position || i}
