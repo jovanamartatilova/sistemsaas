@@ -314,31 +314,22 @@ export default function ActiveInternHR() {
   const [positions, setPositions]           = useState([]);
 
   // ── Fetch ─────────────────────────────────────────────────────────────
-  const fetchInterns = (isSearch = false) => {
-    if (isSearch) setTableLoading(true);
-    const params = new URLSearchParams();
-    if (search) params.set('search', search);
-    if (statusFilter) params.set('status', statusFilter);
-    if (positionFilter) params.set('id_position', positionFilter);
+useEffect(() => {
+  setTableLoading(true);
+  const params = new URLSearchParams();
+  if (search) params.set('search', search);
+  if (statusFilter) params.set('status', statusFilter);
+  if (positionFilter) params.set('id_position', positionFilter);
 
+  const t = setTimeout(() => {
     api(`/hr/apprentices?${params}`)
       .then(res => setInterns(res.apprentices || res.data?.apprentices || []))
       .catch(err => console.error(err))
       .finally(() => { setLoading(false); setTableLoading(false); });
-  };
+  }, search ? 500 : 0);
 
-  useEffect(() => {
-    api('/positions/catalog')
-      .then(res => setPositions(Array.isArray(res) ? res : (res.data || [])))
-      .catch(err => console.error(err));
-  }, []);
-
-  useEffect(() => { fetchInterns(); }, [statusFilter, positionFilter]);
-
-  useEffect(() => {
-    const t = setTimeout(() => fetchInterns(true), 500);
-    return () => clearTimeout(t);
-  }, [search]);
+  return () => clearTimeout(t);
+}, [search, statusFilter, positionFilter]);
 
   // ── Stats ──────────────────────────────────────────────────────────────
   const stats = useMemo(() => ({

@@ -327,6 +327,8 @@ export default function SelectionHR() {
   const [assignTestCandidate,setAssignTestCandidate]= useState(null);
   const [testName,           setTestName]           = useState('');
   const [testLink,           setTestLink]           = useState('');
+  const [testDate,           setTestDate]           = useState('');
+  const [testTime,           setTestTime]           = useState('');
   const [testDeadline,       setTestDeadline]       = useState('');
   const [testNotes,          setTestNotes]          = useState('');
   const [showBulkTestModal,  setShowBulkTestModal]  = useState(false);
@@ -346,6 +348,8 @@ export default function SelectionHR() {
   const [assignInterviewCandidate, setAssignInterviewCandidate] = useState(null);
   const [interviewDate,      setInterviewDate]      = useState('');
   const [interviewTime,      setInterviewTime]      = useState('');
+  const [interviewLink,      setInterviewLink]      = useState('');
+  const [interviewNotes,     setInterviewNotes]     = useState('');
   const [interviewType,      setInterviewType]      = useState('Online');
   const [offlinePlace,       setOfflinePlace]       = useState('');
   const [onlinePlatform,     setOnlinePlatform]     = useState('Google Meet');
@@ -364,18 +368,30 @@ export default function SelectionHR() {
   // ── Interview prefill ──────────────────────────────────────────────────────
   useEffect(() => {
     if (assignInterviewCandidate) {
-      const iv = assignInterviewCandidate.interview;
-      if (iv) {
-        setInterviewDate(iv.interview_date || '');
-        setInterviewTime(iv.interview_time || '');
-        const isOffline = iv.media === 'Offline';
-        setInterviewType(isOffline ? 'Offline' : 'Online');
-        if (isOffline) { setOfflinePlace(iv.notes || ''); setOnlinePlatform('Google Meet'); setOnlineLink(''); }
-        else { setOnlinePlatform(iv.media || 'Google Meet'); setOnlineLink(iv.link || ''); setOfflinePlace(''); }
-      } else {
-        setInterviewDate(''); setInterviewTime(''); setInterviewType('Online');
-        setOfflinePlace(''); setOnlinePlatform('Google Meet'); setOnlineLink('');
+      // Try new format first (from new endpoint)
+      if (assignInterviewCandidate.interview_date || assignInterviewCandidate.interview_link) {
+        setInterviewDate(assignInterviewCandidate.interview_date || '');
+        setInterviewTime(assignInterviewCandidate.interview_time || '');
+        setInterviewLink(assignInterviewCandidate.interview_link || '');
+        setInterviewNotes(assignInterviewCandidate.interview_notes || '');
+        setInterviewType('Online');
       }
+      // Fall back to old format
+      else {
+        const iv = assignInterviewCandidate.interview;
+        if (iv) {
+          setInterviewDate(iv.interview_date || '');
+          setInterviewTime(iv.interview_time || '');
+          const isOffline = iv.media === 'Offline';
+          setInterviewType(isOffline ? 'Offline' : 'Online');
+          if (isOffline) { setOfflinePlace(iv.notes || ''); setOnlinePlatform('Google Meet'); setOnlineLink(''); }
+          else { setOnlinePlatform(iv.media || 'Google Meet'); setOnlineLink(iv.link || ''); setOfflinePlace(''); }
+        } else {
+          setInterviewDate(''); setInterviewTime(''); setInterviewType('Online');
+          setOfflinePlace(''); setOnlinePlatform('Google Meet'); setOnlineLink('');
+        }
+      }
+      setInterviewLink(''); setInterviewNotes('');
     }
   }, [assignInterviewCandidate]);
 
@@ -821,7 +837,7 @@ export default function SelectionHR() {
                               {c.test_link||c.test_submission?<a href={c.test_submission||c.test_link} target='_blank' rel='noreferrer' style={{ fontSize:'12px', color:'#2563eb', background:'#eff6ff', padding:'4px 12px', borderRadius:'8px', textDecoration:'none', fontWeight:'600' }}>View</a>:<span style={{ fontSize:'12px', color:'#94a3b8' }}>-</span>}
                             </div>
                             <div style={{ fontSize:'13px', color:'#0f172a', fontWeight:'700', textAlign:'center' }}>
-                              {c.test_score?<span style={{ color:'#10b981', background:'#ecfdf5', padding:'2px 8px', borderRadius:'12px', cursor:'pointer' }} onClick={()=>{setAssignTestCandidate(c);setTestName(c.test_name||'');setTestLink(c.test_link||'');setTestNotes(c.test_notes||'')}}>{c.test_score}/100</span>:<button style={{ display:'flex', alignItems:'center', gap:'4px', padding:'4px 10px', borderRadius:'6px', border:'1px solid #cbd5e1', background:'#fff', color:'#64748b', fontSize:'11px', fontWeight:'600', cursor:'pointer', transition:'all 0.15s' }} onMouseEnter={e=>{e.currentTarget.style.borderColor='#3b82f6';e.currentTarget.style.color='#3b82f6';e.currentTarget.style.background='#f0f7ff'}} onMouseLeave={e=>{e.currentTarget.style.borderColor='#cbd5e1';e.currentTarget.style.color='#64748b';e.currentTarget.style.background='#fff'}} onClick={()=>{setAssignTestCandidate(c);setTestName(c.test_name||'');setTestLink(c.test_link||'');setTestNotes(c.test_notes||'')}}>Grade</button>}
+                              {c.test_score?<span style={{ color:'#10b981', background:'#ecfdf5', padding:'2px 8px', borderRadius:'12px', cursor:'pointer' }} onClick={()=>{setAssignTestCandidate(c);setTestName(c.test_name||'');setTestLink(c.test_link||'');setTestDate(c.test_date||'');setTestTime(c.test_time||'');setTestNotes(c.test_notes||'')}}>{c.test_score}/100</span>:<button style={{ display:'flex', alignItems:'center', gap:'4px', padding:'4px 10px', borderRadius:'6px', border:'1px solid #cbd5e1', background:'#fff', color:'#64748b', fontSize:'11px', fontWeight:'600', cursor:'pointer', transition:'all 0.15s' }} onMouseEnter={e=>{e.currentTarget.style.borderColor='#3b82f6';e.currentTarget.style.color='#3b82f6';e.currentTarget.style.background='#f0f7ff'}} onMouseLeave={e=>{e.currentTarget.style.borderColor='#cbd5e1';e.currentTarget.style.color='#64748b';e.currentTarget.style.background='#fff'}} onClick={()=>{setAssignTestCandidate(c);setTestName(c.test_name||'');setTestLink(c.test_link||'');setTestDate(c.test_date||'');setTestTime(c.test_time||'');setTestNotes(c.test_notes||'')}}>Grade</button>}
                             </div>
                           </>
                         ) : (
@@ -1017,11 +1033,50 @@ export default function SelectionHR() {
             <div style={{ padding:'24px',display:'flex',flexDirection:'column',gap:'16px' }}>
               <div><label style={{ fontSize:'12px',fontWeight:'600',color:'#475569',display:'block',marginBottom:'6px' }}>Test Name</label><input type='text' placeholder='e.g. Logical Reasoning' value={testName} onChange={e=>setTestName(e.target.value)} style={{ width:'100%',padding:'10px 12px',borderRadius:'8px',border:'1px solid #cbd5e1',fontSize:'13px',background:'#fff',color:'#1e293b',boxSizing:'border-box',outline:'none' }}/></div>
               <div><label style={{ fontSize:'12px',fontWeight:'600',color:'#475569',display:'block',marginBottom:'6px' }}>Test Link / URL</label><input type='url' placeholder='https://...' value={testLink} onChange={e=>setTestLink(e.target.value)} style={{ width:'100%',padding:'10px 12px',borderRadius:'8px',border:'1px solid #cbd5e1',fontSize:'13px',background:'#fff',color:'#1e293b',boxSizing:'border-box',outline:'none' }}/></div>
+              <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:'12px' }}>
+                <div><label style={{ fontSize:'12px',fontWeight:'600',color:'#475569',display:'block',marginBottom:'6px' }}>Date</label><input type='date' value={testDate} onChange={e=>setTestDate(e.target.value)} style={{ width:'100%',padding:'10px 12px',borderRadius:'8px',border:'1px solid #cbd5e1',fontSize:'13px',background:'#fff',color:'#1e293b',boxSizing:'border-box',outline:'none' }}/></div>
+                <div><label style={{ fontSize:'12px',fontWeight:'600',color:'#475569',display:'block',marginBottom:'6px' }}>Time</label><input type='time' value={testTime} onChange={e=>setTestTime(e.target.value)} style={{ width:'100%',padding:'10px 12px',borderRadius:'8px',border:'1px solid #cbd5e1',fontSize:'13px',background:'#fff',color:'#1e293b',boxSizing:'border-box',outline:'none' }}/></div>
+              </div>
               <div><label style={{ fontSize:'12px',fontWeight:'600',color:'#475569',display:'block',marginBottom:'6px' }}>Score (Optional)</label><input type='number' min='0' max='100' placeholder='e.g. 85' value={assignTestCandidate.test_score||''} onChange={e=>setAssignTestCandidate(prev=>({...prev,test_score:e.target.value}))} style={{ width:'100%',padding:'10px 12px',borderRadius:'8px',border:'1px solid #cbd5e1',fontSize:'13px',background:'#fff',color:'#1e293b',boxSizing:'border-box',outline:'none' }}/></div>
               <div><label style={{ fontSize:'12px',fontWeight:'600',color:'#475569',display:'block',marginBottom:'6px' }}>Instructions</label><textarea placeholder='Passcodes, rules...' value={testNotes} onChange={e=>setTestNotes(e.target.value)} style={{ width:'100%',padding:'10px 12px',borderRadius:'8px',border:'1px solid #cbd5e1',fontSize:'13px',fontFamily:'inherit',background:'#fff',color:'#1e293b',resize:'vertical',boxSizing:'border-box',outline:'none' }} rows={3}/></div>
               <div style={{ display:'flex',gap:'10px',justifyContent:'flex-end',marginTop:'8px' }}>
                 <button onClick={()=>setAssignTestCandidate(null)} style={{ padding:'8px 16px',borderRadius:'8px',border:'1px solid #e2e8f0',background:'#fff',color:'#64748b',cursor:'pointer',fontSize:'13px',fontWeight:'600' }}>Cancel</button>
-                <button onClick={()=>{setCandidates(prev=>prev.map(c=>c.id_submission===assignTestCandidate.id_submission?{...c,test_name:testName,test_link:testLink,test_score:assignTestCandidate.test_score,test_notes:testNotes}:c));setAssignTestCandidate(null)}} style={{ padding:'8px 20px',borderRadius:'8px',border:'none',background:'#3b82f6',color:'#fff',cursor:'pointer',fontSize:'13px',fontWeight:'600' }}>Save Test Info</button>
+                <button onClick={async()=>{
+                  try {
+                    console.log("🚀 Save Test clicked. Candidate ID:", assignTestCandidate.id_submission);
+                    console.log("📝 Test Data:", {testName, testLink, testDate, testTime, testNotes, testScore: assignTestCandidate.test_score});
+                    
+                    // If test already exists (has score or name), just update score/notes
+                    // Otherwise, send full test details
+                    const isEditingExisting = assignTestCandidate.test_name || assignTestCandidate.test_score;
+                    
+                    const payload = isEditingExisting ? {
+                      test_score: assignTestCandidate.test_score ? parseInt(assignTestCandidate.test_score) : null,
+                      test_notes: testNotes
+                    } : {
+                      test_name: testName,
+                      test_link: testLink,
+                      test_date: testDate,
+                      test_time: testTime,
+                      test_notes: testNotes
+                    };
+                    console.log("📤 Sending payload:", payload);
+                    
+                    const response = await api(`/hr/candidates/${assignTestCandidate.id_submission}/assign-test`, {
+                      method: 'PATCH',
+                      data: payload
+                    });
+                    console.log("✅ API Response:", response);
+                    
+                    setCandidates(prev=>prev.map(c=>c.id_submission===assignTestCandidate.id_submission?{...c,test_name:testName||c.test_name,test_link:testLink||c.test_link,test_date:testDate||c.test_date,test_time:testTime||c.test_time,test_score:assignTestCandidate.test_score||c.test_score,test_notes:testNotes||c.test_notes}:c));
+                    setAssignTestCandidate(null);
+                    setTestName(''); setTestLink(''); setTestDate(''); setTestTime(''); setTestNotes('');
+                    alert('✅ Test ' + (isEditingExisting ? 'graded' : 'assigned') + ' successfully!');
+                  } catch(err) {
+                    console.error("❌ Error:", err);
+                    alert('Failed to save test: ' + (err.message || err));
+                  }
+                }} style={{ padding:'8px 20px',borderRadius:'8px',border:'none',background:'#3b82f6',color:'#fff',cursor:'pointer',fontSize:'13px',fontWeight:'600' }}>Save Test Info</button>
               </div>
             </div>
           </div>
@@ -1029,19 +1084,58 @@ export default function SelectionHR() {
       )}
 
       {assignInterviewCandidate&&(
-        <div style={{ position:'fixed',inset:0,background:'rgba(10,22,40,0.5)',zIndex:300,display:'flex',alignItems:'center',justifyContent:'center' }}>
-          <div style={{ background:'#fff',borderRadius:'16px',padding:'28px',width:'420px',boxShadow:'0 10px 25px rgba(0,0,0,0.1)' }}>
-            <h3 style={{ margin:'0 0 4px',fontSize:'18px',fontWeight:'700',color:'#1e293b' }}>Schedule Interview</h3>
-            <p style={{ margin:'0 0 20px',fontSize:'13px',color:'#64748b' }}>Assign interview for <strong>{assignInterviewCandidate.name}</strong></p>
-            <div style={{ display:'flex',flexDirection:'column',gap:'14px' }}>
-              <div><label style={{ fontSize:'12px',fontWeight:'600',color:'#475569',display:'block',marginBottom:'6px' }}>Date</label><CalendarPicker value={interviewDate} onChange={setInterviewDate}/></div>
-              <div><label style={{ fontSize:'12px',fontWeight:'600',color:'#475569',display:'block',marginBottom:'6px' }}>Time</label><CustomTimePicker value={interviewTime} onChange={setInterviewTime}/></div>
-              <div><label style={{ fontSize:'12px',fontWeight:'600',color:'#475569',display:'block',marginBottom:'6px' }}>Location Type</label><div style={{ display:'flex',gap:'20px' }}>{['Online','Offline'].map(type=>{const isSel=interviewType===type;return(<div key={type} onClick={()=>setInterviewType(type)} style={{ fontSize:'13px',display:'flex',alignItems:'center',gap:'8px',cursor:'pointer',userSelect:'none',color:isSel?'#1e293b':'#64748b',fontWeight:isSel?'600':'500' }}><div style={{ width:'16px',height:'16px',borderRadius:'50%',border:`2px solid ${isSel?'#3b82f6':'#cbd5e1'}`,background:'#fff',display:'flex',alignItems:'center',justifyContent:'center',boxSizing:'border-box' }}>{isSel&&<div style={{ width:'8px',height:'8px',borderRadius:'50%',background:'#3b82f6' }}/>}</div>{type}</div>)})}</div></div>
-              {interviewType==='Offline'?<div><label style={{ fontSize:'12px',fontWeight:'600',color:'#475569',display:'block',marginBottom:'6px' }}>Interview Place</label><textarea placeholder='e.g. Office 3rd Floor, Meeting Room A' value={offlinePlace} onChange={e=>setOfflinePlace(e.target.value)} style={{ width:'100%',padding:'10px',borderRadius:'8px',border:'1px solid #cbd5e1',fontSize:'13px',fontFamily:'inherit',background:'#fff',color:'#1e293b',resize:'vertical',boxSizing:'border-box',outline:'none' }} rows={3}/></div>:<><div><label style={{ fontSize:'12px',fontWeight:'600',color:'#475569',display:'block',marginBottom:'6px' }}>Platform</label><select value={onlinePlatform} onChange={e=>setOnlinePlatform(e.target.value)} style={{ width:'100%',padding:'10px',borderRadius:'8px',border:'1px solid #cbd5e1',fontSize:'13px',background:'#fff',boxSizing:'border-box' }}><option>Google Meet</option><option>Zoom</option><option>Microsoft Teams</option><option>Skype</option><option>Other</option></select></div><div><label style={{ fontSize:'12px',fontWeight:'600',color:'#475569',display:'block',marginBottom:'6px' }}>Meeting Link</label><input type='url' placeholder='https://meet.google.com/...' value={onlineLink} onChange={e=>setOnlineLink(e.target.value)} style={{ width:'100%',padding:'10px',borderRadius:'8px',border:'1px solid #cbd5e1',fontSize:'13px',background:'#fff',color:'#1e293b',boxSizing:'border-box',outline:'none' }}/></div></>}
+        <div style={{ position:'fixed',inset:0,background:'rgba(10,22,40,0.5)',zIndex:300,display:'flex',alignItems:'center',justifyContent:'center',padding:'20px' }}>
+          <div style={{ background:'#fff',borderRadius:'16px',width:'100%',maxWidth:'480px',boxShadow:'0 20px 25px -5px rgba(0,0,0,0.1)',overflow:'hidden' }}>
+            <div style={{ padding:'20px 24px',borderBottom:'1px solid #f1f5f9',display:'flex',alignItems:'center',justifyContent:'space-between' }}>
+              <div><h3 style={{ margin:0,fontSize:'16px',fontWeight:'700',color:'#0f172a' }}>Schedule Interview</h3><p style={{ margin:'2px 0 0',fontSize:'12.5px',color:'#94a3b8' }}>{assignInterviewCandidate.name}</p></div>
+              <button onClick={()=>setAssignInterviewCandidate(null)} style={{ background:'none',border:'none',cursor:'pointer',color:'#64748b' }}><IC.X/></button>
             </div>
-            <div style={{ display:'flex',gap:'10px',justifyContent:'flex-end',marginTop:'24px' }}>
-              <button onClick={()=>{setAssignInterviewCandidate(null);setInterviewDate('');setInterviewTime('');setOfflinePlace('');setOnlineLink('')}} style={{ padding:'8px 16px',borderRadius:'8px',border:'1px solid #cbd5e1',background:'#fff',cursor:'pointer',fontSize:'13px' }}>Cancel</button>
-              <button onClick={async()=>{if(!interviewDate||!interviewTime){alert('Please fill date and time!');return}const payload={interview_date:interviewDate,interview_time:interviewTime,media:interviewType==='Offline'?'Offline':onlinePlatform,link:interviewType==='Offline'?null:onlineLink,notes:interviewType==='Offline'?offlinePlace:null};try{await api(`/hr/candidates/${assignInterviewCandidate.id_submission}/interview`,{method:'PATCH',data:payload});setCandidates(prev=>prev.map(c=>c.id_submission===assignInterviewCandidate.id_submission?{...c,interview:{...payload,id_interview:c.interview?.id_interview||'temp'}}:c));setAssignInterviewCandidate(null);setInterviewDate('');setInterviewTime('');setOfflinePlace('');setOnlineLink('')}catch(err){console.error(err);alert('Failed: '+(err.message||err))}}} style={{ padding:'8px 18px',borderRadius:'8px',border:'none',background:'#3b82f6',color:'#fff',cursor:'pointer',fontSize:'13px',fontWeight:'600' }}>Save Schedule</button>
+            <div style={{ padding:'24px',display:'flex',flexDirection:'column',gap:'16px' }}>
+              <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:'12px' }}>
+                <div><label style={{ fontSize:'12px',fontWeight:'600',color:'#475569',display:'block',marginBottom:'6px' }}>Date</label><input type='date' value={interviewDate} onChange={e=>setInterviewDate(e.target.value)} style={{ width:'100%',padding:'10px 12px',borderRadius:'8px',border:'1px solid #cbd5e1',fontSize:'13px',background:'#fff',color:'#1e293b',boxSizing:'border-box',outline:'none' }}/></div>
+                <div><label style={{ fontSize:'12px',fontWeight:'600',color:'#475569',display:'block',marginBottom:'6px' }}>Time</label><input type='time' value={interviewTime} onChange={e=>setInterviewTime(e.target.value)} style={{ width:'100%',padding:'10px 12px',borderRadius:'8px',border:'1px solid #cbd5e1',fontSize:'13px',background:'#fff',color:'#1e293b',boxSizing:'border-box',outline:'none' }}/></div>
+              </div>
+              <div><label style={{ fontSize:'12px',fontWeight:'600',color:'#475569',display:'block',marginBottom:'6px' }}>Interview Link / URL</label><input type='url' placeholder='https://meet.google.com/... or Zoom link' value={interviewLink} onChange={e=>setInterviewLink(e.target.value)} style={{ width:'100%',padding:'10px 12px',borderRadius:'8px',border:'1px solid #cbd5e1',fontSize:'13px',background:'#fff',color:'#1e293b',boxSizing:'border-box',outline:'none' }}/></div>
+              <div><label style={{ fontSize:'12px',fontWeight:'600',color:'#475569',display:'block',marginBottom:'6px' }}>Notes / Instructions</label><textarea placeholder='e.g. Meeting room location, platform details, preparation notes' value={interviewNotes} onChange={e=>setInterviewNotes(e.target.value)} style={{ width:'100%',padding:'10px 12px',borderRadius:'8px',border:'1px solid #cbd5e1',fontSize:'13px',fontFamily:'inherit',background:'#fff',color:'#1e293b',resize:'vertical',boxSizing:'border-box',outline:'none' }} rows={3}/></div>
+              <div style={{ display:'flex',gap:'10px',justifyContent:'flex-end',marginTop:'8px' }}>
+                <button onClick={()=>setAssignInterviewCandidate(null)} style={{ padding:'8px 16px',borderRadius:'8px',border:'1px solid #e2e8f0',background:'#fff',color:'#64748b',cursor:'pointer',fontSize:'13px',fontWeight:'600' }}>Cancel</button>
+                <button onClick={async()=>{
+                  try {
+                    console.log("🚀 Save Interview clicked. Candidate ID:", assignInterviewCandidate.id_submission);
+                    console.log("📅 Interview Data:", {interviewDate, interviewTime, interviewLink, interviewNotes});
+                    console.log("🔍 Is date valid?", interviewDate ? "YES: " + interviewDate : "NO - EMPTY");
+                    console.log("🔍 Is time valid?", interviewTime ? "YES: " + interviewTime : "NO - EMPTY");
+                    console.log("🔍 Is link valid?", interviewLink ? "YES: " + interviewLink : "NO - EMPTY");
+                    
+                    const isEditing = assignInterviewCandidate.interview_date || assignInterviewCandidate.id_interview;
+                    
+                    const payload = {
+                      interview_date: interviewDate,
+                      interview_time: interviewTime,
+                      interview_link: interviewLink,
+                      interview_notes: interviewNotes
+                    };
+                    console.log("📤 Sending payload to:", `/hr/candidates/${assignInterviewCandidate.id_submission}/assign-interview`);
+                    console.log("📤 Payload:", payload);
+                    
+                    const response = await api(`/hr/candidates/${assignInterviewCandidate.id_submission}/assign-interview`, {
+                      method: 'PATCH',
+                      data: payload
+                    });
+                    console.log("✅ API Response:", response);
+                    
+                    setCandidates(prev=>prev.map(c=>c.id_submission===assignInterviewCandidate.id_submission?{...c,interview_date:interviewDate,interview_time:interviewTime,interview_link:interviewLink,interview_notes:interviewNotes}:c));
+                    setAssignInterviewCandidate(null);
+                    setInterviewDate(''); setInterviewTime(''); setInterviewLink(''); setInterviewNotes('');
+                    alert('✅ Interview scheduled successfully!');
+                  } catch(err) {
+                    console.error("❌ Error caught:", err);
+                    console.error("❌ Error message:", err.message);
+                    console.error("❌ Full error:", JSON.stringify(err));
+                    alert('Failed to schedule interview: ' + (err.message || JSON.stringify(err)));
+                  }
+                }} style={{ padding:'8px 20px',borderRadius:'8px',border:'none',background:'#3b82f6',color:'#fff',cursor:'pointer',fontSize:'13px',fontWeight:'600' }}>Save Interview</button>
+              </div>
             </div>
           </div>
         </div>

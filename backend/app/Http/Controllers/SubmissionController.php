@@ -25,8 +25,7 @@ class SubmissionController extends Controller
             'university_name' => 'required|string',
             'major_name' => 'required|string',
             'cv_file' => 'required|file|mimes:pdf|max:2048',
-            'cover_letter_file' => 'required|file|mimes:pdf|max:2048',
-            'institution_letter_file' => 'nullable|file|mimes:pdf|max:2048',
+            'supporting_document_file' => 'required|file|mimes:pdf|max:2048',
             'portfolio_file' => 'nullable|file|mimes:pdf|max:2048',
             'motivation_message' => 'required|string',
             'linkedin_url' => 'nullable|url',
@@ -107,10 +106,8 @@ class SubmissionController extends Controller
 
             // 5. Upload Files
             $cvPath = $request->file('cv_file')->store('submissions/cv', 'public');
-            $coverLetterPath = $request->file('cover_letter_file')->store('submissions/cover_letters', 'public');
-            $institutionLetterPath = $request->hasFile('institution_letter_file')
-                ? $request->file('institution_letter_file')->store('submissions/institution_letters', 'public')
-                : null;
+            $supportingPath = $request->file('supporting_document_file')
+                ->store('submissions/supporting_documents', 'public');
             $portfolioPath = $request->hasFile('portfolio_file')
                 ? $request->file('portfolio_file')->store('submissions/portfolios', 'public')
                 : null;
@@ -123,8 +120,7 @@ class SubmissionController extends Controller
                 'id_vacancy' => $request->id_vacancy,
                 'id_position' => $request->id_position,
                 'cv_file' => $cvPath,
-                'cover_letter_file' => $coverLetterPath,
-                'institution_letter_file' => $institutionLetterPath,
+                'supporting_document_file' => $supportingPath,
                 'portfolio_file' => $portfolioPath,
                 'linkedin_url' => $request->linkedin_url,
                 'motivation_message' => $request->motivation_message,

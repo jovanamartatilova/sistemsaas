@@ -18,31 +18,27 @@ function ProgressBar({ value, max, color = "bg-indigo-500", height = "h-1.5" }) 
 }
 
 // --- Competency Card ---
-function CompetencyCard({ title, hours, projects, score, maxScore, status, progress }) {
-  const statusColor = status === "Done" ? "bg-emerald-50 text-emerald-600 border border-emerald-200" : "bg-indigo-50 text-indigo-600 border border-indigo-200";
-  const dotColor = status === "Done" ? "bg-emerald-500" : "bg-indigo-500";
-  const barColor = status === "Done" ? "bg-emerald-500" : "bg-indigo-500";
+function CompetencyCard({ title, hours, score, maxScore, status }) {
+  const dotColor = status === "Done" ? "bg-emerald-500" : "bg-indigo-400";
 
   return (
-    <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3 hover:shadow-sm transition-shadow">
-      <div className="flex items-start justify-between">
-        <div className="flex items-center gap-2">
-          <span className={`w-2.5 h-2.5 rounded-full mt-0.5 flex-shrink-0 ${dotColor}`} />
-          <div>
-            <p className="text-sm font-semibold text-slate-800">{title}</p>
-            <p className="text-xs text-slate-500">{hours} · {projects}</p>
-          </div>
+    <div className="flex items-center justify-between py-3 border-b border-slate-100 last:border-0">
+      <div className="flex items-center gap-3">
+        <span className={`w-2 h-2 rounded-full flex-shrink-0 ${dotColor}`} />
+        <div>
+          <p className="text-sm font-medium text-slate-700">{title}</p>
+          <p className="text-xs text-slate-400 mt-0.5">{hours}</p>
         </div>
-        <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${statusColor}`}>{status}</span>
       </div>
-      {score !== undefined && (
-        <div className="space-y-1">
-          <div className="flex justify-between text-xs text-slate-500">
-            <span>Score Evaluation</span>
-            <span className="text-emerald-600 font-semibold">{score} / {maxScore}</span>
+      {score !== undefined ? (
+        <div className="flex items-center gap-2 text-right">
+          <span className="text-xs text-emerald-600 font-semibold">{score}/{maxScore}</span>
+          <div className="w-16">
+            <ProgressBar value={score} max={maxScore} color="bg-emerald-500" />
           </div>
-          <ProgressBar value={score} max={maxScore} color="bg-emerald-500" />
         </div>
+      ) : (
+        <span className="text-xs text-indigo-500 font-medium">Active</span>
       )}
     </div>
   );
@@ -111,10 +107,17 @@ function CandidateDashboardWithRedirect() {
 }
 
 // --- Main Dashboard ---
+// BACKEND INTEGRATION:
+// - Fetches candidate profile, apprentice status, interviews, tests, and competencies from /candidate/dashboard
+// - Auto-refreshes every 10 seconds to reflect real-time updates from HR
+// - Data display is conditional based on apprentice status:
+//   * Screening (pending): Shows only screening hint, no tests/competencies/tasks
+//   * Accepted/Active: Shows all available data (interviews, tests, competencies, tasks)
+// - Interview and test links appear automatically when HR sends them
+// - No manual refresh needed - system monitors changes automatically
 function EarlyPathDashboard() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [skillFilter, setSkillFilter] = useState("Active");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [dashboardData, setDashboardData] = useState(null);
@@ -126,6 +129,7 @@ function EarlyPathDashboard() {
   useEffect(() => {
     setError(null);
     fetchDashboardData();
+    // Removed auto-refresh - user can refresh manually with button instead
   }, [location.pathname]);
 
   const fetchDashboardData = async () => {
@@ -156,6 +160,8 @@ function EarlyPathDashboard() {
       }
 
       const data = await response.json();
+      console.log("📊 Dashboard Data from Backend:", data);
+      console.log("🧪 Test Data:", data.data?.test);
       setDashboardData(data.data);
       
       // Sync role to store
@@ -304,11 +310,6 @@ function EarlyPathDashboard() {
     status: "Active",
   }));
 
-  const filtered =
-    skillFilter === "All"
-      ? competencyList
-      : competencyList.filter((c) => c.status === skillFilter);
-
   return (
     <div className="min-h-screen bg-gray-50 flex" style={{ fontFamily: 'Poppins, sans-serif' }}>
       <SidebarCandidate
@@ -367,18 +368,27 @@ function EarlyPathDashboard() {
                 <span className="absolute bottom-0.5 right-0.5 w-3 h-3 bg-emerald-400 rounded-full border-2 border-white" />
               </div>
 
-              {/* ← ini yang harus tetap ada */}
               <div className="flex-1 min-w-0">
-                <h1 className="text-xl font-bold text-slate-800 text-left">{profile?.name || "User"}</h1>
-                <p className="text-slate-500 text-sm mt-0.5 text-left">
-                  {apprentice?.position || "Position"} • {vacancy?.start_date ? new Date(vacancy.start_date).toLocaleDateString('en-US') : "Date"} – {vacancy?.location || "Location"}
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h1 className="text-xl font-bold text-slate-800">{profile?.name || "User"}</h1>
+                  {apprentice?.status && (
+                    <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium border ${getStatusColor(apprentice.status)}`}>
+                      {formatStatus(apprentice.status)}
+                    </span>
+                  )}
+                </div>
+                <p className="text-sm text-slate-500 mt-1">
+                  {apprentice?.position || profile?.major || "Candidate"}
+                  {vacancy?.location && <> · <MapPin size={11} className="inline mb-0.5" /> {vacancy.location}</>}
                 </p>
-                {apprentice?.mentor_name && (
-                  <p className="text-xs text-slate-400 mt-0.5 text-left flex items-center gap-1">
-                    <User size={11} />
-                    Mentor: <span className="font-medium text-slate-600 ml-1">{apprentice.mentor_name}</span>
-                  </p>
-                )}
+                <div className="flex flex-wrap gap-3 mt-2">
+                  {apprentice?.mentor_name && (
+                    <span className="text-xs text-slate-400 flex items-center gap-1">
+                      <User size={11} />
+                      Mentor: <span className="font-medium text-slate-600 ml-0.5">{apprentice.mentor_name}</span>
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -393,7 +403,7 @@ function EarlyPathDashboard() {
                   {apprentice || vacancy ? (
                     <div className="space-y-3">
                       {[
-                        { label: "Type", value: vacancy?.type || apprentice?.position || "-" },
+                        { label: "Type", value: vacancy?.type ? vacancy.type.charAt(0).toUpperCase() + vacancy.type.slice(1) : apprentice?.position || "-" },
                         { label: "Location", value: vacancy?.location || "-" },
                         { label: "Start Date", value: vacancy?.start_date ? new Date(vacancy.start_date).toLocaleDateString('en-US') : "-" },
                         { label: "End Date", value: vacancy?.end_date ? new Date(vacancy.end_date).toLocaleDateString('en-US') : "-" },
@@ -406,7 +416,7 @@ function EarlyPathDashboard() {
                               ● {row.value}
                             </span>
                           ) : (
-                            <span className="text-slate-700 font-medium text-right max-w-[55%]">{row.value}</span>
+                            <span className="text-slate-700 font-medium text-right max-w-[55%] leading-snug">{row.value}</span>
                           )}
                         </div>
                       ))}
@@ -417,10 +427,56 @@ function EarlyPathDashboard() {
                       <p className="text-xs text-slate-400">Internship data will appear once HR selects you</p>
                     </div>
                   )}
-                </div>
+                  </div>
+
+                {/* Quick Stats Card */}
+                {apprentice && (
+                  <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+                    <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Overview</h2>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-indigo-50 rounded-xl p-3 text-center">
+                        <p className="text-2xl font-bold text-indigo-600">{memberTasks.length}</p>
+                        <p className="text-xs text-slate-500 mt-0.5">Total Tasks</p>
+                      </div>
+                      <div className="bg-emerald-50 rounded-xl p-3 text-center">
+                        <p className="text-2xl font-bold text-emerald-600">
+                          {memberTasks.filter(t => t.status === 'done').length}
+                        </p>
+                        <p className="text-xs text-slate-500 mt-0.5">Completed</p>
+                      </div>
+                      <div className="bg-amber-50 rounded-xl p-3 text-center">
+                        <p className="text-2xl font-bold text-amber-500">
+                          {memberTasks.filter(t => t.status === 'in_progress').length}
+                        </p>
+                        <p className="text-xs text-slate-500 mt-0.5">In Progress</p>
+                      </div>
+                      <div className="bg-slate-50 rounded-xl p-3 text-center">
+                        <p className="text-2xl font-bold text-slate-500">{competencyList.length}</p>
+                        <p className="text-xs text-slate-500 mt-0.5">Competencies</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Screening hint — tampil kalau pending dan belum ada interview */}
+                {apprentice?.status === 'pending' && (!interviews || interviews.length === 0) && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 shadow-sm">
+                    <div className="flex items-start gap-3">
+                      <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <span className="text-blue-600 text-sm font-bold">🔍</span>
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-blue-800">Currently in Screening</p>
+                        <p className="text-xs text-blue-600 mt-0.5 leading-relaxed">
+                          Your application is being reviewed. An interview schedule will appear here once HR sets it up.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Interview Section */}
-                {interviews && interviews.length > 0 && (
+                 {interviews && interviews.length > 0 && (
                   <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
                     <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Interview Schedule</h2>
                     <div className="space-y-4">
@@ -448,18 +504,28 @@ function EarlyPathDashboard() {
                                 href={interview.link}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-block text-xs font-semibold text-indigo-600 hover:text-indigo-700 underline"
+                                className="inline-flex items-center gap-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 rounded-lg transition-colors"
                               >
-                                Join Meeting →
+                                🎥 Join Interview →
                               </a>
+                            )}
+                            {interview.notes && (
+                              <p className="text-xs text-slate-500 bg-white border border-slate-100 rounded-lg p-2.5 leading-relaxed">
+                                {interview.notes}
+                              </p>
+                            )}
+                            {!interview.link && interview.media === 'Offline' && interview.notes && (
+                              <p className="text-xs text-slate-500 flex items-center gap-1">
+                                <MapPin size={11} /> {interview.notes}
+                              </p>
                             )}
                           </div>
                         );
                       })}
                     </div>
                   </div>
-                )}
-
+                 )
+                }
               </div>
 
               {/* Right Column */}
@@ -478,6 +544,10 @@ function EarlyPathDashboard() {
                     <div className="py-6 text-center">
                       <div className="inline-block w-5 h-5 border-2 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
                       <p className="text-xs text-slate-400 mt-2">Loading My Tasks</p>
+                    </div>
+                  ) : apprentice?.status === 'pending' ? (
+                    <div className="py-6 text-center">
+                      <p className="text-sm text-slate-500">Tasks will appear once your application is reviewed</p>
                     </div>
                   ) : memberTasks.length > 0 ? (
                     <div className="mt-3 space-y-3">
@@ -505,29 +575,21 @@ function EarlyPathDashboard() {
                     </div>
                   )}
                 </div>
+                
                 {/* Competencies - Only show if apprentice is accepted */}
                 {apprentice?.status === 'active' || apprentice?.status === 'accepted' ? (
                   <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm text-left">
                     <div className="flex items-center justify-between mb-4">
                       <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400">Competencies</h2>
-                      <div className="flex gap-1 bg-slate-100 rounded-lg p-1">
-                        {["All", "Active", "Completed"].map((f) => (
-                          <button
-                            key={f}
-                            onClick={() => setSkillFilter(f === "Completed" ? "Done" : f)}
-                            className={`text-xs px-3 py-1 rounded-md font-medium transition-colors ${skillFilter === (f === "Completed" ? "Done" : f) ? "bg-indigo-600 text-white" : "text-slate-500 hover:text-slate-700 hover:bg-white"
-                              }`}
-                          >
-                            {f}
-                          </button>
-                        ))}
-                      </div>
+                      <span className="text-xs bg-indigo-50 text-indigo-600 border border-indigo-200 px-2.5 py-0.5 rounded-full font-medium">
+                        {competencyList.length} Skills
+                      </span>
                     </div>
-                    <div className="space-y-3">
-                      {filtered.length > 0 ? (
-                        filtered.map((c, i) => <CompetencyCard key={i} {...c} />)
+                    <div>
+                      {competencyList.length > 0 ? (
+                        competencyList.map((c, i) => <CompetencyCard key={i} {...c} />)
                       ) : (
-                        <p className="text-slate-500 text-sm">No competencies available</p>
+                        <p className="text-sm text-slate-400 text-center py-4">No competencies available</p>
                       )}
                     </div>
                   </div>
@@ -538,7 +600,39 @@ function EarlyPathDashboard() {
                 )}
               </div>
             </div>
-
+                {/* Test Card - Show if test data exists (during screening if HR sends test, or after acceptance) */}
+{dashboardData?.test && (
+    <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+      <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Assessment</h2>
+      <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="text-sm font-semibold text-slate-800">{dashboardData.test.test_name || "Test"}</p>
+            {dashboardData.test.test_date && (
+              <p className="text-xs text-slate-400 mt-0.5">
+                📅 {new Date(dashboardData.test.test_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                {dashboardData.test.test_time && ` · ${dashboardData.test.test_time}`}
+              </p>
+            )}
+          </div>
+          {dashboardData.test.test_score ? (
+            <span className="text-xs font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full">
+              Score: {dashboardData.test.test_score}/100
+            </span>
+          ) : (
+            <span className="text-xs font-medium text-amber-600 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full">
+              Pending
+            </span>
+          )}
+        </div>
+        {dashboardData.test.test_notes && (
+          <p className="text-xs text-slate-500 bg-white border border-slate-100 rounded-lg p-2.5 leading-relaxed">
+            {dashboardData.test.test_notes}
+          </p>
+        )}
+      </div>
+    </div>
+  )}
 
 
             <p className="text-center text-xs text-slate-400 py-2">
