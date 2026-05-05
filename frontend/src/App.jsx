@@ -50,7 +50,7 @@ import ActiveInternHR from './pages/HR/ActiveInternHR';
 import GenerateLOA  from './pages/HR/GenerateLOA';
 import PayrollHR    from './pages/HR/PayrollHR';
 import AssignMentor from './pages/HR/AssignMentor';
-import CandidateHR from './pages/hr/CandidateHR';
+import CandidateHR from './pages/HR/CandidateHR';
 
 // Mentor
 import DashboardMentor    from './pages/Mentor/DashboardMentor';

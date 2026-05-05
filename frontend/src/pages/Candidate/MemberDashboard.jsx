@@ -7,7 +7,7 @@ import DashboardLayout from "../../components/DashboardLayout";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { getScopedRole } from "../../utils/roleUtils";
 import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+import "jspdf-autotable";
 import * as XLSX from "xlsx";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
@@ -490,7 +490,7 @@ const exportPDF = () => {
   doc.setLineWidth(0.5);
   doc.line(14, boxY + boxH + 12, 55, boxY + boxH + 12);
 
-  autoTable(doc, {
+  doc.autoTable({
     startY: boxY + boxH + 16,
     head: [["No", "Activity", "Description", "Deadline", "Submitted"]],
     body: rows.map((r, i) => [i + 1, r.title, r.description, r.deadline, r.submitted_at]),
@@ -519,7 +519,7 @@ const exportPDF = () => {
     doc.setDrawColor(79, 70, 229);
     doc.line(14, finalY + 2, 72, finalY + 2);
 
-    autoTable(doc, {
+    doc.autoTable({
       startY: finalY + 6,
       head: [["Competency", "Description", "Learning Hours"]],
       body: competencies.map(c => [c.name, c.description || "-", c.learning_hours ? `${c.learning_hours} hrs` : "-"]),
