@@ -730,19 +730,14 @@ function CandidateItem({ sub }) {
                                 <Icon.FileText /> CV / Resume
                             </a>
                         )}
+                        {(sub.supporting_document_file || sub.cover_letter_file || sub.institution_letter_file) && (
+                            <a href={`http://127.0.0.1:8000/storage/${sub.supporting_document_file || sub.cover_letter_file || sub.institution_letter_file}`} target="_blank" rel="noopener noreferrer" style={docBtn} onMouseEnter={e => { e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.color = "#2563c4"; }} onMouseLeave={e => { e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.color = "#475569"; }}>
+                                <Icon.FileText /> Supporting Document
+                            </a>
+                        )}
                         {sub.portfolio_file && (
                             <a href={`http://127.0.0.1:8000/storage/${sub.portfolio_file}`} target="_blank" rel="noopener noreferrer" style={docBtn} onMouseEnter={e => { e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.color = "#2563c4"; }} onMouseLeave={e => { e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.color = "#475569"; }}>
-                                <Icon.FileText /> Portofolio
-                            </a>
-                        )}
-                        {sub.cover_letter_file && (
-                            <a href={`http://127.0.0.1:8000/storage/${sub.cover_letter_file}`} target="_blank" rel="noopener noreferrer" style={docBtn} onMouseEnter={e => { e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.color = "#2563c4"; }} onMouseLeave={e => { e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.color = "#475569"; }}>
-                                <Icon.FileText /> Cover Letter
-                            </a>
-                        )}
-                        {sub.institution_letter_file && (
-                            <a href={`http://127.0.0.1:8000/storage/${sub.institution_letter_file}`} target="_blank" rel="noopener noreferrer" style={docBtn} onMouseEnter={e => { e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.color = "#2563c4"; }} onMouseLeave={e => { e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.color = "#475569"; }}>
-                                <Icon.FileText /> Reference Letter
+                                <Icon.FileText /> Additional Portfolio
                             </a>
                         )}
                     </div>

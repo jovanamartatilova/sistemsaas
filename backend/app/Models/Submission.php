@@ -15,7 +15,7 @@ class Submission extends Model
 
     protected $fillable = [
         'id_submission', 'id_team', 'id_user', 'id_vacancy', 'id_position',
-        'cover_letter_file', 'institution_letter_file',
+        'supporting_document_file',
         'cv_file', 'portfolio_file', 'linkedin_url', 'motivation_message',
         'status', 'submitted_at',
         'hr_notes', 'screening_status',

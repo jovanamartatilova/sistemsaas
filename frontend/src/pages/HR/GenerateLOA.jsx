@@ -4,6 +4,7 @@ import { api } from "../../api";
 import { useAuthStore } from "../../stores/authStore";
 import SidebarHR from "../../components/SidebarHR";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
+import { HRToastStack, useHRToast } from "../../components/HRToast";
 
 // ── Icons ──────────────────────────────────────────────────────────────────────
 const IC = {
@@ -201,13 +202,13 @@ const LOA_STATUS = {
 export default function GenerateLoAHR() {
   const navigate = useNavigate();
   const user     = useAuthStore((state) => state.user);
+  const { toasts, pushToast, removeToast } = useHRToast();
 
   const [showLogout, setShowLogout]               = useState(false);
   const [data, setData]                           = useState({ user: {}, stats: {}, candidates: [] });
   const [pageLoading, setPageLoading]             = useState(true);
   const [loading, setLoading]                     = useState(null);
   const [bulkLoading, setBulkLoading]             = useState(false);
-  const [error, setError]                         = useState("");
   const [sending, setSending]                     = useState({});
   const [regenerateSuccess, setRegenerateSuccess] = useState({});
   const [search, setSearch] = useState("");           
@@ -222,14 +223,13 @@ export default function GenerateLoAHR() {
   }
   
   try {
-    setError("");
     const params = new URLSearchParams();
     if (search) params.set("search", search);
     
     const res = await api(`/hr/loa?${params}`);
     setData(res.data);
   } catch (err) {
-    setError(err.message || "Failed to load data.");
+    pushToast(err.message || "Failed to load data.", "error");
   } finally {
     setPageLoading(false);
     setTableLoading(false);
@@ -261,13 +261,13 @@ export default function GenerateLoAHR() {
   const handleGenerate = async (id) => {
     try {
       setLoading(id);
-      setError("");
       await api(`/hr/loa/${id}/generate`, { method: "POST" });
       await fetchLoa();
       setRegenerateSuccess((prev) => ({ ...prev, [id]: true }));
       setTimeout(() => setRegenerateSuccess((prev) => ({ ...prev, [id]: false })), 3000);
+      pushToast("LoA generated successfully", "success");
     } catch (err) {
-      setError(err.message || "Failed to generate LoA.");
+      pushToast(err.message || "Failed to generate LoA.", "error");
     } finally {
       setLoading(null);
     }
@@ -278,8 +278,9 @@ export default function GenerateLoAHR() {
       setSending((prev) => ({ ...prev, [id]: true }));
       await api(`/hr/loa/${id}/send`, { method: "POST" });
       await fetchLoa();
+      pushToast("LoA sent successfully", "success");
     } catch (err) {
-      setError(err.message || "Failed to send LoA.");
+      pushToast(err.message || "Failed to send LoA.", "error");
     } finally {
       setSending((prev) => ({ ...prev, [id]: false }));
     }
@@ -288,11 +289,11 @@ export default function GenerateLoAHR() {
   const handleBulkGenerate = async () => {
     try {
       setBulkLoading(true);
-      setError("");
       await api("/hr/loa/bulk-generate", { method: "POST" });
       await fetchLoa();
+      pushToast("LoA documents generated successfully", "success");
     } catch (err) {
-      setError(err.message || "Failed to bulk generate LoA.");
+      pushToast(err.message || "Failed to bulk generate LoA.", "error");
     } finally {
       setBulkLoading(false);
     }
@@ -403,18 +404,6 @@ export default function GenerateLoAHR() {
               Create and manage LoA documents for accepted candidates.
             </div>
           </div>
-
-          {/* Error banner */}
-          {error && (
-            <div style={{
-              display: "flex", alignItems: "center", gap: "10px",
-              background: "#fff1f2", border: "1px solid #fecdd3", color: "#be123c",
-              padding: "12px 16px", borderRadius: "12px", marginBottom: "24px", fontSize: "13px",
-            }}>
-              <IC.AlertCircle />
-              {error}
-            </div>
-          )}
 
           {/* Stat Cards */}
           <div style={{
@@ -637,6 +626,8 @@ export default function GenerateLoAHR() {
       {showLogout && (
         <LogoutModal onConfirm={handleLogout} onCancel={() => setShowLogout(false)} />
       )}
+
+      <HRToastStack toasts={toasts} onDismiss={removeToast} />
     </div>
   );
 }

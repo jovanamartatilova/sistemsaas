@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Vacancy;
 use App\Models\Position;
 use App\Models\Submission;
+use App\Models\Employee; 
 use Illuminate\Support\Facades\Log;
 
 class DashboardController extends Controller
@@ -43,6 +44,34 @@ class DashboardController extends Controller
 
             $totalApplicants = $statsSubmissionsQuery->clone()->count();
             $pendingReview = $statsSubmissionsQuery->clone()->where('status', 'pending')->count();
+
+            $totalEmployees  = \App\Models\Employee::where('id_company', $companyId)->count();
+            $activeEmployees = \App\Models\Employee::where('id_company', $companyId)
+                ->where('employee_status', 'active')
+                ->count();
+            $recentEmployees = \App\Models\Employee::where('id_company', $companyId)
+                ->with(['user', 'role'])
+                ->orderByRaw('COALESCE(joined_at, created_at, updated_at) DESC')
+                ->limit(5)
+                ->get()
+                ->map(function ($e) {
+                    $roleName = $e->role?->name ?: $e->user?->role;
+                    $roleDescription = $e->role?->description;
+                    $prettyRoleName = $roleName ? ucwords(str_replace(['_', '-'], ' ', $roleName)) : null;
+
+                    return [
+                        'id_employee'        => $e->id_employee,
+                        'full_name'          => trim($e->first_name . ' ' . $e->last_name) ?: ($e->user?->name ?? '—'),
+                        'department'         => $e->department ?: ($prettyRoleName ?? '—'),
+                        'position'           => $e->position ?: ($roleDescription ?: ($prettyRoleName ?? '—')),
+                        'employee_status'    => $e->employee_status,
+                        'employee_status_ui'  => $this->formatEmployeeStatus($e->employee_status),
+                        'joined_at'          => $e->joined_at,
+                        'joined_at_display'   => $e->joined_at
+                            ? $e->joined_at->format('d/m/Y')
+                            : ($e->created_at ? $e->created_at->format('d/m/Y') : null),
+                    ];
+                });
             
             // Recent Applicants Query dengan format aman
             $recentQuery = Submission::whereHas('vacancy', function ($q) use ($companyId) {
@@ -155,6 +184,9 @@ class DashboardController extends Controller
                 'active_vacancies' => $vacanciesCount,
                 'total_applicants' => $totalApplicants,
                 'pending_review' => $pendingReview,
+                'total_employees'    => $totalEmployees,
+                'active_employees'   => $activeEmployees,
+                'recent_employees'   => $recentEmployees,
                 'recent_applicants' => $recentApplicants,
                 'status_distribution' => $statusDistribution,
                 'monthly_stats' => $monthlyStats,
@@ -169,6 +201,46 @@ class DashboardController extends Controller
         }
     }
 
+    private function formatEmployeeStatus(?string $status): array
+    {
+        $normalized = strtolower(trim((string) $status));
+
+        return match ($normalized) {
+            'full_time', 'fulltime', 'permanent' => [
+                'label' => 'Full Time',
+                'tone' => 'success',
+            ],
+            'part_time', 'parttime' => [
+                'label' => 'Part Time',
+                'tone' => 'info',
+            ],
+            'contract' => [
+                'label' => 'Contract',
+                'tone' => 'primary',
+            ],
+            'probation' => [
+                'label' => 'Probation',
+                'tone' => 'warning',
+            ],
+            'inactive' => [
+                'label' => 'Inactive',
+                'tone' => 'muted',
+            ],
+            'resigned' => [
+                'label' => 'Resigned',
+                'tone' => 'muted',
+            ],
+            'terminated' => [
+                'label' => 'Terminated',
+                'tone' => 'danger',
+            ],
+            default => [
+                'label' => $status ? ucwords(str_replace(['_', '-'], ' ', $status)) : 'Unknown',
+                'tone' => 'muted',
+            ],
+        };
+    }
+
     /**
      * Return empty response when no data or error occurs
      */
@@ -179,6 +251,9 @@ class DashboardController extends Controller
             'active_vacancies' => 0,
             'total_applicants' => 0,
             'pending_review' => 0,
+            'total_employees'    => 0,   
+            'active_employees'   => 0, 
+            'recent_employees'   => [],
             'recent_applicants' => [],
             'status_distribution' => [],
             'monthly_stats' => [],

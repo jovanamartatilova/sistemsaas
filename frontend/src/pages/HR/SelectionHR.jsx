@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../../api';
 import { useAuthStore } from '../../stores/authStore';
 import SidebarHR from '../../components/SidebarHR';
+import { HRToastStack, useHRToast } from '../../components/HRToast';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
 
 const IC = {
@@ -129,10 +130,9 @@ const VARIANT = {
 };
 
 const DOC_TYPES = [
-  { key:'has_cv',                 label:'CV',                 type:'cv' },
-  { key:'has_cover_letter',       label:'Cover Letter',       type:'cover_letter' },
-  { key:'has_portfolio',          label:'Portfolio',          type:'portfolio' },
-  { key:'has_institution_letter', label:'Institution Letter', type:'institution_letter' },
+  { key:'has_cv',                  label:'CV / Resume',         type:'cv' },
+  { key:'has_supporting_document', label:'Supporting Document', type:'supporting_document' },
+  { key:'has_portfolio',           label:'Additional Portfolio', type:'portfolio' },
 ];
 
 function IconBtn({ icon, title, onClick, color='#475569', bgHov='#f1f5f9', active=false }) {
@@ -308,6 +308,7 @@ function AIBanner({ mode, count }) {
 // MAIN COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
 export default function SelectionHR() {
+    const { toasts, pushToast, removeToast } = useHRToast();
   const navigate = useNavigate();
   const user     = useAuthStore(s => s.user);
 
@@ -503,7 +504,7 @@ export default function SelectionHR() {
         setSmartRankMap(map);
         setSmartRankActive(true);
       }
-    } catch (err) { console.error('Smart Rank error:', err); alert('Smart Rank failed'); }
+    } catch (err) { console.error('Smart Rank error:', err); pushToast('Smart Rank failed', 'error'); }
     finally { setSmartRankLoading(false); }
   };
 
@@ -551,8 +552,10 @@ export default function SelectionHR() {
       if (type==='accept') await api(`/hr/candidates/${candidate.id_submission}/accept`,{method:'PATCH'});
       else if (type==='reject') await api(`/hr/candidates/${candidate.id_submission}/reject`,{method:'PATCH'});
       else if (type==='pass') await api(`/hr/candidates/${candidate.id_submission}/stage`,{method:'PATCH',data:{stage:`stage_${nextStageIndex}`}});
-      setConfirmAction(null); fetchCandidates();
-    } catch(err){ console.error(err); alert('Action failed'); }
+      setConfirmAction(null);
+      fetchCandidates();
+      pushToast('Candidate status updated successfully', 'success');
+    } catch(err){ console.error(err); pushToast('Action failed', 'error'); }
   };
 
   const handleSaveNotes = async (id, note) => {
@@ -560,7 +563,7 @@ export default function SelectionHR() {
     try {
       setCandidates(prev=>prev.map(c=>c.id_submission===id?{...c,hr_notes:note}:c));
       await api(`/hr/candidates/${id}/notes`,{method:'PATCH',data:{hr_notes:note}});
-    } catch(err){ console.error(err); setCandidates(old); alert('Failed to save notes'); }
+    } catch(err){ console.error(err); setCandidates(old); pushToast('Failed to save notes', 'error'); }
   };
 
   const handleLogout = () => {
@@ -571,12 +574,16 @@ export default function SelectionHR() {
 
   const viewDoc = async (c, type) => {
     try {
-      const directUrlMap = { cv:c.cv_url, cover_letter:c.cover_letter_url, portfolio:c.portfolio_url, institution_letter:c.institution_letter_url };
+      const directUrlMap = {
+        cv: c.cv_url,
+        supporting_document: c.supporting_document_url || c.cover_letter_url || c.institution_letter_url,
+        portfolio: c.portfolio_url,
+      };
       if (directUrlMap[type]) { window.open(directUrlMap[type],'_blank'); return; }
       const res = await api(`/hr/candidates/${c.id_submission}/documents/${type}`);
       const url = res.url || res.data?.url;
       if (url) window.open(url,'_blank');
-    } catch { alert('Document not found'); }
+    } catch { pushToast('Document not found', 'error'); }
   };
 
   if (loading) return (
@@ -604,7 +611,7 @@ export default function SelectionHR() {
     headerCols = smartRankActive ? ['CANDIDATE','UNIVERSITY','LOCATIONS','SCHEDULE','SUBMISSIONS','SCORE','RANK & MATCH','ACTION'] : ['CANDIDATE','UNIVERSITY','LOCATIONS','SCHEDULE','SUBMISSIONS','SCORE','NOTES','ACTION'];
   } else {
     gridCols   = smartRankActive ? '1.4fr 1fr 0.6fr 0.6fr 0.9fr 0.9fr 1fr 1.5fr' : '1.4fr 1fr 0.6fr 0.6fr 0.9fr 0.9fr 1.2fr 1.5fr';
-    headerCols = smartRankActive ? ['CANDIDATE','UNIVERSITY','CV','PORTO','COVER LETTER','APPLIED DATE','RANK & MATCH','ACTION'] : ['CANDIDATE','UNIVERSITY','CV','PORTO','COVER LETTER','APPLIED DATE','NOTES','ACTION'];
+    headerCols = smartRankActive ? ['CANDIDATE','UNIVERSITY','CV','ADDITIONAL PORTFOLIO','SUPPORTING DOCUMENT','APPLIED DATE','RANK & MATCH','ACTION'] : ['CANDIDATE','UNIVERSITY','CV','ADDITIONAL PORTFOLIO','SUPPORTING DOCUMENT','APPLIED DATE','NOTES','ACTION'];
   }
 
   return (
@@ -844,7 +851,7 @@ export default function SelectionHR() {
                           <>
                             <div style={{ display:'flex', justifyContent:'center', alignItems:'center' }}>{c.has_cv?<DocBtn label='View' onClick={()=>viewDoc(c,'cv')}/>:<span style={{ fontSize:'12px', color:'#cbd5e1' }}>-</span>}</div>
                             <div style={{ display:'flex', justifyContent:'center', alignItems:'center' }}>{c.has_portfolio?<DocBtn label='View' onClick={()=>viewDoc(c,'portfolio')}/>:<span style={{ fontSize:'12px', color:'#cbd5e1' }}>-</span>}</div>
-                            <div style={{ display:'flex', justifyContent:'center', alignItems:'center' }}>{c.has_cover_letter?<DocBtn label='View' onClick={()=>viewDoc(c,'cover_letter')}/>:<span style={{ fontSize:'12px', color:'#cbd5e1' }}>-</span>}</div>
+                            <div style={{ display:'flex', justifyContent:'center', alignItems:'center' }}>{c.has_supporting_document?<DocBtn label='View' onClick={()=>viewDoc(c,'supporting_document')}/>:<span style={{ fontSize:'12px', color:'#cbd5e1' }}>-</span>}</div>
                             <div style={{ fontSize:'12.5px', color:'#64748b', display:'flex', justifyContent:'center', alignItems:'center' }}>{c.submitted_at?new Date(c.submitted_at).toLocaleDateString():'-'}</div>
                           </>
                         )}
@@ -978,7 +985,7 @@ export default function SelectionHR() {
               <div><label style={{ fontSize:'12px',fontWeight:'600',color:'#475569',display:'block',marginBottom:'6px' }}>Instructions</label><textarea placeholder='Instructions...' value={testNotes} onChange={e=>setTestNotes(e.target.value)} style={{ width:'100%',padding:'10px 12px',borderRadius:'8px',border:'1px solid #cbd5e1',fontSize:'13px',fontFamily:'inherit',background:'#fff',color:'#1e293b',resize:'vertical',boxSizing:'border-box',outline:'none' }} rows={3}/></div>
               <div style={{ display:'flex',gap:'10px',justifyContent:'flex-end',marginTop:'8px' }}>
                 <button onClick={()=>setShowAddTestTypeModal(false)} style={{ padding:'8px 16px',borderRadius:'8px',border:'1px solid #e2e8f0',background:'#fff',color:'#64748b',cursor:'pointer',fontSize:'13px',fontWeight:'600' }}>Cancel</button>
-                <button onClick={async()=>{if(!newTestName)return alert('Test name is required!');try{const formData=new FormData();formData.append('name',newTestName);formData.append('format',newTestFormat);formData.append('instructions',testNotes);if(newTestFile)formData.append('file',newTestFile);if(editingTemplateId)formData.append('template_id',editingTemplateId);const res=await api(`/hr/positions/${activePositionId}/test-templates`,{method:'POST',body:formData});if(res.success){setConfiguredTests(res.data);setNewTestName('');setNewTestFile(null);setTestNotes('');setEditingTemplateId(null);setShowAddTestTypeModal(false);alert(editingTemplateId?'Updated!':'Created!')}}catch(err){alert('Failed: '+(err.message||err))}}} style={{ padding:'8px 20px',borderRadius:'8px',border:'none',background:'#3b82f6',color:'#fff',cursor:'pointer',fontSize:'13px',fontWeight:'600' }}>{editingTemplateId?'Update Template':'Save Draft'}</button>
+                <button onClick={async()=>{if(!newTestName)return pushToast('Test name is required!', 'error');try{const formData=new FormData();formData.append('name',newTestName);formData.append('format',newTestFormat);formData.append('instructions',testNotes);if(newTestFile)formData.append('file',newTestFile);if(editingTemplateId)formData.append('template_id',editingTemplateId);const res=await api(`/hr/positions/${activePositionId}/test-templates`,{method:'POST',body:formData});if(res.success){setConfiguredTests(res.data);setNewTestName('');setNewTestFile(null);setTestNotes('');setEditingTemplateId(null);setShowAddTestTypeModal(false);pushToast(editingTemplateId ? 'Template updated successfully' : 'Template created successfully','success')}}catch(err){pushToast('Failed: '+(err.message||err),'error')}}} style={{ padding:'8px 20px',borderRadius:'8px',border:'none',background:'#3b82f6',color:'#fff',cursor:'pointer',fontSize:'13px',fontWeight:'600' }}>{editingTemplateId?'Update Template':'Save Draft'}</button>
               </div>
             </div>
           </div>
@@ -993,7 +1000,7 @@ export default function SelectionHR() {
             <p style={{ margin:'0 0 24px',fontSize:'13px',color:'#64748b',lineHeight:'1.5' }}>Are you sure you want to delete <strong>{deleteTemplateConfirm.name}</strong>? This cannot be undone.</p>
             <div style={{ display:'flex',gap:'12px',justifyContent:'center' }}>
               <button onClick={()=>setDeleteTemplateConfirm(null)} style={{ padding:'8px 16px',borderRadius:'8px',border:'1px solid #cbd5e1',background:'#fff',color:'#64748b',fontSize:'13px',fontWeight:'600',cursor:'pointer' }}>Cancel</button>
-              <button onClick={async()=>{try{const res=await api(`/hr/positions/${activePositionId}/test-templates/${deleteTemplateConfirm.id}`,{method:'DELETE'});if(res.success){setConfiguredTests(res.data);setDeleteTemplateConfirm(null);alert('Deleted')}}catch(err){alert('Failed: '+(err.message||err))}}} style={{ padding:'8px 16px',borderRadius:'8px',border:'none',background:'#ef4444',color:'#fff',fontSize:'13px',fontWeight:'600',cursor:'pointer' }}>Delete</button>
+              <button onClick={async()=>{try{const res=await api(`/hr/positions/${activePositionId}/test-templates/${deleteTemplateConfirm.id}`,{method:'DELETE'});if(res.success){setConfiguredTests(res.data);setDeleteTemplateConfirm(null);pushToast('Test template deleted successfully','success')}}catch(err){pushToast('Failed: '+(err.message||err),'error')}}} style={{ padding:'8px 16px',borderRadius:'8px',border:'none',background:'#ef4444',color:'#fff',fontSize:'13px',fontWeight:'600',cursor:'pointer' }}>Delete</button>
             </div>
           </div>
         </div>
@@ -1016,7 +1023,7 @@ export default function SelectionHR() {
               <div><label style={{ fontSize:'12px',fontWeight:'600',color:'#475569',display:'block',marginBottom:'6px' }}>Deadline (Optional)</label><CalendarPicker value={globalTestDeadline} onChange={setGlobalTestDeadline}/></div>
               <div style={{ display:'flex',gap:'10px',justifyContent:'flex-end',marginTop:'8px' }}>
                 <button onClick={()=>setShowBulkTestModal(false)} style={{ padding:'8px 16px',borderRadius:'8px',border:'1px solid #e2e8f0',background:'#fff',color:'#64748b',cursor:'pointer',fontSize:'13px',fontWeight:'600' }}>Cancel</button>
-                <button onClick={async()=>{const selObj=configuredTests.find(t=>String(t.id)===String(bulkTestId));if(!selObj)return alert('Please select a test type!');if(!bulkTestDate||!bulkTestTime)return alert('Date and time are required!');try{const id_submissions=candidates.map(c=>c.id_submission);if(id_submissions.length===0)return alert('No candidates in this stage!');const res=await api('/hr/candidates/bulk-assign-test',{method:'POST',data:{id_submissions,test_name:selObj.name,test_location:bulkTestLocation,test_date:bulkTestDate,test_time:bulkTestTime,test_deadline:globalTestDeadline||null}});if(res.success){alert(res.message);fetchCandidates();setShowBulkTestModal(false)}}catch(err){alert('Failed: '+(err.message||err))}}} style={{ padding:'8px 20px',borderRadius:'8px',border:'none',background:'#3b82f6',color:'#fff',cursor:'pointer',fontSize:'13px',fontWeight:'600' }}>Assign Tests Now</button>
+                <button onClick={async()=>{const selObj=configuredTests.find(t=>String(t.id)===String(bulkTestId));if(!selObj)return pushToast('Please select a test type!', 'error');if(!bulkTestDate||!bulkTestTime)return pushToast('Date and time are required!', 'error');try{const id_submissions=candidates.map(c=>c.id_submission);if(id_submissions.length===0)return pushToast('No candidates in this stage!', 'error');const res=await api('/hr/candidates/bulk-assign-test',{method:'POST',data:{id_submissions,test_name:selObj.name,test_location:bulkTestLocation,test_date:bulkTestDate,test_time:bulkTestTime,test_deadline:globalTestDeadline||null}});if(res.success){pushToast(res.message || 'Tests assigned successfully','success');fetchCandidates();setShowBulkTestModal(false)}}catch(err){pushToast('Failed: '+(err.message||err),'error')}}} style={{ padding:'8px 20px',borderRadius:'8px',border:'none',background:'#3b82f6',color:'#fff',cursor:'pointer',fontSize:'13px',fontWeight:'600' }}>Assign Tests Now</button>
               </div>
             </div>
           </div>
@@ -1071,10 +1078,10 @@ export default function SelectionHR() {
                     setCandidates(prev=>prev.map(c=>c.id_submission===assignTestCandidate.id_submission?{...c,test_name:testName||c.test_name,test_link:testLink||c.test_link,test_date:testDate||c.test_date,test_time:testTime||c.test_time,test_score:assignTestCandidate.test_score||c.test_score,test_notes:testNotes||c.test_notes}:c));
                     setAssignTestCandidate(null);
                     setTestName(''); setTestLink(''); setTestDate(''); setTestTime(''); setTestNotes('');
-                    alert('✅ Test ' + (isEditingExisting ? 'graded' : 'assigned') + ' successfully!');
+                    pushToast('Test ' + (isEditingExisting ? 'graded' : 'assigned') + ' successfully!', 'success');
                   } catch(err) {
                     console.error("❌ Error:", err);
-                    alert('Failed to save test: ' + (err.message || err));
+                    pushToast('Failed to save test: ' + (err.message || err), 'error');
                   }
                 }} style={{ padding:'8px 20px',borderRadius:'8px',border:'none',background:'#3b82f6',color:'#fff',cursor:'pointer',fontSize:'13px',fontWeight:'600' }}>Save Test Info</button>
               </div>
@@ -1127,12 +1134,12 @@ export default function SelectionHR() {
                     setCandidates(prev=>prev.map(c=>c.id_submission===assignInterviewCandidate.id_submission?{...c,interview_date:interviewDate,interview_time:interviewTime,interview_link:interviewLink,interview_notes:interviewNotes}:c));
                     setAssignInterviewCandidate(null);
                     setInterviewDate(''); setInterviewTime(''); setInterviewLink(''); setInterviewNotes('');
-                    alert('✅ Interview scheduled successfully!');
+                    pushToast('Interview scheduled successfully!', 'success');
                   } catch(err) {
                     console.error("❌ Error caught:", err);
                     console.error("❌ Error message:", err.message);
                     console.error("❌ Full error:", JSON.stringify(err));
-                    alert('Failed to schedule interview: ' + (err.message || JSON.stringify(err)));
+                    pushToast('Failed to schedule interview: ' + (err.message || JSON.stringify(err)), 'error');
                   }
                 }} style={{ padding:'8px 20px',borderRadius:'8px',border:'none',background:'#3b82f6',color:'#fff',cursor:'pointer',fontSize:'13px',fontWeight:'600' }}>Save Interview</button>
               </div>
@@ -1155,6 +1162,8 @@ export default function SelectionHR() {
           </div>
         </div>
       )}
+
+      <HRToastStack toasts={toasts} onDismiss={removeToast} />
 
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}@keyframes fadeSlide{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}`}</style>
     </div>

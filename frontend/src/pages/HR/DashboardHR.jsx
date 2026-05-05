@@ -4,6 +4,7 @@ import { api } from "../../api";
 import { useAuthStore } from "../../stores/authStore";
 import SidebarHR from "../../components/SidebarHR"; // ← import sidebar
 import { LoadingSpinner } from "../../components/LoadingSpinner";
+import { HRToastStack, useHRToast } from "../../components/HRToast";
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
 const IC = {
@@ -204,6 +205,7 @@ export default function DashboardHR() {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
+  const { toasts, pushToast, removeToast } = useHRToast();
 
   const [showLogout, setShowLogout] = useState(false);
   const [confirmAction, setConfirmAction] = useState(null);
@@ -232,7 +234,10 @@ export default function DashboardHR() {
 
     api(`/hr/dashboard?${params}`)
       .then((res) => setData(res.data))
-      .catch((err) => console.error("Fetch error:", err))
+      .catch((err) => {
+        console.error("Fetch error:", err);
+        pushToast(err?.message || "Failed to load dashboard", "error");
+      })
       .finally(() => {
         setLoading(false);
         setTableLoading(false);
@@ -264,9 +269,14 @@ export default function DashboardHR() {
       accept: `/hr/candidates/${candidate.id_submission}/accept`,
       reject: `/hr/candidates/${candidate.id_submission}/reject`,
     };
-    await api(map[type], { method: "PATCH" });
-    fetchDashboard();
-    setConfirmAction(null);
+    try {
+      await api(map[type], { method: "PATCH" });
+      fetchDashboard();
+      setConfirmAction(null);
+      pushToast('Candidate status updated successfully', 'success');
+    } catch (err) {
+      pushToast(err?.message || 'Failed to update candidate status', 'error');
+    }
   };
 
   // ── Stat cards config ─────────────────────────────────────────────────────────
@@ -641,6 +651,8 @@ export default function DashboardHR() {
           onCancel={() => setConfirmAction(null)}
         />
       )}
+
+      <HRToastStack toasts={toasts} onDismiss={removeToast} />
     </div>
   );
 }
