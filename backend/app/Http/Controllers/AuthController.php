@@ -391,44 +391,96 @@ class AuthController extends Controller
     {
         try {
             $existingAuthUser = auth('sanctum')->user();
+            $activationToken = $request->input('activation_token');
+            $invitationCode = $request->input('invitation_code');
 
-            $emailRule = $existingAuthUser
-                ? 'required|email|max:100'
-                : 'required|email|max:100|unique:users,email';
+            $emailRule = 'required|email|max:100';
 
-            $validated = $request->validate([
-                'invitation_code' => 'required|string',
-                'first_name'      => 'required|string|max:100',
-                'last_name'       => 'nullable|string|max:100',
-                'email'           => $emailRule,
-                'password'        => 'required|string|min:8|confirmed',
-            ]);
+            if ($activationToken) {
+                $validated = $request->validate([
+                    'activation_token' => 'required|string',
+                    'first_name'      => 'required|string|max:100',
+                    'last_name'       => 'nullable|string|max:100',
+                    'email'           => $emailRule,
+                    'password'        => 'required|string|min:8|confirmed',
+                ]);
 
-            $invitation = \App\Models\InvitationCode::where('code', $validated['invitation_code'])
-                ->where('is_active', true)->with('company')->first();
+                $user = User::where('activation_token', $validated['activation_token'])
+                    ->where('is_active', false)
+                    ->first();
 
-            if (!$invitation) {
-                return response()->json(['message' => 'Invalid or inactive invitation code.'], 422);
-            }
+                if (!$user) {
+                    return response()->json(['message' => 'Invalid or expired activation token.'], 422);
+                }
 
-            $roleName = 'employee';
-            if ($invitation->id_role) {
-                $role = \App\Models\Role::find($invitation->id_role);
-                if ($role) $roleName = $role->name;
+                $emailValue = $validated['email'] ?: $user->email;
+
+                $roleName = strtolower((string) ($user->role ?: 'employee'));
+                $companyId = $user->id_company;
+                $existingUserByEmail = null;
+            } else {
+                $validated = $request->validate([
+                    'invitation_code' => 'required|string',
+                    'first_name'      => 'required|string|max:100',
+                    'last_name'       => 'nullable|string|max:100',
+                    'email'           => $emailRule,
+                    'password'        => 'required|string|min:8|confirmed',
+                ]);
+
+                $invitation = \App\Models\InvitationCode::where('code', $validated['invitation_code'])
+                    ->where('is_active', true)->with('company')->first();
+
+                if (!$invitation) {
+                    return response()->json(['message' => 'Invalid or inactive invitation code.'], 422);
+                }
+
+                $roleName = 'employee';
+                if ($invitation->id_role) {
+                    $role = \App\Models\Role::find($invitation->id_role);
+                    if ($role) $roleName = $role->name;
+                }
+
+                $companyId = $invitation->id_company;
+                $emailValue = $validated['email'];
+                $existingUserByEmail = User::where('email', $validated['email'])->first();
             }
 
             DB::beginTransaction();
             try {
-                if ($existingAuthUser) {
+                if ($activationToken) {
+                    $user->update([
+                        'name'             => trim($validated['first_name'] . ' ' . ($validated['last_name'] ?? '')),
+                        'email'            => $emailValue,
+                        'id_company'       => $companyId,
+                        'role'             => $roleName,
+                        'password'         => Hash::make($validated['password']),
+                        'is_active'        => true,
+                        'activation_token' => null,
+                    ]);
+                    $firstName = $validated['first_name'];
+                    $lastName  = $validated['last_name'] ?? '';
+                } elseif ($existingAuthUser) {
                     $user = $existingAuthUser;
                     $user->update([
-                        'id_company' => $invitation->id_company,
+                        'id_company' => $companyId,
                         'role'       => $roleName,
+                        'email'      => $validated['email'],
                         'password'   => Hash::make($validated['password']),
                     ]);
                     $nameParts = explode(' ', $user->name, 2);
                     $firstName = $nameParts[0];
                     $lastName  = $nameParts[1] ?? '';
+                } elseif ($existingUserByEmail) {
+                    $user = $existingUserByEmail;
+                    $user->update([
+                        'name'       => trim($validated['first_name'] . ' ' . ($validated['last_name'] ?? '')),
+                        'id_company' => $companyId,
+                        'role'       => $roleName,
+                        'password'   => Hash::make($validated['password']),
+                        'is_active'  => true,
+                    ]);
+                    $firstName = $validated['first_name'];
+                    $lastName  = $validated['last_name'] ?? '';
                 } else {
                     do {
                         $idUser = 'USR' . strtoupper(substr(uniqid(), -7));
@@ -437,9 +489,9 @@ class AuthController extends Controller
                     $user = User::create([
                         'id_user'    => $idUser,
                         'name'       => trim($validated['first_name'] . ' ' . ($validated['last_name'] ?? '')),
-                        'email'      => $validated['email'],
+                        'email'      => $emailValue,
                         'password'   => Hash::make($validated['password']),
-                        'id_company' => $invitation->id_company,
+                        'id_company' => $companyId,
                         'role'       => $roleName,
                         'is_active'  => true,
                     ]);
@@ -448,7 +500,7 @@ class AuthController extends Controller
                 }
 
                 $existingEmployee = \App\Models\Employee::where('id_user', $user->id_user)
-                    ->where('id_company', $invitation->id_company)->first();
+                    ->where('id_company', $companyId)->first();
 
                 if (!$existingEmployee) {
                     do {
@@ -458,15 +510,15 @@ class AuthController extends Controller
                     \App\Models\Employee::create([
                         'id_employee'     => $idEmployee,
                         'id_user'         => $user->id_user,
-                        'id_company'      => $invitation->id_company,
-                        'id_role'         => $invitation->id_role,
+                        'id_company'      => $companyId,
+                        'id_role'         => $activationToken ? $user->role : ($invitation->id_role ?? null),
                         'first_name'      => $firstName,
                         'last_name'       => $lastName,
-                        'department'      => $invitation->division,
-                        'position'        => $invitation->position,
-                        'employee_status' => $invitation->employee_status,
-                        'schedule'        => $invitation->schedule,
-                        'job_level'       => $invitation->job_level,
+                        'department'      => $activationToken ? null : $invitation->division,
+                        'position'        => $activationToken ? null : $invitation->position,
+                        'employee_status' => $activationToken ? 'active' : $invitation->employee_status,
+                        'schedule'        => $activationToken ? null : $invitation->schedule,
+                        'job_level'       => $activationToken ? null : $invitation->job_level,
                         'joined_at'       => now(),
                     ]);
                 }
@@ -494,7 +546,7 @@ class AuthController extends Controller
                         'role'       => $user->role,
                         'id_company' => $user->id_company,
                     ],
-                    'company' => $invitation->company,
+                    'company' => $activationToken ? $user->company : $invitation->company,
                 ], 201);
 
             } catch (\Exception $e) {

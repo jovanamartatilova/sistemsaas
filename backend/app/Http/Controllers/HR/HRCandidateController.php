@@ -184,9 +184,10 @@ class HRCandidateController extends Controller
 
         $column = match($type) {
             'cv'                 => 'cv_file',
-            'cover_letter'       => 'cover_letter_file',
+            'supporting_document'=> 'supporting_document_file',
+            'cover_letter'       => 'supporting_document_file',
             'portfolio'          => 'portfolio_file',
-            'institution_letter' => 'institution_letter_file',
+            'institution_letter' => 'supporting_document_file',
             default              => null,
         };
 
@@ -316,13 +317,15 @@ class HRCandidateController extends Controller
             'status'          => $s->status,
             'submitted_at'    => $s->submitted_at,
             'has_cv'          => !empty($s->cv_file),
-            'has_cover_letter'=> !empty($s->cover_letter_file),
+            'has_supporting_document' => !empty($s->supporting_document_file),
             'has_portfolio'   => !empty($s->portfolio_file),
-            'has_institution_letter' => !empty($s->institution_letter_file),
+            'has_cover_letter'=> !empty($s->supporting_document_file),
+            'has_institution_letter' => !empty($s->supporting_document_file),
             'cv_url'          => $s->cv_file ? asset('storage/' . $s->cv_file) : null,
-            'cover_letter_url'=> $s->cover_letter_file ? asset('storage/' . $s->cover_letter_file) : null,
+            'supporting_document_url' => $s->supporting_document_file ? asset('storage/' . $s->supporting_document_file) : null,
+            'cover_letter_url'=> $s->supporting_document_file ? asset('storage/' . $s->supporting_document_file) : null,
             'portfolio_url'   => $s->portfolio_file ? asset('storage/' . $s->portfolio_file) : null,
-            'institution_letter_url' => $s->institution_letter_file ? asset('storage/' . $s->institution_letter_file) : null,
+            'institution_letter_url' => $s->supporting_document_file ? asset('storage/' . $s->supporting_document_file) : null,
             // Test data from JSON column
             'test_name'       => $testData['test_name'] ?? null,
             'test_link'       => $testData['test_link'] ?? null,
@@ -467,13 +470,15 @@ class HRCandidateController extends Controller
             'hr_notes'               => $s->hr_notes,
 
             'has_cv'                 => !empty($s->cv_file),
-            'has_cover_letter'       => !empty($s->cover_letter_file),
+            'has_supporting_document' => !empty($s->supporting_document_file),
             'has_portfolio'          => !empty($s->portfolio_file),
-            'has_institution_letter' => !empty($s->institution_letter_file),
+            'has_cover_letter'       => !empty($s->supporting_document_file),
+            'has_institution_letter' => !empty($s->supporting_document_file),
             'cv_url'                 => $s->cv_file ? asset('storage/' . $s->cv_file) : null,
-            'cover_letter_url'       => $s->cover_letter_file ? asset('storage/' . $s->cover_letter_file) : null,
+            'supporting_document_url' => $s->supporting_document_file ? asset('storage/' . $s->supporting_document_file) : null,
+            'cover_letter_url'       => $s->supporting_document_file ? asset('storage/' . $s->supporting_document_file) : null,
             'portfolio_url'          => $s->portfolio_file ? asset('storage/' . $s->portfolio_file) : null,
-            'institution_letter_url' => $s->institution_letter_file ? asset('storage/' . $s->institution_letter_file) : null,
+            'institution_letter_url' => $s->supporting_document_file ? asset('storage/' . $s->supporting_document_file) : null,
         ];
     }
 

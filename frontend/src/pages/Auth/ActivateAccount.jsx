@@ -101,6 +101,8 @@ export default function ActivateAccount() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const code = searchParams.get("code");
+  const token = searchParams.get("token");
+  const activationValue = code || token;
 
   const [step, setStep] = useState("preview");
   const [invitation, setInvitation] = useState(null);
@@ -146,8 +148,14 @@ export default function ActivateAccount() {
       }
     } catch {}
 
-    if (!code) {
-      setCodeError("Invitation code not found.");
+    if (!activationValue) {
+      setCodeError("Activation link not found.");
+      setCodeLoading(false);
+      return;
+    }
+
+    if (token && !code) {
+      setStep("form");
       setCodeLoading(false);
       return;
     }
@@ -169,7 +177,7 @@ export default function ActivateAccount() {
       }
     };
     validateCode();
-  }, [code]);
+  }, [code, token, activationValue]);
 
   const getStrength = (pwd) => {
     if (!pwd) return { level: 0, label: "", color: "" };
@@ -215,7 +223,7 @@ export default function ActivateAccount() {
         method: "POST",
         headers,
         body: JSON.stringify({
-          invitation_code: code,
+          ...(code ? { invitation_code: code } : { activation_token: token }),
           first_name: form.first_name,
           last_name: form.last_name,
           email: form.email,

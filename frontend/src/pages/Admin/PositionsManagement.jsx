@@ -146,7 +146,7 @@ function CandidateItem({ sub }) {
                         )}
                         {sub.portfolio_file && (
                             <a href={`http://127.0.0.1:8000/storage/${sub.portfolio_file}`} target="_blank" rel="noopener noreferrer" style={docBtn}>
-                                <Icon.FileText /> Portfolio
+                                <Icon.FileText /> Additional Portfolio
                             </a>
                         )}
                     </div>

@@ -4,6 +4,7 @@ import { api } from "../../api";
 import { useAuthStore } from "../../stores/authStore";
 import SidebarHR from "../../components/SidebarHR";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
+import { HRToastStack, useHRToast } from "../../components/HRToast";
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
 const IC = {
@@ -182,6 +183,7 @@ function ActionBtn({ label, variant = "blue", onClick, icon, disabled }) {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function AssignMentorHR() {
+  const { toasts, pushToast, removeToast } = useHRToast();
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
 
@@ -264,14 +266,23 @@ export default function AssignMentorHR() {
       setSaved((prev) => ({ ...prev, [intern.id_submission]: true }));
       setModal(null);
       fetchData();
-    } catch (err) { console.error(err); }
+      pushToast('Mentor assigned successfully', 'success');
+    } catch (err) {
+      console.error(err);
+      pushToast(err?.message || 'Failed to assign mentor', 'error');
+    }
   };
 
   const handleUnassign = async (id_submission) => {
-    await api(`/hr/assign-mentor/${id_submission}`, { method: "DELETE" });
-    setDraft((prev) => ({ ...prev, [id_submission]: null }));
-    setSaved((prev) => ({ ...prev, [id_submission]: false }));
-    fetchData();
+    try {
+      await api(`/hr/assign-mentor/${id_submission}`, { method: "DELETE" });
+      setDraft((prev) => ({ ...prev, [id_submission]: null }));
+      setSaved((prev) => ({ ...prev, [id_submission]: false }));
+      fetchData();
+      pushToast('Mentor unassigned successfully', 'success');
+    } catch (err) {
+      pushToast(err?.message || 'Failed to unassign mentor', 'error');
+    }
   };
 
   const handleLogout = () => {
@@ -282,8 +293,15 @@ export default function AssignMentorHR() {
 
   const handleAutoAssign = async () => {
     setAutoLoading(true);
-    try { await api("/hr/assign-mentor/auto", { method: "POST" }); fetchData(); }
-    finally { setAutoLoading(false); }
+    try {
+      await api("/hr/assign-mentor/auto", { method: "POST" });
+      fetchData();
+      pushToast('Auto-assignment completed successfully', 'success');
+    } catch (err) {
+      pushToast(err?.message || 'Auto-assignment failed', 'error');
+    } finally {
+      setAutoLoading(false);
+    }
   };
 
   const total = data.stats.total ?? 0;
@@ -712,6 +730,8 @@ export default function AssignMentorHR() {
 
       {/* Logout */}
       {showLogout && <LogoutModal onConfirm={handleLogout} onCancel={() => setShowLogout(false)} />}
+
+      <HRToastStack toasts={toasts} onDismiss={removeToast} />
     </div>
   );
 }

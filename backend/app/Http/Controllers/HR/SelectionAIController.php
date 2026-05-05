@@ -370,17 +370,15 @@ class SelectionAIController extends Controller
         $reasons   = [];
 
         // ── Dokumen ──────────────────────────────────────────────────────────
-        $hasCV        = !empty($s->cv_file);
-        $hasCL        = !empty($s->cover_letter_file);
-        $hasPortfolio = !empty($s->portfolio_file);
-        $hasInstLetter = !empty($s->institution_letter_file);
+        $hasCV                = !empty($s->cv_file);
+        $hasSupportingDocument = !empty($s->supporting_document_file);
+        $hasPortfolio         = !empty($s->portfolio_file);
 
         if ($stageType === 'screening') {
             // Screening: dokumen adalah segalanya
             if ($hasCV)          { $score += 30; $reasons[] = 'CV uploaded'; }
-            if ($hasCL)          { $score += 20; $reasons[] = 'Cover letter present'; }
+            if ($hasSupportingDocument) { $score += 30; $reasons[] = 'Supporting document present'; }
             if ($hasPortfolio)   { $score += 20; $reasons[] = 'Portfolio attached'; }
-            if ($hasInstLetter)  { $score += 10; $reasons[] = 'Recommendation letter included'; }
 
             $motiv = $s->motivation_message ?? '';
             if (str_word_count($motiv) >= 50)  { $score += 15; $reasons[] = 'Detailed motivation'; }
@@ -397,7 +395,7 @@ class SelectionAIController extends Controller
             else                      { $reasons[] = 'No test score yet'; }
 
             // Dokumen sebagai faktor pendukung
-            $docScore = ($hasCV ? 15 : 0) + ($hasPortfolio ? 20 : 0) + ($hasCL ? 10 : 0);
+            $docScore = ($hasCV ? 15 : 0) + ($hasPortfolio ? 20 : 0) + ($hasSupportingDocument ? 15 : 0);
             $score += $docScore;
             if ($docScore > 0) $reasons[] = 'Supporting documents available';
 
@@ -423,7 +421,7 @@ class SelectionAIController extends Controller
 
         } else {
             // Final / general: evaluasi menyeluruh
-            $score += ($hasCV ? 20 : 0) + ($hasCL ? 10 : 0) + ($hasPortfolio ? 15 : 0) + ($hasInstLetter ? 5 : 0);
+            $score += ($hasCV ? 20 : 0) + ($hasSupportingDocument ? 15 : 0) + ($hasPortfolio ? 15 : 0);
             $motiv = $s->motivation_message ?? '';
             if (str_word_count($motiv) >= 50) { $score += 20; $reasons[] = 'Good motivation'; }
             if (!empty($s->linkedin_url))     { $score += 10; $reasons[] = 'LinkedIn linked'; }
@@ -535,8 +533,7 @@ class SelectionAIController extends Controller
 if (!function_exists('DOC_TYPES_COUNT')) {
     function DOC_TYPES_COUNT($s): int {
         return (int) (!empty($s->cv_file))
-             + (int) (!empty($s->cover_letter_file))
-             + (int) (!empty($s->portfolio_file))
-             + (int) (!empty($s->institution_letter_file));
+             + (int) (!empty($s->supporting_document_file))
+             + (int) (!empty($s->portfolio_file));
     }
 }

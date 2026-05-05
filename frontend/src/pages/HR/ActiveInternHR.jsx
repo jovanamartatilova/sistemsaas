@@ -4,6 +4,7 @@ import { api } from '../../api';
 import { useAuthStore } from '../../stores/authStore';
 import SidebarHR from '../../components/SidebarHR';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
+import { HRToastStack, useHRToast } from '../../components/HRToast';
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 const IC = {
@@ -301,6 +302,7 @@ export default function ActiveInternHR() {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
+  const { toasts, pushToast, removeToast } = useHRToast();
 
   const [loading, setLoading]           = useState(true);
   const [interns, setInterns]           = useState([]);
@@ -324,7 +326,10 @@ useEffect(() => {
   const t = setTimeout(() => {
     api(`/hr/apprentices?${params}`)
       .then(res => setInterns(res.apprentices || res.data?.apprentices || []))
-      .catch(err => console.error(err))
+      .catch(err => {
+        console.error(err);
+        pushToast(err?.message || 'Failed to load active interns', 'error');
+      })
       .finally(() => { setLoading(false); setTableLoading(false); });
   }, search ? 500 : 0);
 
@@ -524,6 +529,8 @@ useEffect(() => {
           </div>
         </div>
       )}
+
+      <HRToastStack toasts={toasts} onDismiss={removeToast} />
     </div>
   );
 }

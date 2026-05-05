@@ -4,6 +4,7 @@ import { api } from "../../api";
 import { useAuthStore } from "../../stores/authStore";
 import SidebarHR from "../../components/SidebarHR";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
+import { HRToastStack, useHRToast } from "../../components/HRToast";
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
 const IC = {
@@ -173,9 +174,8 @@ function StatusBadge({ status }) {
 }
 
 // ── Manage Stipend Modal ──────────────────────────────────────────────────────
-function ManageStipendModal({ programs, onClose, onSave }) {
+function ManageStipendModal({ programs, onClose, onSave, onNotify }) {
   const [form, setForm] = useState({ id_vacancy: "", stipend_amount: "" });
-  const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
   const handleProgramChange = (id) => {
@@ -188,7 +188,7 @@ function ManageStipendModal({ programs, onClose, onSave }) {
 
   const handleSave = async () => {
     if (!form.id_vacancy || !form.stipend_amount) {
-      setError("Please fill all fields");
+      onNotify?.("Please fill all fields", "error");
       return;
     }
     setSaving(true);
@@ -196,7 +196,7 @@ function ManageStipendModal({ programs, onClose, onSave }) {
       await onSave(form);
       onClose();
     } catch (err) {
-      setError(err?.message || "Failed to update");
+      onNotify?.(err?.message || "Failed to update", "error");
     } finally {
       setSaving(false);
     }
@@ -212,8 +212,6 @@ function ManageStipendModal({ programs, onClose, onSave }) {
       <div style={{ background: "#fff", borderRadius: "16px", padding: "28px", width: "400px", boxShadow: "0 20px 60px rgba(0,0,0,0.15)" }} onClick={e => e.stopPropagation()}>
         <div style={{ fontSize: "17px", fontWeight: "800", color: "#0f172a", marginBottom: "4px" }}>Set Program Stipend</div>
         <div style={{ fontSize: "12px", color: "#64748b", marginBottom: "20px" }}>Define standard monthly stipend for an internship program.</div>
-
-        {error && <div style={{ background: "#fff1f2", color: "#dc2626", padding: "8px 12px", borderRadius: "8px", fontSize: "12px", marginBottom: "16px", border: "1px solid #fca5a5" }}>{error}</div>}
 
         <div style={{ marginBottom: "16px" }}>
           <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "#475569", marginBottom: "6px" }}>Internship Program</label>
@@ -248,9 +246,9 @@ export default function PayrollHR() {
   const [search, setSearch] = useState("");
   const [appStatus, setAppStatus] = useState("active"); // All / active / completed
   const [showStipendModal, setShowStipendModal] = useState(false);
-  const [toasts, setToasts] = useState([]);
   const [confirmModal, setConfirmModal] = useState(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const { toasts, pushToast, removeToast } = useHRToast();
 
   useEffect(() => {
     fetchData();
@@ -262,16 +260,10 @@ export default function PayrollHR() {
       const res = await api(`/hr/payroll?period=${period}&search=${search}&app_status=${appStatus}`);
       setData(res.data);
     } catch (err) {
-      addToast("Failed to fetch payroll data", "error");
+      pushToast("Failed to fetch payroll data", "error");
     } finally {
       setLoading(false);
     }
-  };
-
-  const addToast = (message, type = "success") => {
-    const id = Date.now();
-    setToasts(prev => [...prev, { id, message, type }]);
-    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3000);
   };
 
   const handlePay = async (item) => {
@@ -283,10 +275,10 @@ export default function PayrollHR() {
           period: period
         })
       });
-      addToast(`Payment processed for ${item.name}`);
+      pushToast(`Payment processed for ${item.name}`, "success");
       fetchData();
     } catch (err) {
-      addToast(err?.message || "Payment failed", "error");
+      pushToast(err?.message || "Payment failed", "error");
     }
   };
 
@@ -299,10 +291,10 @@ export default function PayrollHR() {
           period: period
         })
       });
-      addToast(`Payment rolled back for ${item.name}`);
+      pushToast(`Payment rolled back for ${item.name}`, "success");
       fetchData();
     } catch (err) {
-      addToast(err?.message || "Rollback failed", "error");
+      pushToast(err?.message || "Rollback failed", "error");
     }
   };
 
@@ -314,10 +306,10 @@ export default function PayrollHR() {
           id_apprentice: item.id_apprentice
         })
       });
-      addToast(`Internship ended for ${item.name}. They will no longer appear in payroll.`);
+      pushToast(`Internship ended for ${item.name}. They will no longer appear in payroll.`, "success");
       fetchData();
     } catch (err) {
-      addToast(err?.message || "Action failed", "error");
+      pushToast(err?.message || "Action failed", "error");
     }
   };
 
@@ -327,7 +319,7 @@ export default function PayrollHR() {
         method: "POST",
         body: JSON.stringify(form)
       });
-      addToast("Program stipend updated successfully");
+      pushToast("Program stipend updated successfully", "success");
       fetchData();
     } catch (err) {
       throw err;
@@ -336,7 +328,7 @@ export default function PayrollHR() {
 
   const handleExport = async () => {
     window.location.href = `${import.meta.env.VITE_API_BASE_URL}/hr/payroll/export?period=${period}&token=${localStorage.getItem("token")}`;
-    addToast("Exporting payroll data...");
+    pushToast("Exporting payroll data...", "info");
   };
 
   if (loading && !data.payrolls.length) return (
@@ -615,13 +607,14 @@ export default function PayrollHR() {
         <ManageStipendModal 
           programs={data.programs} 
           onClose={() => setShowStipendModal(false)} 
-          onSave={handleUpdateStipend} 
+          onSave={handleUpdateStipend}
+          onNotify={pushToast}
         />
       )}
 
       <ConfirmModal config={confirmModal} onClose={() => setConfirmModal(null)} />
       {showLogoutModal && <LogoutModal onConfirm={logoutUser} onCancel={() => setShowLogoutModal(false)} />}
-      <ToastContainer toasts={toasts} />
+      <HRToastStack toasts={toasts} onDismiss={removeToast} />
 
       <style>{`
         .table-row-hover:hover { background: #f8fafc !important; }
@@ -674,30 +667,6 @@ function LogoutModal({ onConfirm, onCancel }) {
           <button onClick={onConfirm} style={{ padding: "9px 18px", borderRadius: "10px", border: "none", background: "#ef4444", fontSize: "13px", fontWeight: "700", color: "#fff", cursor: "pointer" }}>Yes, Sign Out</button>
         </div>
       </div>
-    </div>
-  );
-}
-
-function ToastContainer({ toasts }) {
-  const colors = {
-    success: { bg: "#f0fdf4", border: "#86efac", color: "#166534", Icon: IC.CheckMark },
-    error:   { bg: "#fff1f2", border: "#fca5a5", color: "#991b1b", Icon: IC.X },
-    info:    { bg: "#eff6ff", border: "#93c5fd", color: "#1e40af", Icon: IC.Info },
-  };
-  return (
-    <div style={{ position: "fixed", bottom: "24px", right: "24px", display: "flex", flexDirection: "column", gap: "10px", zIndex: 9999, pointerEvents: "none" }}>
-      {toasts.map(toast => {
-        const c = colors[toast.type] || colors.success;
-        return (
-          <div key={toast.id} style={{ display: "flex", alignItems: "center", gap: "10px", background: c.bg, border: `1px solid ${c.border}`, color: c.color, padding: "12px 16px", borderRadius: "12px", fontSize: "13px", fontWeight: 500, boxShadow: "0 4px 16px rgba(0,0,0,0.08)", minWidth: "240px", maxWidth: "340px", animation: "slideIn 0.25s ease" }}>
-            <span style={{ width: "22px", height: "22px", borderRadius: "50%", background: c.color, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <c.Icon />
-            </span>
-            {toast.message}
-          </div>
-        );
-      })}
-      <style>{`@keyframes slideIn { from { opacity:0; transform:translateX(20px); } to { opacity:1; transform:translateX(0); } }`}</style>
     </div>
   );
 }

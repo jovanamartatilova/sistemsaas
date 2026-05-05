@@ -4,6 +4,7 @@ import { api } from '../../api';
 import { useAuthStore } from '../../stores/authStore';
 import SidebarHR from '../../components/SidebarHR';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
+import { HRToastStack, useHRToast } from '../../components/HRToast';
 
 // ─── Icons ───────────────────────────────────────────────────────────────────
 const IC = {
@@ -63,10 +64,9 @@ const CLASSIFICATION_CONFIG = {
 };
 
 const DOC_TYPES = [
-  { key: 'has_cv',                 label: 'CV',                  type: 'cv' },
-  { key: 'has_cover_letter',       label: 'Cover Letter',        type: 'cover_letter' },
-  { key: 'has_portfolio',          label: 'Portfolio',           type: 'portfolio' },
-  { key: 'has_institution_letter', label: 'Institution Letter',  type: 'institution_letter' },
+  { key: 'has_cv',                  label: 'CV / Resume',         type: 'cv' },
+  { key: 'has_supporting_document', label: 'Supporting Document', type: 'supporting_document' },
+  { key: 'has_portfolio',           label: 'Additional Portfolio', type: 'portfolio' },
 ];
 
 const STATUS_OPTIONS = [
@@ -493,7 +493,7 @@ function NotesModal({ candidate, onClose, onSave }) {
  */
 function IndividualRow({ candidate, onDetail, onNotes, onViewDoc, irActive }) {
   const [docModal, setDocModal] = useState(false);
-  const hasAnyDoc = candidate.has_cv || candidate.has_cover_letter || candidate.has_portfolio || candidate.has_institution_letter;
+  const hasAnyDoc = candidate.has_cv || candidate.has_supporting_document || candidate.has_portfolio;
 
   const gridCols = irActive
     ? '1.8fr 0.9fr 0.8fr 1.2fr 1fr 0.8fr 0.9fr'
@@ -570,7 +570,7 @@ function GroupRow({ candidate, onDetail, onNotes, onViewDoc, irActive }) {
   const [expanded, setExpanded] = useState(false);
   const [docModal, setDocModal] = useState(false);
   const members = candidate.team_members || [];
-  const hasAnyDoc = candidate.has_cv || candidate.has_cover_letter || candidate.has_portfolio || candidate.has_institution_letter;
+  const hasAnyDoc = candidate.has_cv || candidate.has_supporting_document || candidate.has_portfolio;
 
   const gridCols = irActive
     ? '1.8fr 0.9fr 0.8fr 1.2fr 1fr 0.8fr 0.9fr'
@@ -647,6 +647,7 @@ function BoolOpToggle({ value, onChange }) {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function CandidateHR() {
+  const { toasts, pushToast, removeToast } = useHRToast();
   const navigate  = useNavigate();
   const user      = useAuthStore((state) => state.user);
   const logout    = useAuthStore((state) => state.logout);
@@ -789,19 +790,28 @@ export default function CandidateHR() {
   // ── Actions ───────────────────────────────────────────────────────────────
   const viewDoc = async (c, type) => {
     try {
-      const directUrlMap = { cv: c.cv_url, cover_letter: c.cover_letter_url, portfolio: c.portfolio_url, institution_letter: c.institution_letter_url };
+      const directUrlMap = {
+        cv: c.cv_url,
+        supporting_document: c.supporting_document_url,
+        portfolio: c.portfolio_url,
+      };
       if (directUrlMap[type]) { window.open(directUrlMap[type], '_blank'); return; }
       const res = await api(`/hr/candidates/${c.id_submission}/documents/${type}`);
       const url = res.url || res.data?.url;
       if (url) window.open(url, '_blank');
-    } catch { alert('Document not found'); }
+    } catch {
+      pushToast('Document not found', 'error');
+    }
   };
 
   const saveNotes = async (id, note) => {
     try {
       await api(`/hr/candidates/${id}/notes`, { method: 'PATCH', data: { hr_notes: note } });
       setCandidates(prev => prev.map(c => c.id_submission === id ? { ...c, hr_notes: note } : c));
-    } catch { alert('Failed to save notes'); }
+      pushToast('Notes saved successfully', 'success');
+    } catch {
+      pushToast('Failed to save notes', 'error');
+    }
   };
 
   const handleLogout = async () => { await logout(); navigate('/', { replace: true }); };
@@ -1042,6 +1052,8 @@ export default function CandidateHR() {
           </div>
         </div>
       )}
+
+      <HRToastStack toasts={toasts} onDismiss={removeToast} />
 
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
