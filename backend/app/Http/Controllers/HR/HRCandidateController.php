@@ -391,7 +391,7 @@ class HRCandidateController extends Controller
                 if (isset($seen[$s->id_team])) continue;
                 $seen[$s->id_team] = true;
             }
-            
+
             // Map status
             $status = $s->status;
             if ($status === 'pending' || $status === 'stage_0') {

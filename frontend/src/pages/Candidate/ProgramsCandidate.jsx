@@ -258,15 +258,15 @@ function RoleChoiceModal({ program, onClose, onSelectLeader, onSelectMember }) {
           {/* Member Option */}
           <button
             onClick={onSelectMember}
-            className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-emerald-200 bg-emerald-50 hover:bg-emerald-100 transition-colors cursor-pointer text-left"
+            className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-indigo-200 bg-indigo-50 hover:bg-indigo-100 transition-colors cursor-pointer text-left"
             style={{ fontFamily: "Poppins, sans-serif" }}
           >
-            <div className="w-10 h-10 rounded-xl bg-emerald-100 border border-emerald-200 flex items-center justify-center flex-shrink-0">
-              <Users size={20} className="text-emerald-600" />
-            </div>
-            <div>
-              <div className="text-sm font-bold text-emerald-800">Join Team (Member)</div>
-              <div className="text-[11px] text-emerald-600 mt-0.5">
+            <div className="w-10 h-10 rounded-xl bg-indigo-100 border border-indigo-200 flex items-center justify-center flex-shrink-0">
+                <Users size={20} className="text-indigo-600" />
+              </div>
+              <div>
+                <div className="text-sm font-bold text-indigo-800">Join Team (Member)</div>
+                <div className="text-[11px] text-indigo-600 mt-0.5">
                 Join an existing team using an invitation link from your leader.
               </div>
             </div>
@@ -327,7 +327,7 @@ function JoinTeamModal({ onClose, onJoined }) {
       style={{ background: "rgba(10,22,40,.6)", backdropFilter: "blur(6px)" }}>
       <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden">
         <div className="flex items-center justify-between p-5 border-b border-slate-100"
-          style={{ background: "linear-gradient(135deg, #047857, #059669)" }}>
+          style={{ background: "linear-gradient(135deg, #4f46e5, #7c3aed)" }}>
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "rgba(255,255,255,.2)" }}>
               <Users size={18} color="#fff" />
@@ -352,7 +352,7 @@ function JoinTeamModal({ onClose, onJoined }) {
               value={code}
               onChange={e => setCode(e.target.value)}
               placeholder="https://...join-team/xxxxx or token"
-              className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:border-green-400 transition-colors"
+              className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:border-indigo-400 transition-colors"
               style={{ fontFamily: "Poppins, sans-serif" }}
             />
           </div>
@@ -367,8 +367,8 @@ function JoinTeamModal({ onClose, onJoined }) {
             onClick={handleJoin}
             disabled={loading || !code.trim()}
             className="w-full py-3 rounded-xl text-sm font-bold text-white border-0 transition-all"
-            style={{
-              background: code.trim() ? "linear-gradient(135deg, #10b981, #059669)" : "#e2e8f0",
+              style={{
+                background: code.trim() ? "linear-gradient(135deg, #4f46e5, #7c3aed)" : "#e2e8f0",
               color: code.trim() ? "#fff" : "#94a3b8",
               cursor: code.trim() ? "pointer" : "not-allowed",
               fontFamily: "Poppins, sans-serif"
@@ -401,7 +401,7 @@ function CompetencyItem({ name, description, learning_hours }) {
 
 // ── Program Card ──────────────────────────────────────────────────
 function ProgramCard({ program, onOpenInvitation, onChooseRole }) {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(true);
   const [invLinks, setInvLinks] = useState([]);
   const [copiedLink, setCopiedLink] = useState(null);
   const { name, description, batch, company, competencies, status, has_loa, loa_file_url, team } = program;
@@ -524,15 +524,6 @@ function ProgramCard({ program, onOpenInvitation, onChooseRole }) {
             </button>
           )}
         </div>
-        {isAccepted && competencies?.length > 0 && (
-          <button
-            onClick={() => setExpanded(!expanded)}
-            className="flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-slate-600 transition-colors cursor-pointer border-0 bg-transparent"
-          >
-            {expanded ? "Hide" : "View"} Competencies
-            {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-          </button>
-        )}
       </div>
     </div>
 
