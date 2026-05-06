@@ -486,7 +486,7 @@ function EarlyPathDashboard() {
                           : 'TBD';
 
                         return (
-                          <div key={idx} className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2">
+                          <div key={idx} className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
                             <div className="flex justify-between items-start">
                               <div>
                                 <p className="text-xs font-bold text-indigo-500 uppercase tracking-widest">Interview {idx + 1}</p>
@@ -499,6 +499,18 @@ function EarlyPathDashboard() {
                                 ● {interview.status || 'pending'}
                               </span>
                             </div>
+                            
+                            {/* Media Type Badge */}
+                            {interview.media && (
+                              <div className={`inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded-lg font-medium border ${
+                                interview.media === 'Offline' 
+                                  ? 'bg-orange-50 text-orange-700 border-orange-200' 
+                                  : 'bg-purple-50 text-purple-700 border-purple-200'
+                              }`}>
+                                {interview.media === 'Offline' ? '📍 Offline' : '🌐 ' + interview.media}
+                              </div>
+                            )}
+                            
                             {interview.link && (
                               <a
                                 href={interview.link}
@@ -510,13 +522,8 @@ function EarlyPathDashboard() {
                               </a>
                             )}
                             {interview.notes && (
-                              <p className="text-xs text-slate-500 bg-white border border-slate-100 rounded-lg p-2.5 leading-relaxed">
+                              <p className="text-xs text-slate-600 bg-white border border-slate-100 rounded-lg p-2.5 leading-relaxed">
                                 {interview.notes}
-                              </p>
-                            )}
-                            {!interview.link && interview.media === 'Offline' && interview.notes && (
-                              <p className="text-xs text-slate-500 flex items-center gap-1">
-                                <MapPin size={11} /> {interview.notes}
                               </p>
                             )}
                           </div>

@@ -429,7 +429,7 @@ export default function GenerateLoAHR() {
                   Accepted Candidates
                 </p>
                 <p style={{ fontSize: "12px", color: "#94a3b8", marginTop: "2px" }}>
-                  Select candidate to generate LoA
+                  Select intern to generate LoA
                 </p>
               </div>
               
@@ -475,7 +475,7 @@ export default function GenerateLoAHR() {
               gap: "12px", padding: "10px 24px",
               background: "#f8fafc", borderBottom: "1px solid #f1f5f9",
             }}>
-              {["CANDIDATE", "POSITION", "PROGRAM", "TYPE", "LOA STATUS", "ACTION"].map((h) => (
+              {["INTERN", "POSITION", "PROGRAM", "TYPE", "LOA STATUS", "ACTION"].map((h) => (
                 <span key={h} style={{ 
                   fontSize: "10.5px", fontWeight: "700", color: "#94a3b8", 
                   letterSpacing: "0.06em",

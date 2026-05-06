@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { SidebarMentor } from "../../components/SidebarMentor";
+import { HRToastStack, useHRToast } from "../../components/HRToast";
 import { mentorApi } from "../../api/mentorApi";
 import { useAuthStore } from "../../stores/authStore";
 import { broadcastDataRefresh, onDataRefresh } from "../../utils/dataRefresh";
@@ -37,6 +38,7 @@ const s = {
 
 export default function CertificateMentor() {
   const navigate = useNavigate();
+  const { toasts, pushToast, removeToast } = useHRToast();
   const [mentor, setMentor] = useState(null);
   const [statCards, setStatCards] = useState([]);
   const [certList, setCertList] = useState([]);
@@ -163,7 +165,7 @@ const applyCerts = (data) => {
       .map(cert => cert.id_submission);
 
     if (eligibleIds.length === 0) {
-      alert("No eligible interns to generate certificates for.");
+      pushToast("No eligible interns to generate certificates for.", "info");
       return;
     }
 
@@ -176,10 +178,10 @@ const applyCerts = (data) => {
       await mentorApi.bulkGenerateCertificates(eligibleIds);
       broadcastDataRefresh('certificate');
       await fetchCerts(search);
-      alert(`Bulk generation successful for ${eligibleIds.length} interns.`);
+      pushToast(`Bulk generation successful for ${eligibleIds.length} interns.`, 'success');
     } catch (error) {
       console.error('Bulk generation error:', error);
-      alert('Failed to process bulk generation');
+      pushToast('Failed to process bulk generation', 'error');
     } finally {
       setBulkGenerating(false);
     }
@@ -191,7 +193,7 @@ const applyCerts = (data) => {
       .map(cert => cert.id_submission);
 
     if (sendableIds.length === 0) {
-      alert("No certificates ready to be sent. Generate them first.");
+      pushToast("No certificates ready to be sent. Generate them first.", "info");
       return;
     }
 
@@ -204,10 +206,10 @@ const applyCerts = (data) => {
       await mentorApi.bulkSendCertificates(sendableIds);
       broadcastDataRefresh('certificate');
       await fetchCerts(search);
-      alert(`Bulk send successful for ${sendableIds.length} interns.`);
+      pushToast(`Bulk send successful for ${sendableIds.length} interns.`, 'success');
     } catch (error) {
       console.error('Bulk send error:', error);
-      alert('Failed to process bulk send');
+      pushToast('Failed to process bulk send', 'error');
     } finally {
       setBulkSending(false);
     }
@@ -220,12 +222,13 @@ const applyCerts = (data) => {
       broadcastDataRefresh('certificate');
       setRegenerateSuccess(prev => ({ ...prev, [idSubmission]: true }));
       setTimeout(() => setRegenerateSuccess(prev => ({ ...prev, [idSubmission]: false })), 3000);
+      pushToast('Certificate generated successfully', 'success');
       setLoading(true);
       await fetchCerts(search);
       setLoading(false);
     } catch (error) {
       console.error('Error generating certificate:', error);
-      alert('Failed to generate certificate');
+      pushToast('Failed to generate certificate', 'error');
     } finally {
       setGenerating(prev => ({ ...prev, [idSubmission]: false }));
     }
@@ -236,12 +239,13 @@ const applyCerts = (data) => {
       setSending(prev => ({ ...prev, [idSubmission]: true }));
       await mentorApi.sendCertificate(idSubmission);
       broadcastDataRefresh('certificate');
+      pushToast('Certificate sent successfully', 'success');
       setLoading(true);
       await fetchCerts(search);
       setLoading(false);
     } catch (error) {
       console.error('Error sending certificate:', error);
-      alert('Failed to send certificate');
+      pushToast('Failed to send certificate', 'error');
     } finally {
       setSending(prev => ({ ...prev, [idSubmission]: false }));
     }
@@ -254,7 +258,7 @@ const applyCerts = (data) => {
       window.open(url, '_blank');
     } catch (error) {
       console.error('Error previewing certificate:', error);
-      alert('Failed to preview certificate');
+      pushToast('Failed to preview certificate', 'error');
     } finally {
       setPreviewing(prev => ({ ...prev, [idSubmission]: false }));
     }
@@ -569,6 +573,9 @@ const applyCerts = (data) => {
             </div>
           </div>
         )}
+
+        {/* Toast Stack */}
+        <HRToastStack toasts={toasts} onDismiss={removeToast} />
       </main>
     </div>
   );

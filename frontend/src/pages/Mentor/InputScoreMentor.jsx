@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { SidebarMentor } from "../../components/SidebarMentor";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
+import { SuccessModal } from "../../components/SuccessModal";
 import { mentorApi } from "../../api/mentorApi";
 import { useAuthStore } from "../../stores/authStore";
 import { broadcastDataRefresh, onDataRefresh } from "../../utils/dataRefresh";
@@ -693,22 +694,13 @@ console.log('unscored count:', internsRes.data.filter(i =>
         </div>
 
         {/* Success Notification Modal */}
-        {successModal && (
-          <div style={{ position: "fixed", inset: 0, background: "rgba(10,22,40,0.5)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <div style={{ background: "#fff", borderRadius: "16px", padding: "28px", width: "340px", boxShadow: "0 20px 60px rgba(0,0,0,0.18)", textAlign: "left" }}>
-              <div style={{ width: "40px", height: "40px", borderRadius: "10px", background: "#dcfce7", display: "flex", alignItems: "center", justifyContent: "center", color: "#16a34a", marginBottom: "14px" }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
-              </div>
-              <div style={{ fontSize: "16px", fontWeight: "800", color: "#0f172a", marginBottom: "6px" }}>Scores Saved</div>
-              <div style={{ fontSize: "13px", color: "#64748b", lineHeight: "1.6", marginBottom: "20px" }}>Competency scores have been saved successfully.</div>
-              <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
-                <button onClick={() => setSuccessModal(false)} style={{ padding: "8px 16px", background: "#8b5cf6", color: "#fff", border: "none", borderRadius: "8px", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Done</button>
-              </div>
-            </div>
-          </div>
-        )}
+        <SuccessModal
+          open={successModal}
+          title="Scores Saved"
+          message="Competency scores have been saved successfully."
+          onClose={() => setSuccessModal(false)}
+          actionLabel="Done"
+        />
 
         {/* Logout Modal */}
       {logoutModal && (
