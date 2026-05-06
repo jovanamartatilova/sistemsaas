@@ -357,14 +357,7 @@ class HRCandidateController extends Controller
             'teamMembers.user.candidate',
         ]);
 
-        // Filter status
-        if ($request->filled('status')) {
-            if ($request->status === 'stage_0') {
-                $query->whereIn('status', ['pending', 'stage_0']);
-            } else {
-                $query->where('status', $request->status);
-            }
-        }
+        $statusParam = $request->query('status');
 
         // Filter type
         if ($request->filled('type')) {
@@ -398,6 +391,31 @@ class HRCandidateController extends Controller
                 if (isset($seen[$s->id_team])) continue;
                 $seen[$s->id_team] = true;
             }
+            
+            // Map status
+            $status = $s->status;
+            if ($status === 'pending' || $status === 'stage_0') {
+                $s->mapped_status = 'screening';
+            } elseif (str_starts_with($status, 'stage_')) {
+                $idx = (int) str_replace('stage_', '', $status);
+                $flow = $s->position?->selection_flow;
+                if (is_string($flow)) $flow = json_decode($flow, true);
+                if (isset($flow[$idx])) {
+                    $s->mapped_status = $flow[$idx]['type'] ?? $status;
+                } else {
+                    $s->mapped_status = $status;
+                }
+            } else {
+                $s->mapped_status = $status;
+            }
+
+            // Filter status
+            if ($statusParam && $statusParam !== 'all' && $statusParam !== '') {
+                if ($s->mapped_status !== $statusParam) {
+                    continue;
+                }
+            }
+
             $results[] = $this->formatSubmissionFull($s);
         }
 
@@ -439,14 +457,20 @@ class HRCandidateController extends Controller
     {
         $members = [];
 
-        if ($s->id_team && $s->teamMembers) {
-            foreach ($s->teamMembers as $tm) {
+        if ($s->id_team) {
+            // Ambil semua submission dari tim ini untuk dapet id_submission masing-masing
+            $teamSubmissions = \App\Models\Submission::where('id_team', $s->id_team)->with('user.candidate')->get();
+            // Ambil metadata leader dari table team_members
+            $teamMeta = \App\Models\TeamMember::where('id_team', $s->id_team)->get()->keyBy('id_user');
+
+            foreach ($teamSubmissions as $ts) {
                 $members[] = [
-                    'id_user'    => $tm->id_user,
-                    'name'       => $tm->user?->name,
-                    'email'      => $tm->user?->email,
-                    'university' => $tm->user?->candidate?->institution ?? '-',
-                    'is_leader'  => (bool) $tm->is_leader,
+                    'id_submission' => $ts->id_submission,
+                    'id_user'       => $ts->id_user,
+                    'name'          => $ts->user?->name,
+                    'email'         => $ts->user?->email,
+                    'university'    => $ts->user?->candidate?->institution ?? '-',
+                    'is_leader'     => (bool) ($teamMeta[$ts->id_user]?->is_leader ?? false),
                 ];
             }
         }
@@ -465,9 +489,10 @@ class HRCandidateController extends Controller
             'position'               => $s->position?->name,
             'program'                => $s->vacancy?->title,
             'type'                   => $s->vacancy?->type,
-            'status'                 => $s->status,
+            'status'                 => $s->mapped_status ?? $s->status,
             'submitted_at'           => $s->submitted_at,
             'hr_notes'               => $s->hr_notes,
+            'motivation'             => $s->motivation_message,
 
             'has_cv'                 => !empty($s->cv_file),
             'has_supporting_document' => !empty($s->supporting_document_file),

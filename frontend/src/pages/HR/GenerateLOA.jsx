@@ -476,9 +476,11 @@ export default function GenerateLoAHR() {
               background: "#f8fafc", borderBottom: "1px solid #f1f5f9",
             }}>
               {["CANDIDATE", "POSITION", "PROGRAM", "TYPE", "LOA STATUS", "ACTION"].map((h) => (
-                <span key={h} style={{
-                  fontSize: "10.5px", fontWeight: "700", color: "#94a3b8",
+                <span key={h} style={{ 
+                  fontSize: "10.5px", fontWeight: "700", color: "#94a3b8", 
                   letterSpacing: "0.06em",
+                  textAlign: h === "CANDIDATE" ? "left" : "center",
+                  display: "block"
                 }}>
                   {h}
                 </span>
@@ -539,16 +541,18 @@ export default function GenerateLoAHR() {
                     </div>
 
                     {/* Position */}
-                    <div style={{ fontSize: "13px", color: "#475569" }}>{c.position}</div>
+                    <div style={{ fontSize: "13px", color: "#475569", textAlign: "center" }}>{c.position}</div>
 
                     {/* Program */}
-                    <div style={{ fontSize: "13px", color: "#475569" }}>{c.program}</div>
+                    <div style={{ fontSize: "13px", color: "#475569", textAlign: "center" }}>{c.program}</div>
 
                     {/* Type */}
-                    <div style={{ fontSize: "13px", color: "#475569" }}>{c.type}</div>
+                    <div style={{ fontSize: "13px", color: "#475569", textTransform: 'capitalize', textAlign: "center" }}>
+                      {c.type === "team" ? "Team" : "Individual"}
+                    </div>
 
                     {/* LoA Status */}
-                    <div>
+                    <div style={{ textAlign: "center" }}>
                       <span style={{
                         display: "inline-flex", padding: "3px 10px", borderRadius: "20px",
                         fontSize: "11px", fontWeight: "600",
@@ -559,7 +563,7 @@ export default function GenerateLoAHR() {
                     </div>
 
                     {/* Actions */}
-                    <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+                    <div style={{ display: "flex", gap: "6px", alignItems: "center", justifyContent: "center" }}>
                       {/* Preview */}
                       {c.has_file && (
                         <ActionBtn

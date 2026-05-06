@@ -242,13 +242,13 @@ function InternRow({ intern, onDetail, isLast }) {
       </div>
 
       {/* University */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: '#475569', minWidth: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: '#475569', minWidth: 0, justifyContent: 'center' }}>
         <div style={{ flexShrink: 0 }}><IC.MapPin /></div>
         <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{intern.university || '-'}</span>
       </div>
 
       {/* Mentor */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0, justifyContent: 'center' }}>
         {intern.mentor_name ? (
           <>
             <div style={{
@@ -266,7 +266,7 @@ function InternRow({ intern, onDetail, isLast }) {
       </div>
 
       {/* Start Date + Days */}
-      <div>
+      <div style={{ textAlign: 'center' }}>
         <div style={{ fontSize: '12px', color: '#475569', fontWeight: '600' }}>{fmtDate(intern.start_date)}</div>
         {days !== null && (
           <div style={{ fontSize: '10.5px', color: '#94a3b8', marginTop: '1px' }}>{days}d active</div>
@@ -274,7 +274,7 @@ function InternRow({ intern, onDetail, isLast }) {
       </div>
 
       {/* Position */}
-      <div style={{ fontSize: '12px', color: '#475569', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+      <div style={{ fontSize: '12px', color: '#475569', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'flex', justifyContent: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
           <IC.Briefcase />
           <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{intern.position || '-'}</span>
@@ -282,7 +282,7 @@ function InternRow({ intern, onDetail, isLast }) {
       </div>
 
       {/* Status + Action */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'center' }}>
         <StatusBadge status={intern.status} />
         <IconBtn icon={<IC.Eye />} title="View Detail" onClick={() => onDetail(intern)} />
       </div>
@@ -315,7 +315,17 @@ export default function ActiveInternHR() {
   const [positionFilter, setPositionFilter] = useState('');
   const [positions, setPositions]           = useState([]);
 
-  // ── Fetch ─────────────────────────────────────────────────────────────
+  // ── Fetch Positions ────────────────────────────────────────────────────────
+  useEffect(() => {
+    api('/positions/catalog')
+      .then(res => {
+        const dataArr = Array.isArray(res) ? res : (res.data || []);
+        setPositions(dataArr);
+      })
+      .catch(err => console.error('Failed to fetch positions:', err));
+  }, []);
+
+  // ── Fetch Interns ─────────────────────────────────────────────────────────────
 useEffect(() => {
   setTableLoading(true);
   const params = new URLSearchParams();
@@ -469,7 +479,13 @@ useEffect(() => {
             {/* Table Header */}
             <div style={{ display: 'grid', gridTemplateColumns: '1.8fr 1fr 1.1fr 1fr 0.8fr 0.7fr', gap: '12px', padding: '10px 24px', background: '#fcfcfd', borderBottom: '1px solid #f1f5f9' }}>
               {['INTERN', 'UNIVERSITY', 'MENTOR', 'START DATE', 'POSITION', 'STATUS'].map(h => (
-                <div key={h} style={{ fontSize: '10px', fontWeight: '700', color: '#94a3b8', letterSpacing: '0.05em' }}>{h}</div>
+                <div key={h} style={{ 
+                  fontSize: '10px', fontWeight: '700', color: '#94a3b8', 
+                  letterSpacing: '0.05em',
+                  textAlign: h === 'INTERN' ? 'left' : 'center',
+                  display: 'flex',
+                  justifyContent: h === 'INTERN' ? 'flex-start' : 'center'
+                }}>{h}</div>
               ))}
             </div>
 

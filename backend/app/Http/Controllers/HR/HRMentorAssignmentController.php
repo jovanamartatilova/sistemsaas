@@ -37,7 +37,7 @@ class HRMentorAssignmentController extends Controller
                 'email' => $s->user?->email,
                 'position' => $s->position?->name,
                 'program' => $s->vacancy?->title,
-                'type' => $s->vacancy?->type,
+                'type' => $s->id_team ? 'team' : 'individual',
                 'mentor_id' => $s->id_user_mentor,
                 'mentor_name' => $s->mentor?->name,
                 'is_assigned' => !empty($s->id_user_mentor),

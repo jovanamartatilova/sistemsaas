@@ -479,12 +479,12 @@ export default function PayrollHR() {
               <thead>
                 <tr style={{ background: "#f8fafc", borderBottom: "1px solid #f1f5f9" }}>
                   <th style={thStyle}>INTERN</th>
-                  <th style={thStyle}>POSITION</th>
-                  <th style={thStyle}>PROGRAM</th>
-                  <th style={thStyle}>STIPEND / MONTH</th>
-                  <th style={thStyle}>BANK ACCOUNT</th>
-                  <th style={thStyle}>STATUS</th>
-                  <th style={thStyle}>ACTION</th>
+                  <th style={{ ...thStyle, textAlign: "center" }}>POSITION</th>
+                  <th style={{ ...thStyle, textAlign: "center" }}>PROGRAM</th>
+                  <th style={{ ...thStyle, textAlign: "center" }}>STIPEND / MONTH</th>
+                  <th style={{ ...thStyle, textAlign: "center" }}>BANK ACCOUNT</th>
+                  <th style={{ ...thStyle, textAlign: "center" }}>STATUS</th>
+                  <th style={{ ...thStyle, textAlign: "center" }}>ACTION</th>
                 </tr>
               </thead>
               <tbody>
@@ -504,23 +504,23 @@ export default function PayrollHR() {
                         </div>
                       </div>
                     </td>
-                    <td style={tdStyle}>
+                    <td style={{ ...tdStyle, textAlign: "center" }}>
                       <span style={{ fontSize: "13px", color: "#475569" }}>{item.position}</span>
                     </td>
-                    <td style={tdStyle}>
+                    <td style={{ ...tdStyle, textAlign: "center" }}>
                       <span style={{ fontSize: "13px", color: "#475569" }}>{item.program}</span>
                     </td>
-                    <td style={tdStyle}>
+                    <td style={{ ...tdStyle, textAlign: "center" }}>
                       <div style={{ fontSize: "13.5px", fontWeight: "700", color: "#1e293b" }}>{item.stipend_formatted}</div>
                     </td>
-                    <td style={tdStyle}>
+                    <td style={{ ...tdStyle, textAlign: "center" }}>
                       <div style={{ fontSize: "12.5px", color: "#475569", fontWeight: 500 }}>{item.bank_name}</div>
                       <div style={{ fontSize: "11px", color: "#94a3b8" }}>{item.bank_account}</div>
                     </td>
-                    <td style={tdStyle}>
+                    <td style={{ ...tdStyle, textAlign: "center" }}>
                       <StatusBadge status={item.status} />
                     </td>
-                    <td style={tdStyle}>
+                    <td style={{ ...tdStyle, display: "flex", justifyContent: "center", borderBottom: "none" }}>
                       {item.status !== "paid" ? (
                         <button 
                           disabled={item.bank_name === "-" || item.bank_account === "-"}

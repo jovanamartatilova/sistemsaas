@@ -19,8 +19,17 @@ class HRDashboardController extends Controller
         );
 
         $statusFilter = $request->query('status');
-        if ($statusFilter && in_array($statusFilter, ['pending', 'screening', 'interview', 'accepted', 'rejected'])) {
-            $base = (clone $base)->where('status', $statusFilter);
+        if ($statusFilter && in_array($statusFilter, ['screening', 'test', 'interview', 'accepted', 'rejected'])) {
+            if (in_array($statusFilter, ['accepted', 'rejected'])) {
+                $base = (clone $base)->where('status', $statusFilter);
+            } else {
+                // For screening/test/interview, we need to match stage_N where stage type is $statusFilter
+                // This is a bit complex for a direct query, so we'll handle it by checking the status string starts with 'stage_' 
+                // OR we'll filter them later if needed. For now, let's just allow the filter to pass and we'll handle it in the query.
+                // Actually, let's keep it simple: if it's 'screening', we look for 'screening' OR 'stage_N' where stage_N is screening.
+                // But since we can't easily join on JSON selection_flow in SQL for all positions at once, 
+                // we'll fetch all and filter in collection if status filter is provided for stages.
+            }
         }
 
         // ── FILTER SEARCH ────────────────────────────────────
@@ -33,49 +42,67 @@ class HRDashboardController extends Controller
         
         $totalCandidates = (clone $totalBase)->count();
         $accepted = (clone $totalBase)->where('status', 'accepted')->count();
-        $pendingReview = (clone $totalBase)->where('status', 'pending')->count();
         
-        $interviewScheduled = Interview::whereHas('submission.vacancy', fn($q) =>
-            $q->where('id_company', $companyId)
-        )->whereIn('result', ['pending', 'continue'])->count();
+        // Count how many are in "Test" stages vs "Interview" vs "Screening"
+        $allSubmissions = (clone $totalBase)->with(['position', 'user'])->get();
+        
+        $mappedSubmissions = $allSubmissions->map(function($s) {
+            $status = $s->status;
+            $type = $status;
+            if ($status === 'pending' || $status === 'stage_0') {
+                $type = 'screening';
+            } elseif (str_starts_with($status, 'stage_')) {
+                $idx = (int) str_replace('stage_', '', $status);
+                $flow = $s->position?->selection_flow;
+                if (is_string($flow)) $flow = json_decode($flow, true);
+                if (isset($flow[$idx])) {
+                    $type = $flow[$idx]['type'] ?? $status;
+                }
+            }
+            $s->mapped_status = $type;
+            return $s;
+        });
 
-        $recentQuery = (clone $base) 
-            ->with(['user', 'position', 'vacancy'])
-            ->when($search, fn($q) =>
-                $q->whereHas('user', fn($u) =>
-                    $u->where('name', 'like', "%$search%")
-                        ->orWhere('email', 'like', "%$search%")
-                )
-            )
-            ->orderByDesc('submitted_at')
-            ->limit(10);
+        $statsCounts = $mappedSubmissions->groupBy('mapped_status')->map->count();
 
-        $recentCandidates = $recentQuery->get()->map(fn($s) => [
-            'id_submission' => $s->id_submission,
-            'name'          => $s->user?->name,
-            'email'         => $s->user?->email,
-            'position'      => $s->position?->name,
-            'status'        => $s->status,
-            'submitted_at'  => $s->submitted_at,
-            'has_cv'            => !empty($s->cv_file),
-            'has_cover_letter'  => !empty($s->cover_letter_file),
-            'has_portfolio'     => !empty($s->portfolio_file),
-            'has_institution_letter' => !empty($s->institution_letter_file),
-            'screening_status' => $s->screening_status,
-            'hr_notes'         => $s->hr_notes,
-        ]);
+        $pendingReview = $statsCounts->get('screening', 0);
+        $interviewScheduled = $statsCounts->get('interview', 0);
 
-        $statuses = ['pending', 'screening', 'interview', 'accepted', 'rejected'];
-        $counts = (clone $totalBase)
-            ->selectRaw('status, count(*) as total')
-            ->groupBy('status')
-            ->pluck('total', 'status');
+        // ── RECENT CANDIDATES ────────────────────────────────
+        $recentCandidates = $mappedSubmissions
+            ->sortByDesc('submitted_at')
+            ->when($statusFilter, fn($c) => $c->where('mapped_status', $statusFilter))
+            ->when($search, function($c) use ($search) {
+                return $c->filter(function($s) use ($search) {
+                    $name = $s->user->name ?? '';
+                    $email = $s->user->email ?? '';
+                    return stripos($name, $search) !== false || 
+                           stripos($email, $search) !== false;
+                });
+            })
+            ->take(10)
+            ->map(fn($s) => [
+                'id_submission' => $s->id_submission,
+                'name'          => $s->user?->name,
+                'email'         => $s->user?->email,
+                'position'      => $s->position?->name,
+                'status'        => $s->mapped_status,
+                'submitted_at'  => $s->submitted_at,
+                'has_cv'            => !empty($s->cv_file),
+                'has_cover_letter'  => !empty($s->cover_letter_file),
+                'has_portfolio'     => !empty($s->portfolio_file),
+                'has_institution_letter' => !empty($s->institution_letter_file),
+                'screening_status' => $s->screening_status,
+                'hr_notes'         => $s->hr_notes,
+            ])->values();
 
+        // ── PIPELINE ─────────────────────────────────────────
+        $statuses = ['screening', 'test', 'interview', 'accepted', 'rejected'];
         $pipeline = collect($statuses)->map(fn($s) => [
             'status' => $s,
-            'count'  => $counts[$s] ?? 0,
+            'count'  => $statsCounts->get($s, 0),
             'pct'    => $totalCandidates > 0
-                ? round((($counts[$s] ?? 0) / $totalCandidates) * 100) . '%'
+                ? round(($statsCounts->get($s, 0) / $totalCandidates) * 100) . '%'
                 : '0%',
         ]);
 
