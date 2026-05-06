@@ -74,16 +74,16 @@ function todayStr() {
 
 // ── Status config ─────────────────────────────────────────────────────────────
 const STATUS = {
-  pending: { bg: "#eff6ff", color: "#1d4ed8", border: "#bfdbfe" },
   screening: { bg: "#fefce8", color: "#92400e", border: "#fde68a" },
+  test: { bg: "#eff6ff", color: "#1d4ed8", border: "#bfdbfe" },
   interview: { bg: "#f5f3ff", color: "#6d28d9", border: "#ddd6fe" },
   accepted: { bg: "#f0fdf4", color: "#15803d", border: "#bbf7d0" },
   rejected: { bg: "#fff1f2", color: "#be123c", border: "#fecdd3" },
 };
 
 const PIPELINE_COLORS = {
-  pending: "#3b82f6",
   screening: "#f59e0b",
+  test: "#3b82f6",
   interview: "#a855f7",
   accepted: "#22c55e",
   rejected: "#ef4444",
@@ -304,7 +304,7 @@ export default function DashboardHR() {
     },
     {
       icon: <IC.Clock />, iconBg: "#fff7ed", iconColor: "#ea580c",
-      title: "Pending Review",
+      title: "Screening Pending",
       value: data.stats.pending_review,
       sub: "Needs attention",
       barColors: ["#fb923c", "#fdba74", "#fb923c", "#fdba74", "#fb923c", "#fed7aa", "#fb923c"],
@@ -349,8 +349,8 @@ export default function DashboardHR() {
       
       /* Warna text berdasarkan value yang dipilih */
       .status-filter[value=""] { color: #64748b; }
-      .status-filter[value="pending"] { color: #1d4ed8; background: #eff6ff; border-color: #bfdbfe; }
       .status-filter[value="screening"] { color: #92400e; background: #fefce8; border-color: #fde68a; }
+      .status-filter[value="test"] { color: #1d4ed8; background: #eff6ff; border-color: #bfdbfe; }
       .status-filter[value="interview"] { color: #6d28d9; background: #f5f3ff; border-color: #ddd6fe; }
       .status-filter[value="accepted"] { color: #15803d; background: #f0fdf4; border-color: #bbf7d0; }
       .status-filter[value="rejected"] { color: #be123c; background: #fff1f2; border-color: #fecdd3; }
@@ -361,8 +361,8 @@ export default function DashboardHR() {
         color: #1e293b;
         padding: 8px;
       }
-      .status-filter option[value="pending"] { color: #1d4ed8; }
       .status-filter option[value="screening"] { color: #92400e; }
+      .status-filter option[value="test"] { color: #1d4ed8; }
       .status-filter option[value="interview"] { color: #6d28d9; }
       .status-filter option[value="accepted"] { color: #15803d; }
       .status-filter option[value="rejected"] { color: #be123c; }
@@ -440,18 +440,18 @@ export default function DashboardHR() {
                       outline: "none",
                       minWidth: "140px",
                       // Warna background & border berdasarkan status yang dipilih
-                      background: statusFilter === "pending" ? "#eff6ff" :
-                        statusFilter === "screening" ? "#fefce8" :
+                      background: statusFilter === "screening" ? "#fefce8" :
+                        statusFilter === "test" ? "#eff6ff" :
                           statusFilter === "interview" ? "#f5f3ff" :
                             statusFilter === "accepted" ? "#f0fdf4" :
                               statusFilter === "rejected" ? "#fff1f2" : "#f8fafc",
-                      color: statusFilter === "pending" ? "#1d4ed8" :
-                        statusFilter === "screening" ? "#92400e" :
+                      color: statusFilter === "screening" ? "#92400e" :
+                        statusFilter === "test" ? "#1d4ed8" :
                           statusFilter === "interview" ? "#6d28d9" :
                             statusFilter === "accepted" ? "#15803d" :
                               statusFilter === "rejected" ? "#be123c" : "#64748b",
-                      borderColor: statusFilter === "pending" ? "#bfdbfe" :
-                        statusFilter === "screening" ? "#fde68a" :
+                      borderColor: statusFilter === "screening" ? "#fde68a" :
+                        statusFilter === "test" ? "#bfdbfe" :
                           statusFilter === "interview" ? "#ddd6fe" :
                             statusFilter === "accepted" ? "#bbf7d0" :
                               statusFilter === "rejected" ? "#fecdd3" : "#e2e8f0",
@@ -459,8 +459,8 @@ export default function DashboardHR() {
                     }}
                   >
                     <option value="">All Status</option>
-                    <option value="pending" style={{ background: "#eff6ff", color: "#1d4ed8" }}>Pending</option>
                     <option value="screening" style={{ background: "#fefce8", color: "#92400e" }}>Screening</option>
+                    <option value="test" style={{ background: "#eff6ff", color: "#1d4ed8" }}>Test</option>
                     <option value="interview" style={{ background: "#f5f3ff", color: "#6d28d9" }}>Interview</option>
                     <option value="accepted" style={{ background: "#f0fdf4", color: "#15803d" }}>Accepted</option>
                     <option value="rejected" style={{ background: "#fff1f2", color: "#be123c" }}>Rejected</option>
@@ -482,7 +482,7 @@ export default function DashboardHR() {
                   </div>
 
                   <button
-                    onClick={() => navigate("/hr/kandidate")}
+                    onClick={() => navigate("/hr/candidates")}
                     style={{
                       display: "flex", alignItems: "center", gap: "5px",
                       fontSize: "13px", color: "#4a9eff", background: "none", border: "none",
@@ -501,7 +501,12 @@ export default function DashboardHR() {
                 background: "#f8fafc", borderBottom: "1px solid #f1f5f9",
               }}>
                 {["CANDIDATE", "POSITION", "STATUS", "ACTION"].map((h) => (
-                  <span key={h} style={{ fontSize: "10.5px", fontWeight: "700", color: "#94a3b8", letterSpacing: "0.06em" }}>
+                  <span key={h} style={{ 
+                    fontSize: "10.5px", fontWeight: "700", color: "#94a3b8", 
+                    letterSpacing: "0.06em",
+                    textAlign: h === "CANDIDATE" ? "left" : "center",
+                    display: "block"
+                  }}>
                     {h}
                   </span>
                 ))}
@@ -546,10 +551,10 @@ export default function DashboardHR() {
                     </div>
 
                     {/* Position */}
-                    <div style={{ fontSize: "13px", color: "#475569" }}>{c.position}</div>
+                    <div style={{ fontSize: "13px", color: "#475569", textAlign: "center" }}>{c.position}</div>
 
                     {/* Status badge */}
-                    <div>
+                    <div style={{ textAlign: "center" }}>
                       <span style={{
                         display: "inline-flex", padding: "3px 10px", borderRadius: "20px",
                         fontSize: "11px", fontWeight: "600",
@@ -563,14 +568,14 @@ export default function DashboardHR() {
                     </div>
 
                     {/* Actions */}
-                    <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-                      {c.status === "pending" && (
+                    <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", justifyContent: "center" }}>
+                      {c.status === "screening" && (
                         <>
-                          <ActionBtn label="Screening" variant="green" onClick={() => setConfirmAction({ type: "screening", candidate: c })} />
+                          <ActionBtn label="Interview" variant="purple" onClick={() => setConfirmAction({ type: "interview", candidate: c })} />
                           <ActionBtn label="Reject" variant="red" onClick={() => setConfirmAction({ type: "reject", candidate: c })} />
                         </>
                       )}
-                      {c.status === "screening" && (
+                      {c.status === "test" && (
                         <>
                           <ActionBtn label="Interview" variant="purple" onClick={() => setConfirmAction({ type: "interview", candidate: c })} />
                           <ActionBtn label="Reject" variant="red" onClick={() => setConfirmAction({ type: "reject", candidate: c })} />

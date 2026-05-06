@@ -35,26 +35,17 @@ function todayStr() {
 }
 
 const STATUS_CONFIG = {
-  pending:   { label: 'Pending',   bg: '#f8fafc', color: '#64748b', border: '#cbd5e1' },
-  stage_0:   { label: 'Stage 1',   bg: '#eff6ff', color: '#1d4ed8', border: '#bfdbfe' },
-  stage_1:   { label: 'Stage 2',   bg: '#eff6ff', color: '#1d4ed8', border: '#bfdbfe' },
-  stage_2:   { label: 'Stage 3',   bg: '#eff6ff', color: '#1d4ed8', border: '#bfdbfe' },
-  stage_3:   { label: 'Stage 4',   bg: '#eff6ff', color: '#1d4ed8', border: '#bfdbfe' },
-  screening: { label: 'Screening', bg: '#faf5ff', color: '#7c3aed', border: '#ddd6fe' },
-  test:      { label: 'Test',      bg: '#fff7ed', color: '#c2410c', border: '#fed7aa' },
-  interview: { label: 'Interview', bg: '#fefce8', color: '#a16207', border: '#fde68a' },
+  screening: { label: 'Screening', bg: '#fefce8', color: '#a16207', border: '#fde68a' },
+  test:      { label: 'Test',      bg: '#eff6ff', color: '#1d4ed8', border: '#bfdbfe' },
+  interview: { label: 'Interview', bg: '#f5f3ff', color: '#6d28d9', border: '#ddd6fe' },
   accepted:  { label: 'Accepted',  bg: '#f0fdf4', color: '#15803d', border: '#86efac' },
   rejected:  { label: 'Rejected',  bg: '#fff1f2', color: '#be123c', border: '#fecdd3' },
 };
 
 function getStatusCfg(status) {
-  if (!status) return STATUS_CONFIG.pending;
+  if (!status) return STATUS_CONFIG.screening;
   if (STATUS_CONFIG[status]) return STATUS_CONFIG[status];
-  if (status.startsWith('stage_')) {
-    const n = parseInt(status.split('_')[1], 10) + 1;
-    return { label: `Stage ${n}`, bg: '#eff6ff', color: '#1d4ed8', border: '#bfdbfe' };
-  }
-  return STATUS_CONFIG.pending;
+  return STATUS_CONFIG.screening;
 }
 
 const CLASSIFICATION_CONFIG = {
@@ -71,10 +62,6 @@ const DOC_TYPES = [
 
 const STATUS_OPTIONS = [
   { value: '', label: 'All Status' },
-  { value: 'pending',   label: 'Pending' },
-  { value: 'stage_0',   label: 'Stage 1' },
-  { value: 'stage_1',   label: 'Stage 2' },
-  { value: 'stage_2',   label: 'Stage 3' },
   { value: 'screening', label: 'Screening' },
   { value: 'test',      label: 'Test' },
   { value: 'interview', label: 'Interview' },
@@ -441,6 +428,15 @@ function DetailModal({ candidate, onClose, onViewDoc }) {
             </div>
           </div>
 
+          {candidate.motivation && (
+            <div>
+              <div style={{ fontSize: '11px', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', marginBottom: '6px' }}>Motivation Statement</div>
+              <div style={{ background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '8px', padding: '12px', fontSize: '12.5px', color: '#0369a1', lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>
+                {candidate.motivation}
+              </div>
+            </div>
+          )}
+
           {candidate.hr_notes && (
             <div>
               <div style={{ fontSize: '11px', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', marginBottom: '6px' }}>HR Notes</div>
@@ -585,11 +581,14 @@ function GroupRow({ candidate, onDetail, onNotes, onViewDoc, irActive }) {
           </button>
           <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#eff6ff', color: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><IC.Users /></div>
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: '13px', fontWeight: '700', color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{candidate.team_name || `Team ${candidate.id_team?.slice(0, 6)}`}</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <div style={{ fontSize: '13px', fontWeight: '700', color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{candidate.team_name || `Team ${candidate.id_team?.slice(0, 6)}`}</div>
+              {candidate._classification && <ClassificationBadge classification={candidate._classification} />}
+            </div>
             <div style={{ fontSize: '11px', color: '#94a3b8' }}>{members.length} members</div>
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: '#475569', minWidth: 0 }}><IC.MapPin /><span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{candidate.university || '-'}</span></div>
+        <div />
         <div><DocsIconBtn candidate={candidate} hasAny={hasAnyDoc} onOpen={() => setDocModal(true)} /></div>
         <div style={{ fontSize: '11.5px', color: '#64748b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {candidate.hr_notes ? <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><IC.MessageSquare /><span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{candidate.hr_notes}</span></span> : <span style={{ color: '#cbd5e1' }}>No notes</span>}
@@ -603,8 +602,8 @@ function GroupRow({ candidate, onDetail, onNotes, onViewDoc, irActive }) {
       </div>
 
       {expanded && members.map((m, i) => (
-        <div key={i} style={{ display: 'grid', gridTemplateColumns: gridCols, gap: '12px', padding: '10px 24px 10px 72px', alignItems: 'center', borderBottom: '1px solid #f8fafc', background: '#f8fafc' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div key={i} style={{ display: 'grid', gridTemplateColumns: gridCols, gap: '12px', padding: '10px 24px', alignItems: 'center', borderBottom: '1px solid #f8fafc', background: '#f8fafc' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingLeft: '48px' }}>
             <div style={{ width: '26px', height: '26px', borderRadius: '50%', background: '#dbeafe', color: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: '700', flexShrink: 0 }}>
               {(m.name || '?').slice(0, 2).toUpperCase()}
             </div>
@@ -612,6 +611,7 @@ function GroupRow({ candidate, onDetail, onNotes, onViewDoc, irActive }) {
               <div style={{ fontSize: '12.5px', fontWeight: '600', color: '#334155', display: 'flex', alignItems: 'center', gap: '5px' }}>
                 {m.name}
                 {m.is_leader && <span style={{ fontSize: '9.5px', fontWeight: '600', padding: '1px 6px', borderRadius: '20px', background: '#fef9c3', color: '#854d0e', border: '1px solid #fde68a' }}>Leader</span>}
+                {m._classification && <ClassificationBadge classification={m._classification} />}
               </div>
               <div style={{ fontSize: '11px', color: '#94a3b8' }}>{m.email}</div>
             </div>
@@ -759,17 +759,52 @@ export default function CandidateHR() {
   // ── Merge IR results with classification cache ─────────────────────────────
   const enrichedIrResults = useMemo(() => {
     if (!irResults) return null;
-    return irResults.map(r => ({
-      ...r,
-      _classification: classifyCache[r.id_submission]?.classification ?? null,
-    }));
+    return irResults.map(r => {
+      let cls = classifyCache[r.id_submission]?.classification ?? null;
+      let members = r.team_members || [];
+
+      if (r.id_team && r.team_members) {
+        const memberScores = r.team_members
+          .map(m => classifyCache[m.id_submission]?.score)
+          .filter(s => s !== undefined);
+
+        if (memberScores.length > 0) {
+          const avgScore = memberScores.reduce((a, b) => a + b, 0) / memberScores.length;
+          cls = avgScore >= 65 ? 'strong' : avgScore >= 35 ? 'average' : 'weak';
+          
+          members = r.team_members.map(m => ({
+            ...m,
+            _classification: classifyCache[m.id_submission]?.classification ?? null
+          }));
+        }
+      }
+      return { ...r, _classification: cls, team_members: members };
+    });
   }, [irResults, classifyCache]);
 
   const enrichedCandidates = useMemo(() => {
-    return candidates.map(c => ({
-      ...c,
-      _classification: classifyCache[c.id_submission]?.classification ?? null,
-    }));
+    return candidates.map(c => {
+      let cls = classifyCache[c.id_submission]?.classification ?? null;
+      let members = c.team_members || [];
+
+      if (c.id_team && c.team_members) {
+        const memberScores = c.team_members
+          .map(m => classifyCache[m.id_submission]?.score)
+          .filter(s => s !== undefined);
+
+        if (memberScores.length > 0) {
+          const avgScore = memberScores.reduce((a, b) => a + b, 0) / memberScores.length;
+          cls = avgScore >= 65 ? 'strong' : avgScore >= 35 ? 'average' : 'weak';
+          
+          members = c.team_members.map(m => ({
+            ...m,
+            _classification: classifyCache[m.id_submission]?.classification ?? null
+          }));
+        }
+      }
+
+      return { ...c, _classification: cls, team_members: members };
+    });
   }, [candidates, classifyCache]);
 
   // ── Deduplication ─────────────────────────────────────────────────────────
@@ -979,7 +1014,11 @@ export default function CandidateHR() {
             {/* Table Header */}
             <div style={{ display: 'grid', gridTemplateColumns: gridCols, gap: '12px', padding: '10px 24px', background: '#fcfcfd', borderBottom: '1px solid #f1f5f9' }}>
               {headerCols.map(h => (
-                <div key={h} style={{ fontSize: '10px', fontWeight: '700', color: h === 'RELEVANCE' ? '#3b82f6' : '#94a3b8', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <div key={h} style={{ 
+                  fontSize: '10px', fontWeight: '700', color: h === 'RELEVANCE' ? '#3b82f6' : '#94a3b8', 
+                  letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '4px',
+                  justifyContent: ['CANDIDATE', 'UNIVERSITY'].includes(h) ? 'flex-start' : 'center'
+                }}>
                   {h === 'RELEVANCE' && <IC.BarChart />}
                   {h}
                 </div>

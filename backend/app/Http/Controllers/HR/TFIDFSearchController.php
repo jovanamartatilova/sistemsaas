@@ -71,7 +71,7 @@ class TFIDFSearchController extends Controller
         }
 
         // Ambil semua submission aktif perusahaan ini
-        $submissions = Submission::with(['user', 'position', 'vacancy'])
+        $submissions = Submission::with(['user.candidate', 'position', 'vacancy', 'team', 'teamMembers.user.candidate'])
             ->whereHas('vacancy', fn($q) => $q->where('id_company', $companyId))
             ->get();
 
@@ -573,11 +573,31 @@ class TFIDFSearchController extends Controller
 
     private function formatCandidate(Submission $s): array
     {
+        $members = [];
+        if ($s->id_team) {
+            $teamSubmissions = \App\Models\Submission::where('id_team', $s->id_team)->with('user.candidate')->get();
+            $teamMeta = \App\Models\TeamMember::where('id_team', $s->id_team)->get()->keyBy('id_user');
+
+            foreach ($teamSubmissions as $ts) {
+                $members[] = [
+                    'id_submission' => $ts->id_submission,
+                    'id_user'       => $ts->id_user,
+                    'name'          => $ts->user?->name,
+                    'email'         => $ts->user?->email,
+                    'university'    => $ts->user?->candidate?->institution ?? '-',
+                    'is_leader'     => (bool) ($teamMeta[$ts->id_user]?->is_leader ?? false),
+                ];
+            }
+        }
+
         return [
             'id_submission'          => $s->id_submission,
+            'id_team'                => $s->id_team,
+            'team_name'              => $s->team?->name ?? null,
+            'team_members'           => $members,
             'name'                   => $s->user?->name,
             'email'                  => $s->user?->email,
-            'university'             => $s->user?->university,
+            'university'             => $s->user?->candidate?->institution ?? '-',
             'position'               => $s->position?->name,
             'status'                 => $s->status,
             'submitted_at'           => $s->submitted_at,

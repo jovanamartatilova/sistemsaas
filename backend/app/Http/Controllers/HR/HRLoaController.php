@@ -434,7 +434,7 @@ class HRLoaController extends Controller
             'email'         => $s->user?->email,
             'position'      => $s->position?->name,
             'program'       => $s->vacancy?->title,
-            'type'          => $s->vacancy?->type,
+            'type'          => $s->id_team ? 'team' : 'individual',
             'loa_status'    => $s->loa ? 'generated' : 'pending',
             'loa_number'    => $s->loa?->letter_number,
             'issued_date'   => $s->loa?->issued_date,

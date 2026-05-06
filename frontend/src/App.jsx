@@ -150,9 +150,9 @@ export default function App() {
                 <Route path="/hr/generate-loa"  element={<Private><GenerateLOA /></Private>} />
                 <Route path="/hr/payroll"       element={<Private><PayrollHR /></Private>} />
                 <Route path="/hr/assign-mentor" element={<Private><AssignMentor /></Private>} />
-                <Route path="/hr/active-intern" element={<Private><ActiveInternHR /></Private>} />
                 <Route path="/hr/candidates" element={<Private><CandidateHR /></Private>} />
-                <Route path="/hr/active-intern" element={<ActiveInternHR />} />
+                <Route path="/hr/kandidate" element={<Navigate to="/hr/candidates" replace />} />
+                <Route path="/hr/active-intern" element={<Private><ActiveInternHR /></Private>} />
 
                 {/* Mentor — Private */}
                 <Route path="/mentor/dashboard"     element={<Private><DashboardMentor /></Private>} />

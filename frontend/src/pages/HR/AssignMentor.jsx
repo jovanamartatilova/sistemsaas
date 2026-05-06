@@ -458,7 +458,12 @@ export default function AssignMentorHR() {
                 background: "#f8fafc", borderBottom: "1px solid #f1f5f9",
               }}>
                 {["INTERN", "POSITION", "PROGRAM", "TYPE", "ASSIGN MENTOR", "ACTION"].map((h) => (
-                  <span key={h} style={{ fontSize: "10.5px", fontWeight: "700", color: "#94a3b8", letterSpacing: "0.06em", textAlign: "center", display: "block" }}>
+                  <span key={h} style={{ 
+                    fontSize: "10.5px", fontWeight: "700", color: "#94a3b8", 
+                    letterSpacing: "0.06em", 
+                    textAlign: h === "INTERN" ? "left" : "center", 
+                    display: "block" 
+                  }}>
                     {h}
                   </span>
                 ))}
@@ -515,13 +520,12 @@ export default function AssignMentorHR() {
                       </div>
 
                       {/* Position */}
-                      <div style={{ fontSize: "13px", color: "#475569" }}>{intern.position}</div>
-
+                      <div style={{ fontSize: "13px", color: "#475569", textAlign: "center" }}>{intern.position}</div>
                       {/* Program */}
-                      <div style={{ fontSize: "13px", color: "#475569" }}>{intern.program}</div>
+                      <div style={{ fontSize: "13px", color: "#475569", textAlign: "center" }}>{intern.program}</div>
 
                       {/* Type badge */}
-                      <div>
+                      <div style={{ textAlign: "center" }}>
                         <span style={{
                           display: "inline-flex", padding: "3px 10px", borderRadius: "20px",
                           fontSize: "11px", fontWeight: "600",
@@ -534,7 +538,7 @@ export default function AssignMentorHR() {
                       </div>
 
                       {/* Mentor select */}
-                      <div>
+                      <div style={{ textAlign: "center" }}>
                         <select
                           value={currentDraft || ""}
                           disabled={isSaved}
@@ -563,7 +567,7 @@ export default function AssignMentorHR() {
                       </div>
 
                       {/* Action */}
-                      <div style={{ display: "flex", gap: "6px" }}>
+                      <div style={{ display: "flex", gap: "6px", justifyContent: "center" }}>
                         {isSaved ? (
                           <ActionBtn
                             label="Assigned"
@@ -575,8 +579,9 @@ export default function AssignMentorHR() {
                           <ActionBtn
                             label="Assign"
                             variant="blue"
-                            disabled={!currentDraft}
-                            onClick={() => currentDraft && setModal(intern)}
+                            icon={<IC.Plus />}
+                            disabled={!currentDraft || savingId === intern.id_submission}
+                            onClick={() => handleAssign(intern.id_submission, currentDraft)}
                           />
                         )}
                       </div>

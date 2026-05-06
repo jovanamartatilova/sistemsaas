@@ -423,45 +423,38 @@ export default function SelectionHR() {
     catch { return []; }
   }, [activePosition]);
 
-  const visualizerStages = useMemo(() => {
-    const merged = [];
-    selectionFlow.forEach((stage, idx) => {
-      const prev = merged[merged.length - 1];
-      if (prev && prev.type === stage.type) prev.items.push({ ...stage, index: idx });
-      else merged.push({ type: stage.type, items: [{ ...stage, index: idx }] });
+  const stageTabs = useMemo(() => {
+    if (!selectionFlow.length) return [];
+    const typeCounts = {};
+    return selectionFlow.map((stage, i) => {
+      typeCounts[stage.type] = (typeCounts[stage.type] || 0) + 1;
+      const count = typeCounts[stage.type];
+      const totalOfType = selectionFlow.filter(s => s.type === stage.type).length;
+      
+      let label = stage.type.replace('-',' ').replace(/\b\w/g,l=>l.toUpperCase());
+      if (totalOfType > 1) label += ` ${count}`;
+      
+      return { ...stage, globalIndex: i, label };
     });
-    return merged;
-  }, [selectionFlow]);
-
-  const stageGroups = useMemo(() => {
-    const groups = {}; const order = [];
-    selectionFlow.forEach((stage, i) => {
-      if (!groups[stage.type]) { groups[stage.type] = []; order.push(stage.type); }
-      groups[stage.type].push({ ...stage, globalIndex: i });
-    });
-    return order.map(t => ({ type: t, stages: groups[t] }));
   }, [selectionFlow]);
 
   useEffect(() => {
-    if (activePosition) {
-      const templates = activePosition.test_templates;
-      setConfiguredTests(Array.isArray(templates) ? templates : []);
+    if (stageTabs.length > 0) {
+      setActiveTab('stage');
+      setActiveSubStageIndex(0);
+    } else { 
+      setActiveTab('final'); 
+      setActiveSubStageIndex(null); 
     }
-  }, [activePosition]);
-
-  useEffect(() => {
-    if (stageGroups.length > 0) {
-      setActiveTab(stageGroups[0].type);
-      setActiveSubStageIndex(stageGroups[0].stages[0].globalIndex);
-    } else { setActiveTab('final'); setActiveSubStageIndex(null); }
     setExpandedStageIndex(null);
-  }, [stageGroups]);
+  }, [stageTabs]);
 
-  const handleTabChange = tab => {
+  const handleTabChange = (tab, index = null) => {
     setActiveTab(tab);
-    if (tab !== 'final') {
-      const group = stageGroups.find(g => g.type === tab);
-      if (group?.stages.length > 0) setActiveSubStageIndex(group.stages[0].globalIndex);
+    if (tab === 'stage') {
+      setActiveSubStageIndex(index);
+    } else {
+      setActiveSubStageIndex(null);
     }
   };
 
@@ -595,12 +588,11 @@ export default function SelectionHR() {
   </div>
 );
 
-  const currentGroup = stageGroups.find(g => g.type === activeTab);
-
   // Table column config
-  const isInterview = activeTab === 'interview';
-  const isTest      = activeTab === 'test';
-  const isScreening = !isInterview && !isTest;
+  const currentStage = activeSubStageIndex !== null ? selectionFlow[activeSubStageIndex] : null;
+  const isInterview = currentStage?.type === 'interview';
+  const isTest      = currentStage?.type === 'test';
+  const isScreening = currentStage?.type === 'screening';
 
   let gridCols, headerCols;
   if (isInterview) {
@@ -647,37 +639,32 @@ export default function SelectionHR() {
           </div>
 
           {/* Flow Visualizer */}
-          {visualizerStages.length > 0 && (
+          {stageTabs.length > 0 && (
             <div style={{ background:'#fff', padding:'16px 20px', borderRadius:'12px', marginBottom:'24px', border:'1px solid #e2e8f0', display:'flex', flexDirection:'column', gap:'12px' }}>
               <div style={{ display:'flex', alignItems:'center', gap:'12px', overflowX:'auto' }}>
-                <div style={{ fontSize:'11px', fontWeight:'700', color:'#94a3b8', textTransform:'uppercase', marginRight:'8px' }}>Stage:</div>
+                <div style={{ fontSize:'11px', fontWeight:'700', color:'#94a3b8', textTransform:'uppercase', marginRight:'8px' }}>Flow Path:</div>
                 <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
-                  {visualizerStages.map((group,idx)=>(
+                  {stageTabs.map((s,idx)=>(
                     <div key={idx} style={{ display:'flex', alignItems:'center', gap:'8px' }}>
                       {idx>0&&<span style={{ color:'#cbd5e1' }}>→</span>}
-                      <button onClick={()=>setExpandedStageIndex(expandedStageIndex===idx?null:idx)} style={{ display:'flex', alignItems:'center', gap:'6px', cursor:'pointer', border:'none', fontSize:'12.5px', fontWeight:'600', color:expandedStageIndex===idx?'#1d4ed8':'#3b82f6', background:expandedStageIndex===idx?'#dbeafe':'#eff6ff', padding:'4px 12px', borderRadius:'20px', whiteSpace:'nowrap', transition:'all 0.2s', fontFamily:'inherit' }}>
-                        {group.type.replace('-',' ').replace(/\b\w/g,l=>l.toUpperCase())}<IC.ChevronDown />
+                      <button 
+                        onClick={() => handleTabChange('stage', idx)}
+                        style={{ display:'flex', alignItems:'center', gap:'6px', cursor:'pointer', border:'none', fontSize:'12.5px', fontWeight:'600', 
+                          color:activeSubStageIndex===idx?'#1d4ed8':'#3b82f6', 
+                          background:activeSubStageIndex===idx?'#dbeafe':'#eff6ff', 
+                          padding:'4px 12px', borderRadius:'20px', whiteSpace:'nowrap', transition:'all 0.2s', fontFamily:'inherit' }}
+                      >
+                        {s.label}
                       </button>
                     </div>
                   ))}
                   <span style={{ color:'#cbd5e1' }}>→</span>
-                  <span style={{ fontSize:'12.5px', fontWeight:'600', color:'#10b981', background:'#ecfdf5', padding:'4px 10px', borderRadius:'20px' }}>Final</span>
+                  <span 
+                    onClick={() => handleTabChange('final')}
+                    style={{ fontSize:'12.5px', fontWeight:'600', color:activeTab==='final'?'#059669':'#10b981', background:activeTab==='final'?'#d1fae5':'#ecfdf5', padding:'4px 10px', borderRadius:'20px', cursor:'pointer' }}
+                  >Final</span>
                 </div>
               </div>
-              {expandedStageIndex!==null&&visualizerStages[expandedStageIndex]&&(
-                <div style={{ background:'#f8fafc', border:'1px solid #e2e8f0', borderRadius:'8px', padding:'12px 16px', marginTop:'4px', textAlign:'left', display:'flex', flexDirection:'column', gap:'16px' }}>
-                  {visualizerStages[expandedStageIndex].items.map((item,i)=>(
-                    <div key={i} style={{ display:'flex', flexDirection:'column', gap:'4px' }}>
-                      <div style={{ fontSize:'13px', fontWeight:'700', color:'#1e293b' }}>
-                        <span style={{ fontWeight:'600', color:'#475569' }}>
-                          {item.type.replace('-',' ').replace(/\b\w/g,l=>l.toUpperCase())} {(()=>{let count=0;for(let k=0;k<=item.index;k++){if(selectionFlow[k].type===item.type)count++}return count})()} : {item.name}
-                        </span>
-                      </div>
-                      <div style={{ fontSize:'12.5px', color:'#475569', lineHeight:'1.5' }}>{item.description||(item.type==='screening'?'Review candidate documents and CV for qualification fit.':item.type==='test'?'Assess technical skills through structured testing.':item.type==='interview'?'Direct interview to evaluate experience and culture fit.':'Evaluate candidate suitability for advancement.')}</div>
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
           )}
 
@@ -719,26 +706,31 @@ export default function SelectionHR() {
             {/* Tabs */}
             <div style={{ borderBottom:'1px solid #e2e8f0' }}>
               <div style={{ display:'flex', overflowX:'auto', padding:'0 8px' }}>
-                {stageGroups.map(g=><TabBtn key={g.type} active={activeTab===g.type} onClick={()=>handleTabChange(g.type)}>{g.type.replace('-',' ').replace(/\b\w/g,l=>l.toUpperCase())}</TabBtn>)}
-                <TabBtn active={activeTab==='final'} onClick={()=>handleTabChange('final')}>Final</TabBtn>
+                {stageTabs.map(s => (
+                  <TabBtn 
+                    key={s.globalIndex} 
+                    active={activeTab === 'stage' && activeSubStageIndex === s.globalIndex} 
+                    onClick={() => handleTabChange('stage', s.globalIndex)}
+                  >
+                    {s.label}
+                  </TabBtn>
+                ))}
+                <TabBtn active={activeTab === 'final'} onClick={() => handleTabChange('final')}>Final</TabBtn>
               </div>
 
               {/* Sub-filters row */}
               <div style={{ padding:'12px 20px', background:'#f8fafc', display:'flex', alignItems:'center', justifyContent:'space-between', borderTop:'1px solid #f1f5f9' }}>
                 <div style={{ display:'flex', alignItems:'center', gap:'12px' }}>
-                  {activeTab!=='final'&&currentGroup&&currentGroup.stages.length>1&&(
-                    <select value={activeSubStageIndex} onChange={e=>setActiveSubStageIndex(Number(e.target.value))} style={{ padding:'6px 12px', borderRadius:'8px', border:'1px solid #cbd5e1', background:'#fff', fontSize:'13px', fontWeight:'600', outline:'none' }}>
-                      {currentGroup.stages.map((st,sidx)=><option key={st.globalIndex} value={st.globalIndex}>{activeTab.replace('-',' ').replace(/\b\w/g,l=>l.toUpperCase())} {sidx+1} : {st.name}</option>)}
-                    </select>
+                  {activeTab === 'stage' && currentStage && (
+                    <div style={{ fontSize:'13px', fontWeight:'600', color:'#64748b' }}>
+                      Stage {activeSubStageIndex + 1}: <span style={{ color:'#0f172a' }}>{currentStage.name || currentStage.type}</span>
+                    </div>
                   )}
                   {activeTab==='final'&&(
                     <select value={finalStatusFilter} onChange={e=>setFinalStatusFilter(e.target.value)} style={{ padding:'6px 12px', borderRadius:'8px', border:'1px solid #cbd5e1', background:'#fff', fontSize:'13px', fontWeight:'600', outline:'none' }}>
                       <option value='accepted'>Accepted</option>
                       <option value='rejected'>Rejected</option>
                     </select>
-                  )}
-                  {activeTab!=='final'&&currentGroup&&currentGroup.stages.length===1&&(
-                    <div style={{ fontSize:'13px', fontWeight:'600', color:'#64748b' }}>Current Stage: <span style={{ color:'#0f172a' }}>{currentGroup.stages[0].name||currentGroup.stages[0].type}</span></div>
                   )}
                 </div>
 
@@ -748,7 +740,7 @@ export default function SelectionHR() {
                     <SmartRankBtn active={smartRankActive} loading={smartRankLoading} onClick={handleSmartRank} />
                   )}
 
-                  {activeTab==='test'&&(
+                  {isTest &&(
                     <button onClick={()=>setShowBulkTestModal(true)} style={{ display:'flex', alignItems:'center', gap:'6px', padding:'7px 14px', background:'#3b82f6', color:'#fff', border:'none', borderRadius:'8px', fontSize:'12px', fontWeight:'700', cursor:'pointer', transition:'all 0.2s', boxShadow:'0 4px 10px rgba(59,130,246,0.2)' }} onMouseEnter={e=>e.currentTarget.style.background='#2563eb'} onMouseLeave={e=>e.currentTarget.style.background='#3b82f6'}>
                       <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2'><path d='M12 20h9'/><path d='M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z'/></svg>
                       Bulk Assign Test
@@ -769,7 +761,12 @@ export default function SelectionHR() {
             {/* Table Header */}
             <div style={{ display:'grid', gridTemplateColumns:gridCols, gap:'12px', padding:'12px 24px', background:'#fcfcfd', borderBottom:'1px solid #f1f5f9' }}>
               {headerCols.map(h=>(
-                <div key={h} style={{ fontSize:'10px', fontWeight:'700', color: h==='RANK & MATCH'?'#6366f1':'#94a3b8', letterSpacing:'0.05em', textAlign:['CANDIDATE','UNIVERSITY'].includes(h)?'left':'center', display:'flex', alignItems:'center', gap:'4px' }}>
+                <div key={h} style={{ 
+                  fontSize:'10px', fontWeight:'700', color: h==='RANK & MATCH'?'#6366f1':'#94a3b8', 
+                  letterSpacing:'0.05em', 
+                  display:'flex', alignItems:'center', gap:'4px',
+                  justifyContent: ['CANDIDATE','UNIVERSITY'].includes(h) ? 'flex-start' : 'center'
+                }}>
                   {h==='RANK & MATCH'&&<IC.Sparkles />}{h}
                 </div>
               ))}
