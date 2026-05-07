@@ -83,6 +83,8 @@ class HRCandidateController extends Controller
         }
 
         $submission->update(['status' => 'accepted']);
+        Interview::where('id_submission', $submission->id_submission)
+                ->update(['result' => 'passed']);
 
         \App\Models\Apprentice::firstOrCreate(
             ['id_submission' => $submission->id_submission],
@@ -117,6 +119,8 @@ class HRCandidateController extends Controller
         }
 
         $submission->update(['status' => 'rejected']);
+        Interview::where('id_submission', $submission->id_submission)
+    ->update(['result' => 'failed']);
 
         return response()->json([
             'success' => true,
@@ -257,7 +261,12 @@ class HRCandidateController extends Controller
             return response()->json(['success' => false, 'message' => 'Candidate not found'], 404);
         }
 
-        $submission->update(['status' => $request->stage]);
+       $submission->update(['status' => $request->stage]);
+
+        // Mark previous interview as passed when advancing stage
+        Interview::where('id_submission', $submission->id_submission)
+            ->where('result', 'pending')
+            ->update(['result' => 'passed']);
 
         return response()->json([
             'success' => true,

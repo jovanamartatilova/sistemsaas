@@ -407,7 +407,12 @@ function EarlyPathDashboard() {
                         { label: "Location", value: vacancy?.location || "-" },
                         { label: "Start Date", value: vacancy?.start_date ? new Date(vacancy.start_date).toLocaleDateString('en-US') : "-" },
                         { label: "End Date", value: vacancy?.end_date ? new Date(vacancy.end_date).toLocaleDateString('en-US') : "-" },
-                        { label: "Status", value: apprentice?.status === 'pending' || !apprentice ? 'Screening' : formatStatus(apprentice?.status), badge: true, isStatus: true },
+                        { label: "Status", value: (() => {
+                          const s = apprentice?.status?.toLowerCase();
+                          if (!s || s === 'pending') return 'Screening';
+                          if (s.startsWith('stage_')) return `Interview Stage ${parseInt(s.split('_')[1]) + 1}`;
+                          return formatStatus(apprentice?.status);
+                        })(), badge: true, isStatus: true },
                       ].map((row, i) => (
                         <div key={i} className="flex justify-between items-center text-sm py-1.5 border-b border-slate-50 last:border-0">
                           <span className="text-slate-400 font-medium">{row.label}</span>
@@ -476,64 +481,53 @@ function EarlyPathDashboard() {
                 )}
 
                 {/* Interview Section */}
-                 {interviews && interviews.length > 0 && (
+                {interviews && interviews.length > 0 && (
                   <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
                     <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Interview Schedule</h2>
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                       {interviews.map((interview, idx) => {
                         const interviewDateTime = interview.interview_date && interview.interview_time
-                          ? new Date(`${interview.interview_date}T${interview.interview_time}`).toLocaleString('en-US')
+                          ? new Date(`${interview.interview_date}T${interview.interview_time}`).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })
                           : 'TBD';
+                        const link = interview.link || interview.interview_link;
+                        const notes = interview.notes || interview.interview_notes;
+                        const isPassed = interview.status === 'passed';
+                        const isFailed = interview.status === 'failed';
 
                         return (
-                          <div key={idx} className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
-                            <div className="flex justify-between items-start">
-                              <div>
-                                <p className="text-xs font-bold text-indigo-500 uppercase tracking-widest">Interview {idx + 1}</p>
-                                <p className="text-sm font-semibold text-slate-700 mt-1">{interviewDateTime}</p>
-                              </div>
-                              <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium border whitespace-nowrap ${interview.status === 'passed' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' :
-                                interview.status === 'failed' ? 'bg-rose-50 text-rose-600 border-rose-200' :
-                                  'bg-blue-50 text-blue-600 border-blue-200'
-                                }`}>
+                          <div key={idx} className="space-y-2">
+                            <div className="flex justify-between items-center text-sm py-1.5 border-b border-slate-50">
+                              <span className="text-slate-400 font-medium">Interview {idx + 1}</span>
+                              <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium border ${isPassed ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : isFailed ? 'bg-rose-50 text-rose-600 border-rose-200' : 'bg-blue-50 text-blue-600 border-blue-200'}`}>
                                 ● {interview.status || 'pending'}
                               </span>
                             </div>
-                            
-                            {/* Media Type Badge */}
-                            {interview.media && (
-                              <div className={`inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded-lg font-medium border ${
-                                interview.media === 'Offline' 
-                                  ? 'bg-orange-50 text-orange-700 border-orange-200' 
-                                  : 'bg-purple-50 text-purple-700 border-purple-200'
-                              }`}>
-                                {interview.media === 'Offline' ? '📍 Offline' : '🌐 ' + interview.media}
+                            <div className="flex justify-between items-center text-sm py-1.5 border-b border-slate-50">
+                              <span className="text-slate-400 font-medium">Schedule</span>
+                              <span className="text-slate-700 font-medium text-right">{interviewDateTime}</span>
+                            </div>
+                            {link && (
+                              <div className="flex justify-between items-center text-sm py-1.5 border-b border-slate-50">
+                                <span className="text-slate-400 font-medium">Link</span>
+                                <a href={link} target="_blank" rel="noopener noreferrer"
+                                  className="text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 rounded-lg transition-colors inline-flex items-center gap-1.5">
+                                  🎥 Join Interview →
+                                </a>
                               </div>
                             )}
-                            
-                            {interview.link && (
-                              <a
-                                href={interview.link}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 rounded-lg transition-colors"
-                              >
-                                🎥 Join Interview →
-                              </a>
-                            )}
-                            {interview.notes && (
-                              <p className="text-xs text-slate-600 bg-white border border-slate-100 rounded-lg p-2.5 leading-relaxed">
-                                {interview.notes}
-                              </p>
+                            {notes && (
+                              <div className="flex justify-between items-start text-sm py-1.5">
+                                <span className="text-slate-400 font-medium">Notes</span>
+                                <span className="text-slate-700 font-medium text-right max-w-[60%] leading-snug">{notes}</span>
+                              </div>
                             )}
                           </div>
                         );
                       })}
                     </div>
                   </div>
-                 )
-                }
-              </div>
+                )}
+                 </div> {/* End Left Column */}
 
               {/* Right Column */}
               <div className="flex flex-col gap-5">
@@ -607,41 +601,53 @@ function EarlyPathDashboard() {
                 )}
               </div>
             </div>
-                {/* Test Card - Show if test data exists (during screening if HR sends test, or after acceptance) */}
-{dashboardData?.test && (
-    <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-      <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Assessment</h2>
-      <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
-        <div className="flex items-start justify-between">
-          <div>
-            <p className="text-sm font-semibold text-slate-800">{dashboardData.test.test_name || "Test"}</p>
-            {dashboardData.test.test_date && (
-              <p className="text-xs text-slate-400 mt-0.5">
-                📅 {new Date(dashboardData.test.test_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                {dashboardData.test.test_time && ` · ${dashboardData.test.test_time}`}
-              </p>
+             {dashboardData?.test && (
+              <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+                <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Assessment</h2>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center text-sm py-1.5 border-b border-slate-50">
+                    <span className="text-slate-400 font-medium">Test Name</span>
+                    <span className="text-slate-700 font-medium">{dashboardData.test.test_name || "Test"}</span>
+                  </div>
+                  {dashboardData.test.test_date && (
+                    <div className="flex justify-between items-center text-sm py-1.5 border-b border-slate-50">
+                      <span className="text-slate-400 font-medium">Schedule</span>
+                      <span className="text-slate-700 font-medium">
+                        {new Date(dashboardData.test.test_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        {dashboardData.test.test_time && ` · ${dashboardData.test.test_time}`}
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex justify-between items-center text-sm py-1.5 border-b border-slate-50">
+                    <span className="text-slate-400 font-medium">Score</span>
+                    {dashboardData.test.test_score ? (
+                      <span className="text-xs font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full">
+                        {dashboardData.test.test_score}/100
+                      </span>
+                    ) : (
+                      <span className="text-xs font-medium text-amber-600 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full">
+                        Pending
+                      </span>
+                    )}
+                  </div>
+                  {dashboardData.test.test_link && (
+                    <div className="flex justify-between items-center text-sm py-1.5 border-b border-slate-50">
+                      <span className="text-slate-400 font-medium">Link</span>
+                      <a href={dashboardData.test.test_link} target="_blank" rel="noopener noreferrer"
+                        className="text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 rounded-lg transition-colors inline-flex items-center gap-1.5">
+                        🔗 Open Test Link →
+                      </a>
+                    </div>
+                  )}
+                  {dashboardData.test.test_notes && (
+                    <div className="flex justify-between items-start text-sm py-1.5">
+                      <span className="text-slate-400 font-medium">Notes</span>
+                      <span className="text-slate-700 font-medium text-right max-w-[60%] leading-snug">{dashboardData.test.test_notes}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
             )}
-          </div>
-          {dashboardData.test.test_score ? (
-            <span className="text-xs font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full">
-              Score: {dashboardData.test.test_score}/100
-            </span>
-          ) : (
-            <span className="text-xs font-medium text-amber-600 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full">
-              Pending
-            </span>
-          )}
-        </div>
-        {dashboardData.test.test_notes && (
-          <p className="text-xs text-slate-500 bg-white border border-slate-100 rounded-lg p-2.5 leading-relaxed">
-            {dashboardData.test.test_notes}
-          </p>
-        )}
-      </div>
-    </div>
-  )}
-
-
             <p className="text-center text-xs text-slate-400 py-2">
               © 2026 EarlyPath · All rights reserved
             </p>

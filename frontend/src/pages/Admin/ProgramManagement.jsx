@@ -525,7 +525,7 @@ function Modal({ open, editingJob, onClose, onSubmit, catalog }) {
                                         <Icon.Upload /> Pilih File
                                     </button>
                                     <input type="file" ref={fileInpRef} hidden accept="image/*" onChange={handleFileChange} />
-                                    {form.image && <div style={{ fontSize: 12, color: "#10b981", fontWeight: 600 }}>Berhasil dipilih!</div>}
+                                    {form.image && <div style={{ fontSize: 12, color: "#10b981", fontWeight: 600 }}>Successfully selected!</div>}
                                 </div>
                             </FGroup>
                             <FGroup label="Program Name" req style={{ marginTop: 14 }}>
@@ -898,9 +898,10 @@ export default function ProgramManagement() {
             formData.append("description", data.desc);
             formData.append("city", data.kota);
             formData.append("province", data.provinsi);
-            formData.append("address", data.alamat);
+            formData.append("city", data.kota);
+            formData.append("province", data.provinsi);
+            formData.append("address", data.alamat || "");
             formData.append("batch", parseInt(data.batch));
-            formData.append("quota", parseInt(data.kuota));
             formData.append("deadline", formatDateToBackend(data.deadline));
             formData.append("start_date", formatDateToBackend(data.startDate));
             formData.append("end_date", formatDateToBackend(data.endDate));
@@ -921,7 +922,7 @@ export default function ProgramManagement() {
             if (editingJob) {
                 // For PUT with files in Laravel, we use POST with _method = PUT
                 formData.append("_method", "PUT");
-                await axios.post(`http://127.0.0.1:8000/api/vacancies/${editingJob.id_vacancy}`, formData, {
+                await axios.post(`http://127.0.0.1:8000/api/vacancies/${editingJob.id}`, formData, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                         "Content-Type": "multipart/form-data"
@@ -942,7 +943,9 @@ export default function ProgramManagement() {
             setEditingJob(null);
         } catch (err) {
             console.error("Failed to save job:", err);
-            const msg = err.response?.data?.message || (err.response?.data?.errors ? Object.values(err.response.data.errors).flat()[0] : null) || "Failed to save program.";
+            console.error("Server error detail:", JSON.stringify(err.response?.data, null, 2));
+            const errors = err.response?.data?.errors;
+            const msg = err.response?.data?.message || (errors ? Object.values(errors).flat()[0] : null) || "Failed to save program.";
             showToast(msg, "error");
         }
     };

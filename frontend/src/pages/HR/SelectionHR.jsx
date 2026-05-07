@@ -559,11 +559,13 @@ export default function SelectionHR() {
     } catch(err){ console.error(err); setCandidates(old); pushToast('Failed to save notes', 'error'); }
   };
 
-  const handleLogout = () => {
-    localStorage.clear();
-    useAuthStore.setState({ isAuthenticated:false, token:null, user:null, company:null });
-    navigate('/login');
-  };
+const handleLogout = () => {
+  const theme = localStorage.getItem('theme');
+  localStorage.clear();
+  if (theme) localStorage.setItem('theme', theme);
+  useAuthStore.setState({ isAuthenticated:false, token:null, user:null, company:null });
+  navigate('/login');
+};
 
   const viewDoc = async (c, type) => {
     try {
@@ -812,14 +814,21 @@ export default function SelectionHR() {
                         {/* Stage-specific columns — unchanged from original */}
                         {isInterview ? (
                           <>
-                            {c.interview ? (
+                          {(c.interview || c.interview_date) ? (
                               <>
                                 <div onClick={()=>setAssignInterviewCandidate(c)} style={{ fontSize:'12.5px', color:'#475569', textAlign:'center', cursor:'pointer', padding:'6px', borderRadius:'8px', border:'1px solid transparent', transition:'all 0.15s' }} onMouseEnter={e=>{e.currentTarget.style.borderColor='#3b82f6';e.currentTarget.style.background='#f0fdf4'}} onMouseLeave={e=>{e.currentTarget.style.borderColor='transparent';e.currentTarget.style.background='transparent'}}>
-                                  {new Date(c.interview.interview_date).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})}<br/>
-                                  <span style={{ fontSize:'11.5px', color:'#64748b' }}>{c.interview.interview_time.substring(0,5)} WIB</span>
+                                  {new Date(c.interview_date || c.interview?.interview_date).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})}<br/>
+                                  <span style={{ fontSize:'11.5px', color:'#64748b' }}>{(c.interview_time || c.interview?.interview_time || '').substring(0,5)} WIB</span>
                                 </div>
                                 <div onClick={()=>setAssignInterviewCandidate(c)} style={{ fontSize:'12.5px', color:'#475569', textAlign:'center', cursor:'pointer', padding:'6px', borderRadius:'8px', border:'1px solid transparent', transition:'all 0.15s' }} onMouseEnter={e=>{e.currentTarget.style.borderColor='#3b82f6';e.currentTarget.style.background='#f0fdf4'}} onMouseLeave={e=>{e.currentTarget.style.borderColor='transparent';e.currentTarget.style.background='transparent'}}>
-                                  {c.interview.media==='Offline'?<span style={{ display:'inline-flex', alignItems:'center', gap:'4px', justifyContent:'center' }}><IC.MapPin/> {c.interview.notes||'Offline Place'}</span>:<div style={{ display:'flex', flexDirection:'column', gap:'4px', alignItems:'center' }}><span style={{ display:'inline-flex', alignItems:'center', gap:'4px', color:'#3b82f6' }}><IC.Video/> {c.interview.media}</span>{c.interview.link&&<a href={c.interview.link} target='_blank' rel='noreferrer' onClick={e=>e.stopPropagation()} style={{ fontSize:'10.5px', color:'#2563eb', background:'#eff6ff', padding:'2px 8px', borderRadius:'12px', textDecoration:'none' }}>Join Meet</a>}</div>}
+                                  {(c.interview_link || c.interview?.link) ? (
+                                    <div style={{ display:'flex', flexDirection:'column', gap:'4px', alignItems:'center' }}>
+                                      <span style={{ display:'inline-flex', alignItems:'center', gap:'4px', color:'#3b82f6' }}><IC.Video/> Online</span>
+                                      <a href={c.interview_link || c.interview?.link} target='_blank' rel='noreferrer' onClick={e=>e.stopPropagation()} style={{ fontSize:'10.5px', color:'#2563eb', background:'#eff6ff', padding:'2px 8px', borderRadius:'12px', textDecoration:'none' }}>Join Meet</a>
+                                    </div>
+                                  ) : (
+                                    <span style={{ display:'inline-flex', alignItems:'center', gap:'4px', justifyContent:'center' }}><IC.MapPin/> {c.interview?.notes || c.interview_notes || 'Offline'}</span>
+                                  )}
                                 </div>
                               </>
                             ) : (

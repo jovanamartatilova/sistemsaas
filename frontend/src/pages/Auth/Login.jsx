@@ -8,6 +8,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
+  const isDark = localStorage.getItem("theme") !== "light";
 
   const navigate = useNavigate();
   const { isAuthenticated, user, company, loading: authLoading } = useAuthStore();
@@ -113,9 +114,10 @@ export default function Login() {
   };
 
   const inputBase = {
-    background: "rgba(255,255,255,0.07)",
-    border: "1px solid rgba(255,255,255,0.1)",
+    background: isDark ? "rgba(255,255,255,0.07)" : "rgba(255,255,255,0.85)",
+    border: isDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(0,0,0,0.15)",
     fontSize: "14px",
+    color: isDark ? "#fff" : "#1a2332",
   };
   const inputFocus = {
     border: "1px solid rgba(74,158,255,0.5)",
@@ -187,7 +189,7 @@ export default function Login() {
       {/* Right Panel - Form (sama seperti sebelumnya) */}
       <div
         className="flex-1 flex flex-col items-center justify-center px-6 py-12 relative overflow-hidden"
-        style={{ background: "linear-gradient(160deg, #0d1f3c 0%, #0a1628 40%, #071220 100%)" }}
+        style={{ background: isDark ? "linear-gradient(160deg, #0d1f3c 0%, #0a1628 40%, #071220 100%)" : "linear-gradient(160deg, #f0f4f8 0%, #e8edf5 40%, #dce4ef 100%)" }}
       >
         {/* Mobile nav */}
         <div className="lg:hidden absolute top-6 left-6 flex items-center gap-4">
@@ -217,15 +219,15 @@ export default function Login() {
             <div className="flex justify-center mb-2">
               <img src="/assets/images/logo.png" alt="Logo" className="w-23 h-20 object-contain" />
             </div>
-            <p className="text-sm font-medium mb-1" style={{ color: "rgba(74,158,255,0.85)" }}>
-              Welcome back to
-            </p>
-            <h1 className="text-xl font-bold text-white mb-1" style={{ letterSpacing: "-0.3px" }}>
-              {companyName}
-            </h1>
-            <p className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>
-              Sign in with your account to continue.
-            </p>
+          <p className="text-sm font-medium mb-1" style={{ color: "rgba(74,158,255,0.85)" }}>
+            Welcome back to
+          </p>
+          <h1 className="text-xl font-bold mb-1" style={{ color: isDark ? "#fff" : "#1a2332" }}>
+            {companyName}
+          </h1>
+          <p className="text-xs" style={{ color: isDark ? "rgba(255,255,255,0.4)" : "rgba(30,40,60,0.55)" }}>
+            Sign in with your account to continue.
+          </p>
           </div>
 
           {/* Success */}
@@ -255,9 +257,9 @@ export default function Login() {
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Email */}
             <div>
-              <label className="block text-sm font-medium mb-1.5 text-left" style={{ color: "rgba(255,255,255,0.8)" }}>
-                Email
-              </label>
+            <label className="block text-sm font-medium mb-1.5 text-left" style={{ color: isDark ? "rgba(255,255,255,0.8)" : "rgba(20,30,50,0.85)" }}>
+              Email
+            </label>
               <input
                 type="email"
                 name="email"
@@ -275,9 +277,9 @@ export default function Login() {
             {/* Password */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-sm font-medium" style={{ color: "rgba(255,255,255,0.8)" }}>
-                  Password
-                </label>
+              <label className="block text-sm font-medium" style={{ color: isDark ? "rgba(255,255,255,0.8)" : "rgba(20,30,50,0.85)" }}>
+                Password
+              </label>
                 <Link
                   to="/forgot-password"
                   className="text-xs transition-colors duration-200"
@@ -326,7 +328,7 @@ export default function Login() {
             {/* Terms & Policy */}
             <div className="flex items-start gap-3">
               <input type="checkbox" id="terms" required className="mt-0.5 w-4 h-4 rounded cursor-pointer accent-blue-500" />
-              <label htmlFor="terms" className="text-xs leading-relaxed cursor-pointer" style={{ color: "rgba(255,255,255,0.5)" }}>
+              <label htmlFor="terms" className="text-xs leading-relaxed cursor-pointer" style={{ color: isDark ? "rgba(255,255,255,0.5)" : "rgba(30,40,60,0.6)" }}>
                 By signing in, you agree to our{" "}
                 <a
                   href="/terms"
@@ -379,9 +381,9 @@ export default function Login() {
 
             {/* Divider */}
             <div className="flex items-center gap-3 my-1">
-              <div className="flex-1 h-px" style={{ background: "rgba(255,255,255,0.1)" }} />
-              <span className="text-xs" style={{ color: "rgba(255,255,255,0.35)" }}>or</span>
-              <div className="flex-1 h-px" style={{ background: "rgba(255,255,255,0.1)" }} />
+              <div className="flex-1 h-px" style={{ background: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)" }} />
+              <span className="text-xs" style={{ color: isDark ? "rgba(255,255,255,0.35)" : "rgba(30,40,60,0.4)" }}>or</span>
+              <div className="flex-1 h-px" style={{ background: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)" }} />
             </div>
 
             {/* Google */}
@@ -411,8 +413,8 @@ export default function Login() {
           </form>
 
           {/* Register link */}
-          <p className="text-center mt-6 text-sm" style={{ color: "rgba(255,255,255,0.4)" }}>
-            Don't have an account?{" "}
+          <p className="text-center mt-6 text-sm" style={{ color: isDark ? "rgba(255,255,255,0.4)" : "rgba(30,40,60,0.55)" }}>
+          Don't have an account?{" "}
             <Link
               to="/register"
               className="font-semibold transition-colors duration-200"

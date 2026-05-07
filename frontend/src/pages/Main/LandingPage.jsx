@@ -143,6 +143,21 @@ const IconLogOut = ({ size = 18 }) => (
   </svg>
 );
 
+const IconSun = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="5"/>
+    <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+    <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+  </svg>
+);
+const IconMoon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+  </svg>
+);
+
 // ── Data ─────────────────────────────────────────────────────────────────────
 const features = [
   { icon: <IconBriefcase />, color: "#4a9eff", title: "Smart Job Matching", desc: "AI-powered matching connects the right interns to the right companies based on skills, interests, and culture fit." },
@@ -184,7 +199,7 @@ const formatDate = (dateStr) => {
 
 // ── VacancyDetailModal ────────────────────────────────────────────────────────
 
-const VacancyDetailModal = ({ vacancy, onClose }) => {
+const VacancyDetailModal = ({ vacancy, onClose, isDark }) => {
   if (!vacancy) return null;
   const navigate = useNavigate();
   const companyId = vacancy.company?.id_company || "";
@@ -205,7 +220,7 @@ const VacancyDetailModal = ({ vacancy, onClose }) => {
         <div style={{ width: "100%", height: "260px", background: vacancy.photo ? `url(http://127.0.0.1:8000/storage/${vacancy.photo}) center/cover` : "rgba(255,255,255,0.05)" }}></div>
         <div style={{ padding: "32px", textAlign: "left" }}>
           <p style={{ fontSize: "14px", fontWeight: "600", color: "#4a9eff", marginBottom: "8px" }}>{vacancy.company?.name}</p>
-          <h2 style={{ fontSize: "28px", fontWeight: "800", color: "#fff", margin: "0 0 16px" }}>{vacancy.title}</h2>
+          <h2 style={{ fontSize: "28px", fontWeight: "800", color:  isDark ? "#fff" : "#1a2332", margin: "0 0 16px" }}>{vacancy.title}</h2>
           <div style={{ marginBottom: "28px" }}>
             <h4 style={{ fontSize: "15px", fontWeight: "700", color: "rgba(255,255,255,0.9)", margin: "0 0 8px" }}>Description</h4>
             <div style={{ fontSize: "15px", color: "rgba(255,255,255,0.6)", lineHeight: "1.7", margin: 0, whiteSpace: "pre-wrap" }}>{vacancy.description}</div>
@@ -225,15 +240,15 @@ const VacancyDetailModal = ({ vacancy, onClose }) => {
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "32px", padding: "20px", background: "rgba(255,255,255,0.03)", borderRadius: "16px", border: "1px solid rgba(255,255,255,0.05)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "14.5px", color: "rgba(255,255,255,0.7)" }}><IconLocation /> <span>{vacancy.location || "Jakarta"}</span></div>
-            <div style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "14.5px", color: "rgba(255,255,255,0.5)", fontStyle: "italic" }}><IconCal /> <span>{formatDate(vacancy.start_date || vacancy.deadline)} - {formatDate(vacancy.end_date || vacancy.deadline)}</span></div>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "14.5px", color: isDark ? "rgba(255,255,255,0.5)" : "rgba(30,40,60,0.6)", fontStyle: "italic" }}><IconCal /> <span>{formatDate(vacancy.start_date || vacancy.deadline)} - {formatDate(vacancy.end_date || vacancy.deadline)}</span></div>
             <div style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "14.5px", color: "#fb7185", fontWeight: "600" }}><IconDeadline /> <span>Pendaftaran Deadline: {formatDate(vacancy.deadline)}</span></div>
           </div>
           <div style={{ display: "flex", gap: "10px", marginBottom: "24px" }}>
             <span style={{ fontSize: "11px", fontWeight: "700", textTransform: "capitalize", padding: "6px 14px", borderRadius: "8px", background: "rgba(74,158,255,0.1)", color: "#4a9eff" }}>{vacancy.type}</span>
             <span style={{ fontSize: "12px", fontWeight: "700", textTransform: "capitalize", padding: "6px 14px", borderRadius: "8px", background: "rgba(16,185,129,0.1)", color: "#10b981" }}>{vacancy.payment_type}</span>
-            <span style={{ fontSize: "11px", fontWeight: "700", background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.5)", padding: "6px 14px", borderRadius: "8px", marginLeft: "auto" }}>{vacancy.total_quota || 0} Total Quota</span>
+            <span style={{ fontSize: "11px", fontWeight: "700", background: "rgba(255,255,255,0.05)", color: isDark ? "rgba(255,255,255,0.5)" : "rgba(30,40,60,0.6)", padding: "6px 14px", borderRadius: "8px", marginLeft: "auto" }}>{vacancy.total_quota || 0} Total Quota</span>
           </div>
-          <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.55)", lineHeight: "1.6", margin: "0 0 16px" }}>
+          <p style={{ fontSize: "13px", color: isDark ? "rgba(255,255,255,0.45)" : "rgba(30,40,60,0.55)", lineHeight: "1.6", margin: "0 0 16px" }}>
             You will choose your desired position in the application form.
           </p>
           <button
@@ -250,6 +265,104 @@ const VacancyDetailModal = ({ vacancy, onClose }) => {
   );
 };
 
+const PositionsPopup = ({ vacancy, onClose, isDark }) => {
+  const navigate = useNavigate();
+  if (!vacancy) return null;
+
+  const companyId = vacancy.company?.id_company || "";
+
+  const handleApply = (positionName) => {
+    if (!companyId) { alert("Company profile is incomplete."); return; }
+    onClose();
+    navigate(`/c/${companyId}/apply/${vacancy.id_vacancy}`, {
+      state: { selectedPosition: positionName }
+    });
+  };
+
+  return (
+    <div
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+      style={{ position: "fixed", inset: 0, background: "rgba(10,22,40,0.85)", backdropFilter: "blur(8px)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}
+    >
+      <div style={{ background: isDark ? "#0d1a28" : "#ffffff", borderRadius: "24px", width: "100%", maxWidth: "520px", maxHeight: "85vh", overflowY: "auto", position: "relative", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5)", border: isDark ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(0,0,0,0.1)" }}>
+
+        {/* Header */}
+        <div style={{ padding: "28px 28px 0" }}>
+          <button onClick={onClose} style={{ position: "absolute", top: "20px", right: "20px", width: "36px", height: "36px", borderRadius: "50%", background: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.07)", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: isDark ? "#fff" : "#333", fontSize: "16px" }}>✕</button>
+
+          <p style={{ fontSize: "12px", fontWeight: "600", color: "#4a9eff", marginBottom: "6px" }}>{vacancy.company?.name}</p>
+          <h2 style={{ fontSize: "22px", fontWeight: "800", color: isDark ? "#fff" : "#1a2332", margin: "0 0 4px" }}>{vacancy.title}</h2>
+          <p style={{ fontSize: "13px", color: isDark ? "rgba(255,255,255,0.4)" : "rgba(30,40,60,0.5)", marginBottom: "20px" }}>
+            Batch {vacancy.batch} · {vacancy.location?.split(",")[0]}
+            <span style={{ marginLeft: "10px", fontSize: "11px", fontWeight: "700", padding: "2px 8px", borderRadius: "6px", background: "rgba(74,158,255,0.1)", color: "#4a9eff" }}>{vacancy.total_quota || 0} Total Quota</span>
+          </p>
+
+          <p style={{ fontSize: "11px", fontWeight: "700", color: isDark ? "rgba(255,255,255,0.35)" : "rgba(30,40,60,0.45)", marginBottom: "14px", textTransform: "uppercase", letterSpacing: "1px" }}>
+            Choose a Position to Apply
+          </p>
+        </div>
+
+        {/* Position Cards */}
+        <div style={{ padding: "0 28px 28px", display: "flex", flexDirection: "column", gap: "12px" }}>
+          {(vacancy.positions || []).map((p, idx) => {
+            const posName = p.name || p;
+            const quota = p.pivot?.quota || 0;
+            const colors = ["#4a9eff", "#a78bfa", "#34d399", "#fbbf24", "#f87171", "#60a5fa"];
+            const accent = colors[idx % colors.length];
+
+            return (
+              <div key={idx} style={{ background: isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)", border: isDark ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(0,0,0,0.09)", borderRadius: "16px", padding: "18px 20px", transition: "all 0.2s" }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = `${accent}40`; e.currentTarget.style.background = isDark ? `${accent}0d` : `${accent}0a`; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.09)"; e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)"; }}
+              >
+                {/* Top row: dot + name + quota badge */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <div style={{ width: "10px", height: "10px", borderRadius: "50%", background: accent, flexShrink: 0, boxShadow: `0 0 8px ${accent}80` }} />
+                    <span style={{ fontSize: "15px", fontWeight: "700", color: isDark ? "#fff" : "#1a2332" }}>{posName}</span>
+                  </div>
+                  <span style={{ fontSize: "12px", fontWeight: "700", color: accent, background: `${accent}18`, padding: "4px 12px", borderRadius: "8px", border: `1px solid ${accent}30`, whiteSpace: "nowrap" }}>
+                    {quota} Quota
+                  </span>
+                </div>
+
+                {/* Info row */}
+                <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "16px", flexWrap: "wrap" }}>
+                  <span style={{ fontSize: "12px", color: isDark ? "rgba(255,255,255,0.4)" : "rgba(30,40,60,0.5)", display: "flex", alignItems: "center", gap: "5px" }}>
+                    <IconLocation /> {vacancy.location?.split(",")[0]}
+                  </span>
+                  <span style={{ fontSize: "11px", fontWeight: "700", textTransform: "uppercase", padding: "3px 8px", borderRadius: "6px", background: "rgba(74,158,255,0.1)", color: "#4a9eff" }}>{vacancy.type}</span>
+                  <span style={{ fontSize: "11px", fontWeight: "700", textTransform: "uppercase", padding: "3px 8px", borderRadius: "6px", background: "rgba(16,185,129,0.1)", color: "#10b981" }}>{vacancy.payment_type}</span>
+                </div>
+
+                {/* Apply button per posisi */}
+                <button
+                  onClick={() => handleApply(posName)}
+                  style={{ width: "100%", padding: "11px", borderRadius: "10px", border: "none", background: `linear-gradient(135deg, ${accent}cc 0%, ${accent} 100%)`, color: "#fff", fontSize: "13px", fontWeight: "700", cursor: "pointer", fontFamily: "inherit", boxShadow: `0 4px 14px ${accent}40`, transition: "all 0.2s", letterSpacing: "0.3px" }}
+                  onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = `0 6px 20px ${accent}60`; }}
+                  onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = `0 4px 14px ${accent}40`; }}
+                >
+                  Apply as {posName} →
+                </button>
+              </div>
+            );
+          })}
+
+          {/* Cancel */}
+          <button
+            onClick={onClose}
+            style={{ width: "100%", padding: "12px", borderRadius: "12px", border: isDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(0,0,0,0.1)", background: "transparent", color: isDark ? "rgba(255,255,255,0.5)" : "rgba(30,40,60,0.5)", fontSize: "13px", fontWeight: "600", cursor: "pointer", fontFamily: "inherit", transition: "0.2s", marginTop: "4px" }}
+            onMouseEnter={e => e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)"}
+            onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ── Main Component ────────────────────────────────────────────────────────────
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -259,6 +372,7 @@ export default function LandingPage() {
   const [vacancies, setVacancies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedVacancy, setSelectedVacancy] = useState(null);
+  const [positionsPopupVacancy, setPositionsPopupVacancy] = useState(null);
 
   // ── Search state ─────────────────────────────────────────────────────────────
   const [searchQuery, setSearchQuery] = useState("");
@@ -266,13 +380,43 @@ export default function LandingPage() {
   const searchInputRef = useRef(null);
 
   const { isAuthenticated, logout, company: authCompany, user: authUser } = useAuthStore();
-  const [showDropdown, setShowDropdown] = useState(false);
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
   const dropdownRef = useRef(null);
   const [emailForm, setEmailForm] = useState({ name: "", email: "", message: "" });
   const [emailSent, setEmailSent] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
+  const [isDark, setIsDark] = useState(() => {
+  const saved = localStorage.getItem("theme");
+  return saved ? saved === "dark" : true;
+});
+const [showDropdown, setShowDropdown] = useState(false);
+
+const theme = {
+  bg: isDark ? "linear-gradient(180deg, #06101e 0%, #081828 100%)" : "linear-gradient(180deg, #f0f4f8 0%, #e8edf5 100%)",
+  navBg: (scrolled) => isDark
+    ? (scrolled ? "rgba(6,16,30,0.92)" : "rgba(6,16,30,0.55)")
+    : (scrolled ? "rgba(240,244,248,0.95)" : "rgba(240,244,248,0.75)"),
+  navBorder: (scrolled) => scrolled
+    ? (isDark ? "1px solid rgba(255,255,255,0.07)" : "1px solid rgba(0,0,0,0.08)")
+    : "1px solid transparent",
+  text: isDark ? "#e8eaf0" : "#1a2332",
+  textMuted: isDark ? "rgba(255,255,255,0.6)" : "rgba(30,40,60,0.6)",
+  textFaint: isDark ? "rgba(255,255,255,0.45)" : "rgba(30,40,60,0.45)",
+  cardBg: isDark ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.85)",
+  cardBorder: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.09)",
+  cardHoverBg: isDark ? "rgba(255,255,255,0.07)" : "rgba(255,255,255,1)",
+  inputBg: isDark ? "rgba(255,255,255,0.07)" : "rgba(255,255,255,0.8)",
+  inputBorder: isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.15)",
+  sectionAlt: isDark ? "rgba(255,255,255,0.01)" : "rgba(0,0,0,0.02)",
+  dropdownBg: isDark ? "#0d1a28" : "#ffffff",
+  dropdownBorder: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.1)",
+  modalBg: isDark ? "#0d1a28" : "#ffffff",
+  footerBg: isDark
+    ? "linear-gradient(160deg,#0a1628 0%,#0d1a2f 55%,#081424 100%)"
+    : "linear-gradient(160deg,#e8edf5 0%,#f0f4f8 55%,#dce4ef 100%)",
+  footerBorder: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.08)",
+};
 
   const handleEmailSubmit = async (e) => {
     e.preventDefault();
@@ -411,32 +555,45 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div style={{ background: "linear-gradient(180deg, #06101e 0%, #081828 100%)", minHeight: "100vh", fontFamily: "'Poppins', sans-serif", color: "#e8eaf0", overflowX: "hidden" }}>
+    <div style={{ background: theme.bg, minHeight: "100vh", fontFamily: "'Poppins', sans-serif", color: theme.text, overflowX: "hidden", transition: "background 0.35s, color 0.35s" }}>
 
       {/* ── NAVBAR ─────────────────────────────────────────────────────── */}
-      <nav style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, padding: "0 32px", height: "64px", display: "flex", alignItems: "center", justifyContent: "space-between", background: scrolled ? "rgba(6, 16, 30, 0.92)" : "rgba(6, 16, 30, 0.55)", backdropFilter: "blur(16px)", borderBottom: scrolled ? "1px solid rgba(255,255,255,0.07)" : "1px solid transparent", transition: "all 0.35s ease" }}>
+      <nav style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, padding: "0 32px", height: "64px", display: "flex", alignItems: "center", justifyContent: "space-between", background: theme.navBg(scrolled), backdropFilter: "blur(16px)", borderBottom: theme.navBorder(scrolled), transition: "all 0.35s ease" }}>
         <Link to="/" style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", textDecoration: "none" }}>
           <img src="/assets/images/logo.png" alt="EarlyPath" style={{ height: "46px", objectFit: "contain" }} />
-          <span style={{ fontSize: 18, fontWeight: 800, color: "#fff", letterSpacing: "-0.5px" }}>EarlyPath</span>
+          <span style={{ fontSize: 18, fontWeight: 800, color: isDark ? "#fff" : "#1a2332", letterSpacing: "-0.5px" }}>EarlyPath</span>
         </Link>
 
         <div style={{ display: "flex", alignItems: "center", gap: "32px" }} className="hidden-mobile">
               {["Features", "How It Works", "Open Programs"].map((item) => (
                 <a key={item} href={item === "Open Programs" ? "#open-positions" : `#${item.toLowerCase().replace(/\s+/g, "-")}`}
-              style={{ color: "rgba(255,255,255,0.65)", textDecoration: "none", fontSize: "14px", fontWeight: "500", transition: "color 0.2s" }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = "#fff")}
-              onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.65)")}
+              style={{ color: isDark ? "rgba(255,255,255,0.65)" : "rgba(20,30,50,0.75)", textDecoration: "none", fontSize: "14px", fontWeight: "500", transition: "color 0.2s" }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = isDark ? "#fff" : "#1a2332")}
+              onMouseLeave={(e) => (e.currentTarget.style.color = isDark ? "rgba(255,255,255,0.65)" : "rgba(20,30,50,0.75)")}
             >{item}</a>
           ))}
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }} className="hidden-mobile">
+          <button
+            onClick={() => {
+              const next = !isDark;
+              setIsDark(next);
+              localStorage.setItem("theme", next ? "dark" : "light");
+            }}
+            title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
+            style={{ width: "40px", height: "40px", borderRadius: "50%", background: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)", border: isDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(0,0,0,0.1)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: isDark ? "#fbbf24" : "#6366f1", transition: "0.2s", padding: 0, flexShrink: 0 }}
+            onMouseEnter={e => e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.09)"}
+            onMouseLeave={e => e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)"}
+          >
+            {isDark ? <IconSun /> : <IconMoon />}
+          </button>
           {!isAuthenticated ? (
             <>
               <button onClick={() => navigate("/login")}
-                style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.8)", padding: "8px 20px", borderRadius: "8px", fontSize: "14px", fontWeight: "500", cursor: "pointer", transition: "all 0.2s" }}
-                onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(74,158,255,0.5)"; e.currentTarget.style.color = "#4a9eff"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)"; e.currentTarget.style.color = "rgba(255,255,255,0.8)"; }}
+              style={{ background: "transparent", border: `1px solid ${isDark ? "rgba(255,255,255,0.2)" : "rgba(30,40,60,0.25)"}`, color: isDark ? "rgba(255,255,255,0.8)" : "rgba(20,30,50,0.8)", padding: "8px 20px", borderRadius: "8px", fontSize: "14px", fontWeight: "500", cursor: "pointer", transition: "all 0.2s" }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(74,158,255,0.5)"; e.currentTarget.style.color = "#4a9eff"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = isDark ? "rgba(255,255,255,0.2)" : "rgba(30,40,60,0.25)"; e.currentTarget.style.color = isDark ? "rgba(255,255,255,0.8)" : "rgba(20,30,50,0.8)"; }}
               >Sign In</button>
               <button onClick={() => navigate("/register")}
                 style={{ background: "linear-gradient(135deg, #2d7dd2 0%, #4a9eff 100%)", border: "none", color: "#fff", padding: "8px 20px", borderRadius: "8px", fontSize: "14px", fontWeight: "600", cursor: "pointer", boxShadow: "0 4px 16px rgba(74,158,255,0.35)", transition: "all 0.2s" }}
@@ -455,7 +612,7 @@ export default function LandingPage() {
                 <div style={{ position: "absolute", top: "calc(100% + 12px)", right: 0, width: "220px", background: "#0d1a28", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "16px", padding: "8px", boxShadow: "0 20px 40px rgba(0,0,0,0.4)", zIndex: 1000 }}>
                   <div style={{ padding: "12px 16px 10px", borderBottom: "1px solid rgba(255,255,255,0.05)", marginBottom: "6px" }}>
                     <div style={{ fontSize: "13px", fontWeight: "700", color: "#fff", marginBottom: "2px" }}>{authUser?.name || authUser?.full_name}</div>
-                    <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{authUser?.email}</div>
+                    <div style={{ fontSize: "11px", color: isDark ? "rgba(255,255,255,0.5)" : "rgba(30,40,60,0.6)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{authUser?.email}</div>
                   </div>
                   <div onClick={() => { setShowDropdown(false); navigate(getDashboardPath()); }}
                     style={{ display: "flex", alignItems: "center", gap: "10px", padding: "12px 16px", color: "#fff", fontSize: "14px", fontWeight: "500", cursor: "pointer", borderRadius: "10px", transition: "0.2s" }}
@@ -505,7 +662,7 @@ export default function LandingPage() {
       {/* ── HERO SECTION ──────────────────────────────────────────────── */}
       <section style={{ position: "relative", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "100px 24px 80px", overflow: "hidden" }}>
         <div style={{ position: "absolute", inset: 0, backgroundImage: "url('/assets/images/bg.png')", backgroundSize: "cover", backgroundPosition: "center top", backgroundRepeat: "no-repeat", opacity: 0.25 }} />
-        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(6,16,30,0.5) 0%, rgba(6,16,30,0.3) 40%, rgba(6,16,30,0.85) 100%)" }} />
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(6,16,30,0.75) 0%, rgba(6,16,30,0.65) 40%, rgba(6,16,30,0.92) 100%)" }} />
         <div style={{ position: "absolute", top: "20%", left: "10%", width: "480px", height: "480px", borderRadius: "50%", background: "rgba(74,158,255,0.06)", filter: "blur(80px)", pointerEvents: "none" }} />
         <div style={{ position: "absolute", top: "30%", right: "8%", width: "360px", height: "360px", borderRadius: "50%", background: "rgba(167,139,250,0.06)", filter: "blur(80px)", pointerEvents: "none" }} />
 
@@ -530,7 +687,7 @@ export default function LandingPage() {
           <div style={{ maxWidth: "640px", margin: "0 auto 44px", position: "relative" }}>
             <form onSubmit={handleSearch}>
               <div
-                style={{ display: "flex", alignItems: "center", background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "14px", overflow: "hidden", backdropFilter: "blur(12px)", boxShadow: "0 8px 32px rgba(0,0,0,0.25)", transition: "border-color 0.25s" }}
+                style={{ display: "flex", alignItems: "center", background: theme.inputBg, border: `1px solid ${theme.inputBorder}`,borderRadius: "14px", overflow: "hidden", backdropFilter: "blur(12px)", boxShadow: "0 8px 32px rgba(0,0,0,0.25)", transition: "border-color 0.25s" }}
                 onFocusCapture={e => e.currentTarget.style.borderColor = "rgba(74,158,255,0.5)"}
                 onBlurCapture={e => e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)"}
               >
@@ -547,7 +704,7 @@ export default function LandingPage() {
                     if (!e.target.value.trim()) { setSearchResults(null); setCurrentPage(1); }
                   }}
                   onKeyDown={e => e.key === "Enter" && handleSearch()}
-                  style={{ flex: 1, background: "transparent", border: "none", outline: "none", color: "#fff", fontSize: "14px", padding: "16px 8px", fontFamily: "'Poppins', sans-serif", minWidth: 0 }}
+                  style={{ flex: 1, background: "transparent", border: "none", outline: "none", color: isDark ? "#fff" : "#1a2332", fontSize: "14px", padding: "16px 8px", fontFamily: "'Poppins', sans-serif", minWidth: 0 }}
                 />
                 {searchQuery && (
                   <button type="button" onClick={handleSearchReset}
@@ -600,21 +757,22 @@ export default function LandingPage() {
         <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
           <div style={{ textAlign: "center", marginBottom: "64px" }}>
             <p style={{ fontSize: "13px", fontWeight: "600", color: "#4a9eff", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "12px" }}>Platform Features</p>
-            <h2 style={{ fontSize: "clamp(28px, 4vw, 42px)", fontWeight: "800", color: "#fff", letterSpacing: "-1px", margin: "0 0 16px" }}>
-              Everything you need,{" "}<span style={{ color: "rgba(255,255,255,0.45)" }}>nothing you don't</span>
+            <h2 style={{ fontSize: "clamp(28px, 4vw, 42px)", fontWeight: "800", color: isDark ? "#fff" : "#1a2332", letterSpacing: "-1px", margin: "0 0 16px" }}>
+              Everything you need,{" "}<span style={{ color: isDark ? "rgba(255,255,255,0.45)" : "rgba(30,40,60,0.4)"}}>nothing you don't</span>
             </h2>
-            <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "16px", maxWidth: "480px", margin: "0 auto" }}>A complete suite of tools built specifically for modern internship management.</p>
+            <p style={{ color: isDark ? "rgba(255,255,255,0.5)" : "rgba(30,40,60,0.6)", fontSize: "16px", maxWidth: "480px", margin: "0 auto" }}>A complete suite of tools built specifically for modern internship management.</p>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "20px" }}>
             {features.map((f, i) => (
               <div key={i}
-                style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "16px", padding: "28px", transition: "all 0.3s", cursor: "default" }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.07)"; e.currentTarget.style.borderColor = `${f.color}30`; e.currentTarget.style.transform = "translateY(-4px)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)"; e.currentTarget.style.transform = "translateY(0)"; }}
+                style={{ background: theme.cardBg, border: `1px solid ${theme.cardBorder}`, borderRadius: "16px", padding: "28px", transition: "all 0.3s", cursor: "default" }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = theme.cardHoverBg; e.currentTarget.style.borderColor = `${f.color}30`; e.currentTarget.style.transform = "translateY(-4px)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = theme.cardBg; e.currentTarget.style.borderColor = theme.cardBorder; e.currentTarget.style.transform = "translateY(0)"; }}
               >
                 <div style={{ width: "48px", height: "48px", borderRadius: "12px", background: `${f.color}18`, border: `1px solid ${f.color}30`, display: "flex", alignItems: "center", justifyContent: "center", color: f.color, marginBottom: "18px" }}>{f.icon}</div>
-                <h3 style={{ fontSize: "17px", fontWeight: "700", color: "#fff", marginBottom: "10px" }}>{f.title}</h3>
-                <p style={{ fontSize: "14px", lineHeight: "1.7", color: "rgba(255,255,255,0.5)" }}>{f.desc}</p>
+                <h3 style={{ fontSize: "17px", fontWeight: "700", color: isDark ? "#fff" : "#1a2332", marginBottom: "10px" }}>
+                {f.title}</h3>
+                <p style={{ fontSize: "14px", lineHeight: "1.7", color: isDark ? "rgba(255,255,255,0.5)" : "rgba(30,40,60,0.6)" }}>{f.desc}</p>
               </div>
             ))}
           </div>
@@ -626,19 +784,19 @@ export default function LandingPage() {
         <div style={{ maxWidth: "1100px", margin: "0 auto", display: "flex", gap: "80px", alignItems: "center", flexWrap: "wrap" }}>
           <div style={{ flex: "1 1 360px" }}>
             <p style={{ fontSize: "13px", fontWeight: "600", color: "#4a9eff", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "12px" }}>How It Works</p>
-            <h2 style={{ fontSize: "clamp(26px, 4vw, 40px)", fontWeight: "800", color: "#fff", letterSpacing: "-1px", margin: "0 0 40px", lineHeight: "1.2" }}>
+            <h2 style={{ fontSize: "clamp(26px, 4vw, 40px)", fontWeight: "800", color: isDark ? "#fff" : "#1a2332", letterSpacing: "-1px", margin: "0 0 40px", lineHeight: "1.2" }}>
               From sign-up to{" "}<span style={{ color: "#4a9eff" }}>certified Intern</span>
             </h2>
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
               {processSteps.map((step, i) => (
                 <div key={i} onClick={() => setActiveStep(i)}
-                  style={{ padding: "20px 22px", borderRadius: "14px", border: activeStep === i ? "1px solid rgba(74,158,255,0.3)" : "1px solid rgba(255,255,255,0.06)", background: activeStep === i ? "rgba(74,158,255,0.08)" : "transparent", cursor: "pointer", transition: "all 0.3s" }}
+                  style={{ padding: "20px 22px", borderRadius: "14px", border: activeStep === i ? "1px solid rgba(74,158,255,0.3)" : `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.08)"}`, background: activeStep === i ? "rgba(74,158,255,0.08)" : "transparent", cursor: "pointer", transition: "all 0.3s" }}
                 >
                   <div style={{ display: "flex", alignItems: "flex-start", gap: "16px" }}>
-                    <span style={{ fontSize: "12px", fontWeight: "700", color: activeStep === i ? "#4a9eff" : "rgba(255,255,255,0.25)", minWidth: "28px", marginTop: "2px" }}>{step.num}</span>
+                    <span style={{ fontSize: "12px", fontWeight: "700", color: activeStep === i ? "#4a9eff" : isDark ? "rgba(255,255,255,0.25)" : "rgba(30,40,60,0.3)", minWidth: "28px", marginTop: "2px" }}>{step.num}</span>
                     <div>
-                      <p style={{ fontSize: "15px", fontWeight: "700", color: activeStep === i ? "#fff" : "rgba(255,255,255,0.6)", marginBottom: "6px" }}>{step.title}</p>
-                      {activeStep === i && <p style={{ fontSize: "13px", lineHeight: "1.65", color: "rgba(255,255,255,0.5)", margin: 0 }}>{step.desc}</p>}
+                      <p style={{ fontSize: "15px", fontWeight: "700", color: activeStep === i ? (isDark ? "#fff" : "#1a2332") : isDark ? "rgba(255,255,255,0.6)" : "rgba(30,40,60,0.5)", marginBottom: "6px" }}>{step.title}</p>
+                      {activeStep === i && <p style={{ fontSize: "13px", lineHeight: "1.65", color: isDark ? "rgba(255,255,255,0.5)" : "rgba(30,40,60,0.6)", margin: 0 }}>{step.desc}</p>}
                     </div>
                   </div>
                 </div>
@@ -647,14 +805,14 @@ export default function LandingPage() {
           </div>
 
           <div style={{ flex: "1 1 340px", maxWidth: "460px" }}>
-            <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "20px", overflow: "hidden" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "14px 18px", borderBottom: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.02)" }}>
+            <div style={{ background: isDark ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.9)", border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.1)"}`, borderRadius: "20px", overflow: "hidden", boxShadow: isDark ? "none" : "0 4px 24px rgba(0,0,0,0.08)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "14px 18px", borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.07)"}`, background: isDark ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.02)" }}>
                 {["#ff5f57", "#ffbd2e", "#28c940"].map((c) => (<div key={c} style={{ width: "10px", height: "10px", borderRadius: "50%", background: c }} />))}
-                <span style={{ flex: 1, textAlign: "center", fontSize: "12px", color: "rgba(255,255,255,0.35)" }}>EarlyPath Dashboard</span>
+                <span style={{ flex: 1, textAlign: "center", fontSize: "12px", color: isDark ? "rgba(255,255,255,0.35)" : "rgba(30,40,60,0.45)" }}>EarlyPath Dashboard</span>
               </div>
               <div style={{ padding: "22px" }}>
                 <div style={{ marginBottom: "16px" }}>
-                  <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)", marginBottom: "6px" }}>Active Positions</div>
+                  <div style={{ fontSize: "12px", color: isDark ? "rgba(255,255,255,0.35)" : "rgba(30,40,60,0.45)", marginBottom: "6px" }}>Active Positions</div>
                   <div style={{ display: "flex", gap: "8px" }}>
                     {["Frontend Dev", "UI/UX", "Data Science"].map((r) => (
                       <span key={r} style={{ fontSize: "11px", background: "rgba(74,158,255,0.15)", border: "1px solid rgba(74,158,255,0.25)", borderRadius: "6px", padding: "4px 10px", color: "#4a9eff", fontWeight: "600" }}>{r}</span>
@@ -665,10 +823,10 @@ export default function LandingPage() {
                   <div key={c.name} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 14px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "10px", marginBottom: "8px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                       <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: `hsl(${c.score * 2},60%,40%)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "13px", color: "#fff", fontWeight: "700" }}>{c.name[0]}</div>
-                      <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.8)", fontWeight: "600" }}>{c.name}</span>
+                      <span style={{ fontSize: "13px", color: isDark ? "rgba(255,255,255,0.8)" : "#1a2332", fontWeight: "600" }}>{c.name}</span>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                      <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.4)" }}>{c.tag}</span>
+                      <span style={{ fontSize: "12px", color: isDark ? "rgba(255,255,255,0.4)" : "rgba(30,40,60,0.45)" }}>{c.tag}</span>
                       <span style={{ fontSize: "13px", fontWeight: "700", color: c.score > 90 ? "#34d399" : c.score > 85 ? "#fbbf24" : "#94a3b8" }}>{c.score}%</span>
                     </div>
                   </div>
@@ -687,28 +845,28 @@ export default function LandingPage() {
       <section style={{ padding: "100px 24px", background: "rgba(0,0,0,0.15)" }}>
         <div style={{ maxWidth: "1100px", margin: "0 auto", display: "flex", gap: "80px", alignItems: "center", flexWrap: "wrap-reverse" }}>
           <div style={{ flex: "1 1 340px", maxWidth: "460px" }}>
-            <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "20px", padding: "28px" }}>
+            <div style={{ background: isDark ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.9)", border: `1px solid ${isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.1)"}`, borderRadius: "20px", padding: "28px", boxShadow: isDark ? "none" : "0 4px 24px rgba(0,0,0,0.08)" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "20px" }}>
                 <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: "rgba(74,158,255,0.15)", border: "1px solid rgba(74,158,255,0.3)", display: "flex", alignItems: "center", justifyContent: "center", color: "#4a9eff" }}><IconRobot /></div>
                 <div>
-                  <div style={{ fontSize: "13px", fontWeight: "700", color: "#fff" }}>EarlyPath AI Assistant</div>
-                  <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)" }}>Active · Analyzing applications</div>
+                  <div style={{ fontSize: "13px", fontWeight: "700", color: isDark ? "#fff" : "#1a2332" }}>EarlyPath AI Assistant</div>
+                  <div style={{ fontSize: "11px", color: isDark ? "rgba(255,255,255,0.4)" : "rgba(30,40,60,0.45)" }}>Active · Analyzing applications</div>
                 </div>
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "20px" }}>
                 {[{ label: "Resume Analysis", value: "100%", color: "#4a9eff" }, { label: "Culture Fit Score", value: "87%", color: "#34d399" }, { label: "Skill Match", value: "92%", color: "#a78bfa" }].map((item) => (
                   <div key={item.label}>
                     <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", marginBottom: "5px" }}>
-                      <span style={{ color: "rgba(255,255,255,0.55)" }}>{item.label}</span>
+                      <span style={{ color: isDark ? "rgba(255,255,255,0.55)" : "rgba(30,40,60,0.6)" }}>{item.label}</span>
                       <span style={{ color: item.color, fontWeight: "700" }}>{item.value}</span>
                     </div>
-                    <div style={{ height: "4px", background: "rgba(255,255,255,0.06)", borderRadius: "99px", overflow: "hidden" }}>
+                    <div style={{ height: "4px", background: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.08)", borderRadius: "99px", overflow: "hidden" }}>
                       <div style={{ height: "100%", width: item.value, background: item.color, borderRadius: "99px", boxShadow: `0 0 8px ${item.color}60` }} />
                     </div>
                   </div>
                 ))}
               </div>
-              <div style={{ background: "rgba(52,211,153,0.08)", border: "1px solid rgba(52,211,153,0.2)", borderRadius: "10px", padding: "14px", fontSize: "13px", color: "rgba(255,255,255,0.65)", lineHeight: "1.65" }}>
+              <div style={{ background: "rgba(52,211,153,0.08)", border: "1px solid rgba(52,211,153,0.2)", borderRadius: "10px", padding: "14px", fontSize: "13px", color: isDark ? "rgba(255,255,255,0.65)" : "rgba(30,40,60,0.7)", lineHeight: "1.65" }}>
                 <span style={{ color: "#34d399", fontWeight: "700" }}>✓ Recommendation: </span>
                 This candidate is highly recommended. Proceed to technical interview stage.
               </div>
@@ -716,10 +874,10 @@ export default function LandingPage() {
           </div>
           <div style={{ flex: "1 1 360px" }}>
             <p style={{ fontSize: "13px", fontWeight: "600", color: "#34d399", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "12px" }}>AI-Powered</p>
-            <h2 style={{ fontSize: "clamp(26px, 4vw, 40px)", fontWeight: "800", color: "#fff", letterSpacing: "-1px", margin: "0 0 20px", lineHeight: "1.2" }}>
+            <h2 style={{ fontSize: "clamp(26px, 4vw, 40px)", fontWeight: "800", color: isDark ? "#fff" : "#1a2332", letterSpacing: "-1px", margin: "0 0 20px", lineHeight: "1.2" }}>
               AI does the{" "}<span style={{ color: "#34d399" }}>heavy lifting</span>
             </h2>
-            <p style={{ fontSize: "15px", lineHeight: "1.75", color: "rgba(255,255,255,0.5)", marginBottom: "32px" }}>
+            <p style={{ fontSize: "15px", lineHeight: "1.75", color: isDark ? "rgba(255,255,255,0.5)" : "rgba(30,40,60,0.6)", marginBottom: "32px" }}>
               Let our intelligent engine handle the tedious screening process while you focus on making meaningful connections with top candidates.
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
@@ -727,8 +885,9 @@ export default function LandingPage() {
                 <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: "14px" }}>
                   <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: f.color, marginTop: "7px", flexShrink: 0, boxShadow: `0 0 8px ${f.color}80` }} />
                   <div>
-                    <p style={{ fontSize: "14px", fontWeight: "700", color: "#fff", marginBottom: "3px" }}>{f.title}</p>
-                    <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.45)", lineHeight: "1.6", margin: 0 }}>{f.desc}</p>
+                    <p style={{ fontSize: "14px", fontWeight: "700", color: isDark ? "#fff" : "#1a2332", marginBottom: "3px" }}>
+                      {f.title}</p>
+                    <p style={{ fontSize: "13px", color: isDark ? "rgba(255,255,255,0.45)" : "rgba(30,40,60,0.55)", lineHeight: "1.6", margin: 0 }}>{f.desc}</p>
                   </div>
                 </div>
               ))}
@@ -745,7 +904,7 @@ export default function LandingPage() {
               Live Opportunities
             </p>
             {/* Header dinamis berdasarkan search */}
-            <h2 style={{ fontSize: "clamp(28px, 4vw, 42px)", fontWeight: "800", color: "#fff", letterSpacing: "-1px", margin: 0 }}>
+            <h2 style={{ fontSize: "clamp(28px, 4vw, 42px)", fontWeight: "800", color:  isDark ? "#fff" : "#1a2332", letterSpacing: "-1px", margin: 0 }}>
               {searchResults !== null
                 ? <><span>Result </span><span style={{ color: "#a78bfa" }}>&ldquo;{searchQuery}&rdquo;</span></>
                 : "Open Programs"
@@ -753,7 +912,7 @@ export default function LandingPage() {
             </h2>
             {searchResults !== null && (
               <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "12px", marginTop: "14px", flexWrap: "wrap" }}>
-                <span style={{ fontSize: "14px", color: "rgba(255,255,255,0.45)" }}>
+                <span style={{ fontSize: "14px", color: isDark ? "rgba(255,255,255,0.45)" : "rgba(30,40,60,0.55)" }}>
                   {searchResults.length === 0 ? "No job vacancies match your search." : `${searchResults.length} job vacancies found`}
                 </span>
                 <button onClick={handleSearchReset}
@@ -769,51 +928,46 @@ export default function LandingPage() {
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "24px", justifyContent: "center" }}>
             {loading ? (
-              <div style={{ gridColumn: "1 / -1", textAlign: "center", padding: "40px", color: "rgba(255,255,255,0.4)" }}>Memuat lowongan...</div>
+              <div style={{ gridColumn: "1 / -1", textAlign: "center", padding: "40px", color: isDark ? "rgba(255,255,255,0.4)" : "rgba(30,40,60,0.45)"}}>Loading vacancies...</div>
             ) : displayedVacancies.length === 0 ? (
               <div style={{ gridColumn: "1 / -1", textAlign: "center", padding: "60px 20px" }}>
                 <div style={{ fontSize: "48px", marginBottom: "16px", opacity: 0.4 }}>🔍</div>
-                <p style={{ fontSize: "16px", fontWeight: "600", color: "rgba(255,255,255,0.5)", marginBottom: "8px" }}>
+                <p style={{ fontSize: "16px", fontWeight: "600", color: isDark ? "rgba(255,255,255,0.5)" : "rgba(30,40,60,0.6)", marginBottom: "8px" }}>
                   {searchResults !== null ? "No job vacancies found" : "There are currently no published job vacancies."}
                 </p>
                 {searchResults !== null && (
-                  <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.3)" }}>Try changing the keyword or use the OR operator to broaden your search</p>
+                  <p style={{ fontSize: "13px", color: isDark ? "rgba(255,255,255,0.45)" : "rgba(30,40,60,0.55)" }}>Try changing the keyword or use the OR operator to broaden your search</p>
                 )}
               </div>
             ) : (
               displayedVacancies.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((pos, i) => (
-                <div key={i} onClick={() => setSelectedVacancy(pos)}
-                  style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "16px", overflow: "hidden", display: "flex", flexDirection: "column", transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)", cursor: "pointer", position: "relative" }}
-                  onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-6px)"; e.currentTarget.style.background = "rgba(255,255,255,0.05)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.background = "rgba(255,255,255,0.03)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; }}
+                <div key={i} onClick={() => setPositionsPopupVacancy(pos)}
+                  style={{ background: theme.cardBg, border: `1px solid ${theme.cardBorder}`, borderRadius: "16px", overflow: "hidden", display: "flex", flexDirection: "column", transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)", cursor: "pointer", position: "relative" }}
+                  onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-6px)"; e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)"; e.currentTarget.style.borderColor = isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.15)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.background = theme.cardBg; e.currentTarget.style.borderColor = theme.cardBorder; }}
                 >
-                  {pos.photo ? (<img
-                      src={`http://127.0.0.1:8000/storage/${pos.photo}`}
-                      alt={pos.title}
-                      style={{ width: "100%", height: "auto", display: "block", objectFit: "contain" }}/>) : ( <div style={{ width: "100%", height: "180px", background: "rgba(255,255,255,0.05)" }} />
-                  )}
+              <div style={{ width: "100%", height: "220px", overflow: "hidden", background: "rgba(255,255,255,0.05)", flexShrink: 0 }}>
+                {pos.photo && (
+                  <img
+                    src={`http://127.0.0.1:8000/storage/${pos.photo}`}
+                    alt={pos.title}
+                    style={{ width: "100%", height: "100%", display: "block", objectFit: "cover", objectPosition: "center top" }}
+                  />
+                )}
+              </div>
           
                   <div style={{ padding: "20px 24px", flex: 1, display: "flex", flexDirection: "column" }}>
                     <p style={{ fontSize: "12px", fontWeight: "600", color: "#4a9eff", marginBottom: "4px" }}>{pos.company?.name}</p>
-                    <h3 style={{ fontSize: "19px", fontWeight: "800", color: "#fff", margin: "0 0 14px", lineHeight: "1.3" }}>{pos.title} - Batch {pos.batch}</h3>
-                    <div style={{ fontSize: "13px", fontWeight: "500", color: "rgba(255,255,255,0.5)", fontStyle: "italic", marginBottom: "6px" }}>Positions:</div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: "2px", marginBottom: "18px" }}>
-                      {(pos.positions || []).slice(0, 3).map((p, idx) => (
-                        <div key={idx} style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "14px", color: "rgba(255,255,255,0.6)" }}><IconDot /> <span>{p.name || p}</span></div>
-                      ))}
-                      {(pos.positions || []).length > 3 && (
-                        <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "14px", color: "rgba(255,255,255,0.6)" }}><IconDot /> <span>etc.</span></div>
-                      )}
-                    </div>
+                    <h3 style={{ fontSize: "19px", fontWeight: "800", color: isDark ? "#fff" : "#1a2332", margin: "0 0 14px", lineHeight: "1.3" }}>{pos.title} - Batch {pos.batch}</h3>
                     <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: "8px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "14.5px", color: "rgba(255,255,255,0.4)", fontStyle: "italic" }}><IconCal /> <span>Period: {formatDate(pos.start_date || pos.deadline)} - {formatDate(pos.end_date || pos.deadline)}</span></div>
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "14.5px", color: "rgba(255,255,255,0.5)" }}><IconLocation /> <span>{pos.location?.split(",")[0]}</span></div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "14.5px", color: isDark ? "rgba(255,255,255,0.4)" : "rgba(30,40,60,0.45)", fontStyle: "italic" }}><IconCal /> <span>Period: {formatDate(pos.start_date || pos.deadline)} - {formatDate(pos.end_date || pos.deadline)}</span></div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "14.5px", color: isDark ? "rgba(255,255,255,0.5)" : "rgba(30,40,60,0.6)"}}><IconLocation /> <span>{pos.location?.split(",")[0]}</span></div>
                       <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "14.5px", color: "#fb7185", fontWeight: "600" }}><IconDeadline /> <span style={{ fontStyle: "italic" }}>Deadline: {formatDate(pos.deadline)}</span></div>
                     </div>
-                    <div style={{ display: "flex", gap: "8px", marginTop: "18px", paddingTop: "16px", borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+                    <div style={{ display: "flex", gap: "8px", marginTop: "18px", paddingTop: "16px", borderTop: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"}`}}>
                       <span style={{ fontSize: "10px", fontWeight: "700", textTransform: "uppercase", padding: "4px 10px", borderRadius: "6px", background: "rgba(74,158,255,0.1)", color: "#4a9eff" }}>{pos.type}</span>
                       <span style={{ fontSize: "10px", fontWeight: "700", textTransform: "uppercase", padding: "4px 10px", borderRadius: "6px", background: "rgba(16,185,129,0.1)", color: "#10b981" }}>{pos.payment_type}</span>
-                      <span style={{ fontSize: "10px", fontWeight: "700", marginLeft: "auto", color: "rgba(255,255,255,0.4)" }}>{pos.total_quota || 0} Quota</span>
+                      <span style={{ fontSize: "10px", fontWeight: "700", marginLeft: "auto", color: isDark ? "rgba(255,255,255,0.4)" : "rgba(30,40,60,0.45)" }}>{pos.total_quota || 0} Quota</span>
                     </div>
                   </div>
                 </div>
@@ -825,7 +979,7 @@ export default function LandingPage() {
           {!loading && displayedVacancies.length > 0 && (
             <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "10px", marginTop: "48px" }}>
               <button onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1}
-                style={{ width: "40px", height: "40px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.03)", color: currentPage === 1 ? "rgba(255,255,255,0.2)" : "#fff", cursor: currentPage === 1 ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "0.2s" }}
+                style={{ width: "40px", height: "40px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.03)", color: currentPage === 1 ? (isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.2)") : (isDark ? "#fff" : "#1a2332"), cursor: currentPage === 1 ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "0.2s" }}
                 onMouseEnter={e => currentPage !== 1 && (e.currentTarget.style.background = "rgba(255,255,255,0.08)")}
                 onMouseLeave={e => currentPage !== 1 && (e.currentTarget.style.background = "rgba(255,255,255,0.03)")}
               >←</button>
@@ -857,11 +1011,11 @@ export default function LandingPage() {
             <div style={{ position: "absolute", top: "-80px", right: "-80px", width: "300px", height: "300px", borderRadius: "50%", background: "rgba(74,158,255,0.06)", filter: "blur(60px)", pointerEvents: "none" }} />
             <div style={{ position: "absolute", bottom: "-60px", left: "-60px", width: "240px", height: "240px", borderRadius: "50%", background: "rgba(167,139,250,0.06)", filter: "blur(60px)", pointerEvents: "none" }} />
             <p style={{ fontSize: "13px", fontWeight: "600", color: "#4a9eff", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "16px" }}>Get Started Today</p>
-            <h2 style={{ fontSize: "clamp(30px, 5vw, 52px)", fontWeight: "800", color: "#fff", letterSpacing: "-1.5px", lineHeight: "1.1", margin: "0 0 18px" }}>
+            <h2 style={{ fontSize: "clamp(30px, 5vw, 52px)", fontWeight: "800", color:  isDark ? "#fff" : "#1a2332", letterSpacing: "-1.5px", lineHeight: "1.1", margin: "0 0 18px" }}>
               Ready to transform your{" "}
               <span style={{ background: "linear-gradient(135deg, #4a9eff, #a78bfa)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>internship program?</span>
             </h2>
-            <p style={{ fontSize: "16px", color: "rgba(255,255,255,0.5)", lineHeight: "1.7", maxWidth: "500px", margin: "0 auto 40px" }}>
+            <p style={{ fontSize: "16px", color: isDark ? "rgba(255,255,255,0.5)" : "rgba(30,40,60,0.6)", lineHeight: "1.7", maxWidth: "500px", margin: "0 auto 40px" }}>
               Join thousands of companies already using EarlyPath to find, manage, and certify exceptional intern talent.
             </p>
             <div style={{ display: "flex", justifyContent: "center", gap: "14px", flexWrap: "wrap" }}>
@@ -871,7 +1025,7 @@ export default function LandingPage() {
                 onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 8px 32px rgba(74,158,255,0.4)"; }}
               >Start Now <IconArrow /></button>
               <button onClick={() => navigate("/login")}
-                style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", color: "#fff", padding: "14px 32px", borderRadius: "10px", fontSize: "15px", fontWeight: "600", cursor: "pointer", transition: "all 0.25s" }}
+                style={{ background: "rgba(30,40,60,0.6)", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(30,40,60,0.6)", padding: "14px 32px", borderRadius: "10px", fontSize: "15px", fontWeight: "600", cursor: "pointer", transition: "all 0.25s" }}
                 onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; }}
                 onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; }}
               >Sign In</button>
@@ -881,21 +1035,21 @@ export default function LandingPage() {
       )}
 
       {/* ── FOOTER ──────────────────────────────────────────────────────── */}
-      <footer style={{ background: "linear-gradient(160deg,#0a1628 0%,#0d1a2f 55%,#081424 100%)", borderTop: "1px solid rgba(255,255,255,0.06)", padding: "80px 24px 40px" }}>
+      <footer style={{ background: theme.footerBg, borderTop: `1px solid ${theme.footerBorder}`, padding: "80px 24px 40px" }}>
         <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
           <div style={{ display: "grid", gridTemplateColumns: "1.5fr 2fr", gap: "64px", marginBottom: "64px" }} className="footer-grid">
             <div className="fadein" style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "14px", marginBottom: "24px" }}>
                 <img src="/assets/images/logo.png" alt="EarlyPath" style={{ height: "48px", objectFit: "contain" }} />
-                <span style={{ fontSize: "18px", fontWeight: "800", color: "#fff", letterSpacing: "-0.5px" }}>EarlyPath</span>
+                <span style={{ fontSize: "18px", fontWeight: "800", color: isDark ? "#fff" : "#1a2332", letterSpacing: "-0.5px" }}>EarlyPath</span>
               </div>
-              <p style={{ fontSize: "14px", color: "rgba(255,255,255,0.45)", lineHeight: "1.8", margin: "0 0 32px", maxWidth: "320px" }}>
+              <p style={{ fontSize: "14px", color: isDark ? "rgba(255,255,255,0.45)" : "rgba(30,40,60,0.65)", lineHeight: "1.8", margin: "0 0 32px", maxWidth: "320px" }}>
                 Empowering talent and organizations to connect, collaborate, and grow together through AI-driven internship management.
               </p>
               <div style={{ display: "flex", flexDirection: "column", gap: "16px", alignItems: "center" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "13px", color: "rgba(255,255,255,0.6)" }}>
-                  <span style={{ color: "#4a9eff" }}><IconLocation /></span>Surabaya, Indonesia
-                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "13px", color: isDark ? "rgba(255,255,255,0.6)" : "rgba(30,40,60,0.7)" }}>
+                <span style={{ color: "#4a9eff" }}><IconLocation /></span>Surabaya, Indonesia
+              </div>
               </div>
             </div>
 
@@ -907,10 +1061,10 @@ export default function LandingPage() {
                 </div>
               ) : (
                 <form onSubmit={handleEmailSubmit} style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
-                  <input placeholder="Your Name" value={emailForm.name} onChange={e => setEmailForm(f => ({ ...f, name: e.target.value }))} className="footer-input" required style={{ padding: "14px 18px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.04)", color: "#fff", fontSize: "13px", fontFamily: "inherit", outline: "none", transition: "0.2s" }} />
-                  <input type="email" placeholder="Your Email" value={emailForm.email} onChange={e => setEmailForm(f => ({ ...f, email: e.target.value }))} className="footer-input" required style={{ padding: "14px 18px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.04)", color: "#fff", fontSize: "13px", fontFamily: "inherit", outline: "none", transition: "0.2s" }} />
+                 <input placeholder="Your Name" value={emailForm.name} onChange={e => setEmailForm(f => ({ ...f, name: e.target.value }))} className="footer-input" required style={{ padding: "14px 18px", borderRadius: "12px", border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.12)"}`, background: isDark ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.8)", color: isDark ? "#fff" : "#1a2332", fontSize: "13px", fontFamily: "inherit", outline: "none", transition: "0.2s" }} />
+                  <input type="email" placeholder="Your Email" value={emailForm.email} onChange={e => setEmailForm(f => ({ ...f, email: e.target.value }))} className="footer-input" required style={{ padding: "14px 18px", borderRadius: "12px", border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.12)"}`, background: isDark ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.8)", color: isDark ? "#fff" : "#1a2332", fontSize: "13px", fontFamily: "inherit", outline: "none", transition: "0.2s" }} />
                   <textarea placeholder="How can we help you?" value={emailForm.message} onChange={e => setEmailForm(f => ({ ...f, message: e.target.value }))} className="footer-input" required rows={4}
-                    style={{ padding: "14px 18px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.04)", color: "#fff", fontSize: "13px", fontFamily: "inherit", resize: "none", gridColumn: "1 / -1", outline: "none", transition: "0.2s" }} />
+                    style={{ padding: "14px 18px", borderRadius: "12px", border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.12)"}`, background: isDark ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.8)", color: isDark ? "#fff" : "#1a2332", fontSize: "13px", fontFamily: "inherit", resize: "none", gridColumn: "1 / -1", outline: "none", transition: "0.2s" }} />
                   <button type="submit"
                     style={{ gridColumn: "1 / -1", padding: "16px", borderRadius: "12px", background: "linear-gradient(135deg,#1e40af,#3b82f6)", border: "none", color: "#fff", fontSize: "14px", fontWeight: "700", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", boxShadow: "0 8px 24px rgba(30,64,175,0.3)", transition: "0.2s" }}
                     onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 12px 32px rgba(30,64,175,0.4)"; }}
@@ -921,31 +1075,34 @@ export default function LandingPage() {
             </div>
           </div>
 
-          <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: "32px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "24px" }}>
+          <div style={{ borderTop: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"}`, paddingTop: "32px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "24px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "24px" }}>
-              <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.35)", margin: 0 }}>© 2026 EarlyPath. All rights reserved.</p>
+              <p style={{ fontSize: "13px", color: isDark ? "rgba(255,255,255,0.45)" : "rgba(30,40,60,0.55)", margin: 0 }}>© 2026 EarlyPath. All rights reserved.</p>
               <div style={{ width: "1px", height: "14px", background: "rgba(255,255,255,0.1)", display: "flex" }} className="hidden-mobile" />
               <div style={{ display: "flex", gap: "20px" }} className="hidden-mobile">
                 {["Privacy Policy", "Terms of Service", "Cookie Policy"].map((l) => (
-                  <a key={l} href="#" style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)", textDecoration: "none", transition: "color 0.2s" }}
-                    onMouseEnter={(e) => (e.currentTarget.style.color = "#fff")}
-                    onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.35)")}
+                  <a key={l} href="#" style={{ fontSize: "12px", color: isDark ? "rgba(255,255,255,0.35)" : "rgba(30,40,60,0.45)", textDecoration: "none", transition: "color 0.2s" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = isDark ? "#fff" : "#1a2332")}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = isDark ? "rgba(255,255,255,0.35)" : "rgba(30,40,60,0.45)")}
                   >{l}</a>
                 ))}
               </div>
             </div>
-            <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)", margin: 0 }}>Built with <span style={{ color: "rgba(248,113,113,0.8)" }}>♥</span> in Indonesia</p>
+            <p style={{ fontSize: "12px", color: isDark ? "rgba(255,255,255,0.35)" : "rgba(30,40,60,0.45)", margin: 0 }}>Built with <span style={{ color: "rgba(248,113,113,0.8)" }}>♥</span> in Indonesia</p>
           </div>
         </div>
       </footer>
 
-      {/* Vacancy Detail Modal */}
+      <PositionsPopup
+        vacancy={positionsPopupVacancy}
+        onClose={() => setPositionsPopupVacancy(null)}
+        isDark={isDark}
+      />
       <VacancyDetailModal
         vacancy={selectedVacancy}
         onClose={() => setSelectedVacancy(null)}
+        isDark={isDark}
       />
-
-      {/* Responsive CSS */}
       <style>{`
         .hidden-mobile { display: flex !important; }
         .show-mobile { display: none !important; }
@@ -953,6 +1110,26 @@ export default function LandingPage() {
           .hidden-mobile { display: none !important; }
           .show-mobile { display: flex !important; }
         }
+        .footer-input::placeholder { color: ${isDark ? "rgba(255,255,255,0.3)" : "rgba(30,40,60,0.35)"} !important; }
+        .feature-title { color: ${isDark ? "#fff" : "#1a2332"} !important; }
+        .feature-desc { color: ${isDark ? "rgba(255,255,255,0.5)" : "rgba(30,40,60,0.6)"} !important; }
+        .section-heading { color: ${isDark ? "#fff" : "#1a2332"} !important; }
+        .section-sub { color: ${isDark ? "rgba(255,255,255,0.5)" : "rgba(30,40,60,0.55)"} !important; }
+        .card-text { color: ${isDark ? "rgba(255,255,255,0.6)" : "rgba(30,40,60,0.65)"} !important; }
+        .card-title { color: ${isDark ? "#fff" : "#1a2332"} !important; }
+        .card-company { color: #4a9eff !important; }
+        .card-border-top { border-top: 1px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"} !important; }
+        .process-card-active { background: ${isDark ? "rgba(74,158,255,0.08)" : "rgba(74,158,255,0.06)"} !important; border-color: rgba(74,158,255,0.3) !important; }
+        .process-card-inactive { background: transparent !important; border-color: ${isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.07)"} !important; }
+        .step-title-active { color: ${isDark ? "#fff" : "#1a2332"} !important; }
+        .step-title-inactive { color: ${isDark ? "rgba(255,255,255,0.6)" : "rgba(30,40,60,0.5)"} !important; }
+        .step-desc { color: ${isDark ? "rgba(255,255,255,0.5)" : "rgba(30,40,60,0.55)"} !important; }
+        .stat-label { color: ${isDark ? "rgba(255,255,255,0.45)" : "rgba(30,40,60,0.5)"} !important; }
+        .stat-value { color: ${isDark ? "#fff" : "#1a2332"} !important; }
+        .hero-desc { color: ${isDark ? "rgba(255,255,255,0.6)" : "rgba(30,40,60,0.65)"} !important; }
+        .search-input { color: ${isDark ? "#fff" : "#1a2332"} !important; }
+        .search-input::placeholder { color: ${isDark ? "rgba(255,255,255,0.35)" : "rgba(30,40,60,0.4)"} !important; }
+        .footer-input { color: ${isDark ? "#fff" : "#1a2332"} !important; }
       `}</style>
 
       {/* Logout confirm modal */}
@@ -963,7 +1140,7 @@ export default function LandingPage() {
               <IconLogOut size={32} />
             </div>
             <h3 style={{ fontSize: 20, fontWeight: 800, marginBottom: 8, color: "#fff" }}>Logout?</h3>
-            <p style={{ fontSize: 14, color: "rgba(255,255,255,0.5)", lineHeight: 1.6, marginBottom: 28 }}>You will need to sign in again to access your dashboard.</p>
+            <p style={{ fontSize: 14, color: isDark ? "rgba(255,255,255,0.5)" : "rgba(30,40,60,0.6)", lineHeight: 1.6, marginBottom: 28 }}>You will need to sign in again to access your dashboard.</p>
             <div style={{ display: "flex", gap: 12 }}>
               <button onClick={() => setLogoutModalOpen(false)}
                 style={{ flex: 1, padding: "12px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.1)", background: "transparent", fontSize: 14, fontWeight: 700, color: "rgba(255,255,255,0.7)", cursor: "pointer", transition: "0.2s" }}
