@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate, useLocation, Link } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore";
 
 /* ─── Searchable Dropdown ─────────────────────────────────────── */
@@ -217,6 +217,8 @@ const inputStyle = {
 export default function SubmissionForm() {
   const { idCompany, vacancyId, positionId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const selectedPositionName = location.state?.selectedPosition || null;
   const { user, token, loading: authLoading } = useAuthStore();
 
   const [company, setCompany] = useState(null);
@@ -243,9 +245,19 @@ export default function SubmissionForm() {
   const [successMsg, setSuccessMsg] = useState("");
   const [fileErrors, setFileErrors] = useState({});
 
-  /* Pre-fill name from auth */
+/* Pre-fill name + candidate profile */
   useEffect(() => {
     if (user?.name && !form.name) setForm((p) => ({ ...p, name: user.name }));
+    try {
+      const cp = JSON.parse(localStorage.getItem("candidate_profile") || "null");
+      if (cp) {
+        setForm((p) => ({
+          ...p,
+          university_name: cp.institution || p.university_name,
+          major_name: cp.major || p.major_name,
+        }));
+      }
+    } catch {}
   }, [user]);
 
   /* Auth guard */
@@ -298,6 +310,17 @@ export default function SubmissionForm() {
     })();
     return () => { alive = false; };
   }, [idCompany, vacancyId]);
+
+  /* Auto-select position from navigation state */
+  useEffect(() => {
+    if (!selectedPositionName || positions.length === 0) return;
+    const matched = positions.find(
+      (p) => p.name.toLowerCase() === selectedPositionName.toLowerCase()
+    );
+    if (matched) {
+      setForm((p) => ({ ...p, id_position: matched.id_position }));
+    }
+  }, [positions, selectedPositionName]);
 
   const MAX_FILE = 2 * 1024 * 1024;
 
@@ -525,31 +548,42 @@ export default function SubmissionForm() {
                 </div>
 
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginTop: 16 }}>
-                  <Field label="University" required>
+                  <Field label="University" required hint={form.university_name ? "Auto-filled from your profile." : ""}>
                     <input
                       name="university_name" value={form.university_name} onChange={handleChange}
                       placeholder="e.g. University of Indonesia"
-                      style={inputStyle} onFocus={(e) => e.target.style.borderColor = "#1a56db"} onBlur={(e) => e.target.style.borderColor = "#d1d5db"}
+                      style={{ ...inputStyle, ...(form.university_name ? { background: "#f0f7ff", borderColor: "#bfdbfe", color: "#1e40af" } : {}) }}
+                      onFocus={(e) => e.target.style.borderColor = "#1a56db"}
+                      onBlur={(e) => e.target.style.borderColor = form.university_name ? "#bfdbfe" : "#d1d5db"}
                     />
                   </Field>
-                  <Field label="Major" required>
+                  <Field label="Major" required hint={form.major_name ? "Auto-filled from your profile." : ""}>
                     <input
                       name="major_name" value={form.major_name} onChange={handleChange}
                       placeholder="e.g. Information Systems"
-                      style={inputStyle} onFocus={(e) => e.target.style.borderColor = "#1a56db"} onBlur={(e) => e.target.style.borderColor = "#d1d5db"}
+                      style={{ ...inputStyle, ...(form.major_name ? { background: "#f0f7ff", borderColor: "#bfdbfe", color: "#1e40af" } : {}) }}
+                      onFocus={(e) => e.target.style.borderColor = "#1a56db"}
+                      onBlur={(e) => e.target.style.borderColor = form.major_name ? "#bfdbfe" : "#d1d5db"}
                     />
                   </Field>
                 </div>
 
-                {/* ── Role / Position Dropdown ── */}
+                {/* ── Role / Position (locked from selection) ── */}
                 <div style={{ marginTop: 16 }}>
-                  <Field label="Role Applied For" required hint="Search by name to quickly find the position you want.">
-                    <SearchableSelect
-                      options={positionOptions}
-                      value={form.id_position}
-                      onChange={(val) => setForm((p) => ({ ...p, id_position: val }))}
-                      placeholder="Search and select a role…"
-                    />
+                  <Field label="Role Applied For" required>
+                    <div style={{
+                      padding: "11px 14px", background: "#f0f7ff",
+                      border: "1.5px solid #bfdbfe", borderRadius: 10,
+                      fontSize: 14, fontWeight: 700, color: "#1e40af",
+                      display: "flex", alignItems: "center", justifyContent: "space-between"
+                    }}>
+                      <span>
+                        {positionOptions.find(o => o.value === form.id_position)?.label || selectedPositionName || "—"}
+                      </span>
+                      <span style={{ fontSize: 11, fontWeight: 600, color: "#60a5fa", background: "#dbeafe", padding: "2px 8px", borderRadius: 6 }}>
+                        Auto-selected
+                      </span>
+                    </div>
                   </Field>
                 </div>
               </Section>

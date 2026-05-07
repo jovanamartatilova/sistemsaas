@@ -152,6 +152,7 @@ class SubmissionController extends Controller
             'position.competencies',
             'vacancy.company',
             'team',
+            'loa',
         ])
         ->where('id_user', $user->id_user)
         ->get()
@@ -187,9 +188,9 @@ class SubmissionController extends Controller
                 'company'          => $company?->name ?? '-',
                 'batch'            => $sub->vacancy?->batch ?? $sub->vacancy?->title,
                 'status'           => $sub->status,
-                'has_loa'          => !is_null($sub->loa_file),
-                'loa_file_url'     => $sub->loa_file
-                    ? asset('storage/' . $sub->loa_file)
+                'has_loa'          => !is_null($sub->loa?->file_path),
+                'loa_file_url'     => $sub->loa?->file_path
+                    ? asset('storage/' . $sub->loa->file_path)
                     : null,
                 'team'             => $team,
                 'competencies'     => $position?->competencies?->map(fn ($c) => [

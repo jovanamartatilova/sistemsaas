@@ -110,8 +110,11 @@ export default function ActivateAccount() {
   const [codeLoading, setCodeLoading] = useState(true);
   const [codeError, setCodeError] = useState("");
 
-  // User yang sudah login sebelumnya (dari localStorage, diisi saat login)
   const [existingUser, setExistingUser] = useState(null);
+  const [isDark, setIsDark] = useState(() => {
+    const saved = localStorage.getItem("theme");
+    return saved ? saved === "dark" : true;
+  });
 
   const [form, setForm] = useState({
     first_name: "",
@@ -253,20 +256,21 @@ export default function ActivateAccount() {
   };
 
   const inputBase = {
-    background: "rgba(255,255,255,0.07)",
-    border: "1px solid rgba(255,255,255,0.1)",
+    background: isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.04)",
+    border: isDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(0,0,0,0.12)",
     fontSize: "14px",
+    color: isDark ? "#fff" : "#1a2332",
   };
   const inputFocus = {
     border: "1px solid rgba(74,158,255,0.5)",
     background: "rgba(74,158,255,0.08)",
   };
   const inputLocked = {
-    background: "rgba(74,158,255,0.05)",
+    background: isDark ? "rgba(74,158,255,0.05)" : "rgba(74,158,255,0.04)",
     border: "1px solid rgba(74,158,255,0.15)",
     fontSize: "14px",
     cursor: "not-allowed",
-    color: "rgba(255,255,255,0.5)",
+    color: isDark ? "rgba(255,255,255,0.5)" : "rgba(30,40,60,0.4)",
   };
 
   const scheduleLabel = (val) => ({
@@ -284,7 +288,7 @@ export default function ActivateAccount() {
   if (codeLoading) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center"
-        style={{ background: "linear-gradient(160deg,#0d1f3c 0%,#0a1628 40%,#071220 100%)" }}>
+        style={{ background: isDark ? "linear-gradient(160deg,#0d1f3c 0%,#0a1628 40%,#071220 100%)" : "linear-gradient(160deg,#f0f4f8 0%,#e8edf5 40%,#dce4ef 100%)" }}>
         <div className="flex flex-col items-center gap-4">
           <Icon.SpinnerBlue size={36} />
           <p className="text-sm" style={{ color: "rgba(255,255,255,0.4)" }}>Verifying invitation code...</p>
@@ -297,7 +301,7 @@ export default function ActivateAccount() {
   if (codeError) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center px-6"
-        style={{ background: "linear-gradient(160deg,#0d1f3c 0%,#0a1628 40%,#071220 100%)" }}>
+        style={{ background: isDark ? "linear-gradient(160deg,#0d1f3c 0%,#0a1628 40%,#071220 100%)" : "linear-gradient(160deg,#f0f4f8 0%,#e8edf5 40%,#dce4ef 100%)" }}>
         <div className="text-center max-w-sm">
           <div className="flex justify-center mb-6">
             <div className="w-20 h-20 rounded-2xl flex items-center justify-center"
@@ -305,8 +309,8 @@ export default function ActivateAccount() {
               <Icon.Alert />
             </div>
           </div>
-          <h1 className="text-2xl font-bold text-white mb-2">Invalid Code</h1>
-          <p className="text-sm mb-8" style={{ color: "rgba(255,255,255,0.4)" }}>{codeError}</p>
+          <h1 className="text-2xl font-bold mb-2" style={{ color: isDark ? "#fff" : "#1a2332" }}>Invalid Code</h1>
+          <p className="text-sm mb-8" style={{ color: isDark ? "rgba(255,255,255,0.4)" : "rgba(30,40,60,0.5)" }}>{codeError}</p>
           <button onClick={() => navigate("/")}
             className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold text-white"
             style={{ background: "linear-gradient(135deg,#2d7dd2 0%,#4a9eff 100%)", border: "none", cursor: "pointer" }}>
@@ -332,7 +336,7 @@ export default function ActivateAccount() {
 
     return (
       <div className="min-h-screen w-full flex"
-        style={{ background: "linear-gradient(160deg,#0d1f3c 0%,#0a1628 40%,#071220 100%)", fontFamily: "'Poppins','Segoe UI',sans-serif" }}>
+      style={{ background: isDark ? "linear-gradient(160deg,#0d1f3c 0%,#0a1628 40%,#071220 100%)" : "linear-gradient(160deg,#f0f4f8 0%,#e8edf5 40%,#dce4ef 100%)", fontFamily: "'Poppins','Segoe UI',sans-serif" }}>
 
         {/* ── Left Panel ── */}
         <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden"
@@ -358,7 +362,8 @@ export default function ActivateAccount() {
         </div>
 
         {/* ── Right Panel ── */}
-        <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 relative overflow-hidden">
+        <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 relative overflow-hidden"
+          style={{ background: isDark ? "linear-gradient(160deg,#0d1f3c 0%,#0a1628 40%,#071220 100%)" : "linear-gradient(160deg,#f0f4f8 0%,#e8edf5 40%,#dce4ef 100%)" }}>
           <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full blur-3xl opacity-5 pointer-events-none"
             style={{ background: "#4a9eff" }} />
 
@@ -374,8 +379,8 @@ export default function ActivateAccount() {
                 }
               </div>
               <div>
-                <p className="text-xs font-semibold mb-0.5" style={{ color: "rgba(255,255,255,0.35)", letterSpacing: "1px", textTransform: "uppercase" }}>Invitation from</p>
-                <h1 className="text-xl font-bold text-white">{company?.name}</h1>
+                <p className="text-xs font-semibold mb-0.5" style={{ color: isDark ? "rgba(255,255,255,0.35)" : "rgba(30,40,60,0.45)", letterSpacing: "1px", textTransform: "uppercase" }}>Invitation from</p>
+                <h1 className="text-xl font-bold" style={{ color: isDark ? "#fff" : "#1a2332" }}>{company?.name}</h1>
               </div>
             </div>
 
@@ -384,18 +389,18 @@ export default function ActivateAccount() {
               <div className="mb-5 px-4 py-3 rounded-xl"
                 style={{ background: "rgba(74,158,255,0.08)", border: "1px solid rgba(74,158,255,0.18)" }}>
                 <p className="text-xs mb-1" style={{ color: "rgba(74,158,255,0.6)" }}>Invitation Label</p>
-                <p className="text-sm font-semibold text-white">{invitation.label}</p>
+                <p className="text-sm font-semibold" style={{ color: isDark ? "#fff" : "#1a2332" }}>{invitation.label}</p>
               </div>
             )}
 
             {/* Detail rows */}
             {details.length > 0 && (
               <div className="rounded-2xl overflow-hidden mb-6"
-                style={{ border: "1px solid rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.03)" }}>
+                style={{ border: isDark ? "1px solid rgba(255,255,255,0.07)" : "1px solid rgba(0,0,0,0.09)", background: isDark ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.7)" }}>
                 {details.map((d, i) => (
                   <div key={i} className="flex items-center justify-between px-5 py-3.5"
-                    style={{ borderBottom: i < details.length - 1 ? "1px solid rgba(255,255,255,0.05)" : "none" }}>
-                    <div className="flex items-center gap-3" style={{ color: "rgba(255,255,255,0.4)" }}>
+                    style={{ borderBottom: i < details.length - 1 ? `1px solid ${isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.07)"}` : "none" }}>
+                      <div className="flex items-center gap-3" style={{ color: isDark ? "rgba(255,255,255,0.4)" : "rgba(30,40,60,0.5)" }}>
                       <d.Icon />
                       <span className="text-sm">{d.label}</span>
                     </div>
@@ -440,7 +445,7 @@ export default function ActivateAccount() {
               Continue and Complete Your Account →
             </button>
 
-            <p className="text-center text-xs mt-4" style={{ color: "rgba(255,255,255,0.2)" }}>
+            <p className="text-center text-xs mt-4" style={{ color: isDark ? "rgba(255,255,255,0.2)" : "rgba(30,40,60,0.3)" }}>
               By continuing you agree to EarlyPath's terms & conditions
             </p>
           </div>
@@ -493,7 +498,7 @@ export default function ActivateAccount() {
 
       {/* ── Right Panel ── */}
       <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 relative overflow-hidden"
-        style={{ background: "linear-gradient(160deg,#0d1f3c 0%,#0a1628 40%,#071220 100%)" }}>
+        style={{ background: isDark ? "linear-gradient(160deg,#0d1f3c 0%,#0a1628 40%,#071220 100%)" : "linear-gradient(160deg,#f0f4f8 0%,#e8edf5 40%,#dce4ef 100%)" }}>
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full blur-3xl opacity-5 pointer-events-none"
           style={{ background: "#4a9eff" }} />
 
@@ -514,10 +519,10 @@ export default function ActivateAccount() {
                 : <img src="/assets/images/logo.png" alt="Logo" className="w-24 h-24 object-contain" />
               }
             </div>
-            <h1 className="text-2xl font-bold text-white text-center mb-1" style={{ letterSpacing: "-0.3px" }}>
+            <h1 className="text-2xl font-bold text-center mb-1" style={{ letterSpacing: "-0.3px", color: isDark ? "#fff" : "#1a2332" }}>
               Activate Your Account
             </h1>
-            <p className="text-sm text-center" style={{ color: "rgba(255,255,255,0.4)" }}>
+            <p className="text-sm text-center" style={{ color: isDark ? "rgba(255,255,255,0.4)" : "rgba(30,40,60,0.5)" }}>
               Joining <span style={{ color: "#4a9eff" }}>{company?.name}</span>
             </p>
           </div>
@@ -559,7 +564,7 @@ export default function ActivateAccount() {
               {/* First & Last Name */}
               <div className="flex gap-3">
                 <div className="flex-1">
-                  <label className="block text-sm font-medium mb-1.5 flex items-center gap-1.5" style={{ color: "rgba(255,255,255,0.8)" }}>
+                  <label className="block text-sm font-medium mb-1.5 flex items-center gap-1.5" style={{ color: isDark ? "rgba(255,255,255,0.8)" : "rgba(30,40,60,0.8)" }}>
                     First Name
                     {existingUser && (
                       <span style={{ color: "rgba(74,158,255,0.6)" }}>
@@ -581,7 +586,7 @@ export default function ActivateAccount() {
                   />
                 </div>
                 <div className="flex-1">
-                  <label className="block text-sm font-medium mb-1.5 flex items-center gap-1.5" style={{ color: "rgba(255,255,255,0.8)" }}>
+                  <label className="block text-sm font-medium mb-1.5 flex items-center gap-1.5" style={{ color: isDark ? "rgba(255,255,255,0.8)" : "rgba(30,40,60,0.8)" }}>
                     Last Name
                     {existingUser && (
                       <span style={{ color: "rgba(74,158,255,0.6)" }}>
@@ -605,7 +610,7 @@ export default function ActivateAccount() {
 
               {/* Email */}
               <div>
-                <label className="block text-sm font-medium mb-1.5 flex items-center gap-1.5" style={{ color: "rgba(255,255,255,0.8)" }}>
+                <label className="block text-sm font-medium mb-1.5 flex items-center gap-1.5" style={{ color: isDark ? "rgba(255,255,255,0.8)" : "rgba(30,40,60,0.8)" }}>
                   Email
                   {existingUser && (
                     <span style={{ color: "rgba(74,158,255,0.6)" }}>
@@ -629,7 +634,7 @@ export default function ActivateAccount() {
 
               {/* Password */}
               <div>
-                <label className="block text-sm font-medium mb-1.5" style={{ color: "rgba(255,255,255,0.8)" }}>Password</label>
+                <label className="block text-sm font-medium mb-1.5" style={{ color: isDark ? "rgba(255,255,255,0.8)" : "rgba(30,40,60,0.8)" }}>Password</label>
                 <div className="relative">
                   <input
                     type={showPassword ? "text" : "password"}
@@ -663,7 +668,7 @@ export default function ActivateAccount() {
 
               {/* Confirm Password */}
               <div>
-                <label className="block text-sm font-medium mb-1.5" style={{ color: "rgba(255,255,255,0.8)" }}>Confirm Password</label>
+                <label className="block text-sm font-medium mb-1.5" style={{ color: isDark ? "rgba(255,255,255,0.8)" : "rgba(30,40,60,0.8)" }}>Confirm Password</label>
                 <div className="relative">
                   <input
                     type={showConfirm ? "text" : "password"}

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../stores/authStore";
 
 export default function OnboardingModal({ isOpen, onClose }) {
+  const isDark = localStorage.getItem("theme") !== "light";
   const navigate = useNavigate();
   const { user, token } = useAuthStore();
 
@@ -141,27 +142,31 @@ export default function OnboardingModal({ isOpen, onClose }) {
   };
 
   const inputBase = {
-    background: "rgba(255,255,255,0.07)",
-    border: "1px solid rgba(255,255,255,0.1)",
-    fontSize: "14px",
-  };
+      background: isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.04)",
+      border: isDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(0,0,0,0.12)",
+      fontSize: "14px",
+      color: isDark ? "#fff" : "#1a2332",
+    };
 
-  const inputFocus = {
-    border: "1px solid rgba(74,158,255,0.5)",
-    background: "rgba(74,158,255,0.08)",
-  };
+    const inputFocus = {
+      border: "1px solid rgba(74,158,255,0.5)",
+      background: "rgba(74,158,255,0.08)",
+      color: isDark ? "#fff" : "#1a2332",
+    };
 
   return (
-    <div
+  <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: "rgba(0,0,0,0.8)" }}
+      style={{ background: isDark ? "rgba(0,0,0,0.8)" : "rgba(0,0,0,0.4)" }}
       onClick={handleClose}
     >
       <div
         className="relative w-full max-w-md rounded-2xl overflow-hidden"
         style={{
-          background: "linear-gradient(160deg, #0d1f3c 0%, #0a1628 40%, #071220 100%)",
-          border: "1px solid rgba(255,255,255,0.1)",
+          background: isDark
+            ? "linear-gradient(160deg, #0d1f3c 0%, #0a1628 40%, #071220 100%)"
+            : "linear-gradient(160deg, #ffffff 0%, #f0f4f8 40%, #e8edf5 100%)",
+          border: isDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(0,0,0,0.1)",
           boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5)",
         }}
         onClick={(e) => e.stopPropagation()}
@@ -171,9 +176,9 @@ export default function OnboardingModal({ isOpen, onClose }) {
           <button
             onClick={handleClose}
             className="absolute right-4 top-4 p-1 rounded-lg transition-colors duration-200"
-            style={{ color: "rgba(255,255,255,0.4)" }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = "#fff")}
-            onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.4)")}
+            style={{ color: isDark ? "rgba(255,255,255,0.4)" : "rgba(30,40,60,0.4)" }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = isDark ? "#fff" : "#1a2332")}
+            onMouseLeave={(e) => (e.currentTarget.style.color = isDark ? "rgba(255,255,255,0.4)" : "rgba(30,40,60,0.4)")}
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" />
@@ -191,12 +196,12 @@ export default function OnboardingModal({ isOpen, onClose }) {
             </div>
           </div>
 
-          <h2 className="text-xl font-bold text-white text-center">
+          <h2 className="text-xl font-bold text-center" style={{ color: isDark ? "#fff" : "#1a2332" }}>
             {step === "choice" && "Choose Your Path"}
             {step === "company_form" && "Start a Company"}
             {step === "candidate_form" && "Start an Internship"}
           </h2>
-          <p className="text-xs text-center mt-1" style={{ color: "rgba(255,255,255,0.45)" }}>
+          <p className="text-xs text-center mt-1" style={{ color: isDark ? "rgba(255,255,255,0.45)" : "rgba(30,40,60,0.55)" }}>
             {step === "choice" && `Hello ${user?.name || "User"}! Choose one of the options below`}
             {step === "company_form" && "Fill in your company details to get started"}
             {step === "candidate_form" && "Complete your profile as a candidate"}
@@ -221,16 +226,19 @@ export default function OnboardingModal({ isOpen, onClose }) {
                 onClick={() => handleChoice("company")}
                 className="w-full p-4 rounded-xl text-left transition-all duration-300 flex items-center gap-4"
                 style={{
-                  background: "rgba(255,255,255,0.05)",
-                  border: "1px solid rgba(255,255,255,0.08)",
+                  background: isDark ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.8)",
+                  border: isDark ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(0,0,0,0.1)",
+                  boxShadow: isDark ? "none" : "0 2px 8px rgba(0,0,0,0.06)",
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.background = "rgba(74,158,255,0.1)";
                   e.currentTarget.style.borderColor = "rgba(74,158,255,0.3)";
+                  e.currentTarget.style.boxShadow = "0 4px 16px rgba(74,158,255,0.15)";
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "rgba(255,255,255,0.05)";
-                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)";
+                  e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.8)";
+                  e.currentTarget.style.borderColor = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.1)";
+                  e.currentTarget.style.boxShadow = isDark ? "none" : "0 2px 8px rgba(0,0,0,0.06)";
                 }}
               >
                 <div
@@ -243,8 +251,8 @@ export default function OnboardingModal({ isOpen, onClose }) {
                   </svg>
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-white font-semibold">Start a Company</h3>
-                  <p className="text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>
+                  <h3 className="font-semibold" style={{ color: isDark ? "#fff" : "#1a2332" }}>Start a Company</h3>
+                  <p className="text-xs" style={{ color: isDark ? "rgba(255,255,255,0.5)" : "rgba(30,40,60,0.55)" }}>
                     Register your company, manage internships, recruit talents
                   </p>
                 </div>
@@ -256,17 +264,20 @@ export default function OnboardingModal({ isOpen, onClose }) {
               <button
                 onClick={() => handleChoice("candidate")}
                 className="w-full p-4 rounded-xl text-left transition-all duration-300 flex items-center gap-4"
-                style={{
-                  background: "rgba(255,255,255,0.05)",
-                  border: "1px solid rgba(255,255,255,0.08)",
+              style={{
+                  background: isDark ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.8)",
+                  border: isDark ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(0,0,0,0.1)",
+                  boxShadow: isDark ? "none" : "0 2px 8px rgba(0,0,0,0.06)",
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.background = "rgba(74,158,255,0.1)";
                   e.currentTarget.style.borderColor = "rgba(74,158,255,0.3)";
+                  e.currentTarget.style.boxShadow = "0 4px 16px rgba(74,158,255,0.15)";
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "rgba(255,255,255,0.05)";
-                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)";
+                  e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.8)";
+                  e.currentTarget.style.borderColor = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.1)";
+                  e.currentTarget.style.boxShadow = isDark ? "none" : "0 2px 8px rgba(0,0,0,0.06)";
                 }}
               >
                 <div
@@ -279,8 +290,8 @@ export default function OnboardingModal({ isOpen, onClose }) {
                   </svg>
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-white font-semibold">Start an Internship</h3>
-                  <p className="text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>
+                  <h3 className="font-semibold" style={{ color: isDark ? "#fff" : "#1a2332" }}>Start an Internship</h3>
+                  <p className="text-xs" style={{ color: isDark ? "rgba(255,255,255,0.5)" : "rgba(30,40,60,0.55)" }}>
                     Find companies, apply for internship positions
                   </p>
                 </div>
@@ -295,7 +306,7 @@ export default function OnboardingModal({ isOpen, onClose }) {
           {step === "company_form" && (
             <form onSubmit={handleCompanySubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1.5" style={{ color: "rgba(255,255,255,0.8)" }}>
+                <label className="block text-sm font-medium mb-1.5" style={{ color: isDark ? "rgba(255,255,255,0.8)" : "rgba(30,40,60,0.8)" }}>
                   Company Name
                 </label>
                 <input
@@ -312,7 +323,7 @@ export default function OnboardingModal({ isOpen, onClose }) {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1.5" style={{ color: "rgba(255,255,255,0.8)" }}>
+                <label className="block text-sm font-medium mb-1.5" style={{ color: isDark ? "rgba(255,255,255,0.8)" : "rgba(30,40,60,0.8)" }}>
                   Phone Number
                 </label>
                 <input
@@ -329,7 +340,7 @@ export default function OnboardingModal({ isOpen, onClose }) {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1.5" style={{ color: "rgba(255,255,255,0.8)" }}>
+                <label className="block text-sm font-medium mb-1.5" style={{ color: isDark ? "rgba(255,255,255,0.8)" : "rgba(30,40,60,0.8)" }}>
                   Address
                 </label>
                 <textarea
@@ -346,7 +357,7 @@ export default function OnboardingModal({ isOpen, onClose }) {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1.5" style={{ color: "rgba(255,255,255,0.8)" }}>
+                <label className="block text-sm font-medium mb-1.5" style={{ color: isDark ? "rgba(255,255,255,0.8)" : "rgba(30,40,60,0.8)" }}>
                   Company Password
                 </label>
                 <input
@@ -360,7 +371,7 @@ export default function OnboardingModal({ isOpen, onClose }) {
                   onFocus={(e) => Object.assign(e.target.style, inputFocus)}
                   onBlur={(e) => Object.assign(e.target.style, inputBase)}
                 />
-                <p className="text-xs mt-1.5" style={{ color: "rgba(255,255,255,0.3)" }}>
+                <p className="text-xs mt-1.5" style={{ color: isDark ? "rgba(255,255,255,0.3)" : "rgba(30,40,60,0.3)" }}>
                   A separate password for company dashboard login
                 </p>
               </div>
@@ -371,9 +382,9 @@ export default function OnboardingModal({ isOpen, onClose }) {
                   onClick={handleBack}
                   className="flex-1 py-3 rounded-xl font-medium text-sm transition-all duration-200"
                   style={{
-                    background: "rgba(255,255,255,0.07)",
-                    color: "rgba(255,255,255,0.7)",
-                    border: "1px solid rgba(255,255,255,0.1)",
+                    background: isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.05)",
+                    color: isDark ? "rgba(255,255,255,0.7)" : "rgba(30,40,60,0.7)",
+                    border: isDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(0,0,0,0.1)",
                   }}
                 >
                   Back
@@ -396,7 +407,7 @@ export default function OnboardingModal({ isOpen, onClose }) {
           {step === "candidate_form" && (
             <form onSubmit={handleCandidateSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1.5" style={{ color: "rgba(255,255,255,0.8)" }}>
+                <label className="block text-sm font-medium mb-1.5" style={{ color: isDark ? "rgba(255,255,255,0.8)" : "rgba(30,40,60,0.8)" }}>
                   Phone Number
                 </label>
                 <input
@@ -412,7 +423,7 @@ export default function OnboardingModal({ isOpen, onClose }) {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1.5" style={{ color: "rgba(255,255,255,0.8)" }}>
+                <label className="block text-sm font-medium mb-1.5" style={{ color: isDark ? "rgba(255,255,255,0.8)" : "rgba(30,40,60,0.8)" }}>
                   Institution / University
                 </label>
                 <input
@@ -429,7 +440,7 @@ export default function OnboardingModal({ isOpen, onClose }) {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium mb-1.5" style={{ color: "rgba(255,255,255,0.8)" }}>
+                  <label className="block text-sm font-medium mb-1.5" style={{ color: isDark ? "rgba(255,255,255,0.8)" : "rgba(30,40,60,0.8)" }}>
                     Education Level
                   </label>
                   <select
@@ -438,22 +449,24 @@ export default function OnboardingModal({ isOpen, onClose }) {
                     className="w-full px-4 py-3 rounded-xl outline-none transition-all duration-200"
                     style={{
                       ...inputBase,
-                      color: candidateForm.education_level === "" ? "#9ca3af" : "white",
+                      color: candidateForm.education_level === "" 
+                        ? (isDark ? "#6b7280" : "rgba(30,40,60,0.4)") 
+                        : (isDark ? "white" : "#1a2332"),
                     }}
                     onFocus={(e) => Object.assign(e.target.style, inputFocus)}
                     onBlur={(e) => Object.assign(e.target.style, inputBase)}
                   >
-                    <option value="" style={{ background: "#0d1f3c", color: "#9ca3af" }}>Select level</option>
-                    <option value="High School" style={{ background: "#0d1f3c", color: "white" }}>High School</option>
-                    <option value="D3" style={{ background: "#0d1f3c", color: "white" }}>D3</option>
-                    <option value="Bachelor" style={{ background: "#0d1f3c", color: "white" }}>Bachelor</option>
-                    <option value="Master" style={{ background: "#0d1f3c", color: "white" }}>Master</option>
-                    <option value="PhD" style={{ background: "#0d1f3c", color: "white" }}>PhD</option>
+                    <option value="" style={{ background: isDark ? "#0d1f3c" : "#ffffff", color: isDark ? "#9ca3af" : "rgba(30,40,60,0.4)" }}>Select level</option>
+                    <option value="High School" style={{ background: isDark ? "#0d1f3c" : "#ffffff", color: isDark ? "white" : "#1a2332" }}>High School</option>
+                    <option value="D3" style={{ background: isDark ? "#0d1f3c" : "#ffffff", color: isDark ? "white" : "#1a2332" }}>D3</option>
+                    <option value="Bachelor" style={{ background: isDark ? "#0d1f3c" : "#ffffff", color: isDark ? "white" : "#1a2332" }}>Bachelor</option>
+                    <option value="Master" style={{ background: isDark ? "#0d1f3c" : "#ffffff", color: isDark ? "white" : "#1a2332" }}>Master</option>
+                    <option value="PhD" style={{ background: isDark ? "#0d1f3c" : "#ffffff", color: isDark ? "white" : "#1a2332" }}>PhD</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1.5" style={{ color: "rgba(255,255,255,0.8)" }}>
+                  <label className="block text-sm font-medium mb-1.5" style={{ color: isDark ? "rgba(255,255,255,0.8)" : "rgba(30,40,60,0.8)" }}>
                     Major
                   </label>
                   <input
@@ -475,9 +488,9 @@ export default function OnboardingModal({ isOpen, onClose }) {
                   onClick={handleBack}
                   className="flex-1 py-3 rounded-xl font-medium text-sm transition-all duration-200"
                   style={{
-                    background: "rgba(255,255,255,0.07)",
-                    color: "rgba(255,255,255,0.7)",
-                    border: "1px solid rgba(255,255,255,0.1)",
+                    background: isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.05)",
+                    color: isDark ? "rgba(255,255,255,0.7)" : "rgba(30,40,60,0.7)",
+                    border: isDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(0,0,0,0.1)",
                   }}
                 >
                   Back

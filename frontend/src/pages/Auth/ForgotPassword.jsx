@@ -9,6 +9,10 @@ export default function ForgotPassword() {
   const [sent, setSent] = useState(false);
 
   const navigate = useNavigate();
+  const [isDark, setIsDark] = useState(() => {
+    const saved = localStorage.getItem("theme");
+    return saved ? saved === "dark" : true;
+  });
 
   const goToLogin = (e) => {
     e.preventDefault();
@@ -16,9 +20,10 @@ export default function ForgotPassword() {
   };
 
   const inputBase = {
-    background: "rgba(255,255,255,0.07)",
-    border: "1px solid rgba(255,255,255,0.1)",
+    background: isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.04)",
+    border: isDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(0,0,0,0.12)",
     fontSize: "14px",
+    color: isDark ? "#fff" : "#1a2332",
   };
   const inputFocus = {
     border: "1px solid rgba(74,158,255,0.5)",
@@ -57,7 +62,7 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className="min-h-screen w-full flex">
+    <div className="min-h-screen w-full flex" style={{ fontFamily: "'Poppins','Segoe UI',sans-serif" }}>
       {/* ── Left Panel: Hero ── */}
       <div
         className="hidden lg:flex lg:w-1/2 relative overflow-hidden"
@@ -140,10 +145,13 @@ export default function ForgotPassword() {
       </div>
 
       {/* ── Right Panel: Form ── */}
+      {/* ── Right Panel: Form ── */}
       <div
         className="flex-1 flex flex-col items-center justify-center px-6 py-12 relative overflow-hidden"
         style={{
-          background: "linear-gradient(160deg, #0d1f3c 0%, #0a1628 40%, #071220 100%)",
+          background: isDark
+            ? "linear-gradient(160deg, #0d1f3c 0%, #0a1628 40%, #071220 100%)"
+            : "linear-gradient(160deg, #f0f4f8 0%, #e8edf5 40%, #dce4ef 100%)",
         }}
       >
         {/* Mobile back link */}
@@ -189,10 +197,10 @@ export default function ForgotPassword() {
               </div>
             </div>
 
-            <h1 className="text-2xl font-bold text-white mb-1" style={{ letterSpacing: "-0.3px" }}>
+          <h1 className="text-2xl font-bold mb-1" style={{ letterSpacing: "-0.3px", color: isDark ? "#fff" : "#1a2332" }}>
               Forgot Password?
             </h1>
-            <p className="text-sm" style={{ color: "rgba(255,255,255,0.4)", maxWidth: "320px", margin: "0 auto" }}>
+            <p className="text-sm" style={{ color: isDark ? "rgba(255,255,255,0.4)" : "rgba(30,40,60,0.5)", maxWidth: "320px", margin: "0 auto" }}>
               Enter your registered email and we will send you a link to reset your password.
             </p>
           </div>
@@ -248,7 +256,7 @@ export default function ForgotPassword() {
 
               {/* Email */}
               <div>
-                <label className="block text-sm font-medium mb-1.5 text-left" style={{ color: "rgba(255,255,255,0.8)" }}>
+                <label className="block text-sm font-medium mb-1.5 text-left" style={{ color: isDark ? "rgba(255,255,255,0.8)" : "rgba(30,40,60,0.8)" }}>
                   Email
                 </label>
                 <input
@@ -257,7 +265,7 @@ export default function ForgotPassword() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="email@perusahaan.com"
                   required
-                  className="w-full px-4 py-3 rounded-xl text-white placeholder-gray-500 outline-none transition-all duration-200"
+                  className="w-full px-4 py-3 rounded-xl placeholder-gray-500 outline-none transition-all duration-200"
                   style={inputBase}
                   onFocus={(e) => Object.assign(e.target.style, inputFocus)}
                   onBlur={(e) => Object.assign(e.target.style, inputBase)}
@@ -298,7 +306,7 @@ export default function ForgotPassword() {
           )}
 
           {/* Back to login */}
-          <p className="text-center mt-6 text-sm" style={{ color: "rgba(255,255,255,0.4)" }}>
+          <p className="text-center mt-6 text-sm" style={{ color: isDark ? "rgba(255,255,255,0.4)" : "rgba(30,40,60,0.5)" }}>
             Remember your password?{" "}
             <button
               onClick={goToLogin}
