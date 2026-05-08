@@ -14,11 +14,13 @@ class Position extends Model
         'name',
         'selection_flow',
         'test_templates',
+        'locked',
     ];
 
     protected $casts = [
         'selection_flow' => 'array',
         'test_templates' => 'array',
+        'locked' => 'boolean',
     ];
     public function vacancies()
     {

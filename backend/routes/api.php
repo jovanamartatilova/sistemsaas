@@ -156,6 +156,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/positions/catalog',         [ProgramController::class, 'storeCatalog']);
     Route::put('/positions/catalog/{id}',     [ProgramController::class, 'updateCatalog']);
     Route::delete('/positions/catalog/{id}',  [ProgramController::class, 'destroyCatalog']);
+    Route::post('/positions/catalog/{id}/lock', [ProgramController::class, 'lockCatalogPosition']);
+    Route::post('/positions/catalog/{id}/unlock', [ProgramController::class, 'unlockCatalogPosition']);
+    Route::post('/positions/catalog/{id}/duplicate', [ProgramController::class, 'duplicateCatalogPosition']);
 
     // Company users
     Route::get('/company-users',         [CompanyUserController::class, 'index']);

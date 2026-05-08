@@ -38,15 +38,18 @@ const Icon = {
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" />
         </svg>
     ),
-    Bell: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg>,
-    Search: () => <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>,
-    Plus: () => <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>,
-    Cal: () => <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>,
-    Edit: () => <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>,
-    Trash: () => <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>,
+    Bell:         () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg>,
+    Search:       () => <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>,
+    Plus:         () => <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>,
+    Cal:          () => <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>,
+    Edit:         () => <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>,
+    Trash:        () => <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>,
     ChevronRight: () => <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6" /></svg>,
-    FileText: () => <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg>,
-    Sparkles: () => <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></svg>
+    FileText:     () => <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg>,
+    Sparkles:     () => <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></svg>,
+    Lock:         () => <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>,
+    Unlock:       () => <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>,
+    Copy:         () => <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>,
 };
 
 // ── Helpers ──────────────────────────────────────────────────────
@@ -54,23 +57,29 @@ const formatDate = (dateStr) => {
     if (!dateStr) return "-";
     const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     const [y, m, d] = dateStr.split("-");
-    const month = MONTHS[parseInt(m) - 1];
-    return `${parseInt(d)} ${month} ${y}`;
+    return `${parseInt(d)} ${MONTHS[parseInt(m) - 1]} ${y}`;
 };
 
-// ── Components ────────────────────────────────────────────────────
+// ── Toast ─────────────────────────────────────────────────────────
 function Toast({ msg, type, visible }) {
     return (
         <div style={{
             position: "fixed", bottom: 28, right: 28, zIndex: 500,
-            background: type === "success" ? "#064e3b" : "#0d1f3c",
+            background: type === "success" ? "#064e3b" : "#7f1d1d",
             color: "#fff", padding: "12px 20px", borderRadius: 12, fontSize: 13, fontWeight: 500,
             boxShadow: "0 8px 32px rgba(0,0,0,.14)",
             transform: visible ? "translateY(0)" : "translateY(80px)",
             opacity: visible ? 1 : 0,
             transition: "all .3s cubic-bezier(.34,1.56,.64,1)",
             pointerEvents: "none",
-        }}>{msg}</div>
+            display: "flex", alignItems: "center", gap: 8,
+        }}>
+            {type === "success"
+                ? <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                : <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            }
+            {msg}
+        </div>
     );
 }
 
@@ -111,10 +120,10 @@ function SideItem({ icon, label, active, badge, onClick }) {
     );
 }
 
+// ── CandidateItem ──────────────────────────────────────────────────
 function CandidateItem({ sub }) {
     const [expanded, setExpanded] = useState(false);
     const docBtn = { display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", border: "1px solid #e2e8f0", borderRadius: 8, background: "#fff", fontSize: 12, fontWeight: 600, color: "#475569", cursor: "pointer", transition: "all .15s", textDecoration: "none" };
-
     return (
         <div style={{ border: "1px solid #e2e8f0", borderRadius: 12, overflow: "hidden", background: expanded ? "#f8fafc" : "#fff", transition: "all .2s" }}>
             <div onClick={() => setExpanded(!expanded)} style={{ padding: "14px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer" }}>
@@ -139,16 +148,8 @@ function CandidateItem({ sub }) {
                     <div style={{ height: 1.5, background: "#e2e8f0", marginBottom: 16, opacity: 0.5 }} />
                     <div style={{ fontSize: 12, fontWeight: 700, color: "#64748b", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.5px" }}>Candidate Documents</div>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                        {sub.cv_file && (
-                            <a href={`http://127.0.0.1:8000/storage/${sub.cv_file}`} target="_blank" rel="noopener noreferrer" style={docBtn}>
-                                <Icon.FileText /> CV / Resume
-                            </a>
-                        )}
-                        {sub.portfolio_file && (
-                            <a href={`http://127.0.0.1:8000/storage/${sub.portfolio_file}`} target="_blank" rel="noopener noreferrer" style={docBtn}>
-                                <Icon.FileText /> Additional Portfolio
-                            </a>
-                        )}
+                        {sub.cv_file && <a href={`http://127.0.0.1:8000/storage/${sub.cv_file}`} target="_blank" rel="noopener noreferrer" style={docBtn}><Icon.FileText /> CV / Resume</a>}
+                        {sub.portfolio_file && <a href={`http://127.0.0.1:8000/storage/${sub.portfolio_file}`} target="_blank" rel="noopener noreferrer" style={docBtn}><Icon.FileText /> Additional Portfolio</a>}
                     </div>
                 </div>
             )}
@@ -156,6 +157,7 @@ function CandidateItem({ sub }) {
     );
 }
 
+// ── SubmissionModal ───────────────────────────────────────────────
 function SubmissionModal({ open, program, onClose }) {
     if (!open) return null;
     return (
@@ -172,17 +174,13 @@ function SubmissionModal({ open, program, onClose }) {
                 <div style={{ padding: "24px 28px", overflowY: "auto", maxHeight: "65vh" }}>
                     {(!program?.applicants || program.applicants.length === 0) ? (
                         <div style={{ padding: "40px 0", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
-                            <div style={{ width: 80, height: 80, background: "#f1f5f9", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", color: "#94a3b8", marginBottom: 20 }}>
-                                <Icon.Users />
-                            </div>
+                            <div style={{ width: 80, height: 80, background: "#f1f5f9", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", color: "#94a3b8", marginBottom: 20 }}><Icon.Users /></div>
                             <h3 style={{ fontSize: 18, fontWeight: 800, color: "#0f172a", marginBottom: 10 }}>No Candidates Yet</h3>
                             <p style={{ fontSize: 14, color: "#64748b", maxWidth: 340, lineHeight: 1.6 }}>Currently there are no candidates for this position.</p>
                         </div>
                     ) : (
                         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                            {program.applicants.map((sub, idx) => (
-                                <CandidateItem key={sub.id_submission || idx} sub={sub} />
-                            ))}
+                            {program.applicants.map((sub, idx) => <CandidateItem key={sub.id_submission || idx} sub={sub} />)}
                         </div>
                     )}
                 </div>
@@ -194,17 +192,19 @@ function SubmissionModal({ open, program, onClose }) {
     );
 }
 
+// ── ProgramCard ───────────────────────────────────────────────────
 function ProgramCard({ program, onEdit, onDelete }) {
     const [hov, setHov] = useState(false);
+    const statusColor = program.vacancy_status === "published" ? "#10b981" : program.vacancy_status === "closed" ? "#ef4444" : "#94a3b8";
     return (
         <div
             onClick={() => onEdit(program)}
             style={{
-                background: "#fff", border: "1px solid #e2e8f0", borderRadius: 16, display: "flex", flexDirection: "column",
-                boxShadow: hov ? "0 12px 32px rgba(0,0,0,.08)" : "0 1px 3px rgba(0,0,0,.06)", overflow: "hidden",
-                transition: "all .2s ease", cursor: "pointer", position: "relative",
-                borderTop: `3px solid ${program.vacancy_status === "published" ? "#10b981" : program.vacancy_status === "closed" ? "#ef4444" : "#94a3b8"}`,
-                textAlign: "left"
+                background: "#fff", border: "1px solid #e2e8f0", borderRadius: 16,
+                display: "flex", flexDirection: "column",
+                boxShadow: hov ? "0 12px 32px rgba(0,0,0,.08)" : "0 1px 3px rgba(0,0,0,.06)",
+                overflow: "hidden", transition: "all .2s ease", cursor: "pointer",
+                position: "relative", borderTop: `3px solid ${statusColor}`, textAlign: "left"
             }}
             onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
         >
@@ -229,38 +229,129 @@ function ProgramCard({ program, onEdit, onDelete }) {
     );
 }
 
-// ── Position Management Specific ──────────────────────────────────────────
-function CatalogItem({ item, onEdit, onDelete }) {
+// ── CatalogItem ───────────────────────────────────────────────────
+function CatalogItem({ item, onEdit, onDelete, onLock, onDuplicate }) {
     const [hov, setHov] = useState(false);
+
+    const btnBase = {
+        display: "flex", alignItems: "center", gap: 5,
+        padding: "6px 12px", borderRadius: 8, fontSize: 12, fontWeight: 600,
+        cursor: "pointer", transition: "all .15s", border: "1px solid #e2e8f0",
+        background: "#fff", color: "#475569", fontFamily: "inherit",
+    };
+
     return (
-        <div onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
-            style={{ padding: "14px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #f1f5f9", background: hov ? "#f8fafc" : "transparent", transition: "background 0.2s" }}>
-            <div style={{ textAlign: "left" }}>
-                <div style={{ fontSize: 14.5, fontWeight: 700, color: "#0f172a" }}>{item.name}</div>
-                <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>{item.competencies?.length || 0} Competencies</div>
+        <div
+            onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
+            style={{
+                padding: "16px 24px", display: "flex", alignItems: "center",
+                justifyContent: "space-between", borderBottom: "1px solid #f1f5f9",
+                background: hov ? "#f8fafc" : "#fff", transition: "background 0.2s",
+            }}
+        >
+            {/* Left: name + badges */}
+            <div style={{ textAlign: "left", display: "flex", flexDirection: "column", gap: 4 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ fontSize: 14.5, fontWeight: 700, color: "#0f172a" }}>{item.name}</span>
+                    {item.locked && (
+                        <span style={{
+                            display: "inline-flex", alignItems: "center", gap: 4,
+                            fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 6,
+                            background: "#fef3c7", color: "#92400e", border: "1px solid #fde68a",
+                        }}>
+                            <Icon.Lock /> Locked
+                        </span>
+                    )}
+                </div>
+                <div style={{ fontSize: 12, color: "#94a3b8" }}>
+                    {item.competencies?.length || 0} competencies
+                </div>
             </div>
-            <div style={{ display: "flex", gap: 8, opacity: hov ? 1 : 0.6, transition: "0.2s" }}>
-                <button onClick={() => onEdit(item)} style={{ padding: "6px 14px", borderRadius: 8, border: "1px solid #e2e8f0", background: "#fff", color: "#475569", fontSize: 12, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}><Icon.Edit /> Edit</button>
-                <button onClick={() => onDelete(item.id_position)} style={{ padding: "6px 10px", borderRadius: 8, border: "1px solid #fee2e2", background: "#fff", color: "#ef4444", fontSize: 12, cursor: "pointer" }}><Icon.Trash /></button>
+
+            {/* Right: action buttons */}
+            <div style={{ display: "flex", gap: 6, opacity: hov ? 1 : 0.5, transition: "opacity 0.2s" }}>
+                {/* Duplicate — always enabled */}
+                <button
+                    onClick={() => onDuplicate(item)}
+                    style={{ ...btnBase, color: "#2563c4", borderColor: "#bfdbfe", background: "#eff6ff" }}
+                    title="Duplicate this position"
+                >
+                    <Icon.Copy /> Duplicate
+                </button>
+
+                {/* Lock / Unlock toggle */}
+                <button
+                    onClick={() => onLock(item)}
+                    style={{
+                        ...btnBase,
+                        color: item.locked ? "#92400e" : "#475569",
+                        borderColor: item.locked ? "#fde68a" : "#e2e8f0",
+                        background: item.locked ? "#fffbeb" : "#fff",
+                    }}
+                    title={item.locked ? "Unlock this position" : "Lock this position"}
+                >
+                    {item.locked ? <><Icon.Unlock /> Unlock</> : <><Icon.Lock /> Lock</>}
+                </button>
+
+                {/* Edit — disabled when locked */}
+                <button
+                    onClick={() => !item.locked && onEdit(item)}
+                    disabled={item.locked}
+                    style={{
+                        ...btnBase,
+                        cursor: item.locked ? "not-allowed" : "pointer",
+                        opacity: item.locked ? 0.4 : 1,
+                    }}
+                    title={item.locked ? "Unlock position to edit" : "Edit position"}
+                >
+                    <Icon.Edit /> Edit
+                </button>
+
+                {/* Delete — disabled when locked */}
+                <button
+                    onClick={() => !item.locked && onDelete(item.id_position)}
+                    disabled={item.locked}
+                    style={{
+                        ...btnBase,
+                        color: item.locked ? "#cbd5e1" : "#ef4444",
+                        borderColor: item.locked ? "#f1f5f9" : "#fee2e2",
+                        cursor: item.locked ? "not-allowed" : "pointer",
+                        opacity: item.locked ? 0.4 : 1,
+                    }}
+                    title={item.locked ? "Unlock position to delete" : "Delete position"}
+                >
+                    <Icon.Trash />
+                </button>
             </div>
         </div>
     );
 }
 
+// ── PositionModal ─────────────────────────────────────────────────
 function PositionModal({ open, item, onClose, onSave }) {
     const { token } = useAuthStore();
     const [form, setForm] = useState({ name: "", competencies: [], selection_flow: [] });
     const [generatingIndex, setGeneratingIndex] = useState(null);
     const [generatingFlowIndex, setGeneratingFlowIndex] = useState(null);
+
     useEffect(() => {
         if (open) {
             setForm({
                 name: item?.name || "",
-                competencies: (item?.competencies || []).map(c => ({ name: c.name, learning_hours: c.learning_hours, description: c.description })),
-                selection_flow: item?.selection_flow || []
+                competencies: (item?.competencies || []).map(c => ({ 
+                    name: c.name || "", 
+                    learning_hours: c.learning_hours || 0, 
+                    description: c.description || "" 
+                })),
+                selection_flow: (item?.selection_flow || []).map(f => ({
+                    type: f.type || "",
+                    name: f.name || "",
+                    description: f.description || ""
+                }))
             });
         }
     }, [open, item]);
+
     if (!open) return null;
 
     const handleCompChange = (i, field, val) => {
@@ -272,26 +363,14 @@ function PositionModal({ open, item, onClose, onSave }) {
     const handleGenerateAI = async (i) => {
         const compName = form.competencies[i].name;
         const posName = form.name;
-        if (!compName || !posName) {
-            alert("Please fill in the Position Name and Competency Name first.");
-            return;
-        }
+        if (!compName || !posName) { alert("Please fill in the Position Name and Competency Name first."); return; }
         setGeneratingIndex(i);
         try {
             const prompt = `Tuliskan satu kalimat deskripsi profesional dan deskriptif (sekitar 15-25 kata) dalam bahasa Indonesia untuk kompetensi '${compName}' pada posisi pekerjaan '${posName}'. Berikan HANYA teks deskripsinya tanpa awalan, tanpa tanda kutip, dan tanpa penjelasan lain.`;
-            const res = await axios.post("http://127.0.0.1:8000/api/ai/generate", {
-                model: "llama3",
-                prompt: prompt
-            }, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const res = await axios.post("http://127.0.0.1:8000/api/ai/generate", { model: "llama3", prompt }, { headers: { Authorization: `Bearer ${token}` } });
             handleCompChange(i, "description", res.data.response.trim());
-        } catch (e) {
-            alert(e.response?.data?.error || e.message || "Failed to connect to local Ollama on port 11434.");
-            console.error(e);
-        } finally {
-            setGeneratingIndex(null);
-        }
+        } catch (e) { alert(e.response?.data?.error || e.message || "Failed to connect to AI."); }
+        finally { setGeneratingIndex(null); }
     };
 
     const handleFlowChange = (i, field, val) => {
@@ -303,25 +382,14 @@ function PositionModal({ open, item, onClose, onSave }) {
     const handleGenerateAIFlow = async (i) => {
         const flowName = form.selection_flow[i].name;
         const posName = form.name;
-        if (!flowName || !posName) {
-            alert("Please fill in the Position Name and Stage Title first.");
-            return;
-        }
+        if (!flowName || !posName) { alert("Please fill in the Position Name and Stage Title first."); return; }
         setGeneratingFlowIndex(i);
         try {
             const prompt = `Tuliskan satu paragraf singkat deskripsi instruksi HR untuk tahap seleksi '${flowName}' pada posisi '${posName}'. Berikan HANYA teks deskripsinya tanpa awalan, tanpa tanda kutip.`;
-            const res = await axios.post("http://127.0.0.1:8000/api/ai/generate", {
-                model: "llama3",
-                prompt: prompt
-            }, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const res = await axios.post("http://127.0.0.1:8000/api/ai/generate", { model: "llama3", prompt }, { headers: { Authorization: `Bearer ${token}` } });
             handleFlowChange(i, "description", res.data.response.trim());
-        } catch (e) {
-            alert(e.response?.data?.error || e.message);
-        } finally {
-            setGeneratingFlowIndex(null);
-        }
+        } catch (e) { alert(e.response?.data?.error || e.message); }
+        finally { setGeneratingFlowIndex(null); }
     };
 
     const inp = { textAlign: "left", border: "1.5px solid #e2e8f0", borderRadius: 8, padding: "8px 12px", fontFamily: "inherit", fontSize: 13, color: "#0f172a", background: "#fff", outline: "none", width: "100%", transition: "all .15s" };
@@ -343,6 +411,8 @@ function PositionModal({ open, item, onClose, onSave }) {
                             <label style={{ fontSize: 12, fontWeight: 700, color: "#475569", display: "block", marginBottom: 6 }}>NAME</label>
                             <input style={inp} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="e.g. Frontend Developer" />
                         </div>
+
+                        {/* Selection Flow */}
                         <div style={{ textAlign: "left" }}>
                             <label style={{ fontSize: 12, fontWeight: 700, color: "#475569", display: "block", marginBottom: 12 }}>SELECTION FLOW</label>
                             {form.selection_flow.map((f, i) => (
@@ -351,15 +421,11 @@ function PositionModal({ open, item, onClose, onSave }) {
                                         <div>
                                             <label style={{ fontSize: 10, fontWeight: 700, color: "#64748b", textTransform: "uppercase", marginBottom: 4, display: "block" }}>Stage Type</label>
                                             <select style={inp} value={f.type} onChange={e => {
-                                                        const newType = e.target.value;
-                                                        handleFlowChange(i, "type", newType);
-                                                        if (newType === "screening") {
-                                                            handleFlowChange(i, "name", "Screening CV & Portfolio");
-                                                            handleFlowChange(i, "description", "");
-                                                        } else {
-                                                            handleFlowChange(i, "name", ""); // ← tambah ini
-                                                        }
-                                                    }}>
+                                                const newType = e.target.value;
+                                                handleFlowChange(i, "type", newType);
+                                                if (newType === "screening") { handleFlowChange(i, "name", "Screening CV & Portfolio"); handleFlowChange(i, "description", ""); }
+                                                else { handleFlowChange(i, "name", ""); }
+                                            }}>
                                                 <option value="">-- Select Type --</option>
                                                 <option value="screening">Screening (CV/Porto)</option>
                                                 <option value="test">Test / Assessment</option>
@@ -377,19 +443,8 @@ function PositionModal({ open, item, onClose, onSave }) {
                                         <>
                                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
                                                 <label style={{ fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.5px" }}>Instructions / Description</label>
-                                                <button 
-                                                    type="button"
-                                                    onClick={() => handleGenerateAIFlow(i)}
-                                                    disabled={generatingFlowIndex === i}
-                                                    style={{
-                                                        display: "flex", alignItems: "center", gap: 5,
-                                                        background: "linear-gradient(135deg, #10b981, #059669)", color: "#fff", border: "none", borderRadius: 6,
-                                                        padding: "5px 12px", fontSize: 10, fontWeight: 700, cursor: generatingFlowIndex === i ? "default" : "pointer",
-                                                        opacity: generatingFlowIndex === i ? 0.7 : 1, transition: "0.2s", boxShadow: "0 2px 6px rgba(16,185,129,.3)"
-                                                    }}
-                                                    onMouseEnter={e => generatingFlowIndex !== i && (e.currentTarget.style.transform = "translateY(-1px)")}
-                                                    onMouseLeave={e => generatingFlowIndex !== i && (e.currentTarget.style.transform = "translateY(0)")}
-                                                >
+                                                <button type="button" onClick={() => handleGenerateAIFlow(i)} disabled={generatingFlowIndex === i}
+                                                    style={{ display: "flex", alignItems: "center", gap: 5, background: "linear-gradient(135deg, #10b981, #059669)", color: "#fff", border: "none", borderRadius: 6, padding: "5px 12px", fontSize: 10, fontWeight: 700, cursor: generatingFlowIndex === i ? "default" : "pointer", opacity: generatingFlowIndex === i ? 0.7 : 1, boxShadow: "0 2px 6px rgba(16,185,129,.3)", fontFamily: "inherit" }}>
                                                     <Icon.Sparkles /> {generatingFlowIndex === i ? "Generating..." : "Generate AI"}
                                                 </button>
                                             </div>
@@ -399,8 +454,10 @@ function PositionModal({ open, item, onClose, onSave }) {
                                     <button onClick={() => setForm({ ...form, selection_flow: form.selection_flow.filter((_, j) => j !== i) })} style={{ position: "absolute", top: -8, right: -8, width: 24, height: 24, borderRadius: "50%", border: "1px solid #fee2e2", background: "#fff", color: "#ef4444", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
                                 </div>
                             ))}
-                            <button onClick={() => setForm({ ...form, selection_flow: [...form.selection_flow, { type: "", name: "", description: "" }] })} style={{ width: "100%", padding: "10px", border: "1.5px dashed #e2e8f0", borderRadius: 12, background: "none", color: "#64748b", fontSize: 12.5, fontWeight: 700, cursor: "pointer", transition: "0.2s", marginBottom: 12 }} onMouseEnter={e => e.currentTarget.style.borderColor = "#c6cfd8"}>+ Add Selection Stage</button>
+                            <button onClick={() => setForm({ ...form, selection_flow: [...form.selection_flow, { type: "", name: "", description: "" }] })} style={{ width: "100%", padding: "10px", border: "1.5px dashed #e2e8f0", borderRadius: 12, background: "none", color: "#64748b", fontSize: 12.5, fontWeight: 700, cursor: "pointer", marginBottom: 12, fontFamily: "inherit" }}>+ Add Selection Stage</button>
                         </div>
+
+                        {/* Competencies */}
                         <div style={{ textAlign: "left" }}>
                             <label style={{ fontSize: 12, fontWeight: 700, color: "#475569", display: "block", marginBottom: 12 }}>COMPETENCIES</label>
                             {form.competencies.map((c, i) => (
@@ -411,18 +468,8 @@ function PositionModal({ open, item, onClose, onSave }) {
                                     </div>
                                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
                                         <label style={{ fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.5px" }}>Description</label>
-                                        <button 
-                                            onClick={() => handleGenerateAI(i)}
-                                            disabled={generatingIndex === i}
-                                            style={{
-                                                display: "flex", alignItems: "center", gap: 5,
-                                                background: "linear-gradient(135deg, #6366f1, #8b5cf6)", color: "#fff", border: "none", borderRadius: 6,
-                                                padding: "5px 12px", fontSize: 10, fontWeight: 700, cursor: generatingIndex === i ? "default" : "pointer",
-                                                opacity: generatingIndex === i ? 0.7 : 1, transition: "0.2s", boxShadow: "0 2px 6px rgba(99,102,241,.3)"
-                                            }}
-                                            onMouseEnter={e => generatingIndex !== i && (e.currentTarget.style.transform = "translateY(-1px)")}
-                                            onMouseLeave={e => generatingIndex !== i && (e.currentTarget.style.transform = "translateY(0)")}
-                                        >
+                                        <button onClick={() => handleGenerateAI(i)} disabled={generatingIndex === i}
+                                            style={{ display: "flex", alignItems: "center", gap: 5, background: "linear-gradient(135deg, #6366f1, #8b5cf6)", color: "#fff", border: "none", borderRadius: 6, padding: "5px 12px", fontSize: 10, fontWeight: 700, cursor: generatingIndex === i ? "default" : "pointer", opacity: generatingIndex === i ? 0.7 : 1, boxShadow: "0 2px 6px rgba(99,102,241,.3)", fontFamily: "inherit" }}>
                                             <Icon.Sparkles /> {generatingIndex === i ? "Generating..." : "Generate AI"}
                                         </button>
                                     </div>
@@ -430,72 +477,190 @@ function PositionModal({ open, item, onClose, onSave }) {
                                     <button onClick={() => setForm({ ...form, competencies: form.competencies.filter((_, j) => j !== i) })} style={{ position: "absolute", top: -8, right: -8, width: 24, height: 24, borderRadius: "50%", border: "1px solid #fee2e2", background: "#fff", color: "#ef4444", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
                                 </div>
                             ))}
-                            <button onClick={() => setForm({ ...form, competencies: [...form.competencies, { name: "", learning_hours: "", description: "" }] })} style={{ width: "100%", padding: "10px", border: "1.5px dashed #e2e8f0", borderRadius: 12, background: "none", color: "#64748b", fontSize: 12.5, fontWeight: 700, cursor: "pointer", transition: "0.2s" }} onMouseEnter={e => e.currentTarget.style.borderColor = "#c6cfd8"}>+ Add Competency</button>
+                            <button onClick={() => setForm({ ...form, competencies: [...form.competencies, { name: "", learning_hours: "", description: "" }] })} style={{ width: "100%", padding: "10px", border: "1.5px dashed #e2e8f0", borderRadius: 12, background: "none", color: "#64748b", fontSize: 12.5, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>+ Add Competency</button>
                         </div>
                     </div>
                 </div>
                 <div style={{ padding: "18px 28px", borderTop: "1px solid #e2e8f0", display: "flex", justifyContent: "flex-end", gap: 10 }}>
-                    <button onClick={onClose} style={{ padding: "10px 20px", borderRadius: 10, border: "1px solid #e2e8f0", background: "#fff", fontWeight: 700, fontSize: 13, color: "#64748b", cursor: "pointer" }}>Cancel</button>
-                    <button onClick={() => onSave(item?.id_position, form)} style={{ padding: "10px 24px", borderRadius: 10, border: "none", background: "#2563c4", color: "#fff", fontWeight: 800, fontSize: 13, cursor: "pointer" }}>Save</button>
+                    <button onClick={onClose} style={{ padding: "10px 20px", borderRadius: 10, border: "1px solid #e2e8f0", background: "#fff", fontWeight: 700, fontSize: 13, color: "#64748b", cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
+                    <button onClick={() => {
+                        // Ensure learning_hours are integers
+                        const cleanedForm = {
+                            ...form,
+                            competencies: form.competencies.map(c => ({
+                                ...c,
+                                learning_hours: parseInt(c.learning_hours, 10) || 0
+                            }))
+                        };
+                        onSave(item?.id_position, cleanedForm);
+                    }} style={{ padding: "10px 24px", borderRadius: 10, border: "none", background: "#2563c4", color: "#fff", fontWeight: 800, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>Save</button>
                 </div>
             </div>
         </div>
     );
 }
 
-// ── Main Page ─────────────────────────────────────────────────────────────
+// ── ConfirmModal ──────────────────────────────────────────────────
+function ConfirmModal({ open, title, message, confirmLabel, confirmColor = "#ef4444", onConfirm, onCancel }) {
+    if (!open) return null;
+    return (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(10,22,40,.5)", zIndex: 400, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div style={{ background: "#fff", borderRadius: 16, padding: 28, width: 360, textAlign: "left", boxShadow: "0 20px 60px rgba(0,0,0,.18)" }}>
+                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: "#0f172a" }}>{title}</h3>
+                <p style={{ fontSize: 13, color: "#64748b", margin: "10px 0 20px", lineHeight: 1.6 }}>{message}</p>
+                <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+                    <button onClick={onCancel} style={{ padding: "8px 18px", borderRadius: 9, border: "1px solid #e2e8f0", background: "#fff", fontSize: 13, fontWeight: 700, color: "#64748b", cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
+                    <button onClick={onConfirm} style={{ padding: "8px 18px", borderRadius: 9, border: "none", background: confirmColor, fontSize: 13, fontWeight: 700, color: "#fff", cursor: "pointer", fontFamily: "inherit" }}>{confirmLabel}</button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// ── Main Page ─────────────────────────────────────────────────────
 export default function PositionsManagement() {
     const navigate = useNavigate();
-    const [activeNav, setActiveNav] = useState("Positions Management");
     const { logout, token } = useAuthStore();
-    const [programs, setPrograms] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [filter, setFilter] = useState("all");
-    const [search, setSearch] = useState("");
-    const [selectedProg, setSelectedProg] = useState(null);
-    const [deletingProg, setDeletingProg] = useState(null);
-    const [toast, setToast] = useState({ msg: "", type: "success", visible: false });
-    const [catalog, setCatalog] = useState([]);
-    const [catalogLoading, setCatalogLoading] = useState(false);
+
+    const [programs, setPrograms]               = useState([]);
+    const [catalog, setCatalog]                 = useState([]);
+    const [loading, setLoading]                 = useState(true);
+    const [catalogLoading, setCatalogLoading]   = useState(false);
     const [isCatalogVisible, setIsCatalogVisible] = useState(false);
-    const [submissionModalOpen, setSubmissionModalOpen] = useState(false);
-    const [posModalOpen, setPosModalOpen] = useState(false);
+    const [filter, setFilter]                   = useState("all");
+    const [search, setSearch]                   = useState("");
+
+    const [selectedProg, setSelectedProg]       = useState(null);
+    const [deletingProg, setDeletingProg]       = useState(null);
     const [editingCatalogItem, setEditingCatalogItem] = useState(null);
+
+    const [submissionModalOpen, setSubmissionModalOpen] = useState(false);
+    const [posModalOpen, setPosModalOpen]       = useState(false);
     const [logoutModalOpen, setLogoutModalOpen] = useState(false);
 
-    useEffect(() => {
-        fetchPrograms();
-        fetchCatalog();
-    }, []);
+    // Confirm modal state
+    const [confirmModal, setConfirmModal] = useState({ open: false, title: "", message: "", confirmLabel: "", confirmColor: "#ef4444", onConfirm: null });
 
-    const fetchCatalog = async () => {
-        try {
-            setCatalogLoading(true);
-            const res = await axios.get("http://127.0.0.1:8000/api/positions/catalog", { headers: { Authorization: `Bearer ${token}` } });
-            setCatalog(res.data);
-        } catch (err) { console.error(err); } finally { setCatalogLoading(false); }
-    };
-
-    const fetchPrograms = async () => {
-        try {
-            setLoading(true);
-            const res = await axios.get("http://127.0.0.1:8000/api/programs", { headers: { Authorization: `Bearer ${token}` } });
-            // Filter out 'draft' as it's not useful here (no candidates)
-            const activeOnly = res.data.filter(p => p.vacancy_status !== "draft");
-            setPrograms(activeOnly);
-        } catch (err) { console.error(err); } finally { setLoading(false); }
-    };
+    const [toast, setToast] = useState({ msg: "", type: "success", visible: false });
 
     const showToast = (msg, type = "success") => {
         setToast({ msg, type, visible: true });
         setTimeout(() => setToast(t => ({ ...t, visible: false })), 3000);
     };
 
-    const handleDelete = async (prog) => {
+    const showConfirm = ({ title, message, confirmLabel, confirmColor, onConfirm }) => {
+        setConfirmModal({ open: true, title, message, confirmLabel, confirmColor: confirmColor || "#ef4444", onConfirm });
+    };
+
+    const closeConfirm = () => setConfirmModal(m => ({ ...m, open: false, onConfirm: null }));
+
+    useEffect(() => { fetchPrograms(); fetchCatalog(); }, []);
+
+    const fetchCatalog = async () => {
+        try {
+            setCatalogLoading(true);
+            const res = await axios.get("http://127.0.0.1:8000/api/positions/catalog", { headers: { Authorization: `Bearer ${token}` } });
+            setCatalog(res.data);
+        } catch (err) { console.error(err); }
+        finally { setCatalogLoading(false); }
+    };
+
+    const fetchPrograms = async () => {
+        try {
+            setLoading(true);
+            const res = await axios.get("http://127.0.0.1:8000/api/programs", { headers: { Authorization: `Bearer ${token}` } });
+            setPrograms(res.data.filter(p => p.vacancy_status !== "draft"));
+        } catch (err) { console.error(err); }
+        finally { setLoading(false); }
+    };
+
+    // ── Lock / Unlock ───────────────────────────────────────────
+    const handleLock = (item) => {
+        const isLocked = item.locked;
+        showConfirm({
+            title: isLocked ? `Unlock "${item.name}"?` : `Lock "${item.name}"?`,
+            message: isLocked
+                ? "Unlocking will allow this position to be edited or deleted again."
+                : "Locking will prevent any edits or deletion. You can always unlock it later.",
+            confirmLabel: isLocked ? "Yes, Unlock" : "Yes, Lock",
+            confirmColor: isLocked ? "#2563c4" : "#f59e0b",
+            onConfirm: async () => {
+                closeConfirm();
+                try {
+                    const action = isLocked ? "unlock" : "lock";
+                    await axios.post(
+                        `http://127.0.0.1:8000/api/positions/catalog/${item.id_position}/${action}`,
+                        {},
+                        { headers: { Authorization: `Bearer ${token}` } }
+                    );
+                    showToast(`Position ${action}ed successfully.`);
+                    fetchCatalog();
+                } catch (e) {
+                    showToast(e.response?.data?.error || "Failed to update lock status.", "error");
+                }
+            }
+        });
+    };
+
+    // ── Duplicate ───────────────────────────────────────────────
+    const handleDuplicate = (item) => {
+        showConfirm({
+            title: `Duplicate "${item.name}"?`,
+            message: "A copy of this position will be created (unlocked) and added to your catalog. You can then modify it for a new program.",
+            confirmLabel: "Yes, Duplicate",
+            confirmColor: "#2563c4",
+            onConfirm: async () => {
+                closeConfirm();
+                try {
+                    const duplicateUrl = `http://127.0.0.1:8000/api/positions/catalog/${item.id_position}/duplicate`;
+                    const config = { headers: { Authorization: `Bearer ${token}` } };
+                    const res = await axios.post(duplicateUrl, null, config);
+                    showToast(`"${item.name}" duplicated successfully and added to catalog.`);
+                    // Auto-expand catalog to show the duplicate
+                    setIsCatalogVisible(true);
+                    // Refresh both catalog and programs to show duplicate in the grid
+                    fetchCatalog();
+                    fetchPrograms();
+                } catch (e) {
+                    showToast(e.response?.data?.error || "Failed to duplicate position.", "error");
+                }
+            }
+        });
+    };
+
+    // ── Delete catalog ──────────────────────────────────────────
+    const handleDeleteCatalog = (id) => {
+        showConfirm({
+            title: "Delete Position?",
+            message: "This will permanently remove the position from your catalog. This action cannot be undone.",
+            confirmLabel: "Yes, Delete",
+            confirmColor: "#ef4444",
+            onConfirm: async () => {
+                closeConfirm();
+                try {
+                    await axios.delete(`http://127.0.0.1:8000/api/positions/catalog/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+                    showToast("Position deleted.");
+                    // Close modal and refresh both catalog and programs
+                    setPosModalOpen(false);
+                    setEditingCatalogItem(null);
+                    fetchCatalog();
+                    fetchPrograms();
+                } catch (e) {
+                    showToast(e.response?.data?.error || "Failed to delete.", "error");
+                }
+            }
+        });
+    };
+
+    // ── Delete program ──────────────────────────────────────────
+    const handleDeleteProgram = async (prog) => {
         try {
             await axios.delete(`http://127.0.0.1:8000/api/programs/${prog.id_vacancy}/${prog.id_position}`, { headers: { Authorization: `Bearer ${token}` } });
-            showToast("Program removed."); fetchPrograms();
-        } catch (err) { showToast("Failed to remove.", "error"); }
+            showToast("Program removed.");
+            fetchPrograms();
+        } catch (err) {
+            showToast("Failed to remove.", "error");
+        }
     };
 
     const comp = (() => { try { return JSON.parse(localStorage.getItem("company")); } catch { return null; } })();
@@ -504,16 +669,16 @@ export default function PositionsManagement() {
     const SIDEBAR_W = 250;
 
     const navItems = [
-        { label: "Dashboard", icon: <Icon.Dashboard />, path: "/dashboard", section: "MAIN MENU" },
-        { label: "User Management", icon: <Icon.Users />, path: "/users" },
-        { label: "Program Management", icon: <Icon.Lowongan />, path: "/programs" },
-        { label: "Positions Management", icon: <Icon.Program />, path: "/positions" },
+        { label: "Dashboard",            icon: <Icon.Dashboard />, path: "/dashboard" },
+        { label: "User Management",       icon: <Icon.Users />,    path: "/users" },
+        { label: "Program Management",    icon: <Icon.Lowongan />, path: "/programs" },
+        { label: "Positions Management",  icon: <Icon.Program />,  path: "/positions" },
     ];
     const navItems2 = [
         { label: "Settings", icon: <Icon.Pengaturan />, path: "/settings" },
     ];
 
-    const filtered = (programs || []).filter(p => {
+    const filtered = programs.filter(p => {
         const ms = (p.position_name || "").toLowerCase().includes(search.toLowerCase()) || (p.vacancy_title || "").toLowerCase().includes(search.toLowerCase());
         const mf = filter === "all" || p.vacancy_status === filter;
         return ms && mf;
@@ -521,59 +686,44 @@ export default function PositionsManagement() {
 
     return (
         <div style={{ display: "flex", minHeight: "100vh", background: "#f8fafc", fontFamily: "'Poppins', sans-serif" }}>
-            <style>{`
-                * { box-sizing: border-box; }
-                ::-webkit-scrollbar { width: 5px; }
-                ::-webkit-scrollbar-track { background: transparent; }
-                ::-webkit-scrollbar-thumb { background: rgba(0,0,0,.12); border-radius: 99px; }
-                @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-                .fade-in { animation: fadeIn 0.35s ease both; }
-            `}</style>
+            <style>{`* { box-sizing: border-box; } ::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: rgba(0,0,0,.12); border-radius: 99px; } @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } } .fade-in { animation: fadeIn 0.35s ease both; }`}</style>
 
             {/* SIDEBAR */}
-            <aside style={{ width: SIDEBAR_W, flexShrink: 0, background: "linear-gradient(180deg, #0f1c2e 0%, #0d1a28 100%)", display: "flex", flexDirection: "column", height: "100vh", position: "sticky", top: 0, padding: "20px 12px", gap: "4px", overflowY: "auto", overflowX: "hidden" }}>
+            <aside style={{ width: SIDEBAR_W, flexShrink: 0, background: "linear-gradient(180deg, #0f1c2e 0%, #0d1a28 100%)", display: "flex", flexDirection: "column", height: "100vh", position: "sticky", top: 0, padding: "20px 12px", gap: "4px", overflowY: "auto" }}>
                 <Link to="/" style={{ display: "flex", alignItems: "center", gap: "10px", padding: "4px 6px 20px", textDecoration: "none" }}>
                     <img src="/assets/images/logo.png" alt="Logo" style={{ height: "46px" }} />
                     <span style={{ fontSize: "15px", fontWeight: "800", color: "#fff", letterSpacing: "-0.3px" }}>EarlyPath</span>
                 </Link>
                 <p style={{ fontSize: "10px", fontWeight: "700", color: "rgba(255,255,255,0.25)", letterSpacing: "1.2px", padding: "6px 14px 4px", textTransform: "uppercase" }}>Main Menu</p>
                 {navItems.map((n) => (
-                    <SideItem key={n.label} icon={n.icon} label={n.label} active={activeNav === n.label} onClick={() => { if (n.path !== "/positions") navigate(n.path); }} />
+                    <SideItem key={n.label} icon={n.icon} label={n.label} active={n.label === "Positions Management"} onClick={() => { if (n.path !== "/positions") navigate(n.path); }} />
                 ))}
-
                 <div style={{ height: "1px", background: "rgba(255,255,255,0.07)", margin: "12px 8px" }} />
-                <p style={{ fontSize: "10px", fontWeight: "700", color: "rgba(255,255,255,0.25)", letterSpacing: "1.2px", padding: "0px 14px 4px", textTransform: "uppercase" }}>
-                    Others
-                </p>
+                <p style={{ fontSize: "10px", fontWeight: "700", color: "rgba(255,255,255,0.25)", letterSpacing: "1.2px", padding: "0 14px 4px", textTransform: "uppercase" }}>Others</p>
                 {navItems2.map((n) => (
-                    <SideItem key={n.label} icon={n.icon} label={n.label} active={activeNav === n.label} onClick={() => navigate(n.path)} />
+                    <SideItem key={n.label} icon={n.icon} label={n.label} active={false} onClick={() => navigate(n.path)} />
                 ))}
-
                 <div style={{ flex: 1 }} />
                 <div style={{ borderTop: "1px solid rgba(255,255,255,0.07)", paddingTop: "14px", display: "flex", alignItems: "center", gap: "10px" }}>
-                    {comp?.logo_path ? (
-                        <img 
-                            src={`http://127.0.0.1:8000/storage/${comp.logo_path}`} 
-                            alt="Logo" 
-                            style={{ width: "36px", height: "36px", borderRadius: "10px", objectFit: "cover" }} 
-                        />
-                    ) : (
-                        <div style={{ width: "36px", height: "36px", borderRadius: "10px", flexShrink: 0, background: "linear-gradient(135deg, #2d7dd2, #4a9eff)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "13px", fontWeight: "800", color: "#fff" }}>
-                            {initials}
-                        </div>
-                    )}
+                    {comp?.logo_path
+                        ? <img src={`http://127.0.0.1:8000/storage/${comp.logo_path}`} alt="Logo" style={{ width: "36px", height: "36px", borderRadius: "10px", objectFit: "cover" }} />
+                        : <div style={{ width: "36px", height: "36px", borderRadius: "10px", flexShrink: 0, background: "linear-gradient(135deg, #2d7dd2, #4a9eff)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "13px", fontWeight: "800", color: "#fff" }}>{initials}</div>
+                    }
                     <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: "12.5px", fontWeight: "700", color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{companyName}</div>
-                        <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", textTransform: "capitalize" }}>Admin</div>
+                        <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)" }}>Admin</div>
                     </div>
-                    <button onClick={() => setLogoutModalOpen(true)} title="Logout" style={{ background: "transparent", border: "none", color: "rgba(255,255,255,0.35)", cursor: "pointer", padding: "4px", borderRadius: "6px", transition: "all 0.2s", display: "flex" }} onMouseEnter={(e) => { e.currentTarget.style.color = "#f87171"; e.currentTarget.style.background = "rgba(248,113,113,0.1)"; }} onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(255,255,255,0.35)"; e.currentTarget.style.background = "transparent"; }}>
+                    <button onClick={() => setLogoutModalOpen(true)} style={{ background: "transparent", border: "none", color: "rgba(255,255,255,0.35)", cursor: "pointer", padding: "4px", borderRadius: "6px", transition: "all 0.2s", display: "flex" }}
+                        onMouseEnter={e => { e.currentTarget.style.color = "#f87171"; e.currentTarget.style.background = "rgba(248,113,113,0.1)"; }}
+                        onMouseLeave={e => { e.currentTarget.style.color = "rgba(255,255,255,0.35)"; e.currentTarget.style.background = "transparent"; }}>
                         <Icon.Logout />
                     </button>
                 </div>
             </aside>
 
+            {/* MAIN */}
             <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
-                <header style={{ height: 56, background: "#fff", borderBottom: "1px solid #e2e8f0", display: "flex", alignItems: "center", padding: "0 24px", gap: 16, position: "sticky", top: 0, zIndex: 50 }}>
+                <header style={{ height: 56, background: "#fff", borderBottom: "1px solid #e2e8f0", display: "flex", alignItems: "center", padding: "0 24px", position: "sticky", top: 0, zIndex: 50 }}>
                     <div style={{ flex: 1, textAlign: "left" }}>
                         <span style={{ fontSize: "15px", fontWeight: "700", color: "#1e293b" }}>Positions Management</span>
                         <span style={{ fontSize: "13px", color: "#94a3b8", margin: "0 6px" }}>/</span>
@@ -588,138 +738,149 @@ export default function PositionsManagement() {
                             <div style={{ fontSize: 20, fontWeight: 800, color: "#0f172a", lineHeight: 1.2 }}>Positions Management</div>
                             <div style={{ fontSize: 13, color: "#64748b", marginTop: 3 }}>Manage position catalog and program linkages.</div>
                         </div>
-                        
                         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                            <div style={{
-                                display: "flex", alignItems: "center", gap: "8px",
-                                background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px",
-                                padding: "7px 14px", width: "240px",
-                            }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px", padding: "7px 14px", width: "240px" }}>
                                 <Icon.Search />
-                                <input
-                                    placeholder="Search by position or program..."
-                                    value={search}
-                                    onChange={(e) => setSearch(e.target.value)}
-                                    style={{
-                                        border: "none", background: "transparent", outline: "none",
-                                        fontSize: "13px", color: "#64748b", width: "100%", fontFamily: "inherit",
-                                    }}
-                                />
+                                <input placeholder="Search position or program..." value={search} onChange={e => setSearch(e.target.value)}
+                                    style={{ border: "none", background: "transparent", outline: "none", fontSize: "13px", color: "#64748b", width: "100%", fontFamily: "inherit" }} />
                             </div>
-                            
                             {isCatalogVisible && (
                                 <button onClick={() => { setEditingCatalogItem(null); setPosModalOpen(true); }}
-                                    style={{
-                                        display: "flex", alignItems: "center", gap: 7,
-                                        background: "#2563c4", color: "#fff", border: "none", borderRadius: 8,
-                                        padding: "10px 18px", fontFamily: "inherit", fontSize: 13, fontWeight: 600,
-                                        cursor: "pointer", boxShadow: "0 2px 8px rgba(37,99,235,.3)"
-                                    }}>
+                                    style={{ display: "flex", alignItems: "center", gap: 7, background: "#2563c4", color: "#fff", border: "none", borderRadius: 8, padding: "10px 18px", fontFamily: "inherit", fontSize: 13, fontWeight: 600, cursor: "pointer", boxShadow: "0 2px 8px rgba(37,99,235,.3)" }}>
                                     <Icon.Plus /> Add Position
                                 </button>
                             )}
                         </div>
                     </div>
 
+                    {/* ── Position Catalog ─────────────────────────────── */}
                     <div style={{ marginBottom: 40 }}>
-                        <div onClick={() => setIsCatalogVisible(!isCatalogVisible)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", background: isCatalogVisible ? "#eff6ff" : "#fff", border: "1px solid #e2e8f0", borderRadius: 12, cursor: "pointer" }}>
+                        <div onClick={() => setIsCatalogVisible(!isCatalogVisible)}
+                            style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", background: isCatalogVisible ? "#eff6ff" : "#fff", border: "1px solid #e2e8f0", borderRadius: 12, cursor: "pointer", transition: "background 0.2s" }}>
                             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                                 <div style={{ color: "#2563c4", transform: isCatalogVisible ? "rotate(90deg)" : "rotate(0deg)", transition: "0.2s" }}><Icon.ChevronRight /></div>
-                                <div style={{ fontSize: 13, fontWeight: 800, color: "#475569", textTransform: "uppercase" }}>Existing Positions</div>
+                                <div style={{ fontSize: 13, fontWeight: 800, color: "#475569", textTransform: "uppercase" }}>Position Catalog</div>
                                 {!isCatalogVisible && <span style={{ fontSize: 12, color: "#94a3b8" }}>({catalog.length} positions)</span>}
                             </div>
+                            {isCatalogVisible && (
+                                <div style={{ display: "flex", gap: 8 }}>
+                                    <span style={{ fontSize: 11, color: "#94a3b8" }}>{catalog.filter(c => c.locked).length} locked</span>
+                                    <span style={{ color: "#cbd5e1" }}>·</span>
+                                    <span style={{ fontSize: 11, color: "#94a3b8" }}>{catalog.filter(c => !c.locked).length} unlocked</span>
+                                </div>
+                            )}
                         </div>
+
                         {isCatalogVisible && (
                             <div style={{ background: "#fff", borderRadius: 16, border: "1px solid #e2e8f0", overflow: "hidden", marginTop: 12 }}>
-                                {catalogLoading ? <div style={{ padding: 40, textAlign: "center" }}>Loading...</div> : catalog.length === 0 ? <div style={{ padding: 40, textAlign: "center" }}>No positions yet.</div> : (
-                                    catalog.map(item => <CatalogItem key={item.id_position} item={item} onEdit={(it) => { setEditingCatalogItem(it); setPosModalOpen(true); }} onDelete={async (id) => {
-                                        if (!confirm("Are you sure?")) return;
-                                        try { await axios.delete(`http://127.0.0.1:8000/api/positions/catalog/${id}`, { headers: { Authorization: `Bearer ${token}` } }); fetchCatalog(); showToast("Deleted."); }
-                                        catch (e) { showToast(e.response?.data?.error || "Error", "error"); }
-                                    }} />)
+                                {catalogLoading ? (
+                                    <div style={{ padding: 40, textAlign: "center", color: "#94a3b8", fontSize: 13 }}>Loading positions...</div>
+                                ) : catalog.length === 0 ? (
+                                    <div style={{ padding: 40, textAlign: "center", color: "#94a3b8", fontSize: 13 }}>No positions yet. Add your first position.</div>
+                                ) : (
+                                    catalog.map(item => (
+                                        <CatalogItem
+                                            key={item.id_position}
+                                            item={item}
+                                            onEdit={(it) => { setEditingCatalogItem(it); setPosModalOpen(true); }}
+                                            onDelete={handleDeleteCatalog}
+                                            onLock={handleLock}
+                                            onDuplicate={handleDuplicate}
+                                        />
+                                    ))
                                 )}
                             </div>
                         )}
                     </div>
 
+                    {/* ── Program Positions ────────────────────────────── */}
                     <SectionTitle style={{ marginBottom: 18 }}>Program Positions</SectionTitle>
                     <div style={{ display: "flex", gap: 8, marginBottom: 22, flexWrap: "wrap" }}>
                         {[
-                            { key: "all", label: "All", count: programs.length },
+                            { key: "all",       label: "All",       count: programs.length },
                             { key: "published", label: "Published", count: programs.filter(p => p.vacancy_status === "published").length },
-                            { key: "closed", label: "Closed", count: programs.filter(p => p.vacancy_status === "closed").length }
+                            { key: "closed",    label: "Closed",    count: programs.filter(p => p.vacancy_status === "closed").length },
                         ].map(t => (
                             <button key={t.key} onClick={() => setFilter(t.key)}
-                                style={{
-                                    display: "flex", alignItems: "center", gap: 8,
-                                    padding: "8px 16px", borderRadius: "100px",
-                                    border: `1.5px solid ${filter === t.key ? "#2563c4" : "#e2e8f0"}`,
-                                    background: filter === t.key ? "#2563c4" : "#fff",
-                                    color: filter === t.key ? "#fff" : "#64748b",
-                                    fontSize: "13px", fontWeight: "600", cursor: "pointer", transition: "all .15s"
-                                }}
-                            >
+                                style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 16px", borderRadius: "100px", border: `1.5px solid ${filter === t.key ? "#2563c4" : "#e2e8f0"}`, background: filter === t.key ? "#2563c4" : "#fff", color: filter === t.key ? "#fff" : "#64748b", fontSize: "13px", fontWeight: "600", cursor: "pointer", transition: "all .15s", fontFamily: "inherit" }}>
                                 <span>{t.label}</span>
-                                <span style={{
-                                    background: filter === t.key ? "rgba(255,255,255,0.2)" : "#f1f5f9",
-                                    padding: "1px 7px", borderRadius: "10px", fontSize: "11px", fontWeight: "700"
-                                }}>{t.count}</span>
+                                <span style={{ background: filter === t.key ? "rgba(255,255,255,0.2)" : "#f1f5f9", padding: "1px 7px", borderRadius: "10px", fontSize: "11px", fontWeight: "700" }}>{t.count}</span>
                             </button>
                         ))}
                     </div>
 
-                    {loading ? <div style={{ textAlign: "center", padding: 40 }}>Loading...</div> : filtered.length === 0 ? <div style={{ textAlign: "center", padding: 60, color: "#64748b" }}>No programs found.</div> : (
+                    {loading ? (
+                        <div style={{ textAlign: "center", padding: 40, color: "#94a3b8", fontSize: 13 }}>Loading programs...</div>
+                    ) : filtered.length === 0 ? (
+                        <div style={{ textAlign: "center", padding: 60, color: "#94a3b8", fontSize: 13 }}>No programs found.</div>
+                    ) : (
                         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(320px,1fr))", gap: 20 }}>
-                            {filtered.map((p, i) => <ProgramCard key={i} program={p} onEdit={(prog) => { setSelectedProg(prog); setSubmissionModalOpen(true); }} onDelete={setDeletingProg} />)}
+                            {filtered.map((p, i) => (
+                                <ProgramCard key={i} program={p}
+                                    onEdit={(prog) => { setSelectedProg(prog); setSubmissionModalOpen(true); }}
+                                    onDelete={setDeletingProg}
+                                />
+                            ))}
                         </div>
                     )}
                 </main>
             </div>
 
+            {/* ── Modals ──────────────────────────────────────────── */}
             <SubmissionModal open={submissionModalOpen} program={selectedProg} onClose={() => { setSubmissionModalOpen(false); setSelectedProg(null); }} />
-            
-            <PositionModal 
-                open={posModalOpen} item={editingCatalogItem} onClose={() => { setPosModalOpen(false); setEditingCatalogItem(null); }}
+
+            <PositionModal
+                open={posModalOpen}
+                item={editingCatalogItem}
+                onClose={() => { setPosModalOpen(false); setEditingCatalogItem(null); }}
                 onSave={async (id, data) => {
                     try {
                         const url = id ? `http://127.0.0.1:8000/api/positions/catalog/${id}` : "http://127.0.0.1:8000/api/positions/catalog";
-                        const res = await axios[id ? "put" : "post"](url, data, { headers: { Authorization: `Bearer ${token}` } });
-                        showToast(`Position ${id ? "updated" : "created"}.`); 
-                        fetchCatalog(); 
+                        await axios[id ? "put" : "post"](url, data, { headers: { Authorization: `Bearer ${token}` } });
+                        showToast(`Position ${id ? "updated" : "created"} successfully.`);
+                        fetchCatalog();
                         setPosModalOpen(false);
-                    } catch (e) { 
-                        // Tambah ini untuk debug
-                        console.log("FULL ERROR:", e.response?.data);
-                        console.log("STATUS:", e.response?.status);
-                        alert(JSON.stringify(e.response?.data)); // ← ini akan show error aslinya
+                        setEditingCatalogItem(null);
+                    } catch (e) {
+                        showToast(e.response?.data?.error || "Failed to save position.", "error");
                     }
                 }}
             />
 
+            {/* Delete program confirm */}
             {deletingProg && (
-                <div style={{ position: "fixed", inset: 0, background: "rgba(10,22,40,.5)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <div style={{ background: "#fff", borderRadius: 16, padding: 28, width: 360, textAlign: "left" }}>
-                        <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>Remove Position?</h3>
-                        <p style={{ fontSize: 13, color: "#64748b", margin: "12px 0 20px" }}>Remove <b>{deletingProg.position_name}</b> from <b>{deletingProg.vacancy_title}</b>?</p>
-                        <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-                            <button onClick={() => setDeletingProg(null)} style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid #e2e8f0", background: "#fff", fontWeight: 700, cursor: "pointer" }}>Cancel</button>
-                            <button onClick={() => { handleDelete(deletingProg); setDeletingProg(null); }} style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: "#ef4444", color: "#fff", fontWeight: 700, cursor: "pointer" }}>Yes, Remove</button>
-                        </div>
-                    </div>
-                </div>
+                <ConfirmModal
+                    open={true}
+                    title="Remove Position from Program?"
+                    message={<>Remove <b>{deletingProg.position_name}</b> from <b>{deletingProg.vacancy_title}</b>? This will not delete the position from your catalog.</>}
+                    confirmLabel="Yes, Remove"
+                    confirmColor="#ef4444"
+                    onConfirm={() => { handleDeleteProgram(deletingProg); setDeletingProg(null); }}
+                    onCancel={() => setDeletingProg(null)}
+                />
             )}
 
-            {logoutModalOpen && (
-                <div style={{ position: "fixed", inset: 0, background: "rgba(10,22,40,.5)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <div style={{ background: "#fff", borderRadius: 16, padding: 28, width: 320, textAlign: "left" }}>
-                        <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>Sign Out?</h3>
-                        <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 20 }}>
-                            <button onClick={() => setLogoutModalOpen(false)} style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid #e2e8f0", background: "#fff", fontWeight: 700, cursor: "pointer" }}>Cancel</button>
-                            <button onClick={async () => { await logout(); navigate("/", { replace: true }); }} style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: "#ef4444", color: "#fff", fontWeight: 700, cursor: "pointer" }}>Sign Out</button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            {/* Generic confirm modal (lock/unlock/duplicate/delete catalog) */}
+            <ConfirmModal
+                open={confirmModal.open}
+                title={confirmModal.title}
+                message={confirmModal.message}
+                confirmLabel={confirmModal.confirmLabel}
+                confirmColor={confirmModal.confirmColor}
+                onConfirm={confirmModal.onConfirm}
+                onCancel={closeConfirm}
+            />
+
+            {/* Logout confirm */}
+            <ConfirmModal
+                open={logoutModalOpen}
+                title="Sign Out?"
+                message="Are you sure you want to sign out of your account?"
+                confirmLabel="Sign Out"
+                confirmColor="#ef4444"
+                onConfirm={async () => { await logout(); navigate("/", { replace: true }); }}
+                onCancel={() => setLogoutModalOpen(false)}
+            />
 
             <Toast msg={toast.msg} type={toast.type} visible={toast.visible} />
         </div>
