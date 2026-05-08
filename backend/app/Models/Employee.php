@@ -22,6 +22,7 @@ class Employee extends Model
         'birth_date',
         'address',
         'photo_path',
+        'signature_path',
         'department',
         'position',
         'joined_at',

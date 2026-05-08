@@ -19,6 +19,7 @@ use App\Http\Controllers\CompanyUserController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProgramController;
 use App\Http\Controllers\VacancyController;
+use App\Http\Controllers\SignatureController;
 
 // Controllers — Users
 use App\Http\Controllers\CandidateController;
@@ -76,6 +77,11 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/create-company',            [AuthController::class, 'createCompany']);
     Route::post('/create-candidate-profile',  [AuthController::class, 'createCandidateProfile']);
+
+    // Signatures (HR & Mentor)
+    Route::get('/signature',    [SignatureController::class, 'getSignature']);
+    Route::post('/signature',   [SignatureController::class, 'storeSignature']);
+    Route::delete('/signature', [SignatureController::class, 'deleteSignature']);
 
     // Company Config
     Route::prefix('company/config')->group(function () {
@@ -347,6 +353,8 @@ Route::middleware(['auth:sanctum'])->prefix('hr')->group(function () {
     // LoA
     Route::get('/loa',                  [HRLoaController::class, 'index']);
     Route::post('/loa/bulk-generate',   [HRLoaController::class, 'bulkGenerate']);
+    Route::post('/loa/bulk-regenerate', [HRLoaController::class, 'bulkRegenerate']);
+    Route::post('/loa/bulk-send',       [HRLoaController::class, 'bulkSend']);
     Route::post('/loa/{id}/generate',   [HRLoaController::class, 'generate']);
     Route::get('/loa/{id}/download',    [HRLoaController::class, 'download']);
     Route::post('/loa/{id}/send',       [HRLoaController::class, 'sendLoa']);

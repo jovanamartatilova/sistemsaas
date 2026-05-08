@@ -784,6 +784,16 @@ class MentorController extends Controller
         $idCert = $certExists ? $certExists->id_certificate : 'CERT' . strtoupper(Str::random(6));
         $filePath = 'certificates/' . $idCert . '.pdf';
 
+        $signature_base64 = null;
+        if (auth()->check() && auth()->user()->employee && auth()->user()->employee->signature_path) {
+            $sigPath = storage_path('app/public/' . auth()->user()->employee->signature_path);
+            if (file_exists($sigPath)) {
+                $type = pathinfo($sigPath, PATHINFO_EXTENSION);
+                $data = file_get_contents($sigPath);
+                $signature_base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
+            }
+        }
+
         $data = [
             'submission' => $submission,
             'company' => $company,
@@ -795,6 +805,7 @@ class MentorController extends Controller
             'competencies' => $competenciesData,
             'avgScore' => $avgScore,
             'evaluation' => $assessment->narrative ?? '',
+            'signature_base64' => $signature_base64,
         ];
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('certificate.template', $data)->setPaper('a4', 'landscape');
@@ -893,6 +904,12 @@ class MentorController extends Controller
             ->with(['user', 'position', 'vacancy.company'])
             ->firstOrFail();
 
+        $certExists = Certificate::where('id_submission', $idSubmission)->first();
+        if ($certExists && $certExists->file_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($certExists->file_path)) {
+            $path = storage_path('app/public/' . $certExists->file_path);
+            return response()->file($path);
+        }
+
         // Calculate average score
         $assessment = Assessment::where('id_submission', $idSubmission)->first();
         $scoresData = $assessment->scores_data ?? [];
@@ -942,6 +959,16 @@ class MentorController extends Controller
             }
         }
 
+        $signature_base64 = null;
+        if (auth()->check() && auth()->user()->employee && auth()->user()->employee->signature_path) {
+            $sigPath = storage_path('app/public/' . auth()->user()->employee->signature_path);
+            if (file_exists($sigPath)) {
+                $type = pathinfo($sigPath, PATHINFO_EXTENSION);
+                $data = file_get_contents($sigPath);
+                $signature_base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
+            }
+        }
+
         $data = [
             'submission' => $submission,
             'company' => $company,
@@ -953,6 +980,7 @@ class MentorController extends Controller
             'competencies' => $competenciesData,
             'avgScore' => $avgScore,
             'evaluation' => $assessment->narrative ?? '',
+            'signature_base64' => $signature_base64,
         ];
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('certificate.template', $data)->setPaper('a4', 'landscape');

@@ -7,6 +7,86 @@ import { useAuthStore } from "../../stores/authStore";
 import { broadcastDataRefresh, onDataRefresh } from "../../utils/dataRefresh";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { Eye, RefreshCw, Check } from 'lucide-react';
+import SignatureSelector from "../../components/SignatureSelector";
+
+// ── Icons ──────────────────────────────────────────────────────────────────────
+const IC = {
+  FileCheck: () => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <polyline points="14 2 14 8 20 8" />
+      <polyline points="9 15 11 17 15 13" />
+    </svg>
+  ),
+  FilePlus: () => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <polyline points="14 2 14 8 20 8" />
+      <line x1="12" y1="18" x2="12" y2="12" />
+      <line x1="9" y1="15" x2="15" y2="15" />
+    </svg>
+  ),
+  Search: () => (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+    </svg>
+  ),
+  Eye: () => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  ),
+  Refresh: (props) => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <polyline points="23 4 23 10 17 10" />
+      <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+    </svg>
+  ),
+  Check: () => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="20 6 9 17 4 12" />
+    </svg>
+  ),
+};
+
+// ── Action Button ──────────────────────────────────────────────────────────────
+const VARIANT = {
+  green:  { bg: "#f0fdf4", color: "#15803d", border: "#86efac" },
+  red:    { bg: "#fff1f2", color: "#be123c", border: "#fecdd3" },
+  blue:   { bg: "#eff6ff", color: "#1d4ed8", border: "#bfdbfe" },
+  amber:  { bg: "#fffbeb", color: "#92400e", border: "#fde68a" },
+  ghost:  { bg: "#f8fafc", color: "#475569", border: "#e2e8f0" },
+};
+
+function ActionBtn({ label, icon, variant = "blue", onClick, disabled, title }) {
+  const v = VARIANT[variant];
+  const [hov, setHov] = useState(false);
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      title={title}
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      style={{
+        padding: "4px 10px", borderRadius: "7px", fontSize: "11.5px", fontWeight: "600",
+        cursor: disabled ? "not-allowed" : "pointer",
+        border: `1px solid ${v.border}`,
+        background: disabled ? "#f1f5f9" : hov ? v.border : v.bg,
+        color: disabled ? "#94a3b8" : v.color,
+        whiteSpace: "nowrap",
+        fontFamily: "'Poppins','Segoe UI',sans-serif",
+        transition: "background 0.15s",
+        display: "flex", alignItems: "center", gap: "4px",
+        opacity: disabled ? 0.6 : 1,
+      }}
+    >
+      {icon && icon}
+      {label}
+    </button>
+  );
+}
 
 const s = {
   app: { display: "flex", minHeight: "100vh", background: "#f1f5f9", fontFamily: "'Poppins', 'Segoe UI', sans-serif", fontSize: "14px", color: "#1e293b", gap: 0 },
@@ -54,6 +134,7 @@ export default function CertificateMentor() {
   const [selectedSubmissionId, setSelectedSubmissionId] = useState(null);
   const [bulkGenerating, setBulkGenerating] = useState(false);
   const [bulkSending, setBulkSending] = useState(false);
+  const [hasSignature, setHasSignature] = useState(false);
 
   // ─── FETCH ───────────────────────────────────────────────────────────────
 const applyCerts = (data) => {
@@ -160,8 +241,12 @@ const applyCerts = (data) => {
 
   // ─── ACTIONS ─────────────────────────────────────────────────────────────
   const handleBulkGenerate = async () => {
+    if (!hasSignature) {
+      pushToast("Silakan atur tanda tangan Anda terlebih dahulu", "error");
+      return;
+    }
     const eligibleIds = filteredCerts
-      .filter(cert => cert.score !== null)
+      .filter(cert => cert.status === "Done") // Only those without cert
       .map(cert => cert.id_submission);
 
     if (eligibleIds.length === 0) {
@@ -169,7 +254,39 @@ const applyCerts = (data) => {
       return;
     }
 
-    if (!window.confirm(`Are you sure you want to generate/regenerate certificates for ${eligibleIds.length} interns?`)) {
+    if (!window.confirm(`Are you sure you want to generate certificates for ${eligibleIds.length} interns?`)) {
+        return;
+    }
+
+    try {
+      setBulkGenerating(true);
+      await mentorApi.bulkGenerateCertificates(eligibleIds);
+      broadcastDataRefresh('certificate');
+      await fetchCerts(search);
+      pushToast(`Bulk generation successful for ${eligibleIds.length} interns.`, 'success');
+    } catch (error) {
+      console.error('Bulk generation error:', error);
+      pushToast('Failed to process bulk generation', 'error');
+    } finally {
+      setBulkGenerating(false);
+    }
+  };
+
+  const handleBulkRegenerate = async () => {
+    if (!hasSignature) {
+      pushToast("Silakan atur tanda tangan Anda terlebih dahulu", "error");
+      return;
+    }
+    const eligibleIds = filteredCerts
+      .filter(cert => cert.status === "Generated") // Only those WITH cert
+      .map(cert => cert.id_submission);
+
+    if (eligibleIds.length === 0) {
+      pushToast("No eligible interns to regenerate certificates for.", "info");
+      return;
+    }
+
+    if (!window.confirm(`Are you sure you want to regenerate certificates for ${eligibleIds.length} interns?`)) {
         return;
     }
 
@@ -216,6 +333,10 @@ const applyCerts = (data) => {
   };
 
   const handleGenerateCertificate = async (idSubmission) => {
+    if (!hasSignature) {
+      pushToast("Silakan atur tanda tangan Anda terlebih dahulu", "error");
+      return;
+    }
     try {
       setGenerating(prev => ({ ...prev, [idSubmission]: true }));
       await mentorApi.generateCertificate(idSubmission);
@@ -223,9 +344,7 @@ const applyCerts = (data) => {
       setRegenerateSuccess(prev => ({ ...prev, [idSubmission]: true }));
       setTimeout(() => setRegenerateSuccess(prev => ({ ...prev, [idSubmission]: false })), 3000);
       pushToast('Certificate generated successfully', 'success');
-      setLoading(true);
       await fetchCerts(search);
-      setLoading(false);
     } catch (error) {
       console.error('Error generating certificate:', error);
       pushToast('Failed to generate certificate', 'error');
@@ -240,9 +359,7 @@ const applyCerts = (data) => {
       await mentorApi.sendCertificate(idSubmission);
       broadcastDataRefresh('certificate');
       pushToast('Certificate sent successfully', 'success');
-      setLoading(true);
       await fetchCerts(search);
-      setLoading(false);
     } catch (error) {
       console.error('Error sending certificate:', error);
       pushToast('Failed to send certificate', 'error');
@@ -326,47 +443,44 @@ const applyCerts = (data) => {
           <h1 style={s.h1}>Certificate</h1>
           <p style={s.subtitle}>Generate and manage certificates for interns who have passed all competency assessments.</p>
 
+          <SignatureSelector onSignatureChange={(url) => setHasSignature(!!url)} />
+
           <div style={s.card}>
            {/* Card Header */}
-          <div style={{ padding: "18px 24px", borderBottom: "1px solid #f1f5f9", display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
+          <div style={{ padding: "18px 24px", borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             
-            {/* Title - center */}
-            <div style={{ textAlign: "center" }}>
+            <div style={{ textAlign: "left" }}>
               <div style={s.ct}>Certificate List</div>
               <div style={s.cs}>Interns who have completed all competency assessments</div>
             </div>
 
-            {/* Tab - center */}
-            <div style={{ display: "flex", background: "#f1f5f9", borderRadius: "10px", padding: "3px", gap: "2px" }}>
-              {["Individual", "Team"].map(tab => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  style={{
-                    padding: "6px 24px", borderRadius: "8px", border: "none",
-                    fontSize: "13px", fontWeight: activeTab === tab ? 700 : 500,
-                    color: activeTab === tab ? "#0f172a" : "#94a3b8",
-                    background: activeTab === tab ? "#fff" : "transparent",
-                    cursor: "pointer", fontFamily: "inherit",
-                    boxShadow: activeTab === tab ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
-                    transition: "all 0.15s",
-                  }}
-                >
-                  {tab}
-                </button>
-              ))}
-            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <div style={{ display: "flex", background: "#f1f5f9", borderRadius: "10px", padding: "3px", gap: "2px" }}>
+                {["Individual", "Team"].map(tab => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    style={{
+                      padding: "6px 24px", borderRadius: "8px", border: "none",
+                      fontSize: "13px", fontWeight: activeTab === tab ? 700 : 500,
+                      color: activeTab === tab ? "#0f172a" : "#94a3b8",
+                      background: activeTab === tab ? "#fff" : "transparent",
+                      cursor: "pointer", fontFamily: "inherit",
+                      boxShadow: activeTab === tab ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
+                      transition: "all 0.15s",
+                    }}
+                  >
+                    {tab}
+                  </button>
+                ))}
+              </div>
 
-            {/* Search + Bulk Generate - center */}
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <div style={{
                 display: "flex", alignItems: "center", gap: "8px",
                 background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px",
-                padding: "7px 14px", width: "280px",
+                padding: "7px 14px", width: "220px", height: "34px"
               }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
-                </svg>
+                <IC.Search />
                 <input
                   placeholder="Search by name..."
                   value={search}
@@ -377,35 +491,46 @@ const applyCerts = (data) => {
                   <span onClick={() => setSearch("")} style={{ cursor: "pointer", color: "#94a3b8", fontSize: "16px", lineHeight: 1 }}>×</span>
                 )}
               </div>
+              
               <div style={{ display: "flex", gap: "8px" }}>
-                <button 
-                  style={{ ...s.btnPrimary, opacity: bulkGenerating ? 0.7 : 1, cursor: bulkGenerating ? "not-allowed" : "pointer" }}
-                  onClick={handleBulkGenerate}
-                  disabled={bulkGenerating}
-                >
-                  {bulkGenerating ? "Generating..." : "Bulk Generate / Regenerate"}
-                </button>
-                <button 
-                  style={{ 
-                    padding: "7px 16px", 
-                    background: "#eff6ff", 
-                    color: "#2563eb", 
-                    border: "1px solid #93c5fd", 
-                    borderRadius: "8px", 
-                    fontSize: "13px", 
-                    fontWeight: 600, 
-                    cursor: bulkSending ? "not-allowed" : "pointer", 
-                    fontFamily: "inherit",
-                    opacity: bulkSending ? 0.7 : 1
+                <button
+                  style={{
+                    padding: "7px 14px", background: "#f0fdf4", color: "#15803d", border: "1px solid #86efac",
+                    borderRadius: "10px", fontSize: "13px", fontWeight: 700, cursor: bulkGenerating ? "not-allowed" : "pointer",
+                    display: "flex", alignItems: "center", gap: "6px", fontFamily: "inherit", opacity: bulkGenerating ? 0.7 : 1, whiteSpace: "nowrap"
                   }}
-                  onClick={handleBulkSend}
-                  disabled={bulkSending}
+                  onClick={handleBulkGenerate} disabled={bulkGenerating}
                 >
-                  {bulkSending ? "Sending..." : "Bulk Send"}
+                  <IC.FilePlus />
+                  Bulk Generate
+                </button>
+                
+                <button
+                  style={{
+                    padding: "7px 14px", background: "#fffbeb", color: "#b45309", border: "1px solid #fde68a",
+                    borderRadius: "10px", fontSize: "13px", fontWeight: 700, cursor: bulkGenerating ? "not-allowed" : "pointer",
+                    display: "flex", alignItems: "center", gap: "6px", fontFamily: "inherit", opacity: bulkGenerating ? 0.7 : 1, whiteSpace: "nowrap"
+                  }}
+                  onClick={handleBulkRegenerate} disabled={bulkGenerating}
+                >
+                  <IC.Refresh />
+                  Bulk Regenerate
+                </button>
+
+                <button
+                  style={{
+                    padding: "7px 14px", background: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe",
+                    borderRadius: "10px", fontSize: "13px", fontWeight: 700, cursor: bulkSending ? "not-allowed" : "pointer",
+                    display: "flex", alignItems: "center", gap: "6px", fontFamily: "inherit", opacity: bulkSending ? 0.7 : 1, whiteSpace: "nowrap"
+                  }}
+                  onClick={handleBulkSend} disabled={bulkSending}
+                >
+                  <IC.Check />
+                  Bulk Send
                 </button>
               </div>
             </div>
-            </div>
+          </div>
 
             {/* Table */}
             <div style={{ overflowX: "auto", width: "100%" }}>
@@ -468,34 +593,38 @@ const applyCerts = (data) => {
                             </td>
                             <td style={s.td}><span style={s.badge(cert.statusBg, cert.statusColor)}>{cert.status}</span></td>
                             <td style={{ ...s.td, textAlign: 'center' }}>
-                              <div style={{ ...s.acts, justifyContent: 'center' }}>
-                                {(cert.status === "Done" || cert.status === "Generated") && (
-                                  <>
-                                    <button style={s.btnIconBox} onClick={() => handlePreview(cert.id_submission)} disabled={previewing[cert.id_submission]} title="Preview">
-                                      <Eye size={15} />
-                                    </button>
-                                    <button style={s.btnIconBox} onClick={() => handleGenerateCertificate(cert.id_submission)} disabled={generating[cert.id_submission]} title="Regenerate">
-                                      <RefreshCw size={15} />
-                                    </button>
-                                  </>
-                                )}
+                              <div style={{ display: "flex", gap: "6px", alignItems: "center", justifyContent: "center" }}>
                                 {cert.status === "Generated" && (
                                   <>
-                                    <button style={{ ...s.btnIconBox, opacity: 0.5, pointerEvents: 'none' }} title="Already sent">
-                                      <Check size={15} />
-                                    </button>
-                                    <button style={s.btnSend} onClick={() => handleSendCertificate(cert.id_submission)} disabled={sending[cert.id_submission]}>
-                                      {sending[cert.id_submission] ? 'Sending...' : 'Send'}
-                                    </button>
+                                    <ActionBtn
+                                      icon={<IC.Eye />}
+                                      variant="ghost" title="Preview"
+                                      onClick={() => handlePreview(cert.id_submission)}
+                                    />
+                                    <ActionBtn
+                                      label={sending[cert.id_submission] ? "Sending" : "Send"}
+                                      variant={cert.is_sent ? "ghost" : "blue"} title={cert.is_sent ? "Sent" : "Send"}
+                                      disabled={cert.is_sent || sending[cert.id_submission]}
+                                      onClick={() => handleSendCertificate(cert.id_submission)}
+                                    />
+                                    <ActionBtn
+                                      icon={<IC.Refresh className={generating[cert.id_submission] ? "spin" : ""} />}
+                                      variant={regenerateSuccess[cert.id_submission] ? "green" : "amber"} title="Regenerate"
+                                      disabled={generating[cert.id_submission]}
+                                      onClick={() => handleGenerateCertificate(cert.id_submission)}
+                                    />
                                   </>
                                 )}
                                 {cert.status === "Done" && (
-                                  <button style={s.btnGenerate} onClick={() => handleGenerateCertificate(cert.id_submission)} disabled={generating[cert.id_submission]}>
-                                    {regenerateSuccess[cert.id_submission] ? '✓ Generated' : generating[cert.id_submission] ? 'Generating...' : 'Generate'}
-                                  </button>
+                                  <ActionBtn
+                                    label="Generate" variant="green" title="Generate Certificate"
+                                    disabled={generating[cert.id_submission]}
+                                    onClick={() => handleGenerateCertificate(cert.id_submission)}
+                                    icon={generating[cert.id_submission] ? <IC.Refresh className="spin" /> : null}
+                                  />
                                 )}
                                 {(cert.status === "Not Passed" || cert.status === "In Progress" || cert.status === "Failed") && (
-                                  <span style={{ color: "#cbd5e1", fontSize: "12px" }}>—</span>
+                                  <span style={{ color: "#cbd5e1", fontSize: "12px", fontWeight: "600" }}>Not Eligible</span>
                                 )}
                               </div>
                             </td>
@@ -517,34 +646,38 @@ const applyCerts = (data) => {
                         </td>
                         <td style={s.td}><span style={s.badge(cert.statusBg, cert.statusColor)}>{cert.status}</span></td>
                         <td style={{ ...s.td, textAlign: 'center' }}>
-                          <div style={{ ...s.acts, justifyContent: 'center' }}>
-                            {(cert.status === "Done" || cert.status === "Generated") && (
-                              <>
-                                <button style={s.btnIconBox} onClick={() => handlePreview(cert.id_submission)} disabled={previewing[cert.id_submission]} title="Preview">
-                                  <Eye size={15} />
-                                </button>
-                                <button style={s.btnIconBox} onClick={() => handleGenerateCertificate(cert.id_submission)} disabled={generating[cert.id_submission]} title="Regenerate">
-                                  <RefreshCw size={15} />
-                                </button>
-                              </>
-                            )}
+                          <div style={{ display: "flex", gap: "6px", alignItems: "center", justifyContent: "center" }}>
                             {cert.status === "Generated" && (
                               <>
-                                <button style={{ ...s.btnIconBox, opacity: 0.5, pointerEvents: 'none' }} title="Already sent">
-                                  <Check size={15} />
-                                </button>
-                                <button style={s.btnSend} onClick={() => handleSendCertificate(cert.id_submission)} disabled={sending[cert.id_submission]}>
-                                  {sending[cert.id_submission] ? 'Sending...' : 'Send'}
-                                </button>
+                                <ActionBtn
+                                  icon={<IC.Eye />}
+                                  variant="ghost" title="Preview"
+                                  onClick={() => handlePreview(cert.id_submission)}
+                                />
+                                <ActionBtn
+                                  label={sending[cert.id_submission] ? "Sending" : "Send"}
+                                  variant={cert.is_sent ? "ghost" : "blue"} title={cert.is_sent ? "Sent" : "Send"}
+                                  disabled={cert.is_sent || sending[cert.id_submission]}
+                                  onClick={() => handleSendCertificate(cert.id_submission)}
+                                />
+                                <ActionBtn
+                                  icon={<IC.Refresh className={generating[cert.id_submission] ? "spin" : ""} />}
+                                  variant={regenerateSuccess[cert.id_submission] ? "green" : "amber"} title="Regenerate"
+                                  disabled={generating[cert.id_submission]}
+                                  onClick={() => handleGenerateCertificate(cert.id_submission)}
+                                />
                               </>
                             )}
                             {cert.status === "Done" && (
-                              <button style={s.btnGenerate} onClick={() => handleGenerateCertificate(cert.id_submission)} disabled={generating[cert.id_submission]}>
-                                {regenerateSuccess[cert.id_submission] ? '✓ Generated' : generating[cert.id_submission] ? 'Generating...' : 'Generate'}
-                              </button>
+                              <ActionBtn
+                                label="Generate" variant="green" title="Generate Certificate"
+                                disabled={generating[cert.id_submission]}
+                                onClick={() => handleGenerateCertificate(cert.id_submission)}
+                                icon={generating[cert.id_submission] ? <IC.Refresh className="spin" /> : null}
+                              />
                             )}
                             {(cert.status === "Not Passed" || cert.status === "In Progress" || cert.status === "Failed") && (
-                              <span style={{ color: "#cbd5e1", fontSize: "12px" }}>—</span>
+                              <span style={{ color: "#cbd5e1", fontSize: "12px", fontWeight: "600" }}>Not Eligible</span>
                             )}
                           </div>
                         </td>

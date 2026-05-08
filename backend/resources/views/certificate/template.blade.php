@@ -90,7 +90,7 @@
     }
 
     .signature-date { font-size: 10pt; margin-bottom: 3px; }
-    .signature-title { font-size: 10pt; font-weight: bold; margin-bottom: 85px; }
+    .signature-title { font-size: 10pt; font-weight: bold; margin-bottom: 5px; }
     .signature-name {
         font-size: 12pt;
         font-weight: bold;
@@ -189,9 +189,18 @@
         </div>
 
         <div class="signature-section-absolute">
-            <div class="signature-date">{{ $companyCity }}, {{ $issuedDate }}</div>
-            <div class="signature-title">Mentor {{ $company ? $company->name : '' }}</div>
-            <div class="signature-name">{{ $mentorName }}</div>
+            <div style="display: inline-block; text-align: center;">
+                <div class="signature-date" style="text-align: center;">{{ $companyCity }}, {{ $issuedDate }}</div>
+                <div class="signature-title" style="text-align: center;">Mentor {{ $company ? $company->name : '' }}</div>
+                @if(isset($signature_base64) && $signature_base64)
+                    <div style="margin-bottom: 5px;">
+                        <img src="{{ $signature_base64 }}" style="max-height: 80px; max-width: 150px; display: inline-block;" alt="Signature">
+                    </div>
+                @else
+                    <div style="height: 85px;"></div>
+                @endif
+                <div class="signature-name">{{ $mentorName }}</div>
+            </div>
         </div>
         
         <div style="position: absolute; bottom: 0px; left: 0px; font-size: 10pt; color: #94a3b8; text-align: left;">
@@ -242,9 +251,18 @@
 
         <!-- Signature follows right after table -->
         <div class="signature-section-flow">
-            <div class="signature-date">{{ $companyCity }}, {{ $issuedDate }}</div>
-            <div class="signature-title">Mentor {{ $company ? $company->name : '' }}</div>
-            <div class="signature-name">{{ $mentorName }}</div>
+            <div style="display: inline-block; text-align: center;">
+                <div class="signature-date" style="text-align: center;">{{ $companyCity }}, {{ $issuedDate }}</div>
+                <div class="signature-title" style="text-align: center;">Mentor {{ $company ? $company->name : '' }}</div>
+                @if(isset($signature_base64) && $signature_base64)
+                    <div style="margin-bottom: 5px;">
+                        <img src="{{ $signature_base64 }}" style="max-height: 80px; max-width: 150px; display: inline-block;" alt="Signature">
+                    </div>
+                @else
+                    <div style="height: 85px;"></div>
+                @endif
+                <div class="signature-name">{{ $mentorName }}</div>
+            </div>
         </div>
     </div>
 
