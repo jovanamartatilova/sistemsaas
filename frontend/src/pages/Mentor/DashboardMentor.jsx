@@ -36,7 +36,6 @@ const s = {
   ch: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 24px", borderBottom: "1px solid #f1f5f9" },
   ct: { fontSize: "15px", fontWeight: 700, color: "#0f172a" },
   cs: { fontSize: "12px", color: "#94a3b8", marginTop: "1px" },
-  tableWrap: { overflowX: "auto" },
   table: { width: "100%", borderCollapse: "collapse", tableLayout: "fixed" },
   thead: { background: "#f8fafc", borderBottom: "1px solid #e2e8f0" },
   th: { padding: "10px 16px", textAlign: "center", fontSize: "10px", fontWeight: 700, color: "#94a3b8", letterSpacing: "0.06em", textTransform: "uppercase", whiteSpace: "nowrap" },
@@ -59,52 +58,114 @@ export default function DashboardMentor() {
   const [tableLoading, setTableLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("individual");
   const [exportDropdown, setExportDropdown] = useState(false);
+  const [batchFilter, setBatchFilter] = useState('');
+  const [allBatches, setAllBatches] = useState([]);
   const logout = useAuthStore((state) => state.logout);
 
   // ─── USE MENTOR STORE (caching + smart fetching) ──────────────────────────
   const { mentor, dashData, interns, recapInterns, loading, error, fetchDashboard, fetchInterns, fetchRecapInterns, backgroundFetchDashboard } = useMentorStore();
 
-// ─── EFFECTS ─────────────────────────────────────────────────────────────────
-useEffect(() => {
-  // Fetch data dengan caching otomatis
-  // Jika cache masih valid, pakai cache. Jika tidak, fetch baru.
-  fetchDashboard();
+  // ─── EFFECTS ─────────────────────────────────────────────────────────────────
+  useEffect(() => {
+    // Fetch data dengan caching otomatis
+    // Jika cache masih valid, pakai cache. Jika tidak, fetch baru.
+    fetchDashboard();
 
-  // Background sync saat window fokus (misal, user switch tab)
-  // Jika cache masih valid: skip fetch (no loading)
-  // Jika cache invalid: fetch in background tanpa trigger loading state
-  const handleFocus = () => {
-    console.log('[Dashboard] Window focused - checking cache validity...');
-    backgroundFetchDashboard(); // ← Use background fetch, tidak trigger loading
-  };
-  window.addEventListener('focus', handleFocus);
+    // Background sync saat window fokus (misal, user switch tab)
+    // Jika cache masih valid: skip fetch (no loading)
+    // Jika cache invalid: fetch in background tanpa trigger loading state
+    const handleFocus = () => {
+      console.log('[Dashboard] Window focused - checking cache validity...');
+      backgroundFetchDashboard(); // ← Use background fetch, tidak trigger loading
+    };
+    window.addEventListener('focus', handleFocus);
 
-  const cleanup = onDataRefresh(() => {
-    console.log('Dashboard: Data refresh event received, force refetching...');
-    fetchDashboard(true); // force refresh
-  });
+    const cleanup = onDataRefresh(() => {
+      console.log('Dashboard: Data refresh event received, force refetching...');
+      fetchDashboard(true); // force refresh
+    });
 
-  return () => {
-    window.removeEventListener('focus', handleFocus);
-    cleanup();
-  };
-}, []);
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      cleanup();
+    };
+  }, []);
 
-useEffect(() => {
-  const timer = setTimeout(() => {
-    if (!loading) {
+  // ─── FIX: Fetch interns & recap on mount, tanpa if (!loading) guard ───────
+  // Guard if (!loading) menyebabkan fetchRecapInterns tidak terpanggil
+  // saat mount karena loading masih true di window 400ms pertama.
+  useEffect(() => {
+    const timer = setTimeout(() => {
       fetchInterns(search);
       fetchRecapInterns(search);
-    }
-  }, 400);
-  return () => clearTimeout(timer);
-}, [search]);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  // Monitor batchFilter changes
+  useEffect(() => {
+    console.log('[BATCH FILTER] Changed to:', batchFilter);
+  }, [batchFilter]);
+
+// Helper: normalize batch value for comparison (convert to string for consistency)
+const normalizeBatch = (b) => {
+  if (!b || b === 'Batch not assigned') return '';
+  // Convert to string to ensure type consistency with dropdown values
+  return String(b).trim();
+};
+const batchMatch = (row) => {
+  const normalized = normalizeBatch(row.batch);
+  const isMatch = batchFilter === '' || normalized === batchFilter;
+  return isMatch;
+};
+
+// Rebuild allBatches with proper normalization and deduplication
+useEffect(() => {
+  if (recapInterns && recapInterns.length > 0) {
+    const batchSet = new Set();
+    recapInterns.forEach(r => {
+      const normalized = normalizeBatch(r.batch);
+      if (normalized) { // Only add non-empty normalized values
+        batchSet.add(normalized);
+      }
+    });
+    // Sort batches naturally (Batch 1, Batch 2, ..., Batch 10, not Batch 1, Batch 10, Batch 2)
+    const sortedBatches = Array.from(batchSet).sort((a, b) => {
+      // Both should be strings now due to normalizeBatch
+      const aStr = String(a).trim();
+      const bStr = String(b).trim();
+      const aMatch = aStr.match(/(\D+)(\d+)/);
+      const bMatch = bStr.match(/(\D+)(\d+)/);
+      
+      if (aMatch && bMatch) {
+        const aPrefix = aMatch[1].trim();
+        const bPrefix = bMatch[1].trim();
+        const aNum = parseInt(aMatch[2], 10);
+        const bNum = parseInt(bMatch[2], 10);
+        
+        if (aPrefix === bPrefix) {
+          return aNum - bNum; // Numeric sort if prefix same
+        }
+        return aPrefix.localeCompare(bPrefix);
+      }
+      // If no pattern match, try pure numeric sort
+      const aNum = parseInt(aStr, 10);
+      const bNum = parseInt(bStr, 10);
+      if (!isNaN(aNum) && !isNaN(bNum)) {
+        return aNum - bNum;
+      }
+      return aStr.localeCompare(bStr); // Fallback to string sort
+    });
+    console.log('[BATCH FILTER] Available batches:', sortedBatches);
+    setAllBatches(sortedBatches);
+  }
+}, [recapInterns]);
 
   const handleLogoutClick = () => {
     setLogoutModal(true);
   };
 
-const confirmLogout = async () => {
+  const confirmLogout = async () => {
     try {
       const savedTheme = localStorage.getItem("theme");
       await logout();
@@ -120,92 +181,92 @@ const confirmLogout = async () => {
 
   const handleLogout = handleLogoutClick;
 
-const handleExportCSV = (mode = "current") => {
-  try {
-    const isAll = mode === "all";
+  const handleExportCSV = (mode = "current") => {
+    try {
+      const isAll = mode === "all";
 
-    if (isAll) {
-      const headers = ['Type', 'Team', 'Intern', 'Position', 'Program', 'Period', 'Avg Score', 'Status'];
-      const rows = recapInterns.map(row => [
-        row.type,
-        row.type === "Team" ? (row.team_name ?? `Team ${(row.id_team ?? '').slice(-4)}`) : '—',
-        row.name, row.position, row.program, row.period ?? '',
-        row.avg != null ? row.avg.toFixed(1) : '',
-        row.status,
-      ]);
+      if (isAll) {
+        const headers = ['Type', 'Team', 'Intern', 'Position', 'Program', 'Period', 'Avg Score', 'Status'];
+        const rows = recapInterns.map(row => [
+          row.type,
+          row.type === "Team" ? (row.team_name ?? `Team ${(row.id_team ?? '').slice(-4)}`) : '—',
+          row.name, row.position, row.program, row.period ?? '',
+          row.avg != null ? row.avg.toFixed(1) : '',
+          row.status,
+        ]);
+        const csvContent = [headers.join(','), ...rows.map(r => r.map(c => `"${c}"`).join(','))].join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.setAttribute('href', URL.createObjectURL(blob));
+        link.setAttribute('download', `score-recap-all-${new Date().toISOString().slice(0, 10)}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        return;
+      }
+
+      const isTeam = activeTab === "team";
+      const filtered = recapInterns.filter(r => r.type === (isTeam ? "Team" : "Individual"));
+      const headers = isTeam
+        ? ['Team', 'Member', 'Position', 'Program', 'Period', 'Average Score', 'Status']
+        : ['Intern', 'Position', 'Program', 'Period', 'Competencies Scored', 'Total Hours', 'Average Score', 'Status'];
+      const rows = isTeam
+        ? filtered.map(row => [
+            row.team_name ?? `Team ${(row.id_team ?? '').slice(-4)}`,
+            row.name, row.position, row.program, row.period ?? '',
+            row.avg != null ? row.avg.toFixed(1) : '', row.status,
+          ])
+        : filtered.map(row => [
+            row.name, row.position, row.program, row.period ?? '',
+            row.scored, row.hours,
+            row.avg != null ? row.avg.toFixed(1) : '', row.status,
+          ]);
+
       const csvContent = [headers.join(','), ...rows.map(r => r.map(c => `"${c}"`).join(','))].join('\n');
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement('a');
       link.setAttribute('href', URL.createObjectURL(blob));
-      link.setAttribute('download', `score-recap-all-${new Date().toISOString().slice(0, 10)}.csv`);
+      link.setAttribute('download', `score-recap-${activeTab}-${new Date().toISOString().slice(0, 10)}.csv`);
       link.style.visibility = 'hidden';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      return;
+    } catch (error) {
+      console.error('Error exporting CSV:', error);
+      alert('Failed to export CSV');
     }
-
-    const isTeam = activeTab === "team";
-    const filtered = recapInterns.filter(r => r.type === (isTeam ? "Team" : "Individual"));
-    const headers = isTeam
-      ? ['Team', 'Member', 'Position', 'Program', 'Period', 'Average Score', 'Status']
-      : ['Intern', 'Position', 'Program', 'Period', 'Competencies Scored', 'Total Hours', 'Average Score', 'Status'];
-    const rows = isTeam
-      ? filtered.map(row => [
-          row.team_name ?? `Team ${(row.id_team ?? '').slice(-4)}`,
-          row.name, row.position, row.program, row.period ?? '',
-          row.avg != null ? row.avg.toFixed(1) : '', row.status,
-        ])
-      : filtered.map(row => [
-          row.name, row.position, row.program, row.period ?? '',
-          row.scored, row.hours,
-          row.avg != null ? row.avg.toFixed(1) : '', row.status,
-        ]);
-
-    const csvContent = [headers.join(','), ...rows.map(r => r.map(c => `"${c}"`).join(','))].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.setAttribute('href', URL.createObjectURL(blob));
-    link.setAttribute('download', `score-recap-${activeTab}-${new Date().toISOString().slice(0, 10)}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  } catch (error) {
-    console.error('Error exporting CSV:', error);
-    alert('Failed to export CSV');
-  }
-};
+  };
 
   // Use new accurate metrics from backend - keep only 4 main cards
   const avgScore = dashData?.average_score ?? 0;
-  
+
   const statCards = [
-  {
-    value: dashData?.total_interns ?? 0, label: "My Interns", badge: "Active", badgeBg: "#f5f3ff", badgeColor: "#7c3aed", sub: "Total active",
-    barColors: ["#8b5cf6","#a78bfa","#c4b5fd","#8b5cf6","#a78bfa","#c4b5fd","#8b5cf6"],
-    iconBg: "#f5f3ff", iconColor: "#7c3aed",
-    icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-  },
-  {
-    value: dashData?.needs_input ?? 0, label: "Needs Input", badge: "Action", badgeBg: "#ede9fe", badgeColor: "#6d28d9", sub: "Evaluation",
-    barColors: ["#a855f7","#c084fc","#a855f7","#c084fc","#a855f7","#c084fc","#a855f7"],
-    iconBg: "#ede9fe", iconColor: "#6d28d9",
-    icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-  },
-  {
-    value: dashData?.interns_passed ?? 0, label: "Passed", badge: null, sub: "Recommended",
-    barColors: ["#22c55e","#4ade80","#22c55e","#4ade80","#22c55e","#4ade80","#22c55e"],
-    iconBg: "#f0fdf4", iconColor: "#16a34a",
-    icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-  },
-  {
-    value: dashData?.ready_for_certificate ?? 0, label: "Ready for Certificate", badge: null, sub: "For issuance",
-    barColors: ["#06b6d4","#22d3ee","#06b6d4","#22d3ee","#06b6d4","#22d3ee","#06b6d4"],
-    iconBg: "#ecfeff", iconColor: "#0891b2",
-    icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg>
-  },
-];
+    {
+      value: dashData?.total_interns ?? 0, label: "My Interns", badge: "Active", badgeBg: "#f5f3ff", badgeColor: "#7c3aed", sub: "Total active",
+      barColors: ["#8b5cf6","#a78bfa","#c4b5fd","#8b5cf6","#a78bfa","#c4b5fd","#8b5cf6"],
+      iconBg: "#f5f3ff", iconColor: "#7c3aed",
+      icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    },
+    {
+      value: dashData?.needs_input ?? 0, label: "Needs Input", badge: "Action", badgeBg: "#ede9fe", badgeColor: "#6d28d9", sub: "Evaluation",
+      barColors: ["#a855f7","#c084fc","#a855f7","#c084fc","#a855f7","#c084fc","#a855f7"],
+      iconBg: "#ede9fe", iconColor: "#6d28d9",
+      icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+    },
+    {
+      value: dashData?.interns_passed ?? 0, label: "Passed", badge: null, sub: "Recommended",
+      barColors: ["#22c55e","#4ade80","#22c55e","#4ade80","#22c55e","#4ade80","#22c55e"],
+      iconBg: "#f0fdf4", iconColor: "#16a34a",
+      icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+    },
+    {
+      value: dashData?.ready_for_certificate ?? 0, label: "Ready for Certificate", badge: null, sub: "For issuance",
+      barColors: ["#06b6d4","#22d3ee","#06b6d4","#22d3ee","#06b6d4","#22d3ee","#06b6d4"],
+      iconBg: "#ecfeff", iconColor: "#0891b2",
+      icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg>
+    },
+  ];
 
   if (loading) {
     return (
@@ -268,30 +329,30 @@ const handleExportCSV = (mode = "current") => {
           <p style={s.subtitle}>Summary of your intern supervision today.</p>
 
           <div style={s.grid4}>
-          {statCards.map((c, i) => (
-            <div key={i} style={s.stat}>
-              {/* Top: icon + badge */}
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
-                <div style={{ width: "38px", height: "38px", borderRadius: "10px", background: c.iconBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px" }}>
-                  {c.icon}
+            {statCards.map((c, i) => (
+              <div key={i} style={s.stat}>
+                {/* Top: icon + badge */}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
+                  <div style={{ width: "38px", height: "38px", borderRadius: "10px", background: c.iconBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px" }}>
+                    {c.icon}
+                  </div>
+                  {c.badge && <span style={s.statBadge(c.badgeBg, c.badgeColor)}>{c.badge}</span>}
                 </div>
-                {c.badge && <span style={s.statBadge(c.badgeBg, c.badgeColor)}>{c.badge}</span>}
+                {/* Value */}
+                <div style={{ fontSize: "28px", fontWeight: "800", color: "#0f172a", letterSpacing: "-1px", marginTop: "4px" }}>{c.value}</div>
+                {/* Label */}
+                <div style={{ fontSize: "13px", color: "#64748b", fontWeight: "500" }}>{c.label}</div>
+                {/* Mini bar chart */}
+                <div style={{ display: "flex", gap: "3px", marginTop: "10px", alignItems: "flex-end", height: "28px" }}>
+                  {c.barColors.map((clr, j) => (
+                    <div key={j} style={{ flex: 1, background: clr, borderRadius: "3px 3px 0 0", height: `${30 + Math.sin(j) * 20}%`, opacity: 0.4, minHeight: "4px" }} />
+                  ))}
+                </div>
+                {/* Sub */}
+                <div style={{ fontSize: "11px", color: "#94a3b8", marginTop: "4px" }}>{c.sub}</div>
               </div>
-              {/* Value */}
-              <div style={{ fontSize: "28px", fontWeight: "800", color: "#0f172a", letterSpacing: "-1px", marginTop: "4px" }}>{c.value}</div>
-              {/* Label */}
-              <div style={{ fontSize: "13px", color: "#64748b", fontWeight: "500" }}>{c.label}</div>
-              {/* Mini bar chart */}
-              <div style={{ display: "flex", gap: "3px", marginTop: "10px", alignItems: "flex-end", height: "28px" }}>
-                {c.barColors.map((clr, j) => (
-                  <div key={j} style={{ flex: 1, background: clr, borderRadius: "3px 3px 0 0", height: `${30 + Math.sin(j) * 20}%`, opacity: 0.4, minHeight: "4px" }} />
-                ))}
-              </div>
-              {/* Sub */}
-              <div style={{ fontSize: "11px", color: "#94a3b8", marginTop: "4px" }}>{c.sub}</div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
 
           <div style={s.card}>
             <div style={{...s.ch, flexDirection: "column", alignItems: "center", textAlign: "center", gap: "8px"}}>
@@ -303,7 +364,7 @@ const handleExportCSV = (mode = "current") => {
                 {["individual", "team"].map(tab => (
                   <button
                     key={tab}
-                    onClick={() => setActiveTab(tab)}
+                    onClick={() => { setActiveTab(tab); setBatchFilter(''); }}
                     style={{
                       padding: "6px 20px", borderRadius: "8px", border: "none", cursor: "pointer",
                       fontSize: "13px", fontWeight: 600, fontFamily: "inherit",
@@ -318,7 +379,7 @@ const handleExportCSV = (mode = "current") => {
                 ))}
               </div>
 
-              {/* Search + Export */}
+              {/* Search + Batch Filter + Export */}
               <div style={{ display: "flex", gap: "8px", alignItems: "center", marginTop: "8px" }}>
                 <div style={{
                   display: "flex", alignItems: "center", gap: "8px",
@@ -335,59 +396,72 @@ const handleExportCSV = (mode = "current") => {
                     style={{ border: "none", background: "transparent", outline: "none", fontSize: "13px", color: "#64748b", width: "100%", fontFamily: "inherit" }}
                   />
                 </div>
+                {/* Batch Filter Dropdown */}
+                <select
+                  value={batchFilter}
+                  onChange={e => setBatchFilter(e.target.value)}
+                  style={{
+                    padding: "7px 14px", borderRadius: "10px", border: "1px solid #e2e8f0", background: "#f8fafc", color: "#334155", fontSize: "13px", fontFamily: "inherit", outline: "none"
+                  }}
+                >
+                  <option value="">All Batch</option>
+                  {allBatches.map(batch => (
+                    <option key={batch} value={batch}>{batch}</option>
+                  ))}
+                </select>
                 <div style={{ position: "relative" }}>
-  <button
-    onClick={() => setExportDropdown(v => !v)}
-    style={{ ...s.btnOutline, display: "flex", alignItems: "center", gap: "6px" }}
-  >
-    Export CSV
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <polyline points="6 9 12 15 18 9" />
-    </svg>
-  </button>
+                  <button
+                    onClick={() => setExportDropdown(v => !v)}
+                    style={{ ...s.btnOutline, display: "flex", alignItems: "center", gap: "6px" }}
+                  >
+                    Export CSV
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                  </button>
 
-  {exportDropdown && (
-    <>
-      <div
-        style={{ position: "fixed", inset: 0, zIndex: 99 }}
-        onClick={() => setExportDropdown(false)}
-      />
-      <div style={{
-        position: "absolute", top: "calc(100% + 6px)", right: 0, zIndex: 100,
-        background: "#fff", border: "1px solid #e2e8f0", borderRadius: "10px",
-        boxShadow: "0 4px 16px rgba(0,0,0,0.08)", minWidth: "180px", overflow: "hidden",
-      }}>
-        <button
-          onClick={() => { handleExportCSV("current"); setExportDropdown(false); }}
-          style={{ width: "100%", padding: "10px 16px", border: "none", background: "transparent",
-            textAlign: "left", fontSize: "13px", color: "#334155", cursor: "pointer",
-            fontFamily: "inherit", display: "flex", alignItems: "center", gap: "8px" }}
-          onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
-          onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-        >
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
-          </svg>
-          Export Current Tab
-        </button>
-        <div style={{ height: "1px", background: "#f1f5f9" }} />
-        <button
-          onClick={() => { handleExportCSV("all"); setExportDropdown(false); }}
-          style={{ width: "100%", padding: "10px 16px", border: "none", background: "transparent",
-            textAlign: "left", fontSize: "13px", color: "#334155", cursor: "pointer",
-            fontFamily: "inherit", display: "flex", alignItems: "center", gap: "8px" }}
-          onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
-          onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-        >
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
-          </svg>
-          Export All
-        </button>
-      </div>
-    </>
-  )}
-</div>
+                  {exportDropdown && (
+                    <>
+                      <div
+                        style={{ position: "fixed", inset: 0, zIndex: 99 }}
+                        onClick={() => setExportDropdown(false)}
+                      />
+                      <div style={{
+                        position: "absolute", top: "calc(100% + 6px)", right: 0, zIndex: 100,
+                        background: "#fff", border: "1px solid #e2e8f0", borderRadius: "10px",
+                        boxShadow: "0 4px 16px rgba(0,0,0,0.08)", minWidth: "180px", overflow: "hidden",
+                      }}>
+                        <button
+                          onClick={() => { handleExportCSV("current"); setExportDropdown(false); }}
+                          style={{ width: "100%", padding: "10px 16px", border: "none", background: "transparent",
+                            textAlign: "left", fontSize: "13px", color: "#334155", cursor: "pointer",
+                            fontFamily: "inherit", display: "flex", alignItems: "center", gap: "8px" }}
+                          onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
+                          onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                        >
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+                          </svg>
+                          Export Current Tab
+                        </button>
+                        <div style={{ height: "1px", background: "#f1f5f9" }} />
+                        <button
+                          onClick={() => { handleExportCSV("all"); setExportDropdown(false); }}
+                          style={{ width: "100%", padding: "10px 16px", border: "none", background: "transparent",
+                            textAlign: "left", fontSize: "13px", color: "#334155", cursor: "pointer",
+                            fontFamily: "inherit", display: "flex", alignItems: "center", gap: "8px" }}
+                          onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
+                          onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                        >
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                          </svg>
+                          Export All
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -396,9 +470,10 @@ const handleExportCSV = (mode = "current") => {
                 // ─── INDIVIDUAL TABLE ───────────────────────────────────────────
                 <table style={s.table}>
                   <colgroup>
-                    <col style={{ width: "20%" }} /><col style={{ width: "15%" }} />
-                    <col style={{ width: "20%" }} /><col style={{ width: "15%" }} />
-                    <col style={{ width: "15%" }} /><col style={{ width: "15%" }} />
+                    <col style={{ width: "16%" }} /><col style={{ width: "13%" }} />
+                    <col style={{ width: "16%" }} /><col style={{ width: "13%" }} />
+                    <col style={{ width: "13%" }} /><col style={{ width: "13%" }} />
+                    <col style={{ width: "16%" }} />
                   </colgroup>
                   <thead style={s.thead}>
                     <tr>
@@ -406,122 +481,144 @@ const handleExportCSV = (mode = "current") => {
                       <th style={s.th}>POSITION</th>
                       <th style={s.th}>PROGRAM</th>
                       <th style={s.th}>PERIOD</th>
+                      <th style={s.th}>BATCH</th>
                       <th style={s.th}>AVG SCORE</th>
                       <th style={s.th}>STATUS</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {recapInterns.filter(r => r.type === "Individual").length === 0 ? (
+                    {recapInterns.filter(r => r.type === "Individual" && batchMatch(r)).length === 0 ? (
                       <tr>
-                        <td colSpan={6} style={{ padding: "48px 0", textAlign: "center", color: "#94a3b8", fontSize: "13px" }}>
+                        <td colSpan={7} style={{ padding: "48px 0", textAlign: "center", color: "#94a3b8", fontSize: "13px" }}>
                           No individual interns found.
                         </td>
                       </tr>
                     ) : (
-                      recapInterns.filter(r => r.type === "Individual").slice(0, 4).map((row, i) => (
-                        <tr key={i}>
-                          <td style={s.td}><span style={s.cname}>{row.name}</span></td>
-                          <td style={s.td}>{row.position}</td>
-                          <td style={s.td}>{row.program}</td>
-                          <td style={s.td}>{row.period}</td>
-                          <td style={s.td}>
-                            {row.avg != null
-                              ? <span style={{ fontWeight: 700, color: "#8b5cf6" }}>{row.avg.toFixed(1)}</span>
-                              : <span style={{ color: "#94a3b8" }}>—</span>}
-                          </td>
-                          <td style={s.td}><span style={s.badge(row.statusBg, row.statusColor)}>{row.status}</span></td>
-                        </tr>
-                      ))
+                      // Filter
+recapInterns
+  .filter(r => r.type === "Individual" && batchMatch(r))
+  .slice(0, 4)
+  .map((row, i) => (
+    <tr key={i}>
+      <td style={s.td}><span style={s.cname}>{row.name}</span></td>
+      <td style={s.td}>{row.position}</td>
+      <td style={s.td}>{row.program}</td>
+      <td style={s.td}>{row.period}</td>
+      {/* Batch dengan fallback '—' */}
+      <td style={s.td}>
+        {normalizeBatch(row.batch)
+          ? <span style={{ fontSize: "11px", background: "#f1f5f9", color: "#334155", padding: "2px 8px", borderRadius: "5px" }}>
+              {row.batch}
+            </span>
+          : <span style={{ color: "#94a3b8" }}>—</span>
+        }
+      </td>
+      <td style={s.td}>
+        {row.avg != null
+          ? <span style={{ fontWeight: 700, color: "#8b5cf6" }}>{row.avg.toFixed(1)}</span>
+          : <span style={{ color: "#94a3b8" }}>—</span>}
+      </td>
+      <td style={s.td}><span style={s.badge(row.statusBg, row.statusColor)}>{row.status}</span></td>
+    </tr>
+  ))
                     )}
                   </tbody>
                 </table>
               ) : (
                 // ─── TEAM TABLE ─────────────────────────────────────────────────
-              (() => {
-                const teamMap = {};
-                recapInterns.filter(r => r.type === "Team").forEach(row => {
-                  const key = row.id_team || "unknown";
-                  if (!teamMap[key]) teamMap[key] = [];
-                  teamMap[key].push(row);
-                });
-                const teams = Object.entries(teamMap);
+                (() => {
+                  const teamMap = {};
+                  recapInterns.filter(r => r.type === "Team").forEach(row => {
+                    const key = row.id_team || "unknown";
+                    if (!teamMap[key]) teamMap[key] = [];
+                    teamMap[key].push(row);
+                  });
+                  const teams = Object.entries(teamMap);
 
-                return (
-                  <table style={{ ...s.table, tableLayout: "fixed" }}>
-                    <colgroup>
-                      <col style={{ width: "15%" }} />
-                      <col style={{ width: "17%" }} />
-                      <col style={{ width: "13%" }} />
-                      <col style={{ width: "18%" }} />
-                      <col style={{ width: "15%" }} />
-                      <col style={{ width: "11%" }} />
-                      <col style={{ width: "11%" }} />
-                    </colgroup>
-                    <thead style={s.thead}>
-                      <tr>
-                        <th style={s.th}>TEAM</th>
-                        <th style={s.th}>MEMBER</th>
-                        <th style={s.th}>POSITION</th>
-                        <th style={s.th}>PROGRAM</th>
-                        <th style={s.th}>PERIOD</th>      {/* ← tambah */}
-                        <th style={s.th}>AVG SCORE</th>
-                        <th style={s.th}>STATUS</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {teams.length === 0 ? (
+                  return (
+                    <table style={{ ...s.table, tableLayout: "fixed" }}>
+                      {/* ─── FIX: colgroup disesuaikan menjadi 8 kolom ─── */}
+                      <colgroup>
+                        <col style={{ width: "12%" }} />
+                        <col style={{ width: "14%" }} />
+                        <col style={{ width: "12%" }} />
+                        <col style={{ width: "14%" }} />
+                        <col style={{ width: "12%" }} />
+                        <col style={{ width: "12%" }} />
+                        <col style={{ width: "12%" }} />
+                        <col style={{ width: "12%" }} />
+                      </colgroup>
+                      <thead style={s.thead}>
                         <tr>
-                          <td colSpan={7} style={{ padding: "48px 0", textAlign: "center", color: "#94a3b8", fontSize: "13px" }}>
-                            No team interns found.
-                          </td>
+                          <th style={s.th}>TEAM</th>
+                          <th style={s.th}>MEMBER</th>
+                          <th style={s.th}>POSITION</th>
+                          <th style={s.th}>PROGRAM</th>
+                          <th style={s.th}>PERIOD</th>
+                          <th style={s.th}>BATCH</th>
+                          <th style={s.th}>AVG SCORE</th>
+                          <th style={s.th}>STATUS</th>
                         </tr>
-                      ) : (
-                        teams.map(([teamId, members]) =>
-                          members.map((row, j) => (
-                            <tr key={`${teamId}-${j}`}>
-                              {j === 0 && (
-                                <td
-                                  rowSpan={members.length}
-                                  style={{
-                                    ...s.td, textAlign: "center", verticalAlign: "middle",
-                                    fontWeight: 700, color: "#1e40af", background: "#eff6ff",
-                                    borderRight: "1px solid #e2e8f0",
-                                  }}
-                                >
-                                  {/* ← pakai team_name dari backend */}
-                                  <span style={{ fontSize: "12px", color: "#1e40af", background: "#dbeafe", padding: "3px 8px", borderRadius: "5px" }}>
-                                    {row.team_name ?? `Team ${teamId.slice(-4)}`}
-                                  </span>
-                                </td>
-                              )}
-                              <td style={{...s.td, textAlign: "left"}}><span style={s.cname}>{row.name}</span></td>
-                              <td style={s.td}>{row.position}</td>
-                              <td style={s.td}>{row.program}</td>
-                              <td style={s.td}>{row.period ?? '—'}</td>    {/* ← tambah */}
-                              <td style={s.td}>
-                                {row.avg != null
-                                  ? <span style={{ fontWeight: 700, color: "#8b5cf6" }}>{row.avg.toFixed(1)}</span>
-                                  : <span style={{ color: "#94a3b8" }}>—</span>}
-                              </td>
-                              <td style={s.td}>
-                                <span style={s.badge(row.statusBg, row.statusColor)}>{row.status}</span>
-                              </td>
-                            </tr>
-                          ))
-                        )
-                      )}
-                    </tbody>
-                  </table>
-                );
-              })()
+                      </thead>
+                      <tbody>
+                        {teams.filter(([, members]) => members.some(row => batchMatch(row))).length === 0 ? (
+                          <tr>
+                            <td colSpan={8} style={{ padding: "48px 0", textAlign: "center", color: "#94a3b8", fontSize: "13px" }}>
+                              No team interns found.
+                            </td>
+                          </tr>
+                        ) : (
+                          // Filter teams
+teams
+  .filter(([, members]) => members.some(row => batchMatch(row)))
+  .map(([teamId, members]) =>
+    members
+      .filter(row => batchMatch(row))
+      .map((row, j, arr) => (
+        <tr key={`${teamId}-${j}`}>
+          {j === 0 && (
+            <td rowSpan={arr.length} style={{ ...s.td, textAlign: "center", verticalAlign: "middle", fontWeight: 700, color: "#1e40af", background: "#eff6ff", borderRight: "1px solid #e2e8f0" }}>
+              <span style={{ fontSize: "12px", color: "#1e40af", background: "#dbeafe", padding: "3px 8px", borderRadius: "5px" }}>
+                {row.team_name ?? `Team ${teamId.slice(-4)}`}
+              </span>
+            </td>
+          )}
+          <td style={{ ...s.td, textAlign: "left" }}><span style={s.cname}>{row.name}</span></td>
+          <td style={s.td}>{row.position}</td>
+          <td style={s.td}>{row.program}</td>
+          <td style={s.td}>{row.period ?? '—'}</td>
+          {/* Kolom BATCH untuk team */}
+          <td style={s.td}>
+            {normalizeBatch(row.batch)
+              ? <span style={{ fontSize: "11px", background: "#f1f5f9", color: "#334155", padding: "2px 8px", borderRadius: "5px" }}>
+                  {row.batch}
+                </span>
+              : <span style={{ color: "#94a3b8" }}>—</span>
+            }
+          </td>
+          <td style={s.td}>
+            {row.avg != null
+              ? <span style={{ fontWeight: 700, color: "#8b5cf6" }}>{row.avg.toFixed(1)}</span>
+              : <span style={{ color: "#94a3b8" }}>—</span>}
+          </td>
+          <td style={s.td}>
+            <span style={s.badge(row.statusBg, row.statusColor)}>{row.status}</span>
+          </td>
+        </tr>
+      ))
+  )
+                        )}
+                      </tbody>
+                    </table>
+                  );
+                })()
               )}
             </div>
           </div>
-          </div>
+        </div>
       </main>
 
-
-{/* Logout Modal */}
+      {/* Logout Modal */}
       {logoutModal && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(10,22,40,0.5)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center" }}>
           <div style={{ background: "#fff", borderRadius: "16px", padding: "28px", width: "340px", boxShadow: "0 20px 60px rgba(0,0,0,0.18)", textAlign: "left" }}>
