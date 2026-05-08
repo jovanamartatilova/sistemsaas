@@ -392,8 +392,7 @@ function EarlyPathDashboard() {
               </div>
             </div>
 
-            {/* Main Content Grid */}
-            <div className="grid grid-cols-[1fr_1.6fr] gap-5 items-start">
+            <div className="grid grid-cols-[1fr_1.6fr] gap-5 items-start min-h-0">
 
               {/* Left Column */}
               <div className="flex flex-col gap-5">
@@ -599,55 +598,56 @@ function EarlyPathDashboard() {
                     <p className="text-slate-400 text-sm">Competencies will be available once you are accepted</p>
                   </div>
                 )}
-              </div>
-            </div>
-             {dashboardData?.test && (
-              <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-                <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Assessment</h2>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center text-sm py-1.5 border-b border-slate-50">
-                    <span className="text-slate-400 font-medium">Test Name</span>
-                    <span className="text-slate-700 font-medium">{dashboardData.test.test_name || "Test"}</span>
+              {/* Assessment - inside Right Column */}
+                {dashboardData?.test && (
+                  <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+                    <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Assessment</h2>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center text-sm py-1.5 border-b border-slate-50">
+                        <span className="text-slate-400 font-medium">Test Name</span>
+                        <span className="text-slate-700 font-medium">{dashboardData.test.test_name || "Test"}</span>
+                      </div>
+                      {dashboardData.test.test_date && (
+                        <div className="flex justify-between items-center text-sm py-1.5 border-b border-slate-50">
+                          <span className="text-slate-400 font-medium">Schedule</span>
+                          <span className="text-slate-700 font-medium">
+                            {new Date(dashboardData.test.test_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                            {dashboardData.test.test_time && ` · ${dashboardData.test.test_time}`}
+                          </span>
+                        </div>
+                      )}
+                      <div className="flex justify-between items-center text-sm py-1.5 border-b border-slate-50">
+                        <span className="text-slate-400 font-medium">Score</span>
+                        {dashboardData.test.test_score ? (
+                          <span className="text-xs font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full">
+                            {dashboardData.test.test_score}/100
+                          </span>
+                        ) : (
+                          <span className="text-xs font-medium text-amber-600 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full">
+                            Pending
+                          </span>
+                        )}
+                      </div>
+                      {dashboardData.test.test_link && (
+                        <div className="flex justify-between items-center text-sm py-1.5 border-b border-slate-50">
+                          <span className="text-slate-400 font-medium">Link</span>
+                          <a href={dashboardData.test.test_link} target="_blank" rel="noopener noreferrer"
+                            className="text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 rounded-lg transition-colors inline-flex items-center gap-1.5">
+                            🔗 Open Test Link →
+                          </a>
+                        </div>
+                      )}
+                      {dashboardData.test.test_notes && (
+                        <div className="flex justify-between items-start text-sm py-1.5">
+                          <span className="text-slate-400 font-medium">Notes</span>
+                          <span className="text-slate-700 font-medium text-right max-w-[60%] leading-snug">{dashboardData.test.test_notes}</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  {dashboardData.test.test_date && (
-                    <div className="flex justify-between items-center text-sm py-1.5 border-b border-slate-50">
-                      <span className="text-slate-400 font-medium">Schedule</span>
-                      <span className="text-slate-700 font-medium">
-                        {new Date(dashboardData.test.test_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                        {dashboardData.test.test_time && ` · ${dashboardData.test.test_time}`}
-                      </span>
-                    </div>
-                  )}
-                  <div className="flex justify-between items-center text-sm py-1.5 border-b border-slate-50">
-                    <span className="text-slate-400 font-medium">Score</span>
-                    {dashboardData.test.test_score ? (
-                      <span className="text-xs font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full">
-                        {dashboardData.test.test_score}/100
-                      </span>
-                    ) : (
-                      <span className="text-xs font-medium text-amber-600 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full">
-                        Pending
-                      </span>
-                    )}
-                  </div>
-                  {dashboardData.test.test_link && (
-                    <div className="flex justify-between items-center text-sm py-1.5 border-b border-slate-50">
-                      <span className="text-slate-400 font-medium">Link</span>
-                      <a href={dashboardData.test.test_link} target="_blank" rel="noopener noreferrer"
-                        className="text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 rounded-lg transition-colors inline-flex items-center gap-1.5">
-                        🔗 Open Test Link →
-                      </a>
-                    </div>
-                  )}
-                  {dashboardData.test.test_notes && (
-                    <div className="flex justify-between items-start text-sm py-1.5">
-                      <span className="text-slate-400 font-medium">Notes</span>
-                      <span className="text-slate-700 font-medium text-right max-w-[60%] leading-snug">{dashboardData.test.test_notes}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
+                )}
+              </div> {/* End Right Column */}
+            </div> {/* End Grid */}
             <p className="text-center text-xs text-slate-400 py-2">
               © 2026 EarlyPath · All rights reserved
             </p>

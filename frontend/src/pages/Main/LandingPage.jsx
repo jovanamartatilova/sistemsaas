@@ -608,14 +608,14 @@ const theme = {
                 onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.1)"}
                 onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.05)"}
               ><IconUser /></button>
-              {showDropdown && (
-                <div style={{ position: "absolute", top: "calc(100% + 12px)", right: 0, width: "220px", background: "#0d1a28", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "16px", padding: "8px", boxShadow: "0 20px 40px rgba(0,0,0,0.4)", zIndex: 1000 }}>
-                  <div style={{ padding: "12px 16px 10px", borderBottom: "1px solid rgba(255,255,255,0.05)", marginBottom: "6px" }}>
-                    <div style={{ fontSize: "13px", fontWeight: "700", color: "#fff", marginBottom: "2px" }}>{authUser?.name || authUser?.full_name}</div>
+{showDropdown && (
+                <div style={{ position: "absolute", top: "calc(100% + 12px)", right: 0, width: "220px", background: isDark ? "#0d1a28" : "#ffffff", border: isDark ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(0,0,0,0.1)", borderRadius: "16px", padding: "8px", boxShadow: isDark ? "0 20px 40px rgba(0,0,0,0.4)" : "0 20px 40px rgba(0,0,0,0.12)", zIndex: 1000 }}>
+                  <div style={{ padding: "12px 16px 10px", borderBottom: isDark ? "1px solid rgba(255,255,255,0.05)" : "1px solid rgba(0,0,0,0.07)", marginBottom: "6px" }}>
+                    <div style={{ fontSize: "13px", fontWeight: "700", color: isDark ? "#fff" : "#0f172a", marginBottom: "2px" }}>{authUser?.name || authUser?.full_name}</div>
                     <div style={{ fontSize: "11px", color: isDark ? "rgba(255,255,255,0.5)" : "rgba(30,40,60,0.6)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{authUser?.email}</div>
                   </div>
                   <div onClick={() => { setShowDropdown(false); navigate(getDashboardPath()); }}
-                    style={{ display: "flex", alignItems: "center", gap: "10px", padding: "12px 16px", color: "#fff", fontSize: "14px", fontWeight: "500", cursor: "pointer", borderRadius: "10px", transition: "0.2s" }}
+                    style={{ display: "flex", alignItems: "center", gap: "10px", padding: "12px 16px", color: isDark ? "#fff" : "#0f172a", fontSize: "14px", fontWeight: "500", cursor: "pointer", borderRadius: "10px", transition: "0.2s" }}
                     onMouseEnter={e => e.currentTarget.style.background = "rgba(74,158,255,0.1)"}
                     onMouseLeave={e => e.currentTarget.style.background = "transparent"}
                   ><IconLayout /> Dashboard</div>
@@ -1135,25 +1135,25 @@ const theme = {
       {/* Logout confirm modal */}
       {logoutModalOpen && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(10,22,40,.8)", backdropFilter: "blur(4px)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
-          <div style={{ background: "#1a1f2e", borderRadius: 24, padding: 32, width: "100%", maxWidth: 380, boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.1)", textAlign: "center" }}>
-            <div style={{ width: 64, height: 64, borderRadius: 20, background: "rgba(251,113,133,0.1)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fb7185", margin: "0 auto 20px" }}>
-              <IconLogOut size={32} />
-            </div>
-            <h3 style={{ fontSize: 20, fontWeight: 800, marginBottom: 8, color: "#fff" }}>Logout?</h3>
-            <p style={{ fontSize: 14, color: isDark ? "rgba(255,255,255,0.5)" : "rgba(30,40,60,0.6)", lineHeight: 1.6, marginBottom: 28 }}>You will need to sign in again to access your dashboard.</p>
-            <div style={{ display: "flex", gap: 12 }}>
-              <button onClick={() => setLogoutModalOpen(false)}
-                style={{ flex: 1, padding: "12px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.1)", background: "transparent", fontSize: 14, fontWeight: 700, color: "rgba(255,255,255,0.7)", cursor: "pointer", transition: "0.2s" }}
-                onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.05)"}
-                onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-              >Cancel</button>
-              <button onClick={() => { logout(); setLogoutModalOpen(false); navigate("/"); }}
-                style={{ flex: 1, padding: "12px", borderRadius: 12, border: "none", background: "#fb7185", fontSize: 14, fontWeight: 700, color: "#fff", cursor: "pointer", transition: "0.2s", boxShadow: "0 8px 20px rgba(251,113,133,0.3)" }}
-                onMouseEnter={e => e.currentTarget.style.transform = "translateY(-1px)"}
-                onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}
-              >Yes, Logout</button>
-            </div>
+          <div style={{ background: isDark ? "#1a1f2e" : "#ffffff", borderRadius: 24, padding: 32, width: "100%", maxWidth: 380, boxShadow: isDark ? "0 25px 50px -12px rgba(0,0,0,0.5)" : "0 25px 50px -12px rgba(0,0,0,0.15)", border: isDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(0,0,0,0.08)", textAlign: "center" }}>
+          <div style={{ width: 64, height: 64, borderRadius: 20, background: "rgba(251,113,133,0.1)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fb7185", margin: "0 auto 20px" }}>
+            <IconLogOut size={32} />
           </div>
+          <h3 style={{ fontSize: 20, fontWeight: 800, marginBottom: 8, color: isDark ? "#fff" : "#0f172a" }}>Logout?</h3>
+          <p style={{ fontSize: 14, color: isDark ? "rgba(255,255,255,0.5)" : "rgba(30,40,60,0.6)", lineHeight: 1.6, marginBottom: 28 }}>You will need to sign in again to access your dashboard.</p>
+          <div style={{ display: "flex", gap: 12 }}>
+            <button onClick={() => setLogoutModalOpen(false)}
+              style={{ flex: 1, padding: "12px", borderRadius: 12, border: isDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(0,0,0,0.1)", background: "transparent", fontSize: 14, fontWeight: 700, color: isDark ? "rgba(255,255,255,0.7)" : "rgba(30,40,60,0.7)", cursor: "pointer", transition: "0.2s" }}
+              onMouseEnter={e => e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)"}
+              onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+            >Cancel</button>
+            <button onClick={() => { logout(); setLogoutModalOpen(false); navigate("/"); }}
+              style={{ flex: 1, padding: "12px", borderRadius: 12, border: "none", background: "#fb7185", fontSize: 14, fontWeight: 700, color: "#fff", cursor: "pointer", transition: "0.2s", boxShadow: "0 8px 20px rgba(251,113,133,0.3)" }}
+              onMouseEnter={e => e.currentTarget.style.transform = "translateY(-1px)"}
+              onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}
+            >Yes, Logout</button>
+          </div>
+        </div>
         </div>
       )}
     </div>

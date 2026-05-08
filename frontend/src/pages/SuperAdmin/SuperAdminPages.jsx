@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect,useRef } from "react";
 import { superAdminService } from "../../api/superAdminService";
 import { useNavigate, useLocation, Routes, Route, Navigate } from "react-router-dom";
 
@@ -114,6 +114,7 @@ const IC = {
   Phone: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.06 6.06l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" /></svg>,
   FileText: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /></svg>,
   // Tambah di object IC:
+   Download: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>,
 Inbox: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>,
 };
 
@@ -154,6 +155,101 @@ function ErrorState({ message, onRetry }) {
         <div style={{ fontSize: "14px", color: "#ef4444", marginBottom: "10px" }}>{message || "Failed to load data"}</div>
         <button onClick={onRetry} style={{ padding: "8px 18px", borderRadius: "9px", border: "1px solid #e2e8f0", background: "#fff", fontSize: "13px", fontWeight: "600", color: "#475569", cursor: "pointer" }}>Retry</button>
       </div>
+    </div>
+  );
+}
+
+// ── Growth Line Chart ─────────────────────────────────────────────────────────
+function GrowthLineChart({ data }) {
+  const canvasRef = useRef(null);
+  const chartRef = useRef(null);
+
+  useEffect(() => {
+    if (!canvasRef.current || !data?.length) return;
+    if (chartRef.current) chartRef.current.destroy();
+
+    const ctx = canvasRef.current.getContext("2d");
+    const makeGradient = (color) => {
+      const g = ctx.createLinearGradient(0, 0, 0, 200);
+      g.addColorStop(0, color.replace("1)", "0.15)"));
+      g.addColorStop(1, color.replace("1)", "0)"));
+      return g;
+    };
+
+    chartRef.current = new window.Chart(ctx, {
+      type: "line",
+      data: {
+        labels: data.map(d => d.month),
+        datasets: [
+          {
+            label: "New tenants",
+            data: data.map(d => d.new_tenant ?? 0),
+            borderColor: "#3b82f6",
+            backgroundColor: makeGradient("rgba(59,130,246,1)"),
+            borderWidth: 2.5,
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            pointBackgroundColor: "#fff",
+            pointBorderColor: "#3b82f6",
+            pointBorderWidth: 2.5,
+            tension: 0.4,
+            fill: true,
+          },
+          {
+            label: "New users",
+            data: data.map(d => d.new_user ?? 0),
+            borderColor: "#10b981",
+            backgroundColor: makeGradient("rgba(16,185,129,1)"),
+            borderWidth: 2.5,
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            pointBackgroundColor: "#fff",
+            pointBorderColor: "#10b981",
+            pointBorderWidth: 2.5,
+            tension: 0.4,
+            fill: true,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: "index", intersect: false },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: "#fff",
+            borderColor: "#e2e8f0",
+            borderWidth: 1,
+            titleColor: "#0f172a",
+            bodyColor: "#64748b",
+            padding: 10,
+            titleFont: { size: 13, weight: "500" },
+            bodyFont: { size: 12 },
+          },
+        },
+        scales: {
+          x: {
+            grid: { display: false },
+            border: { display: false },
+            ticks: { color: "#94a3b8", font: { size: 11, weight: "600" } },
+          },
+          y: {
+            beginAtZero: true,
+            grid: { color: "rgba(0,0,0,0.06)" },
+            border: { display: false },
+            ticks: { display: false },
+          },
+        },
+      },
+    });
+
+    return () => chartRef.current?.destroy();
+  }, [data]);
+
+  return (
+    <div style={{ position: "relative", width: "100%", height: "200px" }}>
+      <canvas ref={canvasRef} />
     </div>
   );
 }
@@ -551,13 +647,13 @@ function DashboardPage() {
 
       {/* Charts row */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: "20px" }}>
-        {/* Growth chart */}
+      {/* Growth chart */}
         <div style={{ background: "#fff", borderRadius: "16px", padding: "22px 24px", boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
           <div style={{ marginBottom: "14px" }}>
             <div style={{ fontSize: "15px", fontWeight: "700", color: "#1e293b" }}>Tenant & User Growth</div>
             <div style={{ fontSize: "12px", color: "#94a3b8", marginTop: "2px" }}>Last 6 months</div>
           </div>
-          <div style={{ display: "flex", gap: "16px", marginBottom: "14px" }}>
+          <div style={{ display: "flex", gap: "16px", marginBottom: "12px" }}>
             {[{ c: "#3b82f6", l: "New tenants" }, { c: "#10b981", l: "New users" }].map(x => (
               <div key={x.l} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                 <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: x.c }} />
@@ -565,25 +661,13 @@ function DashboardPage() {
               </div>
             ))}
           </div>
-          {chartData.length === 0
-            ? <div style={{ height: "140px", display: "flex", alignItems: "center", justifyContent: "center", color: "#94a3b8", fontSize: "13px", border: "1px dashed #e2e8f0", borderRadius: "10px" }}>No data available</div>
-            : (
-              <svg width="100%" viewBox={`0 0 ${chartData.length * colW + 10} ${chartH + 28}`} style={{ overflow: "visible" }}>
-                {[0, 0.25, 0.5, 0.75, 1].map((p, i) => <line key={i} x1="0" y1={chartH - p * chartH} x2={chartData.length * colW + 10} y2={chartH - p * chartH} stroke="#f1f5f9" strokeWidth="1" />)}
-                {chartData.map((d, mi) => {
-                  const x = mi * colW + 8;
-                  const tH = Math.max(((d.new_tenant ?? 0) / (data.total_tenant || 1)) * chartH, 4);
-                  const uH = Math.max(((d.new_user ?? 0) / maxV) * chartH, 4);
-                  return (
-                    <g key={mi}>
-                      <rect x={x} y={chartH - tH} width={bw} height={tH} rx="3" fill="#3b82f6" opacity="0.85" />
-                      <rect x={x + bw + gap} y={chartH - uH} width={bw} height={uH} rx="3" fill="#10b981" opacity="0.85" />
-                      <text x={x + gw / 2} y={chartH + 18} textAnchor="middle" fill="#94a3b8" fontSize="11">{d.month}</text>
-                    </g>
-                  );
-                })}
-              </svg>
-            )}
+          {chartData.length === 0 ? (
+            <div style={{ height: "200px", display: "flex", alignItems: "center", justifyContent: "center", color: "#94a3b8", fontSize: "13px", border: "1px dashed #e2e8f0", borderRadius: "10px" }}>
+              No data available
+            </div>
+          ) : (
+            <GrowthLineChart data={chartData} />
+          )}
         </div>
 
         {/* Tenant status donut */}
@@ -632,16 +716,27 @@ function TenantManagementPage() {
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [companyFilter, setCompanyFilter] = useState("all");
   const [selectedTenant, setSelectedTenant] = useState(null);
+
+  const [allTenants, setAllTenants] = useState([]);
 
   const fetchTenants = () => {
     setLoading(true); setError(null);
     superAdminService.getTenants({ search, status: statusFilter })
-      .then(res => setTenants(res.data ?? []))
+      .then(res => {
+        const data = res.data ?? [];
+        setAllTenants(data); // simpan semua untuk dropdown
+        if (companyFilter !== "all") {
+          setTenants(data.filter(t => String(t.id) === String(companyFilter)));
+        } else {
+          setTenants(data);
+        }
+      })
       .catch(() => setError("Failed to load tenant data"))
       .finally(() => setLoading(false));
   };
-  useEffect(() => { fetchTenants(); }, [search, statusFilter]);
+  useEffect(() => { fetchTenants(); }, [search, statusFilter, companyFilter]);
 
   const toggleStatus = async (id, currentStatus) => {
     const newStatus = currentStatus === "active" ? "suspended" : "active";
@@ -687,6 +782,30 @@ function TenantManagementPage() {
           </select>
           <span style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: "#94a3b8" }}><IC.ChevDown /></span>
         </div>
+
+        <div style={{ position: "relative" }}>
+          <select value={companyFilter} onChange={e => setCompanyFilter(e.target.value)}
+            style={{ appearance: "none", background: "#fff", border: "1px solid #e2e8f0", borderRadius: "10px", padding: "8px 36px 8px 14px", fontSize: "13px", color: "#475569", fontWeight: "500", cursor: "pointer", outline: "none", minWidth: "160px" }}>
+            <option value="all">All Companies</option>
+            {allTenants.map(t => (
+              <option key={t.id} value={t.id}>{t.name}</option>
+            ))}
+          </select>
+          <span style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: "#94a3b8" }}><IC.ChevDown /></span>
+        </div>
+
+        <button onClick={() => {
+          if (!tenants.length) return;
+          const headers = ["Company", "Email", "Users", "Vacancies", "Registered", "Status"];
+          const rows = tenants.map(t => [t.name, t.email, t.users_count ?? 0, t.vacancies_count ?? 0, t.created_at, t.status]);
+          const csv = [headers, ...rows].map(r => r.map(v => `"${v ?? ""}"`).join(",")).join("\n");
+          const blob = new Blob([csv], { type: "text/csv" });
+          const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
+          a.download = "tenants.csv"; a.click();
+        }}
+        style={{ display: "flex", alignItems: "center", gap: "6px", padding: "8px 16px", background: "#1e293b", color: "#fff", border: "none", borderRadius: "10px", fontSize: "13px", fontWeight: "600", cursor: "pointer", whiteSpace: "nowrap" }}>
+          <IC.Download /> Export CSV
+        </button>
       </div>
 
       {/* Table */}
@@ -807,6 +926,9 @@ function UserManagementPage() {
   const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
+  const [companyFilter, setCompanyFilter] = useState("all");
+  const allCompanies = [...new Set(users.map(u => u.company).filter(Boolean))];
+  const displayedUsers = companyFilter === "all" ? users : users.filter(u => u.company === companyFilter);
 
   const fetchUsers = () => {
     setLoading(true);
@@ -819,13 +941,14 @@ function UserManagementPage() {
 
   useEffect(() => { fetchUsers(); }, [search, roleFilter, tab]);
 
-  const handleTabChange = (newTab) => {
-    setTab(newTab);
-    setSearch("");
-    setRoleFilter("all");
-  };
+const handleTabChange = (newTab) => {
+  setTab(newTab);
+  setSearch("");
+  setRoleFilter("all");
+  setCompanyFilter("all");
+};
   const EMP_COLS = ["NAME", "EMAIL", "ROLE", "COMPANY", "DEPARTMENT", "POSITION", "JOB LEVEL", "STATUS", "SCHEDULE", "REGISTERED"];
-  const CAND_COLS = ["NAME", "EMAIL", "PHONE", "INSTITUTION", "EDUCATION LEVEL", "MAJOR", "COMPANY", "POSITION", "PROGRAM", "TYPE", "REGISTERED"];
+  const CAND_COLS = ["NAME", "EMAIL", "PHONE", "INSTITUTION", "MAJOR", "COMPANY", "POSITION", "PROGRAM", "TYPE", "REGISTERED"];
 
   const tdStyle = {
     padding: "11px 14px",
@@ -845,7 +968,7 @@ function UserManagementPage() {
 
       {/* Tabs */}
       <div style={{ display: "flex", gap: "4px", marginBottom: "20px", background: "#fff", borderRadius: "12px", padding: "5px", width: "fit-content", boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
-        {[{ key: "employees", label: "Employees" }, { key: "candidates", label: "Candidates" }].map(t => (
+        {[{ key: "employees", label: "Employees" }, { key: "candidates", label: "Interns" }].map(t => (
           <button key={t.key} onClick={() => handleTabChange(t.key)}
             style={{
               padding: "8px 20px", borderRadius: "9px", border: "none", cursor: "pointer",
@@ -865,13 +988,12 @@ function UserManagementPage() {
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder={tab === "employees" ? "Search name or email..." : "Search candidate name or email..."}
+            placeholder={tab === "employees" ? "Search name or email..." : "Search name or email..."}
             style={{ border: "none", background: "transparent", outline: "none", fontSize: "13px", color: "#64748b", width: "100%" }}
           />
         </div>
 
-        {/* Role filter — hanya tampil di tab employees */}
-        {tab === "employees" && (
+{tab === "employees" && (
           <div style={{ position: "relative" }}>
             <select value={roleFilter} onChange={e => setRoleFilter(e.target.value)}
               style={{ appearance: "none", background: "#fff", border: "1px solid #e2e8f0", borderRadius: "10px", padding: "8px 36px 8px 14px", fontSize: "13px", color: "#475569", fontWeight: "500", cursor: "pointer", outline: "none" }}>
@@ -884,6 +1006,32 @@ function UserManagementPage() {
             <span style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: "#94a3b8" }}><IC.ChevDown /></span>
           </div>
         )}
+
+        <div style={{ position: "relative" }}>
+          <select value={companyFilter} onChange={e => setCompanyFilter(e.target.value)}
+            style={{ appearance: "none", background: "#fff", border: "1px solid #e2e8f0", borderRadius: "10px", padding: "8px 36px 8px 14px", fontSize: "13px", color: "#475569", fontWeight: "500", cursor: "pointer", outline: "none", minWidth: "160px" }}>
+            <option value="all">All Companies</option>
+            {allCompanies.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+          <span style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: "#94a3b8" }}><IC.ChevDown /></span>
+        </div>
+
+        <button onClick={() => {
+          if (!displayedUsers.length) return;
+          const headers = tab === "employees"
+            ? ["Name","Email","Role","Company","Department","Position","Job Level","Status","Schedule","Registered"]
+            : ["Name","Email","Phone","Institution","Major","Company","Position","Program","Type","Registered"];
+          const rows = tab === "employees"
+            ? displayedUsers.map(u => [u.name,u.email,u.role,u.company,u.department,u.position,u.job_level,u.employee_status,u.schedule,u.registered])
+            : displayedUsers.map(u => [u.name,u.email,u.phone,u.institution,u.major,u.company,u.position,u.program,u.team_type,u.registered]);
+          const csv = [headers,...rows].map(r => r.map(v=>`"${v??''}"`).join(",")).join("\n");
+          const blob = new Blob([csv],{type:"text/csv"});
+          const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
+          a.download = `${tab}.csv`; a.click();
+        }}
+        style={{ display:"flex", alignItems:"center", gap:"6px", padding:"8px 16px", background:"#1e293b", color:"#fff", border:"none", borderRadius:"10px", fontSize:"13px", fontWeight:"600", cursor:"pointer", whiteSpace:"nowrap" }}>
+          <IC.Download /> Export CSV
+        </button>
       </div>
 
       {/* Table */}
@@ -912,7 +1060,7 @@ function UserManagementPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {users.map((u) => (
+                  {displayedUsers.map((u) => (
                     <tr key={u.id}
                       onMouseEnter={e => e.currentTarget.style.background = "#fafbfc"}
                       onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
@@ -935,7 +1083,6 @@ function UserManagementPage() {
                             <td style={tdStyle}>{u.email ?? "—"}</td>
                             <td style={tdStyle}>{u.phone ?? "—"}</td>
                             <td style={tdStyle}>{u.institution ?? "—"}</td>
-                            <td style={tdStyle}>{u.education_level ?? "—"}</td>
                             <td style={tdStyle}>{u.major ?? "—"}</td>
                             <td style={tdStyle}>{u.company ?? "—"}</td>
                             <td style={tdStyle}>{u.position ?? "—"}</td>
@@ -958,7 +1105,7 @@ function UserManagementPage() {
               </table>
             </div>
 
-            {users.length === 0 && (
+          {displayedUsers.length === 0 && (
               <div style={{ padding: "48px 0", textAlign: "center", color: "#94a3b8", fontSize: "13.5px" }}>
                 No {tab} found
               </div>
@@ -985,9 +1132,12 @@ export default function SuperAdminPages() {
     localStorage.removeItem("auth_token");
     localStorage.removeItem("company");
     localStorage.removeItem("user");
+    if (!localStorage.getItem("theme")) {
+      localStorage.setItem("theme", "dark");
+    }
     setIsLoggedIn(false);
     setLogoutModal(false);
-    navigate("/superadmin/login");
+    navigate("/");
   };
 
   const pageConfig = {

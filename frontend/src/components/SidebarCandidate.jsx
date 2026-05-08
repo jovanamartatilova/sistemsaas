@@ -5,8 +5,14 @@ import { getScopedRole } from "../utils/roleUtils";
 
 export default function SidebarCandidate({ userName, userPhoto, company, onLogout }) {
   const location = useLocation();
-  const { user } = useAuthStore();
-  const resolvedCompanyId = company?.id_company;
+  const { user, company: authCompany } = useAuthStore();
+  
+  // Fallback: coba dari prop dulu, lalu authStore, lalu localStorage
+  const resolvedCompany = company || authCompany || (() => {
+    try { return JSON.parse(localStorage.getItem("company")); } catch { return null; }
+  })();
+  
+  const resolvedCompanyId = resolvedCompany?.id_company;
 
   // Get scoped role from user object using utility function
   const scopedRole = getScopedRole(user) || "member";
@@ -38,13 +44,12 @@ export default function SidebarCandidate({ userName, userPhoto, company, onLogou
   return (
     <aside className="w-56 min-h-screen bg-[#0f1e3a] text-white flex flex-col px-4 py-6 fixed top-0 left-0 z-10" style={{ fontFamily: 'Poppins, sans-serif' }}>
 
-      {/* 1. Company Logo at the TOP (Added) */}
-      {company?.logo_path && (
+    {resolvedCompany?.logo_path && (
         <div className="flex justify-center mb-6">
           <Link to={`/c/${resolvedCompanyId}`} className="hover:opacity-80 transition-opacity">
             <img
-              src={`http://localhost:8000/storage/${company.logo_path}`}
-              alt={company.name || "Company"}
+              src={`http://localhost:8000/storage/${resolvedCompany.logo_path}`}
+              alt={resolvedCompany.name || "Company"}
               className="h-8 w-auto object-contain"
             />
           </Link>
@@ -89,7 +94,7 @@ export default function SidebarCandidate({ userName, userPhoto, company, onLogou
         {/* Name and Company */}
         <div className="flex-1 min-w-0">
           <p className="text-xs text-slate-300 font-semibold truncate">{userName || "User"}</p>
-          <p className="text-[10px] text-slate-500 truncate">{company?.name || "Candidate"}</p>
+          <p className="text-[10px] text-slate-500 truncate">{resolvedCompany?.name || "Candidate"}</p>
         </div>
 
         {/* Logout button */}

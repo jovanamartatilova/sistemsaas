@@ -7,8 +7,7 @@ import DashboardLayout from "../../components/DashboardLayout";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { getScopedRole } from "../../utils/roleUtils";
 import jsPDF from "jspdf";
-import "jspdf-autotable";
-import * as XLSX from "xlsx";
+import autoTable from "jspdf-autotable";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
 
@@ -25,7 +24,7 @@ function StatusIcon({ status }) {
 }
 
 function TaskCard({ task, onStatusChange, onWorkSubmitted, onReviewSibling, currentUserId, isLeader, children }) {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
   const [showSubmitForm, setShowSubmitForm] = useState(false);
   const [attachments, setAttachments] = useState([{ type: "link", label: "", value: "" }]);
@@ -312,6 +311,7 @@ export default function MemberDashboard() {
   const [userPhoto, setUserPhoto] = useState(null);
   const [internInfo, setInternInfo] = useState({});
   const [competencies, setCompetencies] = useState([]);
+  const [logbookDropdown, setLogbookDropdown] = useState(false);
 
   useEffect(() => {
     fetchMemberTasks();
@@ -343,7 +343,7 @@ export default function MemberDashboard() {
     }
   };
 
-  const fetchMemberTasks = async () => {
+const fetchMemberTasks = async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem("token") || localStorage.getItem("auth_token");
@@ -391,7 +391,7 @@ export default function MemberDashboard() {
     fetchMemberTasks();
   };
 
-  const flattenTasksForLogbook = () => {
+const flattenTasksForLogbook = () => {
   const rows = [];
   const traverse = (taskList) => {
     taskList.forEach(task => {
@@ -412,8 +412,30 @@ export default function MemberDashboard() {
   return rows;
 };
 
+const getCompetenciesFromTasks = () => {
+  const seen = new Set();
+  const result = [];
+  const traverse = (taskList) => {
+    taskList.forEach(task => {
+      if (!seen.has(task.id_task)) {
+        seen.add(task.id_task);
+        result.push({
+          name: task.title || "-",
+          description: task.description || "-",
+          learning_hours: null,
+        });
+      }
+      if (task.children?.length > 0) traverse(task.children);
+    });
+  };
+  traverse(tasks);
+  return result;
+};
+
 const exportPDF = () => {
   const rows = flattenTasksForLogbook();
+  const taskCompetencies = getCompetenciesFromTasks();
+  const allCompetencies = competencies.length > 0 ? competencies : taskCompetencies;
   if (!rows.length) return alert("No submitted tasks to export.");
   const isApproved = tasks.some(t => t.logbook_approved);
   if (!isApproved) return alert("Your logbook hasn't been approved by your mentor yet.");
@@ -490,7 +512,7 @@ const exportPDF = () => {
   doc.setLineWidth(0.5);
   doc.line(14, boxY + boxH + 12, 55, boxY + boxH + 12);
 
-  doc.autoTable({
+autoTable(doc, {
     startY: boxY + boxH + 16,
     head: [["No", "Activity", "Description", "Deadline", "Submitted"]],
     body: rows.map((r, i) => [i + 1, r.title, r.description, r.deadline, r.submitted_at]),
@@ -500,18 +522,21 @@ const exportPDF = () => {
     tableLineColor: [226, 232, 240],
     tableLineWidth: 0.2,
     columnStyles: {
-      0: { cellWidth: 8, halign: "center" },
-      1: { cellWidth: 38 },
-      2: { cellWidth: 78 },
-      3: { cellWidth: 24, halign: "center" },
-      4: { cellWidth: 24, halign: "center" },
+      0: { cellWidth: 10, halign: "center", valign: "middle" },
+      1: { cellWidth: 35 },
+      2: { cellWidth: 90 },
+      3: { cellWidth: 22, halign: "center" },
+      4: { cellWidth: 25, halign: "center" },
     },
-    margin: { left: 14, right: 14 },
+    tableWidth: "auto",
+        headStyles: { fillColor: [30, 41, 59], textColor: [255, 255, 255], fontStyle: "bold", fontSize: 7.5, minCellHeight: 10 },
+        margin: { left: 14, right: 14 },
   });
 
   // Competencies section (if any)
-  if (competencies.length > 0) {
-    const finalY = doc.lastAutoTable.finalY + 10;
+console.log("competencies:", competencies);
+  if (allCompetencies.length > 0) {
+    const finalY = (doc.lastAutoTable?.finalY ?? (boxY + boxH + 80)) + 6;
     doc.setFont("helvetica", "bold");
     doc.setFontSize(8);
     doc.setTextColor(30, 41, 59);
@@ -519,19 +544,19 @@ const exportPDF = () => {
     doc.setDrawColor(79, 70, 229);
     doc.line(14, finalY + 2, 72, finalY + 2);
 
-    doc.autoTable({
+    autoTable(doc, {
       startY: finalY + 6,
       head: [["Competency", "Description", "Learning Hours"]],
-      body: competencies.map(c => [c.name, c.description || "-", c.learning_hours ? `${c.learning_hours} hrs` : "-"]),
+      body: allCompetencies.map(c => [c.name, c.description || "-", c.learning_hours ? `${c.learning_hours} hrs` : "-"]),
       styles: { fontSize: 7.5, cellPadding: 3, overflow: "linebreak", textColor: [30, 41, 59] },
       headStyles: { fillColor: [79, 70, 229], textColor: [255, 255, 255], fontStyle: "bold", fontSize: 7.5 },
       alternateRowStyles: { fillColor: [248, 250, 252] },
       tableLineColor: [226, 232, 240],
       tableLineWidth: 0.2,
       columnStyles: {
-        0: { cellWidth: 45 },
-        1: { cellWidth: 110 },
-        2: { cellWidth: 27, halign: "center" },
+        0: { cellWidth: 50 },
+        1: { cellWidth: 112 },
+        2: { cellWidth: 20, halign: "center" },
       },
       margin: { left: 14, right: 14 },
     });
@@ -553,52 +578,27 @@ const exportPDF = () => {
   doc.save(`logbook_${user?.name || "intern"}_${new Date().toISOString().split("T")[0]}.pdf`);
 };
 
-const exportExcel = () => {
+const exportCSV = () => {
   const rows = flattenTasksForLogbook();
   if (!rows.length) return alert("No submitted tasks to export.");
-  const isApproved = tasks.some(t => t.logbook_approved);
-  if (!isApproved) return alert("Your logbook hasn't been approved by your mentor yet.");
 
-  const wb = XLSX.utils.book_new();
-
-  // Sheet 1: Intern Info
-  const infoData = [
-    ["INTERNSHIP LOGBOOK"],
-    [],
-    ["Name", user?.name || "-"],
-    ["Institution", internInfo.institution || "-"],
-    ["Education Level", internInfo.education_level || "-"],
-    ["Major", internInfo.major || "-"],
-    ["Position", internInfo.position || "-"],
-    ["Company", internInfo.company || "-"],
-    ["Mentor", internInfo.mentor_name || "-"],
-    ["Printed On", new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })],
+  const headers = ["No", "Activity", "Description", "Deadline", "Submitted At", "Attachments"];
+  const csvRows = [
+    headers,
+    ...rows.map((r, i) => [i + 1, r.title, r.description, r.deadline, r.submitted_at, r.attachments])
   ];
-  const wsInfo = XLSX.utils.aoa_to_sheet(infoData);
-  wsInfo["!cols"] = [{ wch: 20 }, { wch: 40 }];
-  XLSX.utils.book_append_sheet(wb, wsInfo, "Intern Info");
-
-  // Sheet 2: Activity Log
-  const activityData = [
-    ["No", "Activity", "Description", "Deadline", "Submitted At"],
-    ...rows.map((r, i) => [i + 1, r.title, r.description, r.deadline, r.submitted_at]),
-  ];
-  const wsActivity = XLSX.utils.aoa_to_sheet(activityData);
-  wsActivity["!cols"] = [{ wch: 5 }, { wch: 30 }, { wch: 50 }, { wch: 15 }, { wch: 15 }];
-  XLSX.utils.book_append_sheet(wb, wsActivity, "Activity Log");
-
-  // Sheet 3: Competencies
-  if (competencies.length > 0) {
-    const compData = [
-      ["Competency", "Description", "Learning Hours"],
-      ...competencies.map(c => [c.name, c.description || "-", c.learning_hours || "-"]),
-    ];
-    const wsComp = XLSX.utils.aoa_to_sheet(compData);
-    wsComp["!cols"] = [{ wch: 30 }, { wch: 60 }, { wch: 15 }];
-    XLSX.utils.book_append_sheet(wb, wsComp, "Competencies");
-  }
-
-  XLSX.writeFile(wb, `logbook_${user?.name || "intern"}_${new Date().toISOString().split("T")[0]}.xlsx`);
+  const csv = csvRows.map(r => 
+    r.map(v => `"${String(v ?? "").replace(/"/g, '""')}"`).join(",")
+  ).join("\r\n");
+  
+  // BOM biar Excel auto-detect UTF-8
+  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `logbook_${user?.name || "intern"}_${new Date().toISOString().split("T")[0]}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 };
 
   if (loading) return <DashboardLayout company={company}><LoadingSpinner message="Loading My Tasks" /></DashboardLayout>;
@@ -608,33 +608,37 @@ const exportExcel = () => {
       <div className="space-y-6 w-full text-left">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-slate-900">My Tasks</h1>
-          <div className="flex gap-2">
-            <button
-              onClick={exportPDF}
-              disabled={!tasks.some(t => t.logbook_approved)}
-              className={`flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-lg border transition-all ${
-                tasks.some(t => t.logbook_approved)
-                  ? "bg-indigo-50 text-indigo-600 border-indigo-200 hover:bg-indigo-100 cursor-pointer"
-                  : "bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed"
-              }`}
-              title={!tasks.some(t => t.logbook_approved) ? "Waiting for mentor approval" : "Download Logbook PDF"}
-            >
-              {tasks.some(t => t.logbook_approved) ? "Logbook (PDF)" : "🔒 Logbook (Pending Approval)"}
-            </button>
-            <button
-              onClick={exportExcel}
-              disabled={!tasks.some(t => t.logbook_approved)}
-              className={`flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-lg border transition-all ${
-                tasks.some(t => t.logbook_approved)
-                  ? "bg-indigo-50 text-indigo-600 border-indigo-200 hover:bg-indigo-100 cursor-pointer"
-                  : "bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed"
-              }`}
-              title={!tasks.some(t => t.logbook_approved) ? "Waiting for mentor approval" : "Download Logbook Excel"}
-            >
-              {tasks.some(t => t.logbook_approved) ? "Logbook (Excel)" : "🔒 Logbook (Pending Approval)"}
-            </button>
-          </div>
-        </div>
+          <div className="relative">
+  <button
+    onClick={() => setLogbookDropdown(v => !v)}
+    className="flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-lg border bg-indigo-50 text-indigo-600 border-indigo-200 hover:bg-indigo-100 cursor-pointer"
+  >
+    Download Logbook ▾
+  </button>
+  {logbookDropdown && (
+    <div style={{ position: "absolute", right: 0, top: "calc(100% + 6px)", background: "#fff", border: "1px solid #e2e8f0", borderRadius: "10px", boxShadow: "0 8px 24px rgba(0,0,0,0.1)", zIndex: 50, overflow: "hidden", minWidth: "160px" }}>
+      <button
+        onClick={() => { setLogbookDropdown(false); exportPDF(); }}
+        disabled={!tasks.some(t => t.logbook_approved)}
+        style={{ display: "block", width: "100%", padding: "10px 16px", fontSize: "13px", fontWeight: 600, textAlign: "left", background: "none", border: "none", cursor: tasks.some(t => t.logbook_approved) ? "pointer" : "not-allowed", color: tasks.some(t => t.logbook_approved) ? "#1e293b" : "#94a3b8" }}
+        onMouseEnter={e => { if (tasks.some(t => t.logbook_approved)) e.currentTarget.style.background = "#f8fafc"; }}
+        onMouseLeave={e => e.currentTarget.style.background = "none"}
+      >
+        {tasks.some(t => t.logbook_approved) ? "📄 Download PDF" : "🔒 PDF"}
+      </button>
+      <button
+        onClick={() => { setLogbookDropdown(false); exportCSV(); }}
+        disabled={!tasks.some(t => t.logbook_approved)}
+        style={{ display: "block", width: "100%", padding: "10px 16px", fontSize: "13px", fontWeight: 600, textAlign: "left", background: "none", border: "none", borderTop: "1px solid #f1f5f9", cursor: tasks.some(t => t.logbook_approved) ? "pointer" : "not-allowed", color: tasks.some(t => t.logbook_approved) ? "#1e293b" : "#94a3b8" }}
+        onMouseEnter={e => { if (tasks.some(t => t.logbook_approved)) e.currentTarget.style.background = "#f8fafc"; }}
+        onMouseLeave={e => e.currentTarget.style.background = "none"}
+      >
+        {tasks.some(t => t.logbook_approved) ? "📊 Download CSV" : "🔒 CSV"}
+      </button>
+    </div>
+  )}
+</div>
+</div>
         {error && <div className="p-4 bg-rose-50 text-rose-600 rounded-xl border border-rose-200">{error}</div>}
         <div className="space-y-4">
           {(() => {
