@@ -278,7 +278,9 @@ const applyCerts = (data) => {
     } catch (err) {
       console.error("Logout error:", err);
     } finally {
+      const savedTheme = localStorage.getItem("theme");
       localStorage.clear();
+      if (savedTheme) localStorage.setItem("theme", savedTheme);
       useAuthStore.setState({ isAuthenticated: false, token: null, user: null, company: null });
       setLogoutModal(false);
         navigate("/", { replace: true });

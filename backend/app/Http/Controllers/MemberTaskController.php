@@ -28,8 +28,16 @@ class MemberTaskController extends Controller
 
         // Ambil competencies dari task competency_ids
         $allCompetencyIds = $tasks->pluck('competency_ids')->flatten()->filter()->unique()->values();
-        $competencies = \App\Models\Competency::whereIn('id_competency', $allCompetencyIds)
-            ->get(['id_competency', 'name', 'description', 'learning_hours']);
+
+        // Jika tidak ada competency_ids di tasks, ambil dari position intern
+        if ($allCompetencyIds->isEmpty() && $submission?->id_position) {
+            $competencies = \App\Models\Competency::whereHas('positions', function($q) use ($submission) {
+                $q->where('positions.id_position', $submission->id_position);
+            })->get(['id_competency', 'name', 'description', 'learning_hours']);
+        } else {
+            $competencies = \App\Models\Competency::whereIn('id_competency', $allCompetencyIds)
+                ->get(['id_competency', 'name', 'description', 'learning_hours']);
+        }
 
         $internInfo = [
             'institution'     => $candidate?->institution,

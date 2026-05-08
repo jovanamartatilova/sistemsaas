@@ -27,8 +27,10 @@ export default function DashboardLayout({
   const displayPhoto = userPhoto || user?.photo_path || user?.photo || null;
   const displayCompany = company || authCompany || null;
 
-  const handleLogout = async () => {
+const handleLogout = async () => {
+    const savedTheme = localStorage.getItem("theme");
     await logout();
+    if (savedTheme) localStorage.setItem("theme", savedTheme);
     navigate("/", { replace: true });
   };
 

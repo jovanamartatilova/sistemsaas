@@ -72,38 +72,8 @@ export default function InputScoreMentor() {
   const [generatingCert, setGeneratingCert] = useState(false);
   const [generatingEval, setGeneratingEval] = useState(false);
 
-  useEffect(() => {
+ useEffect(() => {
     fetchData();
-    
-    // Setup background sync
-    const cacheRef = { lastFetchTime: null };
-    const cacheDuration = 5 * 60 * 1000;
-    
-    const handleFocus = async () => {
-      if (!cacheRef.lastFetchTime) return;
-      const elapsed = Date.now() - cacheRef.lastFetchTime;
-      if (elapsed < cacheDuration) return;
-      try {
-        await fetchData();
-        cacheRef.lastFetchTime = Date.now();
-      } catch (error) {
-        console.error('[InputScoreMentor] Background sync error:', error);
-      }
-    };
-    
-    const cleanup = onDataRefresh((eventName) => {
-      if (eventName === 'scores') {
-        fetchData().then(() => { cacheRef.lastFetchTime = Date.now(); });
-      }
-    });
-    
-    window.addEventListener('focus', handleFocus);
-    cacheRef.lastFetchTime = Date.now();
-    
-    return () => {
-      window.removeEventListener('focus', handleFocus);
-      cleanup();
-    };
   }, []);
 
   const fetchData = async (skipAutoSelect = false) => {
@@ -245,7 +215,6 @@ console.log('unscored count:', internsRes.data.filter(i =>
       }
       
       setSuccessModal(true);
-      await fetchCompetencies(selectedSubmissionId);
       await fetchData(true);
     } catch (error) {
       console.error('Error saving scores:', error);
@@ -343,11 +312,13 @@ console.log('unscored count:', internsRes.data.filter(i =>
 
   const handleLogoutClick = () => setLogoutModal(true);
 
-  const confirmLogout = async () => {
+const confirmLogout = async () => {
     try {
       await mentorApi.logout();
     } finally {
+      const theme = localStorage.getItem("theme");
       localStorage.clear();
+      if (theme) localStorage.setItem("theme", theme);
       useAuthStore.setState({ isAuthenticated: false, mentor: null });
       setLogoutModal(false);
       navigate("/", { replace: true });

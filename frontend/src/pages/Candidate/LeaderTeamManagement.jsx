@@ -137,8 +137,8 @@ function DelegatedWorkRow({ st, teamMembers, onReview, onUpdate, onDelete }) {
               <CheckCircle size={14} className={`mt-0.5 ${st.status === 'done' ? 'text-emerald-500' : 'text-slate-300'}`} />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-sm font-bold text-slate-900">{st.assignee}</span>
-                  <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">{st.title}</span>
+                  <span className="text-xs font-bold text-slate-900">{st.assignee}</span>
+                        <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">{st.title}</span>
                 </div>
                 {st.description && (
                   <div className="mt-1.5 flex items-start gap-1.5 bg-white/50 p-2 rounded border border-slate-100">
@@ -256,7 +256,7 @@ function DelegatedWorkRow({ st, teamMembers, onReview, onUpdate, onDelete }) {
 }
 
 function TaskShareCard({ task, teamMembers, onAssign, onUpdate, onDelete, onReview }) {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(true);
   const [assigningToTarget, setAssigningToTarget] = useState(null); // ID of target being delegated
   const [formData, setFormData] = useState({ title: "", description: "", memberUserId: "", deadline: "" });
 
@@ -275,12 +275,12 @@ function TaskShareCard({ task, teamMembers, onAssign, onUpdate, onDelete, onRevi
         onClick={() => setExpanded(!expanded)}
       >
         <div className="flex items-center gap-4">
-          <div className="w-10 h-10 bg-indigo-600 text-white rounded-xl flex items-center justify-center shadow-indigo-100 shadow-lg">
-            <Users size={20} />
+        <div className="w-9 h-9 bg-indigo-600 text-white rounded-xl flex items-center justify-center shadow-indigo-100 shadow-lg">
+            <Users size={16} />
           </div>
           <div>
-            <h3 className="text-base font-bold text-slate-900">{task.title}</h3>
-            <p className="text-xs text-slate-500">Project Overview & Team Delegation</p>
+            <h3 className="text-sm font-bold text-slate-900">{task.title}</h3>
+            <p className="text-xs text-slate-400">Project Overview & Team Delegation</p>
           </div>
         </div>
         <div className="flex items-center gap-4">
@@ -297,7 +297,7 @@ function TaskShareCard({ task, teamMembers, onAssign, onUpdate, onDelete, onRevi
           {task.description && (
             <div className="bg-white border border-slate-100 rounded-lg p-3">
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Project Description</p>
-              <p className="text-sm text-slate-600 leading-relaxed">{task.description}</p>
+            <p className="text-xs text-slate-600 leading-relaxed">{task.description}</p>
             </div>
           )}
 
@@ -317,9 +317,9 @@ function TaskShareCard({ task, teamMembers, onAssign, onUpdate, onDelete, onRevi
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
                           <span className="w-2 h-2 rounded-full bg-indigo-500" />
-                          <h5 className="text-sm font-bold text-slate-800">{target.title}</h5>
-                        </div>
-                        <p className="text-xs text-slate-500 italic pl-4">{target.description}</p>
+                          <h5 className="text-xs font-bold text-slate-800">{target.title}</h5>
+                  </div>
+                  <p className="text-[11px] text-slate-500 italic pl-4">{target.description}</p>
                       </div>
                       <button 
                         onClick={() => setAssigningToTarget(assigningToTarget === target.id ? null : target.id)}
@@ -495,16 +495,16 @@ export default function LeaderTeamManagement() {
     <DashboardLayout userName={user?.name} userPhoto={user?.photo} company={company}>
       <div className="space-y-6 text-left w-full">
         <div className="text-left w-full">
-          <h1 className="text-2xl font-bold text-slate-900 text-left">Team Management</h1>
-          <p className="text-sm text-slate-500 mt-1 text-left">Share mentor tasks and review member submissions</p>
+          <h1 className="text-xl font-bold text-slate-900 text-left">Team Management</h1>
+          <p className="text-xs text-slate-500 mt-1 text-left">Share mentor tasks and review member submissions</p>
         </div>
 
         {error && <div className="bg-rose-50 border border-rose-200 p-4 rounded-xl text-rose-700 text-sm">{error}</div>}
 
         <div className="space-y-4 w-full">
           <div className="flex flex-col gap-1">
-            <h2 className="text-sm font-bold text-slate-800">Tasks to Share with Members</h2>
-            <p className="text-xs text-slate-500">Review tasks from your mentor and delegate parts to your team.</p>
+            <h2 className="text-xs font-bold text-slate-800 uppercase tracking-widest">Tasks to Share with Members</h2>
+            <p className="text-xs text-slate-400">Review tasks from your mentor and delegate parts to your team.</p>
           </div>
 
           {tasksToShare.length > 0 ? (

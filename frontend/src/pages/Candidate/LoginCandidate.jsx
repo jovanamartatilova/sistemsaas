@@ -9,6 +9,25 @@ export default function LoginCandidate() {
 
     const [company, setCompany] = useState(null);
     const [companyLoading, setCompanyLoading] = useState(true);
+    const isDark = (localStorage.getItem("theme") ?? "dark") !== "light";
+    const panelBg = isDark
+        ? "linear-gradient(160deg, #0d1f3c 0%, #0a1628 40%, #071220 100%)"
+        : "linear-gradient(160deg, #e8edf5 0%, #f0f4f8 40%, #dce4ef 100%)";
+    const leftPanelBg = isDark
+        ? "linear-gradient(135deg, #0a1628 0%, #0d2044 50%, #0a1a35 100%)"
+        : "linear-gradient(135deg, #1a3a6b 0%, #1e4080 50%, #152f5a 100%)";
+    const textColor = isDark ? "rgba(255,255,255,0.8)" : "rgba(15,23,42,0.85)";
+    const textMuted = isDark ? "rgba(255,255,255,0.4)" : "rgba(15,23,42,0.5)";
+    const inputBase = {
+        background: isDark ? "rgba(255,255,255,0.07)" : "rgba(255,255,255,0.9)",
+        border: isDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(0,0,0,0.15)",
+        fontSize: "14px",
+        color: isDark ? "#fff" : "#0f172a",
+    };
+    const inputFocus = {
+        border: "1px solid rgba(74,158,255,0.5)",
+        background: isDark ? "rgba(74,158,255,0.08)" : "rgba(74,158,255,0.06)",
+    };
 
     useEffect(() => {
         if (isAuthenticated && !authLoading) {
@@ -130,15 +149,6 @@ export default function LoginCandidate() {
         }
     };
 
-    const inputBase = {
-        background: "rgba(255,255,255,0.07)",
-        border: "1px solid rgba(255,255,255,0.1)",
-        fontSize: "14px",
-    };
-    const inputFocus = {
-        border: "1px solid rgba(74,158,255,0.5)",
-        background: "rgba(74,158,255,0.08)",
-    };
     const btnLink = {
         background: "none",
         border: "none",
@@ -176,7 +186,7 @@ export default function LoginCandidate() {
         <div className="min-h-screen w-full flex">
             {/* ── Left Panel ── */}
             <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden"
-                style={{ background: "linear-gradient(135deg, #0a1628 0%, #0d2044 50%, #0a1a35 100%)" }}>
+                style={{ background: leftPanelBg }}>
                 <div className="absolute inset-0 bg-cover bg-center bg-no-repeat"
                     style={{ backgroundImage: "url('/assets/images/bg.png')" }} />
                 <div className="absolute inset-0"
@@ -260,7 +270,7 @@ export default function LoginCandidate() {
 
             {/* ── Right Panel ── */}
             <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 relative overflow-hidden"
-                style={{ background: "linear-gradient(160deg, #0d1f3c 0%, #0a1628 40%, #071220 100%)" }}>
+                style={{ background: panelBg }}>
 
                 {/* Mobile navigation */}
                 <div className="lg:hidden absolute top-6 left-6 flex items-center gap-4 z-50 pointer-events-auto">
@@ -306,9 +316,9 @@ export default function LoginCandidate() {
                                 <span style={{ color: "#4a9eff" }}>{company?.name ?? "EarlyPath"}</span>
                             )}
                         </h1>
-                        <p className="text-sm" style={{ color: "rgba(255,255,255,0.4)" }}>
-                            Sign in to your account and continue your journey.
-                        </p>
+                        <p className="text-sm" style={{ color: textMuted }}>
+                        Sign in to your account and continue your journey.
+                    </p>
                     </div>
 
                     {successMsg && (
@@ -331,7 +341,7 @@ export default function LoginCandidate() {
                     <form onSubmit={handleSubmit} className="space-y-4">
                         {/* Email */}
                         <div>
-                            <label className="block text-sm font-medium mb-1.5" style={{ color: "rgba(255,255,255,0.8)" }}>Email</label>
+                            <label className="block text-sm font-medium mb-1.5" style={{ color: textColor }}>Email</label>
                             <input type="email" name="email" value={form.email} onChange={handleChange}
                                 placeholder="john@email.com" required
                                 className="w-full px-4 py-3 rounded-xl text-white placeholder-gray-500 outline-none transition-all duration-200"
@@ -424,7 +434,7 @@ export default function LoginCandidate() {
                     </form>
 
                     {/* Register link */}
-                    <p className="text-center mt-6 text-sm" style={{ color: "rgba(255,255,255,0.4)" }}>
+                    <p className="text-center mt-6 text-sm" style={{ color: textMuted }}>
                         Don't have an account?{" "}
                         <button
                             onClick={() => navigate(idCompany && idCompany !== 'undefined' ? `/c/${idCompany}/register` : '/register')}
