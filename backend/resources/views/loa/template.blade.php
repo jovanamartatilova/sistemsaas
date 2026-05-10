@@ -28,6 +28,17 @@
 </table>
 <p class="c15 c22"><span class="c3 c5"></span></p><p class="c7" style="margin-top: 10px;"><span>Dinyatakan </span><span class="c10">DITERIMA</span><span class="c2">&nbsp;sebagai peserta program magang di {{ $company->name }}. </span></p><p class="c7"><span>Informasi teknis terkait pelaksanaan magang dan proses onboarding akan disampaikan lebih lanjut kepada yang bersangkutan melalui email yang terdaftar. Demikian surat ini kami sampaikan. Atas perhatian dan kerja samanya, kami ucapkan terima kasih.</span><span class="c3">&nbsp;</span></p>
 <div style="margin-top: 40px; text-align: right;">
-    <p class="c20"><span>Hormat kami,</span></p><p class="c20"><span class="c10">HR</span></p><p class="c11"><span class="c5 c3"></span></p><p class="c11"><span class="c5 c3"></span></p><p class="c11"><span class="c5 c3"></span></p><p class="c11"><span class="c5 c3"></span></p><br><br><br><p class="c26"><span class="c10">{{ $loa->signed_by }}</span></p>
+    <div style="display: inline-block; text-align: center;">
+        <p style="margin: 0; padding-bottom: 2pt;"><span>Hormat kami,</span></p>
+        <p style="margin: 0; padding-bottom: 2pt;"><span class="c10">HR</span></p>
+        @if(isset($signature_base64) && $signature_base64)
+            <div style="margin-top: 10px; margin-bottom: 10px;">
+                <img src="{{ $signature_base64 }}" style="max-height: 80px; max-width: 150px; display: inline-block;" alt="Signature">
+            </div>
+        @else
+            <br><br><br><br>
+        @endif
+        <p style="margin: 0; padding-top: 2pt;"><span class="c10">{{ $loa->signed_by }}</span></p>
+    </div>
 </div>
 </body></html>
