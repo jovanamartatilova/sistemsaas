@@ -726,9 +726,25 @@ class MentorController extends Controller
 
         // Calculate average score
         $assessment = Assessment::where('id_submission', $idSubmission)->first();
+        
+        if (!$assessment || empty($assessment->scores_data)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Please save assessment scores first before generating a certificate.'
+            ], 400);
+        }
+
         $scoresData = $assessment->scores_data ?? [];
         $scores = array_filter($scoresData, fn($s) => $s['score'] !== null);
-        $avgScore = count($scores) > 0 ? round(array_sum(array_column($scores, 'score')) / count($scores), 2) : 0;
+        
+        if (count($scores) === 0) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No scores found. Please input and save scores for at least one competency.'
+            ], 400);
+        }
+
+        $avgScore = round(array_sum(array_column($scores, 'score')) / count($scores), 2);
 
         $positionComps = DB::table('position_competencies')
             ->join('competencies', 'position_competencies.id_competency', '=', 'competencies.id_competency')
@@ -785,12 +801,12 @@ class MentorController extends Controller
         $filePath = 'certificates/' . $idCert . '.pdf';
 
         $signature_base64 = null;
-        if (auth()->check() && auth()->user()->employee && auth()->user()->employee->signature_path) {
-            $sigPath = storage_path('app/public/' . auth()->user()->employee->signature_path);
-            if (file_exists($sigPath)) {
-                $type = pathinfo($sigPath, PATHINFO_EXTENSION);
-                $data = file_get_contents($sigPath);
-                $signature_base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
+        $employee = auth()->user()->employee;
+        if ($employee && $employee->signature_path) {
+            if (Storage::disk('public')->exists($employee->signature_path)) {
+                $fileContent = Storage::disk('public')->get($employee->signature_path);
+                $type = pathinfo($employee->signature_path, PATHINFO_EXTENSION);
+                $signature_base64 = 'data:image/' . $type . ';base64,' . base64_encode($fileContent);
             }
         }
 
@@ -960,12 +976,12 @@ class MentorController extends Controller
         }
 
         $signature_base64 = null;
-        if (auth()->check() && auth()->user()->employee && auth()->user()->employee->signature_path) {
-            $sigPath = storage_path('app/public/' . auth()->user()->employee->signature_path);
-            if (file_exists($sigPath)) {
-                $type = pathinfo($sigPath, PATHINFO_EXTENSION);
-                $data = file_get_contents($sigPath);
-                $signature_base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
+        $employee = auth()->user()->employee;
+        if ($employee && $employee->signature_path) {
+            if (Storage::disk('public')->exists($employee->signature_path)) {
+                $fileContent = Storage::disk('public')->get($employee->signature_path);
+                $type = pathinfo($employee->signature_path, PATHINFO_EXTENSION);
+                $signature_base64 = 'data:image/' . $type . ';base64,' . base64_encode($fileContent);
             }
         }
 

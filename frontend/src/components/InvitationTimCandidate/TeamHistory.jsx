@@ -11,7 +11,7 @@ export default function TeamHistory({ program, onTeamSelect = null }) {
   const [error, setError] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
 
-  const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+  const API_BASE_URL = import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}`;
   const authToken = localStorage.getItem("auth_token") || localStorage.getItem("token");
 
   useEffect(() => {

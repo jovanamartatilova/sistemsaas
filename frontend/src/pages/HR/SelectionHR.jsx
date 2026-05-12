@@ -404,6 +404,18 @@ export default function SelectionHR() {
     setSummaryMap({});
   }, [activePositionId, activeTab, activeSubStageIndex]);
 
+  // ── NEW: Fetch Test Templates ──────────────────────────────────────────────
+  const fetchTestTemplates = () => {
+    if (!activePositionId) return;
+    api(`/hr/positions/${activePositionId}/test-templates`)
+      .then(res => setConfiguredTests(res || []))
+      .catch(err => console.error('Fetch test templates error:', err));
+  };
+
+  useEffect(() => {
+    fetchTestTemplates();
+  }, [activePositionId]);
+
   // ── Fetch Positions ────────────────────────────────────────────────────────
   useEffect(() => {
     api('/positions/catalog')
@@ -670,8 +682,8 @@ const handleLogout = () => {
             </div>
           )}
 
-          {/* Test Types Panel (unchanged) */}
-          {activeTab==='test'&&(
+          {/* Test Types Panel — show if current stage is 'test' */}
+          {currentStage?.type === 'test' && (
             <div style={{ background:'#fff', borderRadius:'16px', border:'1px solid #cbd5e1', padding:'16px 20px', marginBottom:'20px', boxShadow:'0 4px 6px -1px rgba(0,0,0,0.02)' }}>
               <div onClick={()=>setExpandedStageIndex(expandedStageIndex==='test-setup'?null:'test-setup')} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', cursor:'pointer' }}>
                 <div style={{ display:'flex', alignItems:'center', gap:'10px' }}>

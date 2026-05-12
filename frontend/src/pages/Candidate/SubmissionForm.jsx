@@ -276,12 +276,12 @@ export default function SubmissionForm() {
         alive && setLoading(true);
         const [profileRes, companyRes, vacanciesRes] = await Promise.all([
           token
-            ? fetch("http://127.0.0.1:8000/api/auth/profile", {
+            ? fetch(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/auth/profile`, {
                 headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
               }).catch(() => null)
             : Promise.resolve(null),
-          fetch(`http://127.0.0.1:8000/api/c/${idCompany}`, { headers: { Accept: "application/json" } }),
-          fetch(`http://127.0.0.1:8000/api/c/${idCompany}/vacancies`, { headers: { Accept: "application/json" } }),
+          fetch(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/c/${idCompany}`, { headers: { Accept: "application/json" } }),
+          fetch(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/c/${idCompany}/vacancies`, { headers: { Accept: "application/json" } }),
         ]);
 
         if (!alive) return;
@@ -391,7 +391,7 @@ export default function SubmissionForm() {
       fd.append("linkedin_url", form.linkedin_url);
       fd.append("motivation_message", form.motivation_message);
 
-      const res = await fetch(`http://127.0.0.1:8000/api/c/${idCompany}/apply`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/c/${idCompany}/apply`, {
         method: "POST",
         headers: { Accept: "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: fd,
@@ -416,7 +416,10 @@ export default function SubmissionForm() {
 
     } catch (err) {
       if (err.name === "AbortError") setErrorMsg("Request timed out. Check your connection and try again.");
-      else if (err.message === "Failed to fetch") setErrorMsg("Cannot connect to server. Ensure the backend is running on port 8000.");
+      else if (err.message === "Failed to fetch") {
+        const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+        setErrorMsg(`Cannot connect to API at ${apiUrl}. Please ensure the backend is running and accessible.`);
+      }
       else setErrorMsg(err.message);
       setSubmitting(false);
     } finally {

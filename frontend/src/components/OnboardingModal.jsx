@@ -61,7 +61,7 @@ export default function OnboardingModal({ isOpen, onClose }) {
     }
 
     try {
-      const response = await fetch("http://localhost:8000/api/create-company", {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/create-company`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -104,7 +104,7 @@ export default function OnboardingModal({ isOpen, onClose }) {
     setErrorMsg("");
 
     try {
-      const response = await fetch("http://localhost:8000/api/create-candidate-profile", {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/create-candidate-profile`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
