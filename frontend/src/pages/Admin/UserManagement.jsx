@@ -3,7 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore";
 import axios from "axios";
 
-const API = "http://localhost:8000/api";
+const API = `${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}`;
 
 const IC = {
   Dashboard: () => <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>,
@@ -398,7 +398,43 @@ export default function UserManagement() {
     if (token) { fetchCodes(); fetchStaff(); fetchRoles(); fetchDivisions(); fetchPositions(); fetchJobLevels(); }
   }, [token]);
 
-  const copy = t => { navigator.clipboard.writeText(t); setCopiedToast(true); setTimeout(() => setCopiedToast(false), 2000); };
+  const copy = t => {
+    // 1. Try modern clipboard API
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(t).then(() => {
+        setCopiedToast(true);
+        setTimeout(() => setCopiedToast(false), 2000);
+      }).catch(err => {
+        console.warn("Clipboard API failed, using fallback", err);
+        fallbackCopy(t);
+      });
+    } else {
+      fallbackCopy(t);
+    }
+  };
+
+  const fallbackCopy = t => {
+    const textArea = document.createElement("textarea");
+    textArea.value = t;
+    // Ensure it's not visible but exists in the DOM
+    textArea.style.position = "fixed";
+    textArea.style.left = "-9999px";
+    textArea.style.top = "0";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    try {
+      const successful = document.execCommand('copy');
+      if (successful) {
+        setCopiedToast(true);
+        setTimeout(() => setCopiedToast(false), 2000);
+      }
+    } catch (err) {
+      console.error('Fallback copy failed', err);
+      alert("Failed to copy URL. Please copy it manually: " + t);
+    }
+    document.body.removeChild(textArea);
+  };
   const activationLink = c => `${window.location.origin}/activate?code=${c}`;
 
   const openCreateCode = () => { setCodeForm({ label: "", id_role: "", division: "", position: "", employee_status: "intern", schedule: "", job_level: "" }); setCodeError(""); setCodeSuccess(false); setCreatedCode(null); setCodeModal(true); };
@@ -534,7 +570,7 @@ const roleBorder = r => getRolePalette(r).border;
         <div style={{ flex: 1 }} />
         <div style={{ borderTop: "1px solid rgba(255,255,255,0.07)", paddingTop: 12, display: "flex", alignItems: "center", gap: 10 }}>
           {company?.logo_path
-            ? <img src={`http://127.0.0.1:8000/storage/${company.logo_path}`} style={{ width: 34, height: 34, borderRadius: 9, objectFit: "cover" }} />
+            ? <img src={`${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.split("/api")[0] : "http://localhost:8000"}/storage/${company.logo_path}`} style={{ width: 34, height: 34, borderRadius: 9, objectFit: "cover" }} />
             : <div style={{ width: 34, height: 34, borderRadius: 9, background: "linear-gradient(135deg,#2d7dd2,#4a9eff)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 800, color: "#fff" }}>{initials}</div>
           }
           <div style={{ flex: 1, minWidth: 0 }}>

@@ -385,6 +385,14 @@ Route::middleware(['auth:sanctum'])->prefix('hr')->group(function () {
         Route::get('/summarize/{id}', [SelectionAIController::class, 'summarize']);
         Route::get('/suggest/{id}', [SelectionAIController::class, 'suggestDecision']);
     });
+
+    // Test Templates (for positions)
+    Route::get('/positions/{id}/test-templates',     [ProgramController::class, 'getTestTemplates']);
+    Route::post('/positions/{id}/test-templates',    [ProgramController::class, 'storeTestTemplate']);
+    Route::delete('/positions/{id}/test-templates/{templateId}', [ProgramController::class, 'destroyTestTemplate']);
+
+    // Bulk actions
+    Route::post('/candidates/bulk-assign-test', [HRCandidateController::class, 'bulkAssignTest']);
 });
 
 // Development-only Routes (DEBUG mode)

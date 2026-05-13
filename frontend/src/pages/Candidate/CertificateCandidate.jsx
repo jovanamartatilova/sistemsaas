@@ -111,7 +111,7 @@ export default function CertificatesPage() {
   const navigate = useNavigate();
   const { logout: globalLogout } = useAuthStore();
   const { idCompany } = useParams();
-  const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+  const API_BASE_URL = import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}`;
   const [filter, setFilter] = useState("All");
   const [search, setSearch] = useState("");
   const [userData, setUserData] = useState(null);

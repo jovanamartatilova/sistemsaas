@@ -10,7 +10,7 @@ import { useAuthStore } from "../../stores/authStore";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import SidebarCandidate from "../../components/SidebarCandidate";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+const API_BASE_URL = import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}`;
 const getToken = () => localStorage.getItem("auth_token") || localStorage.getItem("token");
 const getStoredCompany = () => {
   try { return JSON.parse(localStorage.getItem("company") || "{}") || null; }
