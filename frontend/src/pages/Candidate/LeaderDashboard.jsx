@@ -288,7 +288,7 @@ export default function LeaderDashboard() {
 
                 <button
                   onClick={() =>
-                    navigator.clipboard.writeText(team.invitation.invitation_link)
+                    navigator.clipboard ? navigator.clipboard.writeText(team.invitation.invitation_link) : (() => { const el = document.createElement("textarea"); el.value = team.invitation.invitation_link; document.body.appendChild(el); el.select(); document.execCommand("copy"); document.body.removeChild(el); })()
                   }
                   className="text-sm text-white bg-indigo-600 px-3 py-1 rounded-md"
                 >

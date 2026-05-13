@@ -478,7 +478,7 @@ export default function SelectionHR() {
     params.set('id_position', activePositionId);
     if (search) params.set('search', search);
     if (activeTab === 'final') params.set('status', finalStatusFilter);
-    else params.set('status', `stage_${activeSubStageIndex}`);
+   else params.set('status', `stage_${activeSubStageIndex}`);
     api(`/hr/candidates?${params}`)
       .then(res => setCandidates(res.candidates || res.data?.candidates || []))
       .catch(err => console.error(err))
