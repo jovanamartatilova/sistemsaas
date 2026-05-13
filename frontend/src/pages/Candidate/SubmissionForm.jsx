@@ -296,7 +296,15 @@ export default function SubmissionForm() {
         if (profileRes?.ok) {
           const u = await profileRes.json();
           const p = u.company || u.user || {};
-          setForm((prev) => ({ ...prev, name: p.name || "", email: p.email || "" }));
+          // If candidate, they might have university and major in their profile
+          const profile = u.candidate_profile || {};
+          setForm((prev) => ({ 
+            ...prev, 
+            name: p.name || "", 
+            email: p.email || "",
+            university_name: profile.university || profile.institution || prev.university_name,
+            major_name: profile.major || prev.major_name
+          }));
         }
 
         if (!companyRes.ok) throw new Error("Company not found");
