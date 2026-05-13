@@ -217,7 +217,7 @@ const VacancyDetailModal = ({ vacancy, onClose, isDark }) => {
     <div onClick={(e) => e.target === e.currentTarget && onClose()} style={{ position: "fixed", inset: 0, background: "rgba(10,22,40,0.85)", backdropFilter: "blur(8px)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
       <div style={{ background: "#0d1a28", borderRadius: "24px", width: "100%", maxWidth: "600px", maxHeight: "90vh", overflowY: "auto", position: "relative", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5)", border: "1px solid rgba(255,255,255,0.08)" }}>
         <button onClick={onClose} style={{ position: "absolute", top: "20px", right: "20px", width: "40px", height: "40px", borderRadius: "50%", background: "rgba(255,255,255,0.1)", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 10, color: "#fff", fontSize: "18px" }}>✕</button>
-        <div style={{ width: "100%", height: "260px", background: vacancy.photo ? `url(http://127.0.0.1:8000/storage/${vacancy.photo}) center/cover` : "rgba(255,255,255,0.05)" }}></div>
+        <div style={{ width: "100%", height: "260px", background: vacancy.photo ? `url(${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.split("/api")[0] : "http://localhost:8000"}/storage/${vacancy.photo}) center/cover` : "rgba(255,255,255,0.05)" }}></div>
         <div style={{ padding: "32px", textAlign: "left" }}>
           <p style={{ fontSize: "14px", fontWeight: "600", color: "#4a9eff", marginBottom: "8px" }}>{vacancy.company?.name}</p>
           <h2 style={{ fontSize: "28px", fontWeight: "800", color:  isDark ? "#fff" : "#1a2332", margin: "0 0 16px" }}>{vacancy.title}</h2>
@@ -421,7 +421,7 @@ const theme = {
   const handleEmailSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch("http://localhost:8000/api/contact", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/contact`, {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
@@ -539,7 +539,7 @@ const theme = {
   }, []);
 
   useEffect(() => {
-    fetch("http://localhost:8000/api/vacancies/public")
+    fetch(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/vacancies/public`)
       .then(async (res) => {
         const data = await res.json();
         if (!res.ok) {
@@ -949,7 +949,7 @@ const theme = {
               <div style={{ width: "100%", height: "220px", overflow: "hidden", background: "rgba(255,255,255,0.05)", flexShrink: 0 }}>
                 {pos.photo && (
                   <img
-                    src={`http://127.0.0.1:8000/storage/${pos.photo}`}
+                    src={`${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.split("/api")[0] : "http://localhost:8000"}/storage/${pos.photo}`}
                     alt={pos.title}
                     style={{ width: "100%", height: "100%", display: "block", objectFit: "cover", objectPosition: "center top" }}
                   />

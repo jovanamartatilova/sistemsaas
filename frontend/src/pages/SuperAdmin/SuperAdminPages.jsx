@@ -15,7 +15,7 @@ function LoginForm({ onLoginSuccess }) {
     setLoading(true);
     setError("");
     try {
-      const response = await fetch("http://localhost:8000/api/auth/login-superadmin", {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/auth/login-superadmin`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -263,7 +263,7 @@ function MessagesPage({ onUnreadChange }) {
   const fetchMessages = async () => {
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:8000/api/superadmin/messages", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/superadmin/messages`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("auth_token")}` },
       });
       const data = await res.json();
@@ -281,7 +281,7 @@ function MessagesPage({ onUnreadChange }) {
   const markRead = async (msg) => {
     setSelected(msg);
     if (!msg.is_read) {
-      await fetch(`http://localhost:8000/api/superadmin/messages/${msg.id}/read`, {
+      await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/superadmin/messages/${msg.id}/read`, {
         method: "PATCH",
         headers: { Authorization: `Bearer ${localStorage.getItem("auth_token")}` },
       });
@@ -290,7 +290,7 @@ function MessagesPage({ onUnreadChange }) {
   };
 
   const deleteMsg = async (id) => {
-    await fetch(`http://localhost:8000/api/superadmin/messages/${id}`, {
+    await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/superadmin/messages/${id}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${localStorage.getItem("auth_token")}` },
     });
@@ -850,7 +850,7 @@ function TenantManagementPage() {
                           {/* Ganti icon initials dengan logo */}
                           {t.logo_path
                             ? <img
-                                src={`http://127.0.0.1:8000/storage/${t.logo_path}`}
+                                src={`${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.split("/api")[0] : "http://localhost:8000"}/storage/${t.logo_path}`}
                                 alt={t.name}
                                 style={{ width: "32px", height: "32px", borderRadius: "8px", objectFit: "cover", flexShrink: 0, border: "1px solid #f1f5f9" }}
                                 onError={e => { e.target.style.display = "none"; e.target.nextSibling.style.display = "flex"; }}

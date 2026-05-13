@@ -220,6 +220,13 @@ export default function SubmissionForm() {
   const location = useLocation();
   const selectedPositionName = location.state?.selectedPosition || null;
   const { user, token, loading: authLoading } = useAuthStore();
+  
+  const getApiUrl = () => {
+    if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
+    const { protocol, hostname } = window.location;
+    return `${protocol}//${hostname}:8000/api`;
+  };
+  const apiUrl = getApiUrl();
 
   const [company, setCompany] = useState(null);
   const [vacancy, setVacancy] = useState(null);
@@ -276,12 +283,12 @@ export default function SubmissionForm() {
         alive && setLoading(true);
         const [profileRes, companyRes, vacanciesRes] = await Promise.all([
           token
-            ? fetch("http://127.0.0.1:8000/api/auth/profile", {
+            ? fetch(`${apiUrl}/auth/profile`, {
                 headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
               }).catch(() => null)
             : Promise.resolve(null),
-          fetch(`http://127.0.0.1:8000/api/c/${idCompany}`, { headers: { Accept: "application/json" } }),
-          fetch(`http://127.0.0.1:8000/api/c/${idCompany}/vacancies`, { headers: { Accept: "application/json" } }),
+          fetch(`${apiUrl}/c/${idCompany}`, { headers: { Accept: "application/json" } }),
+          fetch(`${apiUrl}/c/${idCompany}/vacancies`, { headers: { Accept: "application/json" } }),
         ]);
 
         if (!alive) return;
@@ -289,7 +296,15 @@ export default function SubmissionForm() {
         if (profileRes?.ok) {
           const u = await profileRes.json();
           const p = u.company || u.user || {};
-          setForm((prev) => ({ ...prev, name: p.name || "", email: p.email || "" }));
+          // If candidate, they might have university and major in their profile
+          const profile = u.candidate_profile || {};
+          setForm((prev) => ({ 
+            ...prev, 
+            name: p.name || "", 
+            email: p.email || "",
+            university_name: profile.university || profile.institution || prev.university_name,
+            major_name: profile.major || prev.major_name
+          }));
         }
 
         if (!companyRes.ok) throw new Error("Company not found");
@@ -391,7 +406,7 @@ export default function SubmissionForm() {
       fd.append("linkedin_url", form.linkedin_url);
       fd.append("motivation_message", form.motivation_message);
 
-      const res = await fetch(`http://127.0.0.1:8000/api/c/${idCompany}/apply`, {
+      const res = await fetch(`${apiUrl}/c/${idCompany}/apply`, {
         method: "POST",
         headers: { Accept: "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: fd,
@@ -416,7 +431,9 @@ export default function SubmissionForm() {
 
     } catch (err) {
       if (err.name === "AbortError") setErrorMsg("Request timed out. Check your connection and try again.");
-      else if (err.message === "Failed to fetch") setErrorMsg("Cannot connect to server. Ensure the backend is running on port 8000.");
+      else if (err.message === "Failed to fetch") {
+        setErrorMsg(`Cannot connect to API at ${apiUrl}. Please ensure the backend is running and accessible.`);
+      }
       else setErrorMsg(err.message);
       setSubmitting(false);
     } finally {

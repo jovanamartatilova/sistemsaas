@@ -5,7 +5,7 @@ import { useAuthStore } from "../../stores/authStore";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { getScopedRole, debugUserRole } from "../../utils/roleUtils";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+const API_BASE_URL = import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}`;
 
 // --- Progress Bar ---
 function ProgressBar({ value, max, color = "bg-indigo-500", height = "h-1.5" }) {
@@ -350,7 +350,7 @@ function EarlyPathDashboard() {
               <div className="relative flex-shrink-0">
                 {profile?.photo_url || profile?.photo_path ? (
                   <img
-                    src={profile?.photo_url || `http://localhost:8000/storage/${profile?.photo_path}`}
+                    src={profile?.photo_url || `${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.split("/api")[0] : "http://localhost:8000"}/storage/${profile?.photo_path}`}
                     alt={profile?.name}
                     className="w-16 h-16 rounded-full object-cover border-2 border-slate-200"
                     onError={(e) => {

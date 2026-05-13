@@ -256,7 +256,7 @@ function JobCard({ job, onEdit, onDelete }) {
             <div style={{ width: "100%", position: "relative", backgroundColor: "#f1f5f9", height: 280, overflow: "hidden" }}>
                 {(job.photo || job.image) && (
                     <img 
-                        src={job.photo ? `http://127.0.0.1:8000/storage/${job.photo}` : job.image} 
+                        src={job.photo ? `${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.split("/api")[0] : "http://localhost:8000"}/storage/${job.photo}` : job.image} 
                         alt="poster"
                         style={{ width: "100%", height: "auto", display: "block", objectFit: "cover" }}
                     />
@@ -366,7 +366,7 @@ function Modal({ open, editingJob, onClose, onSubmit, catalog }) {
         setIsGeneratingAI(true);
         try {
             const prompt = `Tuliskan satu paragraf deskripsi profesional dan menarik (sekitar 30-50 kata) dalam bahasa Indonesia untuk program magang '${form.title}'. Berikan HANYA teks deskripsinya tanpa awalan, tanpa tanda kutip, dan tanpa penjelasan lain.`;
-            const res = await axios.post("http://127.0.0.1:8000/api/ai/generate", {
+            const res = await axios.post(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/ai/generate`, {
                 model: "llama3",
                 prompt: prompt
             }, {
@@ -726,17 +726,17 @@ function CandidateItem({ sub }) {
                     <div style={{ fontSize: 12, fontWeight: 700, color: "#64748b", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.5px" }}>Candidate Documents</div>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                         {sub.cv_file && (
-                            <a href={`http://127.0.0.1:8000/storage/${sub.cv_file}`} target="_blank" rel="noopener noreferrer" style={docBtn} onMouseEnter={e => { e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.color = "#2563c4"; }} onMouseLeave={e => { e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.color = "#475569"; }}>
+                            <a href={`${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.split("/api")[0] : "http://localhost:8000"}/storage/${sub.cv_file}`} target="_blank" rel="noopener noreferrer" style={docBtn} onMouseEnter={e => { e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.color = "#2563c4"; }} onMouseLeave={e => { e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.color = "#475569"; }}>
                                 <Icon.FileText /> CV / Resume
                             </a>
                         )}
                         {(sub.supporting_document_file || sub.cover_letter_file || sub.institution_letter_file) && (
-                            <a href={`http://127.0.0.1:8000/storage/${sub.supporting_document_file || sub.cover_letter_file || sub.institution_letter_file}`} target="_blank" rel="noopener noreferrer" style={docBtn} onMouseEnter={e => { e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.color = "#2563c4"; }} onMouseLeave={e => { e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.color = "#475569"; }}>
+                            <a href={`${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.split("/api")[0] : "http://localhost:8000"}/storage/${sub.supporting_document_file || sub.cover_letter_file || sub.institution_letter_file}`} target="_blank" rel="noopener noreferrer" style={docBtn} onMouseEnter={e => { e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.color = "#2563c4"; }} onMouseLeave={e => { e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.color = "#475569"; }}>
                                 <Icon.FileText /> Supporting Document
                             </a>
                         )}
                         {sub.portfolio_file && (
-                            <a href={`http://127.0.0.1:8000/storage/${sub.portfolio_file}`} target="_blank" rel="noopener noreferrer" style={docBtn} onMouseEnter={e => { e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.color = "#2563c4"; }} onMouseLeave={e => { e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.color = "#475569"; }}>
+                            <a href={`${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.split("/api")[0] : "http://localhost:8000"}/storage/${sub.portfolio_file}`} target="_blank" rel="noopener noreferrer" style={docBtn} onMouseEnter={e => { e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.color = "#2563c4"; }} onMouseLeave={e => { e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.color = "#475569"; }}>
                                 <Icon.FileText /> Additional Portfolio
                             </a>
                         )}
@@ -819,7 +819,7 @@ export default function ProgramManagement() {
 
     const fetchCatalog = async () => {
         try {
-            const res = await axios.get("http://127.0.0.1:8000/api/positions/catalog", {
+            const res = await axios.get(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/positions/catalog`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setCatalog(res.data);
@@ -831,7 +831,7 @@ export default function ProgramManagement() {
     const fetchJobs = async () => {
         try {
             setLoading(true);
-            const res = await axios.get("http://127.0.0.1:8000/api/vacancies", {
+            const res = await axios.get(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/vacancies`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             // Map the backend data to frontend field names if they differ
@@ -922,7 +922,7 @@ export default function ProgramManagement() {
             if (editingJob) {
                 // For PUT with files in Laravel, we use POST with _method = PUT
                 formData.append("_method", "PUT");
-                await axios.post(`http://127.0.0.1:8000/api/vacancies/${editingJob.id}`, formData, {
+                await axios.post(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/vacancies/${editingJob.id}`, formData, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                         "Content-Type": "multipart/form-data"
@@ -930,7 +930,7 @@ export default function ProgramManagement() {
                 });
                 showToast(`Program updated successfully.`);
             } else {
-                await axios.post("http://127.0.0.1:8000/api/vacancies", formData, {
+                await axios.post(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/vacancies`, formData, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                         "Content-Type": "multipart/form-data"
@@ -953,7 +953,7 @@ export default function ProgramManagement() {
     const handleDelete = async (id) => {
         if (!confirm("Are you sure you want to delete this program?")) return;
         try {
-            await axios.delete(`http://127.0.0.1:8000/api/vacancies/${id}`, {
+            await axios.delete(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/vacancies/${id}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             showToast("Program deleted successfully.");
@@ -1059,7 +1059,7 @@ export default function ProgramManagement() {
                 <div style={{ borderTop: "1px solid rgba(255,255,255,0.07)", paddingTop: "14px", display: "flex", alignItems: "center", gap: "10px" }}>
                     {comp.logo_path ? (
                         <img 
-                            src={`http://127.0.0.1:8000/storage/${comp.logo_path}`} 
+                            src={`${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.split("/api")[0] : "http://localhost:8000"}/storage/${comp.logo_path}`} 
                             alt="Logo" 
                             style={{ width: "36px", height: "36px", borderRadius: "10px", objectFit: "cover" }} 
                         />

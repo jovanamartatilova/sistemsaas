@@ -23,7 +23,7 @@ export default function ForgotPasswordStaff() {
   useEffect(() => {
     const fetchCompany = async () => {
       try {
-        const response = await fetch(`http://localhost:8000/api/c/${idCompany}`, {
+        const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/c/${idCompany}`, {
           headers: { "Accept": "application/json" },
         });
         if (!response.ok) throw new Error("Perusahaan tidak ditemukan");
@@ -55,7 +55,7 @@ export default function ForgotPasswordStaff() {
     setSuccessMsg("");
 
     try {
-      const response = await fetch("http://localhost:8000/api/auth/forgot-password-staff", {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/auth/forgot-password-staff`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -148,7 +148,7 @@ export default function ForgotPasswordStaff() {
               <div className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold overflow-hidden"
                 style={{ background: "rgba(74,158,255,0.2)", color: "#4a9eff" }}>
                 {company.logo_path
-                  ? <img src={`http://localhost:8000/storage/${company.logo_path}`} alt="" className="w-full h-full object-cover" />
+                  ? <img src={`${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.split("/api")[0] : "http://localhost:8000"}/storage/${company.logo_path}`} alt="" className="w-full h-full object-cover" />
                   : company.name?.charAt(0).toUpperCase()}
               </div>
               <span className="text-xs font-medium" style={{ color: "#5dd8d8" }}>{company.name}</span>
@@ -204,7 +204,7 @@ export default function ForgotPasswordStaff() {
               {companyLoading ? (
                 <div className="w-16 h-16 rounded-2xl animate-pulse" style={{ background: "rgba(74,158,255,0.1)" }} />
               ) : company?.logo_path ? (
-                <img src={`http://localhost:8000/storage/${company.logo_path}`} alt={company.name} className="w-16 h-16 object-contain rounded-2xl" />
+                <img src={`${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.split("/api")[0] : "http://localhost:8000"}/storage/${company.logo_path}`} alt={company.name} className="w-16 h-16 object-contain rounded-2xl" />
               ) : (
                 <img src="/assets/images/logo.png" alt="Logo" className="w-23 h-23 object-contain" />
               )}

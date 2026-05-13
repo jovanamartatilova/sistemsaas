@@ -75,7 +75,7 @@ function PositionCard({ position, onClick }) {
   return (
     <div onClick={() => onClick(position)} onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
       style={{ background: "#fff", borderRadius: 16, overflow: "hidden", border: hov ? "1.5px solid #2d7ff3" : "1.5px solid #e2e8f0", boxShadow: hov ? "0 8px 32px rgba(45,127,243,0.14)" : "0 2px 8px rgba(0,0,0,0.04)", cursor: "pointer", transition: "all 0.22s cubic-bezier(.4,0,.2,1)", transform: hov ? "translateY(-4px)" : "translateY(0)", display: "flex", flexDirection: "column" }}>
-      <div style={{ height: 130, background: vacancy.photo ? `url(http://127.0.0.1:8000/storage/${vacancy.photo}) center/cover` : "linear-gradient(135deg,#eff6ff 0%,#dbeafe 100%)", position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ height: 130, background: vacancy.photo ? `url(${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.split("/api")[0] : "http://localhost:8000"}/storage/${vacancy.photo}) center/cover` : "linear-gradient(135deg,#eff6ff 0%,#dbeafe 100%)", position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
         {!vacancy.photo && <div style={{ width: 48, height: 48, borderRadius: 12, background: "#2d7ff320", border: "1.5px solid #2d7ff340", display: "flex", alignItems: "center", justifyContent: "center", color: "#2d7ff3" }}>{Icon.briefcase}</div>}
         <span style={{ position: "absolute", top: 12, left: 12, fontSize: 10, fontWeight: 700, color: "#16a34a", background: "#f0fdf4", border: "1px solid #bbf7d0", padding: "3px 10px", borderRadius: 20, letterSpacing: "0.05em" }}>● OPEN</span>
       </div>
@@ -101,7 +101,7 @@ const PositionDetailModal = ({ position, idCompany, isAuthenticated, onClose }) 
     <div onClick={(e) => e.target === e.currentTarget && onClose()} style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.6)", backdropFilter: "blur(6px)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
       <div style={{ background: "#fff", borderRadius: 24, width: "100%", maxWidth: 560, maxHeight: "90vh", overflowY: "auto", position: "relative", boxShadow: "0 25px 60px rgba(0,0,0,0.18)", border: "1px solid #e2e8f0" }}>
         <button onClick={onClose} style={{ position: "absolute", top: 16, right: 16, width: 36, height: 36, borderRadius: "50%", background: "#f1f5f9", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 10, color: "#64748b" }}>{Icon.close}</button>
-        <div style={{ width: "100%", height: 200, background: vacancy.photo ? `url(http://127.0.0.1:8000/storage/${vacancy.photo}) center/cover` : "linear-gradient(135deg,#1a5fc4,#38bdf8)", borderRadius: "24px 24px 0 0" }} />
+        <div style={{ width: "100%", height: 200, background: vacancy.photo ? `url(${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.split("/api")[0] : "http://localhost:8000"}/storage/${vacancy.photo}) center/cover` : "linear-gradient(135deg,#1a5fc4,#38bdf8)", borderRadius: "24px 24px 0 0" }} />
         <div style={{ padding: "28px 32px 32px" }}>
           <span style={{ fontSize: 12, fontWeight: 700, color: "#2d7ff3", background: "#eff6ff", padding: "4px 12px", borderRadius: 20, display: "inline-block", marginBottom: 12 }}>{vacancy.title} · Batch {vacancy.batch}</span>
           <h2 style={{ fontSize: 26, fontWeight: 800, color: "#0f172a", margin: "0 0 20px", fontFamily: "'Poppins',sans-serif" }}>{position.name}</h2>
@@ -165,12 +165,12 @@ export default function CompanyPublicPage() {
   }, []);
 
   useEffect(() => {
-    fetch(`http://localhost:8000/api/c/${idCompany}`, { headers: { Accept: "application/json" } })
+    fetch(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/c/${idCompany}`, { headers: { Accept: "application/json" } })
       .then(r => r.json())
       .then(data => {
         if (data.company) {
           setCompany(data.company);
-          fetch(`http://localhost:8000/api/c/${idCompany}/vacancies`, { headers: { Accept: "application/json" } })
+          fetch(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/c/${idCompany}/vacancies`, { headers: { Accept: "application/json" } })
             .then(res => res.json())
             .then(vData => setVacancies(vData.vacancies || []))
             .catch(console.error);
@@ -269,7 +269,7 @@ export default function CompanyPublicPage() {
               {/* Logo */}
               <div style={{ marginBottom: 20 }}>
                 {company.logo_path
-                  ? <img src={`http://localhost:8000/storage/${company.logo_path}`} alt={company.name} style={{ width: 100, height: 100, objectFit: "contain" }} />
+                  ? <img src={`${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.split("/api")[0] : "http://localhost:8000"}/storage/${company.logo_path}`} alt={company.name} style={{ width: 100, height: 100, objectFit: "contain" }} />
                   : <span style={{ fontSize: 60, fontWeight: 900, color: "#fff" }}>{company.name.charAt(0)}</span>
                 }
               </div>
@@ -466,7 +466,7 @@ export default function CompanyPublicPage() {
               <div>
                 <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 20 }}>
                   <div style={{ width: 56, height: 56, borderRadius: 14, overflow: "hidden", background: "rgba(255,255,255,0.1)", border: "1.5px solid rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    {company.logo_path ? <img src={`http://localhost:8000/storage/${company.logo_path}`} alt={company.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ fontSize: 22, fontWeight: 900, color: "#fff" }}>{company.name.charAt(0)}</span>}
+                    {company.logo_path ? <img src={`${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.split("/api")[0] : "http://localhost:8000"}/storage/${company.logo_path}`} alt={company.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ fontSize: 22, fontWeight: 900, color: "#fff" }}>{company.name.charAt(0)}</span>}
                   </div>
                   <div>
                     <div style={{ fontSize: 16, fontWeight: 800, color: "#fff" }}>{company.name}</div>

@@ -32,7 +32,7 @@ export default function SignUpCandidate() {
     useEffect(() => {
         const fetchCompany = async () => {
             try {
-                const response = await fetch(`http://localhost:8000/api/c/${idCompany}`, {
+                const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/c/${idCompany}`, {
                     headers: { "Accept": "application/json" },
                 });
                 if (!response.ok) throw new Error("Perusahaan tidak ditemukan");
@@ -64,7 +64,7 @@ export default function SignUpCandidate() {
         setLoading(true);
 
         try {
-            const response = await fetch(`http://localhost:8000/api/auth/register-candidate/${idCompany}`, {
+            const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/auth/register-candidate/${idCompany}`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -247,7 +247,7 @@ export default function SignUpCandidate() {
                                 style={{ background: "rgba(74,158,255,0.2)", color: "#4a9eff" }}
                             >
                                 {company.logo_path ? (
-                                    <img src={`http://localhost:8000/storage/${company.logo_path}`} alt="" className="w-full h-full object-cover" />
+                                    <img src={`${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.split("/api")[0] : "http://localhost:8000"}/storage/${company.logo_path}`} alt="" className="w-full h-full object-cover" />
                                 ) : (
                                     company.name?.charAt(0).toUpperCase()
                                 )}
@@ -332,7 +332,7 @@ export default function SignUpCandidate() {
                                 <div className="w-16 h-16 rounded-2xl animate-pulse" style={{ background: "rgba(74,158,255,0.1)" }} />
                             ) : company?.logo_path ? (
                                 <img
-                                    src={`http://localhost:8000/storage/${company.logo_path}`}
+                                    src={`${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.split("/api")[0] : "http://localhost:8000"}/storage/${company.logo_path}`}
                                     alt={company.name}
                                     className="w-16 h-16 object-contain rounded-2xl"
                                 />

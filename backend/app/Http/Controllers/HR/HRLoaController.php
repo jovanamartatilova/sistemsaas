@@ -29,6 +29,7 @@ class HRLoaController extends Controller
         }
 
         $search = $request->get('search');
+        $type = $request->get('type');
 
         $submissionsQuery = Submission::where('status', 'accepted')
             ->whereHas('vacancy', fn($q) => $q->where('id_company', $companyId))
@@ -39,6 +40,12 @@ class HRLoaController extends Controller
                 $q->where('name', 'like', "%{$search}%")
                   ->orWhere('email', 'like', "%{$search}%");
             });
+        }
+        
+        if ($type === 'team') {
+            $submissionsQuery->whereNotNull('id_team');
+        } elseif ($type === 'individual') {
+            $submissionsQuery->whereNull('id_team');
         }
         
         $submissions = $submissionsQuery->get()
@@ -322,6 +329,153 @@ class HRLoaController extends Controller
     }
 
     /**
+     * POST /hr/loa/bulk-regenerate
+     * Regenerate LoA untuk semua kandidat accepted yang SUDAH punya LoA
+     */
+    public function bulkRegenerate(Request $request)
+    {
+        $companyId = $request->user()->id_company;
+
+        $submissions = Submission::where('status', 'accepted')
+            ->whereHas('vacancy', fn($q) => $q->where('id_company', $companyId))
+            ->whereHas('loa')
+            ->with(['user', 'position', 'vacancy', 'loa'])
+            ->get();
+
+        if ($submissions->isEmpty()) {
+            return response()->json(['success' => false, 'message' => 'No existing LoA to regenerate'], 422);
+        }
+
+        $teams = [];
+        $individuals = [];
+        
+        foreach ($submissions as $sub) {
+            if ($sub->id_team) {
+                $key = $sub->id_team . '_' . $sub->id_vacancy;
+                if (!isset($teams[$key])) {
+                    $teams[$key] = $sub; 
+                }
+            } else {
+                $individuals[] = $sub;
+            }
+        }
+
+        // Process Individuals
+        foreach ($individuals as $submission) {
+            $loa = $submission->loa;
+            
+            // Re-use the existing id_loa / file_path so it overwrites the exact same file
+            // Note: If you want to create a new file entirely, you can generate a new idLoa here.
+            // But usually we just overwrite the same path or generate a new random string for cache busting.
+            $idLoa = 'LOA' . strtoupper(Str::random(7));
+            $filePath = 'loas/' . $idLoa . '.pdf';
+
+            $loa->update([
+                'signed_by'     => $request->user()->name,
+                'issued_date'   => now()->toDateString(),
+                'file_path'     => $filePath,
+                'is_sent'       => false,
+            ]);
+
+            $this->generatePdfForLoa($loa, $submission);
+        }
+
+        // Process Teams
+        foreach ($teams as $teamSub) {
+            $acceptedSubmissions = Submission::where('id_team', $teamSub->id_team)
+                ->where('id_vacancy', $teamSub->id_vacancy)
+                ->where('status', 'accepted')
+                ->with(['user', 'position', 'vacancy.company', 'loa'])
+                ->get();
+                
+            $teamMembersRoles = \Illuminate\Support\Facades\DB::table('team_members')
+                ->where('id_team', $teamSub->id_team)
+                ->pluck('role', 'id_user');
+
+            $team_members_raw = $acceptedSubmissions->map(function($sub) use ($teamMembersRoles) {
+                return [
+                    'name' => $sub->user->name,
+                    'position' => $sub->position ? $sub->position->name : '-',
+                    'role' => $teamMembersRoles[$sub->id_user] ?? 'member',
+                    'updated_at' => $sub->updated_at,
+                ];
+            })->toArray();
+
+            usort($team_members_raw, function($a, $b) {
+                if ($a['role'] === 'leader' && $b['role'] !== 'leader') return -1;
+                if ($b['role'] === 'leader' && $a['role'] !== 'leader') return 1;
+                return strtotime($a['updated_at']) - strtotime($b['updated_at']);
+            });
+
+            $team_members = $team_members_raw;
+
+            $team = \App\Models\Team::where('id_team', $teamSub->id_team)->first();
+            $team_name = $team ? $team->name : 'Tim Kandidat';
+            
+            $existingLoa = Loa::whereIn('id_submission', $acceptedSubmissions->pluck('id_submission'))
+                ->whereNotNull('letter_number')
+                ->first();
+                
+            $loaNumber = $existingLoa ? $existingLoa->letter_number : 'LOA/' . now()->year . '/000';
+            
+            $idLoa = 'LOA' . strtoupper(Str::random(7));
+            $filePath = 'loas/' . $idLoa . '.pdf';
+            
+            $dummyLoa = new Loa([
+                'id_loa'        => $idLoa,
+                'letter_number' => $loaNumber,
+                'signed_by'     => $request->user()->name,
+                'issued_date'   => now()->toDateString(),
+                'file_path'     => $filePath,
+            ]);
+            
+            $this->generatePdfForTeamLoa($dummyLoa, $teamSub, $team_name, $team_members);
+            
+            foreach ($acceptedSubmissions as $ts) {
+                if ($ts->loa) {
+                    $ts->loa->update([
+                        'file_path' => $filePath, 
+                        'signed_by' => $request->user()->name,
+                        'issued_date' => now()->toDateString(),
+                        'is_sent' => false
+                    ]);
+                }
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => $submissions->count() . ' LoA regenerated',
+        ]);
+    }
+
+    /**
+     * POST /hr/loa/bulk-send
+     * Kirim LoA ke semua kandidat accepted yang sudah punya LoA tapi belum dikirim
+     */
+    public function bulkSend(Request $request)
+    {
+        $companyId = $request->user()->id_company;
+
+        $loas = Loa::where('is_sent', false)
+            ->whereHas('submission.vacancy', fn($q) => $q->where('id_company', $companyId))
+            ->get();
+
+        if ($loas->isEmpty()) {
+            return response()->json(['success' => false, 'message' => 'No pending LoA to send'], 422);
+        }
+
+        foreach ($loas as $loa) {
+            $loa->update(['is_sent' => true]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => $loas->count() . ' LoA sent',
+        ]);
+    }
+
+    /**
      * GET /hr/loa/{id_submission}/download
      * Download file LoA
      */
@@ -372,7 +526,17 @@ class HRLoaController extends Controller
             }
         }
 
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('loa.template', compact('submission', 'loa', 'company', 'logo_base64', 'companyCity'));
+        $signature_base64 = null;
+        if (auth()->check() && auth()->user()->employee && auth()->user()->employee->signature_path) {
+            $sigPath = storage_path('app/public/' . auth()->user()->employee->signature_path);
+            if (file_exists($sigPath)) {
+                $type = pathinfo($sigPath, PATHINFO_EXTENSION);
+                $data = file_get_contents($sigPath);
+                $signature_base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
+            }
+        }
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('loa.template', compact('submission', 'loa', 'company', 'logo_base64', 'companyCity', 'signature_base64'));
         
         $filePath = $loa->file_path;
         Storage::disk('public')->put($filePath, $pdf->output());
@@ -408,10 +572,20 @@ class HRLoaController extends Controller
         $start_date = $submission->vacancy->start_date;
         $end_date = $submission->vacancy->end_date;
 
+        $signature_base64 = null;
+        if (auth()->check() && auth()->user()->employee && auth()->user()->employee->signature_path) {
+            $sigPath = storage_path('app/public/' . auth()->user()->employee->signature_path);
+            if (file_exists($sigPath)) {
+                $type = pathinfo($sigPath, PATHINFO_EXTENSION);
+                $data = file_get_contents($sigPath);
+                $signature_base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
+            }
+        }
+
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('loa.template_team', compact(
             'loa', 'company', 'logo_base64', 'companyCity',
             'team_name', 'team_members', 'position_name', 'program_title',
-            'internship_type', 'start_date', 'end_date'
+            'internship_type', 'start_date', 'end_date', 'signature_base64'
         ));
         
         $filePath = $loa->file_path; // should already have 'loas/...'
