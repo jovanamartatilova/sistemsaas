@@ -225,7 +225,7 @@ export default function PreviewOnboarding() {
   };
 
   const copyToClipboard = (text) => {
-    navigator.clipboard.writeText(text);
+    navigator.clipboard ? navigator.clipboard.writeText(text) : (() => { const el = document.createElement("textarea"); el.value = text; document.body.appendChild(el); el.select(); document.execCommand("copy"); document.body.removeChild(el); })();
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };

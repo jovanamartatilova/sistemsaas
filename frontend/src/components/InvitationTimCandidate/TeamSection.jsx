@@ -189,7 +189,7 @@ export default function TeamSection({ program, userRole = null, team = null, isP
 
   const copyToClipboard = () => {
     if (invitationData?.invitation_link) {
-      navigator.clipboard.writeText(invitationData.invitation_link);
+      navigator.clipboard ? navigator.clipboard.writeText(invitationData.invitation_link) : (() => { const el = document.createElement("textarea"); el.value = invitationData.invitation_link; document.body.appendChild(el); el.select(); document.execCommand("copy"); document.body.removeChild(el); })();
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }

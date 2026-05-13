@@ -406,7 +406,7 @@ class HRCandidateController extends Controller
             if ($status === 'pending' || $status === 'stage_0') {
                 $s->mapped_status = 'screening';
             } elseif (str_starts_with($status, 'stage_')) {
-                $idx = (int) str_replace('stage_', '', $status);
+                $idx = (int) str_replace('stage_', '', $status) -1;
                 $flow = $s->position?->selection_flow;
                 if (is_string($flow)) $flow = json_decode($flow, true);
                 if (isset($flow[$idx])) {
@@ -666,7 +666,7 @@ class HRCandidateController extends Controller
             \Log::info("Creating new interview...");
             try {
                 $interview = new \App\Models\Interview([
-                    'id_interview' => 'INT' . strtoupper(\Illuminate\Support\Str::random(10)),
+                    'id_interview' => 'INT' . strtoupper(\Illuminate\Support\Str::random(7)),
                     'id_submission' => $submission->id_submission,
                     'id_interviewer' => $request->user()->id_user,
                     'interview_date' => $request->interview_date,

@@ -60,7 +60,7 @@ export default function LeaderInvitationSection({ program, onInvitationCreated }
 
   const copyToClipboard = () => {
     if (invitation?.invitation_link) {
-      navigator.clipboard.writeText(invitation.invitation_link);
+      navigator.clipboard ? navigator.clipboard.writeText(invitation.invitation_link) : (() => { const el = document.createElement("textarea"); el.value = invitation.invitation_link; document.body.appendChild(el); el.select(); document.execCommand("copy"); document.body.removeChild(el); })();
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
