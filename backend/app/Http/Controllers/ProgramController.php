@@ -1,5 +1,7 @@
 <?php
+
 namespace App\Http\Controllers;
+
 use App\Models\Vacancy;
 use App\Models\Position;
 use App\Models\Competency;
@@ -8,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+
 class ProgramController extends Controller
 {
     /**
@@ -26,6 +29,7 @@ class ProgramController extends Controller
         }, 'positions.submissions.user'])
             ->where('id_company', $id_company)
             ->get();
+
         $programs = [];
         foreach ($vacancies as $vacancy) {
             foreach ($vacancy->positions as $position) {
@@ -50,6 +54,7 @@ class ProgramController extends Controller
                 ];
             }
         }
+
         return response()->json($programs);
     }
 
@@ -135,6 +140,11 @@ class ProgramController extends Controller
         $id_company = $request->user()->id_company;
         $position = Position::where('id_position', $id)->where('id_company', $id_company)->firstOrFail();
 
+        // Check if position is locked
+        if ($position->locked) {
+            return response()->json(['error' => 'Cannot edit a locked position. Please unlock it first.'], 422);
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:100',
             'competencies' => 'nullable|array',
@@ -196,6 +206,11 @@ class ProgramController extends Controller
         $id_company = $request->user()->id_company;
         $position = Position::where('id_position', $id)->where('id_company', $id_company)->firstOrFail();
 
+        // Check if position is locked
+        if ($position->locked) {
+            return response()->json(['error' => 'Cannot delete a locked position. Please unlock it first.'], 422);
+        }
+
         // Check if it's currently linked to any vacancy
         if ($position->vacancies()->count() > 0) {
             return response()->json(['error' => 'Cannot delete position that is linked to an active program.'], 422);
@@ -203,6 +218,77 @@ class ProgramController extends Controller
 
         $position->delete();
         return response()->json(['message' => 'Position deleted successfully.']);
+    }
+
+    /**
+     * Lock a position in the catalog (prevent edit/delete).
+     */
+    public function lockCatalogPosition(Request $request, $id)
+    {
+        $id_company = $request->user()->id_company;
+        $position = Position::where('id_position', $id)->where('id_company', $id_company)->firstOrFail();
+        $position->locked = true;
+        $position->save();
+        return response()->json(['message' => 'Position locked successfully.', 'locked' => true]);
+    }
+
+    /**
+     * Unlock a position in the catalog (allow edit/delete).
+     */
+    public function unlockCatalogPosition(Request $request, $id)
+    {
+        $id_company = $request->user()->id_company;
+        $position = Position::where('id_position', $id)->where('id_company', $id_company)->firstOrFail();
+        $position->locked = false;
+        $position->save();
+        return response()->json(['message' => 'Position unlocked successfully.', 'locked' => false]);
+    }
+
+    /**
+     * Duplicate a position in the catalog for a new program.
+     * Copies basic info and competencies but resets program-specific fields.
+     */
+    public function duplicateCatalogPosition(Request $request, $id)
+    {
+        try {
+            DB::beginTransaction();
+            
+            $id_company = $request->user()->id_company;
+            $original = Position::where('id_position', $id)->where('id_company', $id_company)->firstOrFail();
+            
+            $newId = 'POS' . strtoupper(Str::random(7));
+            
+            // Generate unique name by appending " (Copy)" or a number
+            $baseName = $original->name;
+            $newName = $baseName . ' (Copy)';
+            $counter = 1;
+            while (Position::where('id_company', $id_company)->where('name', $newName)->exists()) {
+                $counter++;
+                $newName = $baseName . " (Copy $counter)";
+            }
+            
+            // Create duplicate with reset fields
+            $duplicate = new Position();
+            $duplicate->id_position = $newId;
+            $duplicate->id_company = $id_company;
+            $duplicate->name = $newName;
+            $duplicate->selection_flow = $original->selection_flow ?? []; 
+            $duplicate->locked = false;
+            $duplicate->save();
+            
+            // Duplicate competencies relation (these are reusable)
+            if ($original->competencies()->count() > 0) {
+                $compIds = $original->competencies()->pluck('competencies.id_competency')->toArray();
+                $duplicate->competencies()->sync($compIds);
+            }
+            
+            DB::commit();
+            return response()->json($duplicate->load('competencies'));
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error duplicating position: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to duplicate position: ' . $e->getMessage()], 500);
+        }
     }
 
     /**
@@ -226,6 +312,7 @@ class ProgramController extends Controller
             'competencies.*.learning_hours' => 'required|integer',
             'competencies.*.description' => 'nullable|string|max:255',
         ]);
+
         try {
             DB::beginTransaction();
             $competencyIds = [];
@@ -259,42 +346,45 @@ class ProgramController extends Controller
         }
     }
 
+    /**
+     * Get program view for team leader.
+     */
     public function leaderProgramView(Request $request)
-{
-    $user = $request->user();
+    {
+        $user = $request->user();
 
-    $team = TeamMember::where('id_user', $user->id_user)
-        ->with('team')
-        ->first();
+        $team = TeamMember::where('id_user', $user->id_user)
+            ->with('team')
+            ->first();
 
-    if (!$team) {
+        if (!$team) {
+            return response()->json([
+                'success' => true,
+                'data' => null
+            ]);
+        }
+
+        $invitation = TeamInvitation::where('id_team', $team->id_team)
+            ->where('is_active', true)
+            ->first();
+
+        $program = Submission::where('id_team', $team->id_team)
+            ->first();
+
         return response()->json([
             'success' => true,
-            'data' => null
+            'data' => [
+                'team_name' => $team->team->name ?? null,
+                'role' => $team->role,
+                'invitation_link' => $invitation
+                    ? env('APP_URL', 'http://localhost:3000') . "/join/{$invitation->token}"
+                    : null,
+                'competencies' => $program?->competencies ?? [],
+                'program_name' => $program?->position_name ?? null,
+                'status' => $program?->status ?? null,
+            ]
         ]);
     }
-
-    $invitation = TeamInvitation::where('id_team', $team->id_team)
-        ->where('is_active', true)
-        ->first();
-
-    $program = Submission::where('id_team', $team->id_team)
-        ->first();
-
-    return response()->json([
-        'success' => true,
-        'data' => [
-            'team_name' => $team->team->name ?? null,
-            'role' => $team->role,
-            'invitation_link' => $invitation
-                ? env('APP_URL', 'http://localhost:3000') . "/join/{$invitation->token}"
-                : null,
-            'competencies' => $program?->competencies ?? [],
-            'program_name' => $program?->position_name ?? null,
-            'status' => $program?->status ?? null,
-        ]
-    ]);
-}
 
     /**
      * Remove a position from a vacancy.

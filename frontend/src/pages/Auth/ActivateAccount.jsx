@@ -111,6 +111,8 @@ export default function ActivateAccount() {
   const [codeError, setCodeError] = useState("");
 
   const [existingUser, setExistingUser] = useState(null);
+  const [existingAccountDetected, setExistingAccountDetected] = useState(false);
+  const [emailCheckLoading, setEmailCheckLoading] = useState(false);
   const [isDark, setIsDark] = useState(() => {
     const saved = localStorage.getItem("theme");
     return saved ? saved === "dark" : true;
@@ -129,28 +131,53 @@ export default function ActivateAccount() {
   const [errorMsg, setErrorMsg] = useState("");
   const [done, setDone] = useState(false);
 
-  useEffect(() => {
-    // Ambil data user yang sudah login dari localStorage
-    // Data ini diset saat user login via endpoint /api/auth/login
-    try {
-      const stored = localStorage.getItem("user");
-      if (stored) {
-        const u = JSON.parse(stored);
-        // Pastikan user memang punya data yang valid (sudah login)
-        if (u && u.id_user && u.email) {
-          setExistingUser(u);
-          // Pre-fill form dari data user yang sudah ada di DB
-          const nameParts = (u.name || "").split(" ");
-          setForm(prev => ({
-            ...prev,
-            first_name: nameParts[0] || "",
-            last_name: nameParts.slice(1).join(" ") || "",
-            email: u.email || "",
-          }));
-        }
-      }
-    } catch {}
+  // Check if email exists in database
+  const handleEmailChange = async (emailValue) => {
+    setForm(prev => ({ ...prev, email: emailValue }));
+    
+    // Reset detection if email is empty
+    if (!emailValue || emailValue.trim() === "") {
+      setExistingAccountDetected(false);
+      setExistingUser(null);
+      setForm(prev => ({ ...prev, first_name: "", last_name: "" }));
+      return;
+    }
 
+    // Debounce email checking (optional, for performance)
+    setEmailCheckLoading(true);
+    try {
+      const response = await fetch(
+        `http://localhost:8000/api/auth/check-email/${encodeURIComponent(emailValue)}`,
+        { headers: { Accept: "application/json" } }
+      );
+      const data = await response.json();
+      
+      if (data.exists && data.user) {
+        // Email exists: auto-fill and mark as detected
+        setExistingAccountDetected(true);
+        setExistingUser(data.user);
+        setForm(prev => ({
+          ...prev,
+          first_name: data.user.first_name || "",
+          last_name: data.user.last_name || "",
+          email: data.user.email,
+        }));
+      } else {
+        // Email doesn't exist: clear detection
+        setExistingAccountDetected(false);
+        setExistingUser(null);
+        setForm(prev => ({ ...prev, first_name: "", last_name: "" }));
+      }
+    } catch (err) {
+      console.error("Email check error:", err);
+      setExistingAccountDetected(false);
+      setExistingUser(null);
+    } finally {
+      setEmailCheckLoading(false);
+    }
+  };
+
+  useEffect(() => {
     if (!activationValue) {
       setCodeError("Activation link not found.");
       setCodeLoading(false);
@@ -211,16 +238,10 @@ export default function ActivateAccount() {
     }
     setLoading(true);
     try {
-      // Kalau ada user yang sudah login, kirim token-nya
-      // Backend akan pakai user existing, bukan buat baru
       const headers = {
         "Content-Type": "application/json",
         Accept: "application/json",
       };
-      const token = localStorage.getItem("auth_token");
-      if (existingUser && token) {
-        headers["Authorization"] = `Bearer ${token}`;
-      }
 
       const response = await fetch("http://localhost:8000/api/auth/activate", {
         method: "POST",
@@ -413,26 +434,6 @@ export default function ActivateAccount() {
               </div>
             )}
 
-            {/* Who's joining — tampil kalau user sudah login sebelumnya */}
-            {existingUser && (
-              <div className="flex items-center gap-3 px-4 py-3 rounded-xl mb-6"
-                style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.15)" }}>
-                <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
-                  style={{ background: "rgba(34,197,94,0.15)", color: "#4ade80" }}>
-                  {existingUser.name?.charAt(0).toUpperCase()}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-white truncate">{existingUser.name}</p>
-                  <p className="text-xs truncate" style={{ color: "rgba(255,255,255,0.35)" }}>{existingUser.email}</p>
-                </div>
-                <span className="text-xs font-semibold px-2 py-1 rounded-full flex-shrink-0 flex items-center gap-1"
-                  style={{ background: "rgba(34,197,94,0.12)", color: "#4ade80", border: "1px solid rgba(34,197,94,0.2)" }}>
-                  <Icon.LoggedIn />
-                  Logged in
-                </span>
-              </div>
-            )}
-
             <button onClick={() => setStep("form")}
               className="w-full py-4 rounded-xl font-bold text-white text-sm transition-all duration-200"
               style={{
@@ -527,16 +528,16 @@ export default function ActivateAccount() {
             </p>
           </div>
 
-          {/* Notice kalau user sudah punya akun — nama & email dikunci */}
-          {existingUser && (
+          {/* Notice: Existing account detected */}
+          {existingAccountDetected && (
             <div className="flex items-start gap-2.5 px-3 py-3 rounded-xl mb-5"
               style={{ background: "rgba(74,158,255,0.06)", border: "1px solid rgba(74,158,255,0.12)" }}>
               <div className="mt-0.5 flex-shrink-0" style={{ color: "#4a9eff" }}>
                 <Icon.Lock />
               </div>
               <p className="text-xs leading-relaxed" style={{ color: "rgba(74,158,255,0.7)" }}>
-                Your name and email have been automatically filled in from your existing account and cannot be changed.
-                You only need to create a new password for this account.
+                Existing account detected. This account will be activated as company staff.
+                Your name and email cannot be changed. Please enter your password to complete activation.
               </p>
             </div>
           )}
@@ -566,7 +567,7 @@ export default function ActivateAccount() {
                 <div className="flex-1">
                   <label className="block text-sm font-medium mb-1.5 flex items-center gap-1.5" style={{ color: isDark ? "rgba(255,255,255,0.8)" : "rgba(30,40,60,0.8)" }}>
                     First Name
-                    {existingUser && (
+                    {existingAccountDetected && (
                       <span style={{ color: "rgba(74,158,255,0.6)" }}>
                         <Icon.Lock />
                       </span>
@@ -575,20 +576,20 @@ export default function ActivateAccount() {
                   <input
                     type="text"
                     value={form.first_name}
-                    onChange={e => !existingUser && setForm({ ...form, first_name: e.target.value })}
-                    readOnly={!!existingUser}
+                    onChange={e => !existingAccountDetected && setForm({ ...form, first_name: e.target.value })}
+                    readOnly={!!existingAccountDetected}
                     placeholder="John"
                     required
                     className="w-full px-4 py-3 rounded-xl text-white placeholder-gray-500 outline-none transition-all duration-200"
-                    style={existingUser ? inputLocked : inputBase}
-                    onFocus={e => { if (!existingUser) Object.assign(e.target.style, inputFocus); }}
-                    onBlur={e => { if (!existingUser) Object.assign(e.target.style, inputBase); }}
+                    style={existingAccountDetected ? inputLocked : inputBase}
+                    onFocus={e => { if (!existingAccountDetected) Object.assign(e.target.style, inputFocus); }}
+                    onBlur={e => { if (!existingAccountDetected) Object.assign(e.target.style, inputBase); }}
                   />
                 </div>
                 <div className="flex-1">
                   <label className="block text-sm font-medium mb-1.5 flex items-center gap-1.5" style={{ color: isDark ? "rgba(255,255,255,0.8)" : "rgba(30,40,60,0.8)" }}>
                     Last Name
-                    {existingUser && (
+                    {existingAccountDetected && (
                       <span style={{ color: "rgba(74,158,255,0.6)" }}>
                         <Icon.Lock />
                       </span>
@@ -597,13 +598,13 @@ export default function ActivateAccount() {
                   <input
                     type="text"
                     value={form.last_name}
-                    onChange={e => !existingUser && setForm({ ...form, last_name: e.target.value })}
-                    readOnly={!!existingUser}
+                    onChange={e => !existingAccountDetected && setForm({ ...form, last_name: e.target.value })}
+                    readOnly={!!existingAccountDetected}
                     placeholder="Doe"
                     className="w-full px-4 py-3 rounded-xl text-white placeholder-gray-500 outline-none transition-all duration-200"
-                    style={existingUser ? inputLocked : inputBase}
-                    onFocus={e => { if (!existingUser) Object.assign(e.target.style, inputFocus); }}
-                    onBlur={e => { if (!existingUser) Object.assign(e.target.style, inputBase); }}
+                    style={existingAccountDetected ? inputLocked : inputBase}
+                    onFocus={e => { if (!existingAccountDetected) Object.assign(e.target.style, inputFocus); }}
+                    onBlur={e => { if (!existingAccountDetected) Object.assign(e.target.style, inputBase); }}
                   />
                 </div>
               </div>
@@ -612,7 +613,12 @@ export default function ActivateAccount() {
               <div>
                 <label className="block text-sm font-medium mb-1.5 flex items-center gap-1.5" style={{ color: isDark ? "rgba(255,255,255,0.8)" : "rgba(30,40,60,0.8)" }}>
                   Email
-                  {existingUser && (
+                  {emailCheckLoading && (
+                    <span style={{ color: "rgba(74,158,255,0.6)" }}>
+                      <Icon.Spinner size={13} />
+                    </span>
+                  )}
+                  {existingAccountDetected && !emailCheckLoading && (
                     <span style={{ color: "rgba(74,158,255,0.6)" }}>
                       <Icon.Lock />
                     </span>
@@ -621,12 +627,12 @@ export default function ActivateAccount() {
                 <input
                   type="email"
                   value={form.email}
-                  onChange={e => !existingUser && setForm({ ...form, email: e.target.value })}
-                  readOnly={!!existingUser}
+                  onChange={e => handleEmailChange(e.target.value)}
+                  readOnly={!!existingAccountDetected}
                   placeholder="john@example.com"
                   required
                   className="w-full px-4 py-3 rounded-xl text-white placeholder-gray-500 outline-none transition-all duration-200"
-                  style={existingUser ? inputLocked : inputBase}
+                  style={existingAccountDetected ? inputLocked : inputBase}
                   onFocus={e => { if (!existingUser) Object.assign(e.target.style, inputFocus); }}
                   onBlur={e => { if (!existingUser) Object.assign(e.target.style, inputBase); }}
                 />

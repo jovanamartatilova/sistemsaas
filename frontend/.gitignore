@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+/backend/bootstrap/cache/*
+!/backend/bootstrap/cache/.gitignore

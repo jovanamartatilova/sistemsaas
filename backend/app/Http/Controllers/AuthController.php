@@ -384,18 +384,61 @@ class AuthController extends Controller
     }
 
     /**
-     * 9. ACTIVATE ACCOUNT VIA INVITATION CODE
+     * 8b. CHECK EMAIL EXISTENCE
+     * GET /api/auth/check-email/{email}
+     * Returns user data if email exists, otherwise returns null
+     */
+    public function checkEmailExists($email)
+    {
+        try {
+            $user = User::where('email', strtolower(trim($email)))
+                ->first();
+
+            if ($user) {
+                $nameParts = explode(' ', $user->name, 2);
+                return response()->json([
+                    'exists' => true,
+                    'user' => [
+                        'id_user' => $user->id_user,
+                        'first_name' => $nameParts[0] ?? '',
+                        'last_name' => $nameParts[1] ?? '',
+                        'email' => $user->email,
+                        'is_active' => $user->is_active,
+                    ],
+                ]);
+            }
+
+            return response()->json([
+                'exists' => false,
+                'user' => null,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to check email',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * 9. ACTIVATE ACCOUNT VIA INVITATION CODE OR ACTIVATION TOKEN
      * POST /api/auth/activate
+     * 
+     * Logic:
+     * 1. Validates activation_token OR invitation_code (both are required paths)
+     * 2. Checks if email already exists in database
+     * 3. If email exists: reuse existing user account, update role + company + password
+     * 4. If email doesn't exist: create new user account
+     * 5. Creates Employee record if not already linked to company
      */
     public function activateAccount(Request $request)
     {
         try {
-            $existingAuthUser = auth('sanctum')->user();
             $activationToken = $request->input('activation_token');
             $invitationCode = $request->input('invitation_code');
-
             $emailRule = 'required|email|max:100';
 
+            // Determine which activation path and validate
             if ($activationToken) {
                 $validated = $request->validate([
                     'activation_token' => 'required|string',
@@ -405,19 +448,19 @@ class AuthController extends Controller
                     'password'        => 'required|string|min:8|confirmed',
                 ]);
 
-                $user = User::where('activation_token', $validated['activation_token'])
+                // Get user from activation token
+                $tokenUser = User::where('activation_token', $validated['activation_token'])
                     ->where('is_active', false)
                     ->first();
 
-                if (!$user) {
+                if (!$tokenUser) {
                     return response()->json(['message' => 'Invalid or expired activation token.'], 422);
                 }
 
-                $emailValue = $validated['email'] ?: $user->email;
+                $roleName = strtolower((string) ($tokenUser->role ?: 'employee'));
+                $companyId = $tokenUser->id_company;
+                $invitationData = null;
 
-                $roleName = strtolower((string) ($user->role ?: 'employee'));
-                $companyId = $user->id_company;
-                $existingUserByEmail = null;
             } else {
                 $validated = $request->validate([
                     'invitation_code' => 'required|string',
@@ -427,6 +470,7 @@ class AuthController extends Controller
                     'password'        => 'required|string|min:8|confirmed',
                 ]);
 
+                // Get invitation from code
                 $invitation = \App\Models\InvitationCode::where('code', $validated['invitation_code'])
                     ->where('is_active', true)->with('company')->first();
 
@@ -441,13 +485,38 @@ class AuthController extends Controller
                 }
 
                 $companyId = $invitation->id_company;
-                $emailValue = $validated['email'];
-                $existingUserByEmail = User::where('email', $validated['email'])->first();
+                $invitationData = $invitation;
+                $tokenUser = null;
             }
+
+            $emailValue = strtolower(trim($validated['email']));
+            
+            // Check if email already exists in database
+            $existingUserByEmail = User::where('email', $emailValue)->first();
 
             DB::beginTransaction();
             try {
-                if ($activationToken) {
+                if ($existingUserByEmail) {
+                    // EMAIL EXISTS: Reuse existing user account
+                    $user = $existingUserByEmail;
+                    
+                    // Update: password, company role, set as active
+                    $user->update([
+                        'password'   => Hash::make($validated['password']),
+                        'id_company' => $companyId,
+                        'role'       => $roleName,
+                        'is_active'  => true,
+                        'activation_token' => null, // Clear token if it exists
+                    ]);
+
+                    // Extract name parts from existing user (existing data is source of truth)
+                    $nameParts = explode(' ', $user->name, 2);
+                    $firstName = $nameParts[0];
+                    $lastName  = $nameParts[1] ?? '';
+
+                } else if ($activationToken && $tokenUser) {
+                    // ACTIVATION TOKEN PATH: Email doesn't exist, update the token user
+                    $user = $tokenUser;
                     $user->update([
                         'name'             => trim($validated['first_name'] . ' ' . ($validated['last_name'] ?? '')),
                         'email'            => $emailValue,
@@ -459,29 +528,9 @@ class AuthController extends Controller
                     ]);
                     $firstName = $validated['first_name'];
                     $lastName  = $validated['last_name'] ?? '';
-                } elseif ($existingAuthUser) {
-                    $user = $existingAuthUser;
-                    $user->update([
-                        'id_company' => $companyId,
-                        'role'       => $roleName,
-                        'email'      => $validated['email'],
-                        'password'   => Hash::make($validated['password']),
-                    ]);
-                    $nameParts = explode(' ', $user->name, 2);
-                    $firstName = $nameParts[0];
-                    $lastName  = $nameParts[1] ?? '';
-                } elseif ($existingUserByEmail) {
-                    $user = $existingUserByEmail;
-                    $user->update([
-                        'name'       => trim($validated['first_name'] . ' ' . ($validated['last_name'] ?? '')),
-                        'id_company' => $companyId,
-                        'role'       => $roleName,
-                        'password'   => Hash::make($validated['password']),
-                        'is_active'  => true,
-                    ]);
-                    $firstName = $validated['first_name'];
-                    $lastName  = $validated['last_name'] ?? '';
+
                 } else {
+                    // INVITATION CODE PATH: Email doesn't exist, create new user
                     do {
                         $idUser = 'USR' . strtoupper(substr(uniqid(), -7));
                     } while (User::where('id_user', $idUser)->exists());
@@ -499,6 +548,7 @@ class AuthController extends Controller
                     $lastName  = $validated['last_name'] ?? '';
                 }
 
+                // Create Employee record if not already linked to this company
                 $existingEmployee = \App\Models\Employee::where('id_user', $user->id_user)
                     ->where('id_company', $companyId)->first();
 
@@ -511,14 +561,14 @@ class AuthController extends Controller
                         'id_employee'     => $idEmployee,
                         'id_user'         => $user->id_user,
                         'id_company'      => $companyId,
-                        'id_role'         => $activationToken ? $user->role : ($invitation->id_role ?? null),
+                        'id_role'         => $activationToken && $tokenUser ? $tokenUser->role : ($invitationData?->id_role ?? null),
                         'first_name'      => $firstName,
                         'last_name'       => $lastName,
-                        'department'      => $activationToken ? null : $invitation->division,
-                        'position'        => $activationToken ? null : $invitation->position,
-                        'employee_status' => $activationToken ? 'active' : $invitation->employee_status,
-                        'schedule'        => $activationToken ? null : $invitation->schedule,
-                        'job_level'       => $activationToken ? null : $invitation->job_level,
+                        'department'      => $activationToken ? null : $invitationData->division,
+                        'position'        => $activationToken ? null : $invitationData->position,
+                        'employee_status' => $activationToken ? 'active' : $invitationData->employee_status,
+                        'schedule'        => $activationToken ? null : $invitationData->schedule,
+                        'job_level'       => $activationToken ? null : $invitationData->job_level,
                         'joined_at'       => now(),
                     ]);
                 }
@@ -546,7 +596,7 @@ class AuthController extends Controller
                         'role'       => $user->role,
                         'id_company' => $user->id_company,
                     ],
-                    'company' => $activationToken ? $user->company : $invitation->company,
+                    'company' => $activationToken && $tokenUser ? $tokenUser->company : $invitationData?->company,
                 ], 201);
 
             } catch (\Exception $e) {

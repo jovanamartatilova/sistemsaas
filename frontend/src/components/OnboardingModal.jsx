@@ -161,7 +161,7 @@ export default function OnboardingModal({ isOpen, onClose }) {
       onClick={handleClose}
     >
       <div
-        className="relative w-full max-w-md rounded-2xl overflow-hidden"
+        className="relative w-full max-w-md rounded-2xl overflow-hidden flex flex-col max-h-[calc(100vh-32px)]"
         style={{
           background: isDark
             ? "linear-gradient(160deg, #0d1f3c 0%, #0a1628 40%, #071220 100%)"
@@ -172,7 +172,7 @@ export default function OnboardingModal({ isOpen, onClose }) {
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="relative px-6 pt-6 pb-2">
+        <div className="relative px-4 sm:px-6 pt-6 pb-2 flex-shrink-0">
           <button
             onClick={handleClose}
             className="absolute right-4 top-4 p-1 rounded-lg transition-colors duration-200"
@@ -196,7 +196,7 @@ export default function OnboardingModal({ isOpen, onClose }) {
             </div>
           </div>
 
-          <h2 className="text-xl font-bold text-center" style={{ color: isDark ? "#fff" : "#1a2332" }}>
+          <h2 className="text-lg sm:text-xl font-bold text-center" style={{ color: isDark ? "#fff" : "#1a2332" }}>
             {step === "choice" && "Choose Your Path"}
             {step === "company_form" && "Start a Company"}
             {step === "candidate_form" && "Start an Internship"}
@@ -208,8 +208,12 @@ export default function OnboardingModal({ isOpen, onClose }) {
           </p>
         </div>
 
-        {/* Body */}
-        <div className="p-6">
+        {/* Body - Scrollable */}
+        <div className="px-4 sm:px-6 py-6 overflow-y-auto flex-1"
+          style={{
+            scrollBehavior: 'smooth',
+            overscrollBehavior: 'contain',
+          }}>
           {errorMsg && (
             <div
               className="px-4 py-3 rounded-lg mb-4 text-sm border"

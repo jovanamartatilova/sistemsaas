@@ -505,6 +505,7 @@ class MentorController extends Controller
                 'position' => $sub->position->name ?? 'N/A',
                 'program' => $sub->vacancy->title ?? 'Regular Batch',
                 'period' => $period,                          // ← tambah ini
+                'batch' => $sub->vacancy->batch ?? null,
                 'type' => !empty($sub->id_team) ? 'Team' : 'Individual',
                 'id_team' => $sub->id_team ?? null,           // ← untuk grouping team
                 'team_name' => $sub->team->name ?? null,

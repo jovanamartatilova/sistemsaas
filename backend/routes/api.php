@@ -55,6 +55,7 @@ Route::get('/vacancies/public', [VacancyController::class, 'publicIndex']);
 Route::get('/c/{id_company}', [CompanyPublicController::class, 'show']);
 Route::get('/c/{id_company}/vacancies', [CompanyPublicController::class, 'vacancies']);
 Route::get('/invitation-codes/validate/{code}', [AuthController::class, 'validateInvitationCode']);
+Route::get('/auth/check-email/{email}', [AuthController::class, 'checkEmailExists']);
 Route::post('/auth/activate', [AuthController::class, 'activateAccount']);
 Route::post('/contact', [ContactMessageController::class, 'store']);
 Route::options('/{any}', fn () => response()->noContent())->where('any', '.*');
@@ -156,6 +157,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/positions/catalog',         [ProgramController::class, 'storeCatalog']);
     Route::put('/positions/catalog/{id}',     [ProgramController::class, 'updateCatalog']);
     Route::delete('/positions/catalog/{id}',  [ProgramController::class, 'destroyCatalog']);
+    Route::post('/positions/catalog/{id}/lock', [ProgramController::class, 'lockCatalogPosition']);
+    Route::post('/positions/catalog/{id}/unlock', [ProgramController::class, 'unlockCatalogPosition']);
+    Route::post('/positions/catalog/{id}/duplicate', [ProgramController::class, 'duplicateCatalogPosition']);
 
     // Company users
     Route::get('/company-users',         [CompanyUserController::class, 'index']);
