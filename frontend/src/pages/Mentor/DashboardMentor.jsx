@@ -405,7 +405,6 @@ useEffect(() => {
                     <span onClick={() => setSearch("")} style={{ cursor: "pointer", color: "#94a3b8", fontSize: "16px", lineHeight: 1 }}>×</span>
                   )}
                 </div>
-
                 {/* Batch Filter Dropdown */}
                 <select
                   value={batchFilter}
@@ -476,7 +475,6 @@ useEffect(() => {
                     </>
                   )}
                 </div>
-
               </div>
             </div>
 

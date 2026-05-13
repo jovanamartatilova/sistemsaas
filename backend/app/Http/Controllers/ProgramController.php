@@ -397,7 +397,6 @@ class ProgramController extends Controller
         $vacancy->positions()->detach($id_position);
         return response()->json(['message' => 'Program removed successfully']);
     }
-
     /**
      * GET /hr/positions/{id}/test-templates
      */
