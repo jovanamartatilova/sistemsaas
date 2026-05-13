@@ -406,7 +406,7 @@ class HRCandidateController extends Controller
             if ($status === 'pending' || $status === 'stage_0') {
                 $s->mapped_status = 'screening';
             } elseif (str_starts_with($status, 'stage_')) {
-                $idx = (int) str_replace('stage_', '', $status);
+                $idx = (int) str_replace('stage_', '', $status) - 1;
                 $flow = $s->position?->selection_flow;
                 if (is_string($flow)) $flow = json_decode($flow, true);
                 if (isset($flow[$idx])) {

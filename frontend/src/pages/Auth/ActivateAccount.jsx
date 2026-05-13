@@ -166,7 +166,7 @@ export default function ActivateAccount() {
     const validateCode = async () => {
       try {
         const response = await fetch(
-          `http://localhost:8000/api/invitation-codes/validate/${code}`,
+          `http://167.172.83.139:8000/api/invitation-codes/validate/${code}`,
           { headers: { Accept: "application/json" } }
         );
         const data = await response.json();
@@ -211,18 +211,16 @@ export default function ActivateAccount() {
     }
     setLoading(true);
     try {
-      // Kalau ada user yang sudah login, kirim token-nya
-      // Backend akan pakai user existing, bukan buat baru
       const headers = {
         "Content-Type": "application/json",
         Accept: "application/json",
       };
-      const token = localStorage.getItem("auth_token");
-      if (existingUser && token) {
-        headers["Authorization"] = `Bearer ${token}`;
+      const authToken = localStorage.getItem("auth_token");
+      if (existingUser && authToken) {
+        headers["Authorization"] = `Bearer ${authToken}`;
       }
 
-      const response = await fetch("http://localhost:8000/api/auth/activate", {
+      const response = await fetch("http://167.172.83.139:8000/api/auth/activate", {
         method: "POST",
         headers,
         body: JSON.stringify({
@@ -374,7 +372,7 @@ export default function ActivateAccount() {
               <div className="w-14 h-14 rounded-2xl flex items-center justify-center overflow-hidden flex-shrink-0"
                 style={{ background: "linear-gradient(135deg,#1a3a6e,#2d5ba3)", border: "1px solid rgba(74,158,255,0.2)" }}>
                 {company?.logo_path
-                  ? <img src={`http://localhost:8000/storage/${company.logo_path}`} alt="" className="w-full h-full object-cover" />
+                  ? <img src={`http://167.172.83.139:8000/storage/${company.logo_path}`} alt="" className="w-full h-full object-cover" />
                   : <span className="text-xl font-black text-white">{company?.name?.charAt(0).toUpperCase()}</span>
                 }
               </div>
@@ -475,7 +473,7 @@ export default function ActivateAccount() {
               <div className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold overflow-hidden"
                 style={{ background: "rgba(74,158,255,0.2)", color: "#4a9eff" }}>
                 {company.logo_path
-                  ? <img src={`http://localhost:8000/storage/${company.logo_path}`} alt="" className="w-full h-full object-cover" />
+                  ? <img src={`http://167.172.83.139:8000/storage/${company.logo_path}`} alt="" className="w-full h-full object-cover" />
                   : company.name?.charAt(0).toUpperCase()}
               </div>
               <span className="text-xs font-medium" style={{ color: "#5dd8d8" }}>{company.name}</span>
@@ -515,7 +513,7 @@ export default function ActivateAccount() {
             </button>
             <div className="flex justify-center mb-4">
               {company?.logo_path
-                ? <img src={`http://localhost:8000/storage/${company.logo_path}`} alt={company.name} className="w-16 h-16 object-contain rounded-2xl" />
+                ? <img src={`http://167.172.83.139:8000/storage/${company.logo_path}`} alt={company.name} className="w-16 h-16 object-contain rounded-2xl" />
                 : <img src="/assets/images/logo.png" alt="Logo" className="w-24 h-24 object-contain" />
               }
             </div>
