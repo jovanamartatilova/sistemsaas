@@ -123,7 +123,7 @@ export default function SettingsAdmin() {
         e.preventDefault();
         setLoading(true);
         try {
-            const res = await axios.put("http://127.0.0.1:8000/api/company/profile", form, {
+            const res = await axios.put(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/company/profile`, form, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             const updated = res.data.company;
@@ -144,7 +144,7 @@ export default function SettingsAdmin() {
 
         setLoading(true);
         try {
-            const res = await axios.post("http://127.0.0.1:8000/api/company/logo", formData, {
+            const res = await axios.post(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/company/logo`, formData, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                     "Content-Type": "multipart/form-data"
@@ -163,7 +163,7 @@ export default function SettingsAdmin() {
         if (!confirm("Are you sure you want to remove the company logo?")) return;
         setLoading(true);
         try {
-            const res = await axios.delete("http://127.0.0.1:8000/api/company/logo", {
+            const res = await axios.delete(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/company/logo`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             const updated = res.data.company;
@@ -188,7 +188,7 @@ export default function SettingsAdmin() {
 
     const companyName = comp.name || "Admin";
     const initials = companyName.slice(0, 2).toUpperCase();
-    const logoUrl = comp.logo_path ? `http://127.0.0.1:8000/storage/${comp.logo_path}` : null;
+    const logoUrl = comp.logo_path ? `${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.split("/api")[0] : "http://localhost:8000"}/storage/${comp.logo_path}` : null;
 
     const inputStyle = {
         width: "100%", padding: "12px 14px", borderRadius: "10px",

@@ -56,6 +56,7 @@ Route::get('/vacancies/public', [VacancyController::class, 'publicIndex']);
 Route::get('/c/{id_company}', [CompanyPublicController::class, 'show']);
 Route::get('/c/{id_company}/vacancies', [CompanyPublicController::class, 'vacancies']);
 Route::get('/invitation-codes/validate/{code}', [AuthController::class, 'validateInvitationCode']);
+Route::get('/auth/check-email/{email}', [AuthController::class, 'checkEmailExists']);
 Route::post('/auth/activate', [AuthController::class, 'activateAccount']);
 Route::post('/contact', [ContactMessageController::class, 'store']);
 Route::options('/{any}', fn () => response()->noContent())->where('any', '.*');
@@ -385,6 +386,14 @@ Route::middleware(['auth:sanctum'])->prefix('hr')->group(function () {
         Route::get('/summarize/{id}', [SelectionAIController::class, 'summarize']);
         Route::get('/suggest/{id}', [SelectionAIController::class, 'suggestDecision']);
     });
+
+    // Test Templates (for positions)
+    Route::get('/positions/{id}/test-templates',     [ProgramController::class, 'getTestTemplates']);
+    Route::post('/positions/{id}/test-templates',    [ProgramController::class, 'storeTestTemplate']);
+    Route::delete('/positions/{id}/test-templates/{templateId}', [ProgramController::class, 'destroyTestTemplate']);
+
+    // Bulk actions
+    Route::post('/candidates/bulk-assign-test', [HRCandidateController::class, 'bulkAssignTest']);
 });
 
 // Development-only Routes (DEBUG mode)

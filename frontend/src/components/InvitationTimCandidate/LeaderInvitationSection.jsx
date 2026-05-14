@@ -19,7 +19,7 @@ export default function LeaderInvitationSection({ program, onInvitationCreated }
   const [invitation, setInvitation] = useState(null);
   const [copied, setCopied] = useState(false);
 
-  const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+  const API_BASE_URL = import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}`;
   const token = localStorage.getItem("auth_token") || localStorage.getItem("token");
 
   const handleCreateInvitation = async (e) => {
@@ -60,7 +60,7 @@ export default function LeaderInvitationSection({ program, onInvitationCreated }
 
   const copyToClipboard = () => {
     if (invitation?.invitation_link) {
-      navigator.clipboard.writeText(invitation.invitation_link);
+      navigator.clipboard ? navigator.clipboard.writeText(invitation.invitation_link) : (() => { const el = document.createElement("textarea"); el.value = invitation.invitation_link; document.body.appendChild(el); el.select(); document.execCommand("copy"); document.body.removeChild(el); })();
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }

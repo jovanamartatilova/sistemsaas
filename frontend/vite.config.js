@@ -13,4 +13,34 @@ export default defineConfig({
   optimizeDeps: {
     include: ['jspdf', 'jspdf-autotable'],
   },
+  build: {
+    // Output to Laravel public folder
+    outDir: '../backend/public/dist',
+    emptyOutDir: true,
+    sourcemap: false, // Set to true for debugging in production
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true, // Remove console logs
+      },
+    },
+    rollupOptions: {
+      output: {
+        // Optimize chunk naming for better caching
+        entryFileNames: 'assets/[name].[hash].js',
+        chunkFileNames: 'assets/[name].[hash].js',
+        assetFileNames: 'assets/[name].[hash][extname]',
+      },
+    },
+  },
+  server: {
+    // Development server configuration
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        rewrite: (path) => path,
+      },
+    },
+  },
 })

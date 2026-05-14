@@ -139,14 +139,21 @@ export default function CertificateMentor() {
   // ─── FETCH ───────────────────────────────────────────────────────────────
 const applyCerts = (data) => {
     setStatCards(data.stats || []);
-    const transformed = (data.certificates || []).map(cert => ({
-      ...cert,
-      status: cert.score === null
-        ? "In Progress"
-        : cert.status === "Passed"
-          ? "Done"
-          : cert.status,
-    }));
+    const transformed = (data.certificates || []).map(cert => {
+      // If certificate already exists, respect the status from backend (Generated/Sent)
+      if (cert.status === "Generated" || cert.status === "Sent") {
+        return cert;
+      }
+      
+      return {
+        ...cert,
+        status: cert.score === null
+          ? "In Progress"
+          : cert.status === "Passed"
+            ? "Done"
+            : cert.status,
+      };
+    });
     setCertList(transformed);
   };
 
@@ -387,7 +394,7 @@ const applyCerts = (data) => {
     try {
       const token = localStorage.getItem("token");
       if (token) {
-        await fetch("http://localhost:8000/api/auth/logout", {
+        await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/auth/logout`, {
           method: "POST",
           headers: { "Authorization": `Bearer ${token}` },
         });

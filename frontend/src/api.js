@@ -1,5 +1,13 @@
 const TOKEN_KEY = 'auth_token';
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+const getBaseUrl = () => {
+  if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
+  // Fallback to current host on port 8000 if VITE_API_URL is not set
+  const { protocol, hostname } = window.location;
+  const port = hostname === 'localhost' || hostname === '127.0.0.1' ? '8000' : '8000';
+  return `${protocol}//${hostname}:${port}/api`;
+};
+
+const BASE_URL = getBaseUrl();
 
 // Get test token in development if no token exists
 const getTestToken = async () => {

@@ -359,7 +359,7 @@ export default function DashboardPage() {
         try {
             const params = new URLSearchParams();
             if (candidateSearch) params.set("search", candidateSearch);
-            const res = await axios.get(`http://localhost:8000/api/dashboard/stats?${params}`, {
+            const res = await axios.get(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/dashboard/stats?${params}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             setLiveStats(res.data);
@@ -513,7 +513,7 @@ export default function DashboardPage() {
                 <div style={{ flex: 1 }} />
                 <div style={{ borderTop: "1px solid rgba(255,255,255,0.07)", paddingTop: "14px", display: "flex", alignItems: "center", gap: "10px" }}>
                     {company?.logo_path ? (
-                        <img src={`http://127.0.0.1:8000/storage/${company.logo_path}`} alt="Logo" style={{ width: "36px", height: "36px", borderRadius: "10px", objectFit: "cover" }} />
+                        <img src={`${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.split("/api")[0] : "http://localhost:8000"}/storage/${company.logo_path}`} alt="Logo" style={{ width: "36px", height: "36px", borderRadius: "10px", objectFit: "cover" }} />
                     ) : (
                         <div style={{ width: "36px", height: "36px", borderRadius: "10px", flexShrink: 0, background: "linear-gradient(135deg, #2d7dd2, #4a9eff)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "13px", fontWeight: "800", color: "#fff" }}>
                             {initials}

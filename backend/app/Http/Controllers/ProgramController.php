@@ -397,4 +397,92 @@ class ProgramController extends Controller
         $vacancy->positions()->detach($id_position);
         return response()->json(['message' => 'Program removed successfully']);
     }
+    /**
+     * GET /hr/positions/{id}/test-templates
+     */
+    public function getTestTemplates(Request $request, $id)
+    {
+        $id_company = $request->user()->id_company;
+        $position = Position::where('id_position', $id)->where('id_company', $id_company)->firstOrFail();
+        return response()->json($position->test_templates ?? []);
+    }
+
+    /**
+     * POST /hr/positions/{id}/test-templates
+     */
+    public function storeTestTemplate(Request $request, $id)
+    {
+        $id_company = $request->user()->id_company;
+        $position = Position::where('id_position', $id)->where('id_company', $id_company)->firstOrFail();
+
+        $validated = $request->validate([
+            'template_id'  => 'nullable|string',
+            'name'         => 'required|string|max:255',
+            'format'       => 'required|string',
+            'instructions' => 'nullable|string',
+            'file'         => 'nullable|file|mimes:pdf,doc,docx,zip|max:5120', // 5MB max
+        ]);
+
+        $templates = $position->test_templates ?? [];
+        $templateId = $validated['template_id'] ?? (string) Str::uuid();
+
+        // Handle file upload
+        $filePath = null;
+        if ($request->hasFile('file')) {
+            $filePath = $request->file('file')->store('test_templates', 'public');
+        }
+
+        $newTemplate = [
+            'id'           => $templateId,
+            'name'         => $validated['name'],
+            'format'       => $validated['format'],
+            'instructions' => $validated['instructions'] ?? '',
+            'file_path'    => $filePath,
+            'updated_at'   => now()->toDateTimeString(),
+        ];
+
+        // If editing, find and replace
+        $found = false;
+        foreach ($templates as $idx => $t) {
+            if ($t['id'] === $templateId) {
+                // Keep old file if no new file uploaded
+                if (!$filePath && isset($t['file_path'])) {
+                    $newTemplate['file_path'] = $t['file_path'];
+                }
+                $templates[$idx] = $newTemplate;
+                $found = true;
+                break;
+            }
+        }
+
+        if (!$found) {
+            $templates[] = $newTemplate;
+        }
+
+        $position->update(['test_templates' => $templates]);
+
+        return response()->json([
+            'success' => true,
+            'data'    => $templates
+        ]);
+    }
+
+    /**
+     * DELETE /hr/positions/{id}/test-templates/{templateId}
+     */
+    public function destroyTestTemplate(Request $request, $id, $templateId)
+    {
+        $id_company = $request->user()->id_company;
+        $position = Position::where('id_position', $id)->where('id_company', $id_company)->firstOrFail();
+
+        $templates = $position->test_templates ?? [];
+        $newTemplates = array_values(array_filter($templates, fn($t) => $t['id'] !== $templateId));
+
+        $position->update(['test_templates' => $newTemplates]);
+
+        return response()->json([
+            'success' => true,
+            'data'    => $newTemplates
+        ]);
+    }
 }
