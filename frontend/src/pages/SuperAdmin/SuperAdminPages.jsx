@@ -589,7 +589,7 @@ export function SuperAdminSidebar({ onLogout, unreadCount = 0, isOpen, onClose }
 }
 
 // ── Topbar ────────────────────────────────────────────────────────────────────
-function Topbar({ title, sub, onMenuClick }) {
+function Topbar({ title, sub, onMenuClick, isMobile }) {
   return (
     <header style={{
       height: "56px", background: "#fff",
@@ -599,16 +599,15 @@ function Topbar({ title, sub, onMenuClick }) {
     }}>
       <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
         {/* Hamburger — hanya tampil di mobile via inline media query trick */}
-        <button
-          onClick={onMenuClick}
-          style={{
-            display: "none", // override via CSS class di bawah
-            background: "transparent", border: "none", cursor: "pointer",
-            color: "#475569", padding: "4px", borderRadius: "6px",
-            alignItems: "center",
-          }}
-          className="topbar-hamburger"
-        >
+          <button
+            onClick={onMenuClick}
+            style={{
+              display: isMobile ? "flex" : "none",
+              background: "transparent", border: "none", cursor: "pointer",
+              color: "#475569", padding: "4px", borderRadius: "6px",
+              alignItems: "center",
+            }}
+          >
           {/* Hamburger icon */}
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <line x1="3" y1="6" x2="21" y2="6"/>
@@ -1261,7 +1260,7 @@ export default function SuperAdminPages() {
   };
 
   const DashboardLayout = ({ children, pageTitle }) => (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#f8fafc", fontFamily: "'Poppins','Inter',sans-serif" }}>
+    <div style={{ display: "flex", minHeight: "100vh", background: "#f8fafc", fontFamily: "'Poppins','Inter',sans-serif", overflow: "hidden", position: "relative" }}>
       <style>{`
   @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
   * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; }
@@ -1272,7 +1271,9 @@ export default function SuperAdminPages() {
   .fade-in { animation: fadeIn 0.35s ease both; }
 .tenant-card-wrap { display: none; }
 @media (max-width: 768px) {
-  .topbar-hamburger { display: flex !important; }
+  @media (max-width: 768px) {
+  button.topbar-hamburger { display: flex !important; }
+}
   .dashboard-charts-grid { grid-template-columns: 1fr !important; }
   .messages-grid { grid-template-columns: 1fr !important; }
   .main-page-padding { padding: 16px 14px 32px !important; }
@@ -1289,7 +1290,7 @@ export default function SuperAdminPages() {
       onClose={() => setSidebarOpen(false)}
     />
     <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
-      <Topbar title={pageTitle.title} sub={pageTitle.sub} onMenuClick={() => setSidebarOpen(true)} />
+      <Topbar title={pageTitle.title} sub={pageTitle.sub} onMenuClick={() => setSidebarOpen(true)} isMobile={window.innerWidth <= 768} />
 
         {children}
       </div>
