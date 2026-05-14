@@ -49,7 +49,7 @@ const handleLogout = async () => {
       />
 
       {/* Main Content */}
-      <main className="flex-1 ml-56">
+      <main className="flex-1 md:ml-56 pt-14 md:pt-0 overflow-x-hidden">
         <div className="min-h-screen p-8">{children}</div>
       </main>
 

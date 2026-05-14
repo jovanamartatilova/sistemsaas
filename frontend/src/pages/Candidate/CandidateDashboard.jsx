@@ -251,7 +251,7 @@ function EarlyPathDashboard() {
           company={JSON.parse(localStorage.getItem("company"))}
           onLogout={handleLogout}
         />
-        <main className="ml-56 flex-1 flex items-center justify-center">
+        <main className="md:ml-56 pt-14 md:pt-0 flex-1 flex items-center justify-center">
           {loading ? (
             <LoadingSpinner message="Loading dashboard..." />
           ) : (
@@ -319,7 +319,7 @@ function EarlyPathDashboard() {
         onLogout={handleLogoutClick}
       />
 
-      <main className="ml-56 flex-1 px-6 py-6 space-y-5 min-w-0">
+      <main className="md:ml-56 pt-14 md:pt-0 flex-1 px-6 py-6 space-y-5 min-w-0">
         <style>{`@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');`}</style>
 
         {loading && (
@@ -392,7 +392,7 @@ function EarlyPathDashboard() {
               </div>
             </div>
 
-            <div className="grid grid-cols-[1fr_1.6fr] gap-5 items-start min-h-0">
+            <div className="grid grid-cols-1 md:grid-cols-[1fr_1.6fr] gap-5 items-start min-h-0">
 
               {/* Left Column */}
               <div className="flex flex-col gap-5">
