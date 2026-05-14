@@ -195,9 +195,9 @@ export default function AssignTasksMentor() {
       setLoading(true);
       const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
       const [resTasks, resAssignTargets, resComp] = await Promise.all([
-        axios.get("http://localhost:8000/api/mentor/tasks", { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get("http://localhost:8000/api/mentor/assign-targets", { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get("http://localhost:8000/api/mentor/competencies", { headers: { Authorization: `Bearer ${token}` } })
+        axios.get(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/mentor/tasks`, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/mentor/assign-targets`, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/mentor/competencies`, { headers: { Authorization: `Bearer ${token}` } })
       ]);
       setTasks(resTasks.data.data || []);
       setAssignTargets(resAssignTargets.data.data || []);
@@ -257,7 +257,7 @@ export default function AssignTasksMentor() {
       setInternInfo({ position: target.position, program: target.program });
       if (target.id_position) {
         const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
-        axios.get(`http://localhost:8000/api/mentor/competencies?id_position=${target.id_position}`, { headers: { Authorization: `Bearer ${token}` } })
+        axios.get(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/mentor/competencies?id_position=${target.id_position}`, { headers: { Authorization: `Bearer ${token}` } })
           .then(res => setCompetencies(res.data.data || []))
           .catch(err => console.error("Failed to load competencies for edit:", err));
       }
@@ -272,7 +272,7 @@ export default function AssignTasksMentor() {
     setInternInfo({ position: target.position, program: target.program });
     if (target.id_position) {
       const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
-      const res = await axios.get(`http://localhost:8000/api/mentor/competencies?id_position=${target.id_position}`, { headers: { Authorization: `Bearer ${token}` } });
+      const res = await axios.get(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/mentor/competencies?id_position=${target.id_position}`, { headers: { Authorization: `Bearer ${token}` } });
       setCompetencies(res.data.data || []);
     }
   };
@@ -368,9 +368,9 @@ export default function AssignTasksMentor() {
       };
 
       if (isEditing) {
-        await axios.put(`http://localhost:8000/api/mentor/tasks/${editId}`, payload, { headers: { Authorization: `Bearer ${token}` } });
+        await axios.put(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/mentor/tasks/${editId}`, payload, { headers: { Authorization: `Bearer ${token}` } });
       } else {
-        await axios.post("http://localhost:8000/api/mentor/tasks", payload, { headers: { Authorization: `Bearer ${token}` } });
+        await axios.post(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/mentor/tasks`, payload, { headers: { Authorization: `Bearer ${token}` } });
       }
 
       setModalOpen(false);
@@ -385,7 +385,7 @@ export default function AssignTasksMentor() {
   const handleUpdateTask = async (taskId, payload) => {
     try {
       const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
-      await axios.put(`http://localhost:8000/api/mentor/tasks/${taskId}`, payload, { headers: { Authorization: `Bearer ${token}` } });
+      await axios.put(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/mentor/tasks/${taskId}`, payload, { headers: { Authorization: `Bearer ${token}` } });
       fetchData();
       showToast("Task updated successfully!");
     } catch (e) { showToast("Failed to update task.", "error"); }
@@ -395,7 +395,7 @@ export default function AssignTasksMentor() {
     if (!window.confirm("Are you sure you want to delete this project and all its targets?")) return;
     try {
       const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
-      await axios.delete(`http://localhost:8000/api/mentor/tasks/${taskId}`, { headers: { Authorization: `Bearer ${token}` } });
+      await axios.delete(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/mentor/tasks/${taskId}`, { headers: { Authorization: `Bearer ${token}` } });
       fetchData();
       showToast("Project deleted successfully!");
     } catch (e) { showToast("Failed to delete project.", "error");}
@@ -404,7 +404,7 @@ export default function AssignTasksMentor() {
   const handleApproveLogbook = async (taskId) => {
     try {
       const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
-      await axios.put(`http://localhost:8000/api/mentor/tasks/${taskId}/approve-logbook`,
+      await axios.put(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/mentor/tasks/${taskId}/approve-logbook`,
         { logbook_approved: true },
         { headers: { Authorization: `Bearer ${token}` } }
       );

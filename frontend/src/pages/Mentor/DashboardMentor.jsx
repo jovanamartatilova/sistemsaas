@@ -355,36 +355,42 @@ useEffect(() => {
           </div>
 
           <div style={s.card}>
-            <div style={{...s.ch, flexDirection: "column", alignItems: "center", textAlign: "center", gap: "8px"}}>
-              <div style={s.ct}>Active Interns</div>
-              <div style={s.cs}>Each intern is scored individually regardless of team enrollment</div>
-
-              {/* Tabs */}
-              <div style={{ display: "flex", gap: "4px", background: "#f1f5f9", borderRadius: "10px", padding: "3px", marginTop: "8px" }}>
-                {["individual", "team"].map(tab => (
-                  <button
-                    key={tab}
-                    onClick={() => { setActiveTab(tab); setBatchFilter(''); }}
-                    style={{
-                      padding: "6px 20px", borderRadius: "8px", border: "none", cursor: "pointer",
-                      fontSize: "13px", fontWeight: 600, fontFamily: "inherit",
-                      background: activeTab === tab ? "#fff" : "transparent",
-                      color: activeTab === tab ? "#0f172a" : "#64748b",
-                      boxShadow: activeTab === tab ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
-                      transition: "all 0.15s",
-                    }}
-                  >
-                    {tab === "individual" ? "Individual" : "Team"}
-                  </button>
-                ))}
+            <div style={{ padding: "18px 24px", borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              
+              {/* Left: Title & Subtitle */}
+              <div style={{ textAlign: "left" }}>
+                <div style={s.ct}>Active Interns</div>
+                <div style={s.cs}>Each intern is scored individually regardless of team enrollment</div>
               </div>
 
-              {/* Search + Batch Filter + Export */}
-              <div style={{ display: "flex", gap: "8px", alignItems: "center", marginTop: "8px" }}>
+              {/* Right: Tabs + Filters + Export */}
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                
+                {/* Tabs */}
+                <div style={{ display: "flex", gap: "2px", background: "#f1f5f9", borderRadius: "10px", padding: "3px" }}>
+                  {["individual", "team"].map(tab => (
+                    <button
+                      key={tab}
+                      onClick={() => { setActiveTab(tab); setBatchFilter(''); }}
+                      style={{
+                        padding: "6px 20px", borderRadius: "8px", border: "none", cursor: "pointer",
+                        fontSize: "13px", fontWeight: 600, fontFamily: "inherit",
+                        background: activeTab === tab ? "#fff" : "transparent",
+                        color: activeTab === tab ? "#0f172a" : "#64748b",
+                        boxShadow: activeTab === tab ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
+                        transition: "all 0.15s",
+                      }}
+                    >
+                      {tab === "individual" ? "Individual" : "Team"}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Search */}
                 <div style={{
                   display: "flex", alignItems: "center", gap: "8px",
                   background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px",
-                  padding: "7px 14px", width: "260px",
+                  padding: "7px 14px", width: "220px", height: "34px"
                 }}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
@@ -395,13 +401,16 @@ useEffect(() => {
                     onChange={(e) => setSearch(e.target.value)}
                     style={{ border: "none", background: "transparent", outline: "none", fontSize: "13px", color: "#64748b", width: "100%", fontFamily: "inherit" }}
                   />
+                  {search && (
+                    <span onClick={() => setSearch("")} style={{ cursor: "pointer", color: "#94a3b8", fontSize: "16px", lineHeight: 1 }}>×</span>
+                  )}
                 </div>
                 {/* Batch Filter Dropdown */}
                 <select
                   value={batchFilter}
                   onChange={e => setBatchFilter(e.target.value)}
                   style={{
-                    padding: "7px 14px", borderRadius: "10px", border: "1px solid #e2e8f0", background: "#f8fafc", color: "#334155", fontSize: "13px", fontFamily: "inherit", outline: "none"
+                    padding: "7.5px 12px", borderRadius: "10px", border: "1px solid #e2e8f0", background: "#f8fafc", color: "#334155", fontSize: "13px", fontFamily: "inherit", outline: "none", height: "34px", cursor: "pointer"
                   }}
                 >
                   <option value="">All Batch</option>
@@ -409,10 +418,14 @@ useEffect(() => {
                     <option key={batch} value={batch}>{batch}</option>
                   ))}
                 </select>
+
+                {/* Export Dropdown */}
                 <div style={{ position: "relative" }}>
                   <button
                     onClick={() => setExportDropdown(v => !v)}
-                    style={{ ...s.btnOutline, display: "flex", alignItems: "center", gap: "6px" }}
+                    style={{ 
+                      padding: "7px 14px", background: "#fff", color: "#334155", border: "1px solid #e2e8f0", borderRadius: "10px", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: "6px", height: "34px"
+                    }}
                   >
                     Export CSV
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

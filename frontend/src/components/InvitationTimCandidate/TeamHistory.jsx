@@ -11,7 +11,7 @@ export default function TeamHistory({ program, onTeamSelect = null }) {
   const [error, setError] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
 
-  const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+  const API_BASE_URL = import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}`;
   const authToken = localStorage.getItem("auth_token") || localStorage.getItem("token");
 
   useEffect(() => {
@@ -42,7 +42,7 @@ export default function TeamHistory({ program, onTeamSelect = null }) {
   }, [authToken]);
 
   const copyToClipboard = (link, id) => {
-    navigator.clipboard.writeText(link);
+    navigator.clipboard ? navigator.clipboard.writeText(link) : (() => { const el = document.createElement("textarea"); el.value = link; document.body.appendChild(el); el.select(); document.execCommand("copy"); document.body.removeChild(el); })();
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
   };

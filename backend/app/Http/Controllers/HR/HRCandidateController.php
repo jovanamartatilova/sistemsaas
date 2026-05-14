@@ -406,7 +406,7 @@ class HRCandidateController extends Controller
             if ($status === 'pending' || $status === 'stage_0') {
                 $s->mapped_status = 'screening';
             } elseif (str_starts_with($status, 'stage_')) {
-                $idx = (int) str_replace('stage_', '', $status);
+                $idx = (int) str_replace('stage_', '', $status) - 1;
                 $flow = $s->position?->selection_flow;
                 if (is_string($flow)) $flow = json_decode($flow, true);
                 if (isset($flow[$idx])) {
@@ -666,7 +666,7 @@ class HRCandidateController extends Controller
             \Log::info("Creating new interview...");
             try {
                 $interview = new \App\Models\Interview([
-                    'id_interview' => 'INT' . strtoupper(\Illuminate\Support\Str::random(10)),
+                    'id_interview' => 'INT' . strtoupper(\Illuminate\Support\Str::random(7)),
                     'id_submission' => $submission->id_submission,
                     'id_interviewer' => $request->user()->id_user,
                     'interview_date' => $request->interview_date,
@@ -759,4 +759,48 @@ class HRCandidateController extends Controller
         ];
     }
 
+    /**
+     * POST /hr/candidates/bulk-assign-test
+     */
+    public function bulkAssignTest(Request $request)
+    {
+        $validated = $request->validate([
+            'id_submissions' => 'required|array',
+            'id_submissions.*' => 'exists:submissions,id_submission',
+            'test_name'     => 'required|string',
+            'test_location' => 'required|string',
+            'test_date'     => 'required|date',
+            'test_time'     => 'required|string',
+            'test_deadline' => 'nullable|date',
+        ]);
+
+        $companyId = $request->user()->id_company;
+        $count = 0;
+
+        foreach ($validated['id_submissions'] as $id) {
+            $submission = Submission::where('id_submission', $id)
+                ->whereHas('vacancy', fn($q) => $q->where('id_company', $companyId))
+                ->first();
+
+            if ($submission) {
+                $testDetails = [
+                    'test_name'     => $validated['test_name'],
+                    'test_location' => $validated['test_location'],
+                    'test_date'     => $validated['test_date'],
+                    'test_time'     => $validated['test_time'],
+                    'test_deadline' => $validated['test_deadline'] ?? null,
+                    'test_link'     => $request->test_link ?? null,
+                    'assigned_at'   => now()->toDateTimeString(),
+                ];
+
+                $submission->update(['test_details' => $testDetails]);
+                $count++;
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => "Successfully assigned test to $count candidates.",
+        ]);
+    }
 }

@@ -1,0 +1,10 @@
+/node_modules
+/.env
+/backend/vendor
+/backend/storage/*.key
+/backend/storage/app/public/certificates/*
+/backend/storage/app/public/signatures/*
+/frontend/dist
+/frontend/node_modules
+.DS_Store
+Thumbs.db

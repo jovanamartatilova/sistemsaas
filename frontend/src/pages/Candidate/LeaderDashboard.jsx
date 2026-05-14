@@ -5,7 +5,7 @@ import { useAuthStore } from "../../stores/authStore";
 import DashboardLayout from "../../components/DashboardLayout";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+const API_BASE_URL = import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}`;
 
 // Stats Card Component
 function StatsCard({ icon: Icon, label, value, color = "indigo" }) {
@@ -34,7 +34,7 @@ function TeamMemberCard({ member, onViewTasks }) {
       <div className="flex items-center gap-3">
         {member.photo ? (
           <img
-            src={member.photo.startsWith('http') ? member.photo : `http://localhost:8000/storage/${member.photo}`}
+            src={member.photo.startsWith('http') ? member.photo : `${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.split("/api")[0] : "http://localhost:8000"}/storage/${member.photo}`}
             alt={member.name}
             className="w-10 h-10 rounded-full object-cover"
           />
@@ -288,7 +288,7 @@ export default function LeaderDashboard() {
 
                 <button
                   onClick={() =>
-                    navigator.clipboard.writeText(team.invitation.invitation_link)
+                    navigator.clipboard ? navigator.clipboard.writeText(team.invitation.invitation_link) : (() => { const el = document.createElement("textarea"); el.value = team.invitation.invitation_link; document.body.appendChild(el); el.select(); document.execCommand("copy"); document.body.removeChild(el); })()
                   }
                   className="text-sm text-white bg-indigo-600 px-3 py-1 rounded-md"
                 >

@@ -9,7 +9,7 @@ import { getScopedRole } from "../../utils/roleUtils";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+const API_BASE_URL = import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}`;
 
 const STATUS_CONFIG = {
   pending: { label: "Pending", cls: "bg-amber-50 text-amber-600 border-amber-200" },

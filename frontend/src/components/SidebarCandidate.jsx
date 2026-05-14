@@ -48,7 +48,7 @@ export default function SidebarCandidate({ userName, userPhoto, company, onLogou
         <div className="flex justify-center mb-6">
           <Link to={`/c/${resolvedCompanyId}`} className="hover:opacity-80 transition-opacity">
             <img
-              src={`http://localhost:8000/storage/${resolvedCompany.logo_path}`}
+              src={`${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.split("/api")[0] : "http://localhost:8000"}/storage/${resolvedCompany.logo_path}`}
               alt={resolvedCompany.name || "Company"}
               className="h-8 w-auto object-contain"
             />
@@ -81,7 +81,7 @@ export default function SidebarCandidate({ userName, userPhoto, company, onLogou
         {/* Photo */}
         {userPhoto ? (
           <img
-            src={userPhoto.startsWith('http') ? userPhoto : `http://localhost:8000/storage/${userPhoto}`}
+            src={userPhoto.startsWith('http') ? userPhoto : `${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.split("/api")[0] : "http://localhost:8000"}/storage/${userPhoto}`}
             alt="Candidate"
             className="w-10 h-10 rounded-full object-cover border border-indigo-500 flex-shrink-0"
           />

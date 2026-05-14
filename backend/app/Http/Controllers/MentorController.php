@@ -726,9 +726,25 @@ class MentorController extends Controller
 
         // Calculate average score
         $assessment = Assessment::where('id_submission', $idSubmission)->first();
+        
+        if (!$assessment || empty($assessment->scores_data)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Please save assessment scores first before generating a certificate.'
+            ], 400);
+        }
+
         $scoresData = $assessment->scores_data ?? [];
         $scores = array_filter($scoresData, fn($s) => $s['score'] !== null);
-        $avgScore = count($scores) > 0 ? round(array_sum(array_column($scores, 'score')) / count($scores), 2) : 0;
+        
+        if (count($scores) === 0) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No scores found. Please input and save scores for at least one competency.'
+            ], 400);
+        }
+
+        $avgScore = round(array_sum(array_column($scores, 'score')) / count($scores), 2);
 
         $positionComps = DB::table('position_competencies')
             ->join('competencies', 'position_competencies.id_competency', '=', 'competencies.id_competency')
@@ -784,6 +800,16 @@ class MentorController extends Controller
         $idCert = $certExists ? $certExists->id_certificate : 'CERT' . strtoupper(Str::random(6));
         $filePath = 'certificates/' . $idCert . '.pdf';
 
+        $signature_base64 = null;
+        $employee = auth()->user()->employee;
+        if ($employee && $employee->signature_path) {
+            if (Storage::disk('public')->exists($employee->signature_path)) {
+                $fileContent = Storage::disk('public')->get($employee->signature_path);
+                $type = pathinfo($employee->signature_path, PATHINFO_EXTENSION);
+                $signature_base64 = 'data:image/' . $type . ';base64,' . base64_encode($fileContent);
+            }
+        }
+
         $data = [
             'submission' => $submission,
             'company' => $company,
@@ -795,6 +821,7 @@ class MentorController extends Controller
             'competencies' => $competenciesData,
             'avgScore' => $avgScore,
             'evaluation' => $assessment->narrative ?? '',
+            'signature_base64' => $signature_base64,
         ];
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('certificate.template', $data)->setPaper('a4', 'landscape');
@@ -893,6 +920,12 @@ class MentorController extends Controller
             ->with(['user', 'position', 'vacancy.company'])
             ->firstOrFail();
 
+        $certExists = Certificate::where('id_submission', $idSubmission)->first();
+        if ($certExists && $certExists->file_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($certExists->file_path)) {
+            $path = storage_path('app/public/' . $certExists->file_path);
+            return response()->file($path);
+        }
+
         // Calculate average score
         $assessment = Assessment::where('id_submission', $idSubmission)->first();
         $scoresData = $assessment->scores_data ?? [];
@@ -942,6 +975,16 @@ class MentorController extends Controller
             }
         }
 
+        $signature_base64 = null;
+        $employee = auth()->user()->employee;
+        if ($employee && $employee->signature_path) {
+            if (Storage::disk('public')->exists($employee->signature_path)) {
+                $fileContent = Storage::disk('public')->get($employee->signature_path);
+                $type = pathinfo($employee->signature_path, PATHINFO_EXTENSION);
+                $signature_base64 = 'data:image/' . $type . ';base64,' . base64_encode($fileContent);
+            }
+        }
+
         $data = [
             'submission' => $submission,
             'company' => $company,
@@ -953,6 +996,7 @@ class MentorController extends Controller
             'competencies' => $competenciesData,
             'avgScore' => $avgScore,
             'evaluation' => $assessment->narrative ?? '',
+            'signature_base64' => $signature_base64,
         ];
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('certificate.template', $data)->setPaper('a4', 'landscape');

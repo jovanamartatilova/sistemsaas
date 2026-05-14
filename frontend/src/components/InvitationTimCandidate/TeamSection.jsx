@@ -35,7 +35,7 @@ export default function TeamSection({ program, userRole = null, team = null, isP
     max_members: 5,
   });
 
-  const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+  const API_BASE_URL = import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}`;
   const authToken = localStorage.getItem("auth_token") || localStorage.getItem("token");
 
   // Validate invitation on mount (for public join flow)
@@ -189,7 +189,7 @@ export default function TeamSection({ program, userRole = null, team = null, isP
 
   const copyToClipboard = () => {
     if (invitationData?.invitation_link) {
-      navigator.clipboard.writeText(invitationData.invitation_link);
+      navigator.clipboard ? navigator.clipboard.writeText(invitationData.invitation_link) : (() => { const el = document.createElement("textarea"); el.value = invitationData.invitation_link; document.body.appendChild(el); el.select(); document.execCommand("copy"); document.body.removeChild(el); })();
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }

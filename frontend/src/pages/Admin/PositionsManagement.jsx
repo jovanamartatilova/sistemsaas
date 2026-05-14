@@ -148,8 +148,8 @@ function CandidateItem({ sub }) {
                     <div style={{ height: 1.5, background: "#e2e8f0", marginBottom: 16, opacity: 0.5 }} />
                     <div style={{ fontSize: 12, fontWeight: 700, color: "#64748b", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.5px" }}>Candidate Documents</div>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                        {sub.cv_file && <a href={`http://127.0.0.1:8000/storage/${sub.cv_file}`} target="_blank" rel="noopener noreferrer" style={docBtn}><Icon.FileText /> CV / Resume</a>}
-                        {sub.portfolio_file && <a href={`http://127.0.0.1:8000/storage/${sub.portfolio_file}`} target="_blank" rel="noopener noreferrer" style={docBtn}><Icon.FileText /> Additional Portfolio</a>}
+                        {sub.cv_file && <a href={`${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.split("/api")[0] : "http://localhost:8000"}/storage/${sub.cv_file}`} target="_blank" rel="noopener noreferrer" style={docBtn}><Icon.FileText /> CV / Resume</a>}
+                        {sub.portfolio_file && <a href={`${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.split("/api")[0] : "http://localhost:8000"}/storage/${sub.portfolio_file}`} target="_blank" rel="noopener noreferrer" style={docBtn}><Icon.FileText /> Additional Portfolio</a>}
                     </div>
                 </div>
             )}
@@ -208,7 +208,7 @@ function ProgramCard({ program, onEdit, onDelete }) {
             }}
             onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
         >
-            <div style={{ width: "100%", height: 160, background: program.vacancy_photo ? `url(http://127.0.0.1:8000/storage/${program.vacancy_photo}) center/cover` : "#e2e8f0", position: "relative" }}>
+            <div style={{ width: "100%", height: 160, background: program.vacancy_photo ? `url(${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.split("/api")[0] : "http://localhost:8000"}/storage/${program.vacancy_photo}) center/cover` : "#e2e8f0", position: "relative" }}>
                 <div style={{ position: "absolute", top: 12, left: 12, background: "rgba(255,255,255,0.9)", backdropFilter: "blur(4px)", padding: "4px 10px", borderRadius: 20, fontSize: 11, fontWeight: 700, color: "#64748b", border: "1px solid rgba(0,0,0,0.1)", textTransform: "uppercase" }}>{program.vacancy_status}</div>
                 <div style={{ position: "absolute", top: 12, right: 12, display: "flex", gap: 6 }}>
                     <button onClick={(e) => { e.stopPropagation(); onDelete(program); }} style={{ width: 32, height: 32, borderRadius: 8, border: "none", background: "rgba(255,255,255,0.9)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#ef4444" }}><Icon.Trash /></button>
@@ -367,7 +367,7 @@ function PositionModal({ open, item, onClose, onSave }) {
         setGeneratingIndex(i);
         try {
             const prompt = `Tuliskan satu kalimat deskripsi profesional dan deskriptif (sekitar 15-25 kata) dalam bahasa Indonesia untuk kompetensi '${compName}' pada posisi pekerjaan '${posName}'. Berikan HANYA teks deskripsinya tanpa awalan, tanpa tanda kutip, dan tanpa penjelasan lain.`;
-            const res = await axios.post("http://127.0.0.1:8000/api/ai/generate", { model: "llama3", prompt }, { headers: { Authorization: `Bearer ${token}` } });
+            const res = await axios.post(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/ai/generate`, { model: "llama3", prompt }, { headers: { Authorization: `Bearer ${token}` } });
             handleCompChange(i, "description", res.data.response.trim());
         } catch (e) { alert(e.response?.data?.error || e.message || "Failed to connect to AI."); }
         finally { setGeneratingIndex(null); }
@@ -386,7 +386,7 @@ function PositionModal({ open, item, onClose, onSave }) {
         setGeneratingFlowIndex(i);
         try {
             const prompt = `Tuliskan satu paragraf singkat deskripsi instruksi HR untuk tahap seleksi '${flowName}' pada posisi '${posName}'. Berikan HANYA teks deskripsinya tanpa awalan, tanpa tanda kutip.`;
-            const res = await axios.post("http://127.0.0.1:8000/api/ai/generate", { model: "llama3", prompt }, { headers: { Authorization: `Bearer ${token}` } });
+            const res = await axios.post(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/ai/generate`, { model: "llama3", prompt }, { headers: { Authorization: `Bearer ${token}` } });
             handleFlowChange(i, "description", res.data.response.trim());
         } catch (e) { alert(e.response?.data?.error || e.message); }
         finally { setGeneratingFlowIndex(null); }
@@ -559,7 +559,7 @@ export default function PositionsManagement() {
     const fetchCatalog = async () => {
         try {
             setCatalogLoading(true);
-            const res = await axios.get("http://127.0.0.1:8000/api/positions/catalog", { headers: { Authorization: `Bearer ${token}` } });
+            const res = await axios.get(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/positions/catalog`, { headers: { Authorization: `Bearer ${token}` } });
             setCatalog(res.data);
         } catch (err) { console.error(err); }
         finally { setCatalogLoading(false); }
@@ -568,7 +568,7 @@ export default function PositionsManagement() {
     const fetchPrograms = async () => {
         try {
             setLoading(true);
-            const res = await axios.get("http://127.0.0.1:8000/api/programs", { headers: { Authorization: `Bearer ${token}` } });
+            const res = await axios.get(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/programs`, { headers: { Authorization: `Bearer ${token}` } });
             setPrograms(res.data.filter(p => p.vacancy_status !== "draft"));
         } catch (err) { console.error(err); }
         finally { setLoading(false); }
@@ -589,7 +589,7 @@ export default function PositionsManagement() {
                 try {
                     const action = isLocked ? "unlock" : "lock";
                     await axios.post(
-                        `http://127.0.0.1:8000/api/positions/catalog/${item.id_position}/${action}`,
+                        `${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/positions/catalog/${item.id_position}/${action}`,
                         {},
                         { headers: { Authorization: `Bearer ${token}` } }
                     );
@@ -612,7 +612,7 @@ export default function PositionsManagement() {
             onConfirm: async () => {
                 closeConfirm();
                 try {
-                    const duplicateUrl = `http://127.0.0.1:8000/api/positions/catalog/${item.id_position}/duplicate`;
+                    const duplicateUrl = `${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/positions/catalog/${item.id_position}/duplicate`;
                     const config = { headers: { Authorization: `Bearer ${token}` } };
                     const res = await axios.post(duplicateUrl, null, config);
                     showToast(`"${item.name}" duplicated successfully and added to catalog.`);
@@ -638,7 +638,7 @@ export default function PositionsManagement() {
             onConfirm: async () => {
                 closeConfirm();
                 try {
-                    await axios.delete(`http://127.0.0.1:8000/api/positions/catalog/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+                    await axios.delete(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/positions/catalog/${id}`, { headers: { Authorization: `Bearer ${token}` } });
                     showToast("Position deleted.");
                     // Close modal and refresh both catalog and programs
                     setPosModalOpen(false);
@@ -655,7 +655,7 @@ export default function PositionsManagement() {
     // ── Delete program ──────────────────────────────────────────
     const handleDeleteProgram = async (prog) => {
         try {
-            await axios.delete(`http://127.0.0.1:8000/api/programs/${prog.id_vacancy}/${prog.id_position}`, { headers: { Authorization: `Bearer ${token}` } });
+            await axios.delete(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/programs/${prog.id_vacancy}/${prog.id_position}`, { headers: { Authorization: `Bearer ${token}` } });
             showToast("Program removed.");
             fetchPrograms();
         } catch (err) {
@@ -706,7 +706,7 @@ export default function PositionsManagement() {
                 <div style={{ flex: 1 }} />
                 <div style={{ borderTop: "1px solid rgba(255,255,255,0.07)", paddingTop: "14px", display: "flex", alignItems: "center", gap: "10px" }}>
                     {comp?.logo_path
-                        ? <img src={`http://127.0.0.1:8000/storage/${comp.logo_path}`} alt="Logo" style={{ width: "36px", height: "36px", borderRadius: "10px", objectFit: "cover" }} />
+                        ? <img src={`${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.split("/api")[0] : "http://localhost:8000"}/storage/${comp.logo_path}`} alt="Logo" style={{ width: "36px", height: "36px", borderRadius: "10px", objectFit: "cover" }} />
                         : <div style={{ width: "36px", height: "36px", borderRadius: "10px", flexShrink: 0, background: "linear-gradient(135deg, #2d7dd2, #4a9eff)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "13px", fontWeight: "800", color: "#fff" }}>{initials}</div>
                     }
                     <div style={{ flex: 1, minWidth: 0 }}>
@@ -835,7 +835,7 @@ export default function PositionsManagement() {
                 onClose={() => { setPosModalOpen(false); setEditingCatalogItem(null); }}
                 onSave={async (id, data) => {
                     try {
-                        const url = id ? `http://127.0.0.1:8000/api/positions/catalog/${id}` : "http://127.0.0.1:8000/api/positions/catalog";
+                        const url = id ? `${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/positions/catalog/${id}` : `${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/positions/catalog`;
                         await axios[id ? "put" : "post"](url, data, { headers: { Authorization: `Bearer ${token}` } });
                         showToast(`Position ${id ? "updated" : "created"} successfully.`);
                         fetchCatalog();

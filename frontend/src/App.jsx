@@ -38,7 +38,8 @@ import ResetPasswordStaff   from './pages/Admin/ResetPasswordStaff';
 // Main
 import LandingPage  from './pages/Main/LandingPage';
 import ProfilePage  from './pages/Main/ProfilePage';
-import PreviewOnboarding from './pages/Main/PreviewOnboarding';
+import PreviewOnboarding from "./pages/Main/PreviewOnBoarding";
+
 
 // Super Admin
 import SuperAdminPages from './pages/SuperAdmin/SuperAdminPages';
@@ -112,7 +113,7 @@ export default function App() {
                 <Route path="/c/:idCompany/staff/login"       element={<LoginStaff />} />
                 <Route path="/c/:idCompany/staff/forgot-password"   element={<ForgotPasswordStaff />} />
                 <Route path="/c/:idCompany/staff/reset-password"    element={<ResetPasswordStaff />} />
-                <Route path="/onboarding" element={<PreviewOnboarding />} />
+                <Route path="/onboarding" element={<PreviewOnBoarding />} />
 
                 {/* Team Invitation - Public */}
                 <Route path="/join-team/:token" element={<JoinTeamPage />} />

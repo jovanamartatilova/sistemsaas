@@ -5,6 +5,7 @@ import { useAuthStore } from "../../stores/authStore";
 import SidebarHR from "../../components/SidebarHR";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { HRToastStack, useHRToast } from "../../components/HRToast";
+import SignatureSelector from "../../components/SignatureSelector";
 
 // ── Icons ──────────────────────────────────────────────────────────────────────
 const IC = {
@@ -46,8 +47,8 @@ const IC = {
       <line x1="12" y1="15" x2="12" y2="3" />
     </svg>
   ),
-  Refresh: () => (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  Refresh: (props) => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
       <polyline points="23 4 23 10 17 10" />
       <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
     </svg>
@@ -213,35 +214,42 @@ export default function GenerateLoAHR() {
   const [regenerateSuccess, setRegenerateSuccess] = useState({});
   const [search, setSearch] = useState("");           
   const [tableLoading, setTableLoading] = useState(false); 
+  const [hasSignature, setHasSignature] = useState(false);
+  const [typeFilter, setTypeFilter] = useState("all");
 
   // ── Fetch ────────────────────────────────────────────────────────────────────
-  const fetchLoa = async (isSearch = false) => {
-  if (isSearch) {
-    setTableLoading(true);   // Loading hanya untuk tabel
-  } else {
-    setPageLoading(true);    // Loading untuk seluruh halaman
-  }
+  const fetchLoa = async (isSearch = false, isBackground = false) => {
+    if (!isBackground) {
+      if (isSearch) {
+        setTableLoading(true);
+      } else {
+        setPageLoading(true);
+      }
+    }
   
-  try {
-    const params = new URLSearchParams();
-    if (search) params.set("search", search);
-    
-    const res = await api(`/hr/loa?${params}`);
-    setData(res.data);
-  } catch (err) {
-    pushToast(err.message || "Failed to load data.", "error");
-  } finally {
-    setPageLoading(false);
-    setTableLoading(false);
-  }
-};
+    try {
+      const params = new URLSearchParams();
+      if (search) params.set("search", search);
+      if (typeFilter !== "all") params.set("type", typeFilter);
+      
+      const res = await api(`/hr/loa?${params}`);
+      setData(res.data);
+    } catch (err) {
+      pushToast(err.message || "Failed to load data.", "error");
+    } finally {
+      if (!isBackground) {
+        setPageLoading(false);
+        setTableLoading(false);
+      }
+    }
+  };
 
   // Initial load (saat pertama kali buka halaman)
   useEffect(() => { 
     fetchLoa(); 
   }, []);
 
-  // Search debounce (hanya loading tabel)
+  // Search and filter debounce
   useEffect(() => {
     if (!pageLoading) { 
       const timer = setTimeout(() => {
@@ -249,7 +257,7 @@ export default function GenerateLoAHR() {
       }, 500);
       return () => clearTimeout(timer);
     }
-  }, [search]);
+  }, [search, typeFilter]);
 
   // ── Handlers ─────────────────────────────────────────────────────────────────
   const handleLogout = () => {
@@ -259,10 +267,14 @@ export default function GenerateLoAHR() {
   };
 
   const handleGenerate = async (id) => {
+    if (!hasSignature) {
+      pushToast("Silakan atur tanda tangan Anda terlebih dahulu", "error");
+      return;
+    }
     try {
       setLoading(id);
       await api(`/hr/loa/${id}/generate`, { method: "POST" });
-      await fetchLoa();
+      await fetchLoa(false, true);
       setRegenerateSuccess((prev) => ({ ...prev, [id]: true }));
       setTimeout(() => setRegenerateSuccess((prev) => ({ ...prev, [id]: false })), 3000);
       pushToast("LoA generated successfully", "success");
@@ -277,7 +289,7 @@ export default function GenerateLoAHR() {
     try {
       setSending((prev) => ({ ...prev, [id]: true }));
       await api(`/hr/loa/${id}/send`, { method: "POST" });
-      await fetchLoa();
+      await fetchLoa(false, true);
       pushToast("LoA sent successfully", "success");
     } catch (err) {
       pushToast(err.message || "Failed to send LoA.", "error");
@@ -287,13 +299,47 @@ export default function GenerateLoAHR() {
   };
 
   const handleBulkGenerate = async () => {
+    if (!hasSignature) {
+      pushToast("Silakan atur tanda tangan Anda terlebih dahulu", "error");
+      return;
+    }
     try {
       setBulkLoading(true);
       await api("/hr/loa/bulk-generate", { method: "POST" });
-      await fetchLoa();
+      await fetchLoa(false, true);
       pushToast("LoA documents generated successfully", "success");
     } catch (err) {
       pushToast(err.message || "Failed to bulk generate LoA.", "error");
+    } finally {
+      setBulkLoading(false);
+    }
+  };
+
+  const handleBulkRegenerate = async () => {
+    if (!hasSignature) {
+      pushToast("Silakan atur tanda tangan Anda terlebih dahulu", "error");
+      return;
+    }
+    try {
+      setBulkLoading(true);
+      await api("/hr/loa/bulk-regenerate", { method: "POST" });
+      await fetchLoa(false, true);
+      pushToast("LoA documents regenerated successfully", "success");
+    } catch (err) {
+      pushToast(err.message || "Failed to bulk regenerate LoA.", "error");
+    } finally {
+      setBulkLoading(false);
+    }
+  };
+
+  const handleBulkSend = async () => {
+    try {
+      setBulkLoading(true);
+      await api("/hr/loa/bulk-send", { method: "POST" });
+      await fetchLoa(false, true);
+      pushToast("LoA documents sent successfully", "success");
+    } catch (err) {
+      pushToast(err.message || "Failed to bulk send LoA.", "error");
     } finally {
       setBulkLoading(false);
     }
@@ -398,12 +444,16 @@ export default function GenerateLoAHR() {
           {/* Page heading */}
           <div style={{ marginBottom: "28px", display: "flex", flexDirection: "column", gap: "4px", textAlign: "left" }}>
             <div style={{ fontSize: "20px", fontWeight: "800", color: "#0f172a", lineHeight: 1.2 }}>
-              Generate Letter of Acceptance
+              Generate Letter of Acceptance (LoA)
             </div>
-            <div style={{ fontSize: "13px", color: "#64748b", marginTop: "4px" }}>
-              Create and manage LoA documents for accepted candidates.
+            <div style={{ fontSize: "13.5px", color: "#64748b" }}>
+              Generate official acceptance letters for newly hired candidates
             </div>
           </div>
+
+          <SignatureSelector onSignatureChange={(url) => setHasSignature(!!url)} />
+
+
 
           {/* Stat Cards */}
           <div style={{
@@ -450,21 +500,73 @@ export default function GenerateLoAHR() {
                     }}
                   />
                 </div>
-                
-                <button
-                  onClick={handleBulkGenerate}
-                  disabled={bulkLoading}
+
+                <select
+                  value={typeFilter}
+                  onChange={(e) => setTypeFilter(e.target.value)}
                   style={{
-                    display: "flex", alignItems: "center", gap: "6px",
-                    padding: "8px 18px", background: bulkLoading ? "#94a3b8" : "#1e293b",
-                    color: "#fff", border: "none", borderRadius: "10px",
-                    fontSize: "13px", fontWeight: "700", cursor: bulkLoading ? "not-allowed" : "pointer",
-                    fontFamily: "'Poppins','Segoe UI',sans-serif", transition: "background 0.15s",
+                    padding: "7.5px 12px", borderRadius: "10px", border: "1px solid #e2e8f0",
+                    background: "#f8fafc", fontSize: "13px", color: "#475569", outline: "none",
+                    fontFamily: "inherit", cursor: "pointer", height: "34px",
                   }}
                 >
-                  <IC.FilePlus />
-                  {bulkLoading ? "Generating…" : "Bulk Generate"}
-                </button>
+                  <option value="all">All Types</option>
+                  <option value="individual">Individual</option>
+                  <option value="team">Team</option>
+                </select>
+                
+                <div style={{ display: "flex", gap: "8px" }}>
+                  <button
+                    onClick={handleBulkGenerate}
+                    disabled={bulkLoading}
+                    style={{
+                      display: "flex", alignItems: "center", gap: "6px",
+                      padding: "8px 14px", background: bulkLoading ? "#dcfce7" : "#f0fdf4",
+                      color: "#16a34a", border: "1px solid #86efac", borderRadius: "10px",
+                      fontSize: "12px", fontWeight: "700", cursor: bulkLoading ? "not-allowed" : "pointer",
+                      fontFamily: "'Poppins','Segoe UI',sans-serif", transition: "background 0.15s",
+                      opacity: bulkLoading ? 0.7 : 1, whiteSpace: "nowrap"
+                    }}
+                    title="Generate LoA for all accepted candidates"
+                  >
+                    <IC.FilePlus />
+                    {bulkLoading ? "Generating…" : "Bulk Generate"}
+                  </button>
+                  
+                  <button
+                    onClick={handleBulkRegenerate}
+                    disabled={bulkLoading}
+                    style={{
+                      display: "flex", alignItems: "center", gap: "6px",
+                      padding: "8px 14px", background: bulkLoading ? "#fef3c7" : "#fffbeb",
+                      color: "#92400e", border: "1px solid #fde68a", borderRadius: "10px",
+                      fontSize: "12px", fontWeight: "700", cursor: bulkLoading ? "not-allowed" : "pointer",
+                      fontFamily: "'Poppins','Segoe UI',sans-serif", transition: "background 0.15s",
+                      opacity: bulkLoading ? 0.7 : 1, whiteSpace: "nowrap"
+                    }}
+                    title="Regenerate all existing LoA documents"
+                  >
+                    <IC.Refresh style={bulkLoading ? { animation: "spin 1s linear infinite" } : {}} />
+                    {bulkLoading ? "Regenerating…" : "Bulk Regenerate"}
+                  </button>
+
+                  <button
+                    onClick={handleBulkSend}
+                    disabled={bulkLoading}
+                    style={{
+                      display: "flex", alignItems: "center", gap: "6px",
+                      padding: "8px 14px", background: bulkLoading ? "#dbeafe" : "#eff6ff",
+                      color: "#1d4ed8", border: "1px solid #bfdbfe", borderRadius: "10px",
+                      fontSize: "12px", fontWeight: "700", cursor: bulkLoading ? "not-allowed" : "pointer",
+                      fontFamily: "'Poppins','Segoe UI',sans-serif", transition: "background 0.15s",
+                      opacity: bulkLoading ? 0.7 : 1, whiteSpace: "nowrap"
+                    }}
+                    title="Send all generated LoA documents to interns"
+                  >
+                    <IC.FileCheck />
+                    {bulkLoading ? "Sending…" : "Bulk Send"}
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -591,7 +693,7 @@ export default function GenerateLoAHR() {
                       {/* Generate / Regenerate */}
                       {c.has_file ? (
                         <ActionBtn
-                          icon={regenerateSuccess[c.id_submission] ? <IC.Check /> : <IC.Refresh />}
+                          icon={regenerateSuccess[c.id_submission] ? <IC.Check /> : <IC.Refresh style={isGenerating ? { animation: "spin 1s linear infinite" } : {}} />}
                           variant={regenerateSuccess[c.id_submission] ? "green" : "amber"}
                           onClick={() => handleGenerate(c.id_submission)}
                           disabled={isGenerating}

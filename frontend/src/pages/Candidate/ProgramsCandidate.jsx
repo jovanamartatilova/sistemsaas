@@ -10,7 +10,7 @@ import { useAuthStore } from "../../stores/authStore";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import SidebarCandidate from "../../components/SidebarCandidate";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+const API_BASE_URL = import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}`;
 const getToken = () => localStorage.getItem("auth_token") || localStorage.getItem("token");
 const getStoredCompany = () => {
   try { return JSON.parse(localStorage.getItem("company") || "{}") || null; }
@@ -91,7 +91,7 @@ function InvitationModal({ program, onClose, onCreated }) {
     };
 
     const copyLink = async (link, idx = null) => {
-      await navigator.clipboard.writeText(link);
+      await navigator.clipboard ? navigator.clipboard.writeText(link) : (() => { const el = document.createElement("textarea"); el.value = link; document.body.appendChild(el); el.select(); document.execCommand("copy"); document.body.removeChild(el); })();
       if (idx !== null) { setCopiedIdx(idx); setTimeout(() => setCopiedIdx(null), 2000); }
       else { setCopied(true); setTimeout(() => setCopied(false), 2000); }
     };
@@ -433,7 +433,7 @@ function ProgramCard({ program, onOpenInvitation, onChooseRole }) {
   }, [isLeader, program.id_submission]);
 
   const copyInvLink = async (link, token) => {
-    await navigator.clipboard.writeText(link);
+    await navigator.clipboard ? navigator.clipboard.writeText(link) : (() => { const el = document.createElement("textarea"); el.value = link; document.body.appendChild(el); el.select(); document.execCommand("copy"); document.body.removeChild(el); })();
     setCopiedLink(token);
     setTimeout(() => setCopiedLink(null), 2000);
   };
