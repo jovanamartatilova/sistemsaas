@@ -455,11 +455,11 @@ function ProgramCard({ program, onOpenInvitation, onChooseRole }) {
   };
 
   return (
-  <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col relative transition-all">
+  <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col relative transition-all w-full">
     <div className={`absolute top-0 bottom-0 left-0 w-1.5 ${isAccepted ? "bg-emerald-500" : isPending ? "bg-amber-400" : isRejected ? "bg-rose-500" : "bg-slate-300"}`} />
 
     {/* ROW 1: Info kiri + Actions kanan */}
-    <div className="px-6 pt-5 pb-4 ml-1.5 flex flex-row items-start justify-between gap-6">
+    <div className="px-4 pt-4 pb-3 ml-1.5 flex flex-col md:flex-row items-start justify-between gap-3">
       {/* Kiri: nama, badge, company, team */}
       <div className="flex-1 min-w-0">
         <div className="flex flex-wrap items-center gap-3 mb-2">
@@ -673,7 +673,7 @@ useEffect(() => { fetchData(); }, [fetchData]);
           onLogout={handleLogout}
       />
 
-      <div className="ml-56 flex-1 flex flex-col">
+      <div className="md:ml-56 pt-14 md:pt-0 flex-1 flex flex-col min-w-0 overflow-x-hidden">
         <main className="p-6 space-y-5">
           {loading ? (
             <LoadingSpinner message="Loading programs..." />

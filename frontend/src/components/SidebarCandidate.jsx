@@ -1,11 +1,13 @@
-import { LayoutDashboard, BookOpen, User, Award, LogOut, Users, CheckSquare } from "lucide-react";
+import { LayoutDashboard, BookOpen, User, Award, LogOut, Users, CheckSquare, Menu, X } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
+import { useState } from "react";
 import { useAuthStore } from "../stores/authStore";
 import { getScopedRole } from "../utils/roleUtils";
 
 export default function SidebarCandidate({ userName, userPhoto, company, onLogout }) {
   const location = useLocation();
   const { user, company: authCompany } = useAuthStore();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   
   // Fallback: coba dari prop dulu, lalu authStore, lalu localStorage
   const resolvedCompany = company || authCompany || (() => {
@@ -41,10 +43,47 @@ export default function SidebarCandidate({ userName, userPhoto, company, onLogou
 
   const navItems = [...baseNavItems, ...roleSpecificItems];
 
-  return (
-    <aside className="w-56 min-h-screen bg-[#0f1e3a] text-white flex flex-col px-4 py-6 fixed top-0 left-0 z-10" style={{ fontFamily: 'Poppins, sans-serif' }}>
+  const getPageTitle = () => {
+    const path = location.pathname;
+    if (path.includes('/programs')) return 'My Programs';
+    if (path.includes('/profile')) return 'My Profile';
+    if (path.includes('/certificates')) return 'Certificates';
+    if (path.includes('/member/tasks')) return 'My Tasks';
+    if (path.includes('/leader/tasks')) return 'My Tasks';
+    if (path.includes('/leader/team')) return 'Team Management';
+    if (path.includes('/leader/dashboard')) return 'Leader Dashboard';
+    if (path.includes('/dashboard')) return 'Dashboard';
+    return 'EarlyPath';
+  };
 
-    {resolvedCompany?.logo_path && (
+  return (
+    <>
+      {/* Topbar mobile only */}
+      <header className="md:hidden fixed top-0 left-0 right-0 z-10 h-14 bg-white border-b border-slate-200 flex items-center px-4 gap-3">
+        <button onClick={() => setSidebarOpen(true)} className="text-slate-600 flex items-center justify-center">
+          <Menu size={20} />
+        </button>
+        <span className="text-sm font-bold text-slate-800">{getPageTitle()}</span>
+      </header>
+
+      {/* Overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-20 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      <aside className={`w-56 min-h-screen bg-[#0f1e3a] text-white flex flex-col px-4 py-6 fixed top-0 left-0 z-30 flex transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`} style={{ fontFamily: 'Poppins, sans-serif' }}>
+
+    <button
+        onClick={() => setSidebarOpen(false)}
+        className="absolute top-4 right-4 md:hidden text-slate-400 hover:text-white"
+      >
+        <X size={18} />
+      </button>
+
+      {resolvedCompany?.logo_path && (
         <div className="flex justify-center mb-6">
           <Link to={`/c/${resolvedCompanyId}`} className="hover:opacity-80 transition-opacity">
             <img
@@ -107,5 +146,6 @@ export default function SidebarCandidate({ userName, userPhoto, company, onLogou
         </button>
       </div>
     </aside>
+    </>
   );
 }

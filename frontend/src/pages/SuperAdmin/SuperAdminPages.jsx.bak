@@ -476,7 +476,7 @@ function SideItem({ icon, label, active, onClick }) {
   );
 }
 
-export function SuperAdminSidebar({ onLogout, unreadCount = 0, isOpen, onClose }) {
+export function SuperAdminSidebar({ onLogout, unreadCount = 0, isOpen, onClose, forceDesktop = false }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
@@ -498,15 +498,15 @@ export function SuperAdminSidebar({ onLogout, unreadCount = 0, isOpen, onClose }
   const sidebarStyle = {
     width: "250px",
     flexShrink: 0,
-    display: isMobile && !isOpen ? "none" : "flex",
     background: "linear-gradient(180deg, #0f1c2e 0%, #0d1a28 100%)",
+    display: "flex",
     flexDirection: "column",
     height: "100vh",
     padding: "20px 12px",
     gap: "4px",
     overflowY: "auto",
     transition: "transform 0.3s ease",
-    ...(isMobile ? {
+    ...(isMobile && !forceDesktop ? {
       position: "fixed",
       top: 0,
       left: 0,
@@ -532,7 +532,7 @@ export function SuperAdminSidebar({ onLogout, unreadCount = 0, isOpen, onClose }
         />
       )}
 
-      <aside style={sidebarStyle} className={`sidebar-mobile${isOpen ? " open" : ""}`}>
+      <aside style={sidebarStyle}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "4px 6px 20px" }}>
           <img src="/assets/images/logo.png" alt="Logo" style={{ height: "46px", objectFit: "contain", flexShrink: 0 }} />
           <span style={{ fontSize: "15px", fontWeight: "800", color: "#fff", letterSpacing: "-0.3px", whiteSpace: "nowrap" }}>EarlyPath</span>
@@ -589,7 +589,7 @@ export function SuperAdminSidebar({ onLogout, unreadCount = 0, isOpen, onClose }
 }
 
 // ── Topbar ────────────────────────────────────────────────────────────────────
-function Topbar({ title, sub, onMenuClick }) {
+function Topbar({ title, sub, onMenuClick, isMobile }) {
   return (
     <header style={{
       height: "56px", background: "#fff",
@@ -599,16 +599,15 @@ function Topbar({ title, sub, onMenuClick }) {
     }}>
       <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
         {/* Hamburger — hanya tampil di mobile via inline media query trick */}
-        <button
-          onClick={onMenuClick}
-          style={{
-            display: "none", // override via CSS class di bawah
-            background: "transparent", border: "none", cursor: "pointer",
-            color: "#475569", padding: "4px", borderRadius: "6px",
-            alignItems: "center",
-          }}
-          className="topbar-hamburger"
-        >
+          <button
+            onClick={onMenuClick}
+            style={{
+              display: isMobile ? "flex" : "none",
+              background: "transparent", border: "none", cursor: "pointer",
+              color: "#475569", padding: "4px", borderRadius: "6px",
+              alignItems: "center",
+            }}
+          >
           {/* Hamburger icon */}
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <line x1="3" y1="6" x2="21" y2="6"/>
@@ -1238,6 +1237,13 @@ export default function SuperAdminPages() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("auth_token"));
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
+  }, []);
 
   useEffect(() => { setIsLoggedIn(!!localStorage.getItem("auth_token")); }, []);
 
@@ -1261,7 +1267,7 @@ export default function SuperAdminPages() {
   };
 
   const DashboardLayout = ({ children, pageTitle }) => (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#f8fafc", fontFamily: "'Poppins','Inter',sans-serif" }}>
+    <div style={{ display: "flex", minHeight: "100vh", background: "#f8fafc", fontFamily: "'Poppins','Inter',sans-serif", overflow: "hidden", position: "relative" }}>
       <style>{`
   @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
   * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; }
@@ -1271,27 +1277,27 @@ export default function SuperAdminPages() {
   @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
   .fade-in { animation: fadeIn 0.35s ease both; }
 .tenant-card-wrap { display: none; }
-aside.sidebar-mobile { display: none; }
-aside.sidebar-mobile.open { display: flex; position: fixed; top: 0; left: 0; z-index: 200; height: 100vh; }
+aside.superadmin-sidebar { display: flex; }
 @media (max-width: 768px) {
-  .topbar-hamburger { display: flex !important; }
+  button.topbar-hamburger { display: flex !important; }
   .dashboard-charts-grid { grid-template-columns: 1fr !important; }
   .messages-grid { grid-template-columns: 1fr !important; }
   .main-page-padding { padding: 16px 14px 32px !important; }
-   .topbar-date { display: none; }
+  .topbar-date { display: none; }
   .tenant-table-wrap { display: none; }
   .tenant-card-wrap { display: block; }
 }
 `}</style>
 
-      <SuperAdminSidebar
+    <SuperAdminSidebar
       onLogout={() => setLogoutModal(true)}
       unreadCount={unreadCount}
       isOpen={sidebarOpen}
+      forceDesktop={!isMobile}
       onClose={() => setSidebarOpen(false)}
     />
     <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
-      <Topbar title={pageTitle.title} sub={pageTitle.sub} onMenuClick={() => setSidebarOpen(true)} />
+      <Topbar title={pageTitle.title} sub={pageTitle.sub} onMenuClick={() => setSidebarOpen(true)} isMobile={window.innerWidth <= 768} />
 
         {children}
       </div>
