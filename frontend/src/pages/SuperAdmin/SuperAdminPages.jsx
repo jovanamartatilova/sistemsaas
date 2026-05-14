@@ -1237,6 +1237,13 @@ export default function SuperAdminPages() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("auth_token"));
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
+  }, []);
 
   useEffect(() => { setIsLoggedIn(!!localStorage.getItem("auth_token")); }, []);
 
@@ -1283,10 +1290,10 @@ export default function SuperAdminPages() {
 }
 `}</style>
 
-      <SuperAdminSidebar
+    <SuperAdminSidebar
       onLogout={() => setLogoutModal(true)}
       unreadCount={unreadCount}
-      isOpen={sidebarOpen}
+      isOpen={isMobile ? sidebarOpen : true}
       onClose={() => setSidebarOpen(false)}
     />
     <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
