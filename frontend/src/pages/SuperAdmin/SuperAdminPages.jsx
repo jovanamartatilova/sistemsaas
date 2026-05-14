@@ -55,7 +55,7 @@ function LoginForm({ onLoginSuccess }) {
       <div style={{
         position: "relative", zIndex: 2,
         background: "#fff", borderRadius: "18px",
-        padding: "42px 40px", width: "100%", maxWidth: "400px",
+        padding: "32px 20px", width: "calc(100% - 32px)", maxWidth: "400px",
         boxShadow: "0 24px 64px rgba(0,0,0,0.45)",
       }}>
         <div style={{ marginBottom: "30px", textAlign: "center" }}>
@@ -303,7 +303,7 @@ function MessagesPage({ onUnreadChange }) {
   });
 
   return (
-    <main style={{ flex: 1, padding: "28px 28px 40px", overflowY: "auto", background: "#f8fafc" }}>
+    <main style={{ flex: 1, padding: "28px 28px 40px", overflowY: "auto", background: "#f8fafc" }} className="main-page-padding">
       <div style={{ marginBottom: "22px" }}>
         <div style={{ fontSize: "20px", fontWeight: "800", color: "#0f172a" }}>Messages</div>
         <div style={{ fontSize: "13px", color: "#64748b", marginTop: "3px" }}>
@@ -311,7 +311,7 @@ function MessagesPage({ onUnreadChange }) {
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1.4fr", gap: "20px", alignItems: "start" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1.4fr", gap: "20px", alignItems: "start" }} className="messages-grid">
         {/* List */}
         <div style={{ background: "#fff", borderRadius: "16px", boxShadow: "0 1px 4px rgba(0,0,0,0.05)", overflow: "hidden" }}>
           <div style={{ padding: "14px 18px", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -476,10 +476,17 @@ function SideItem({ icon, label, active, onClick }) {
   );
 }
 
-// Ganti SuperAdminSidebar:
-export function SuperAdminSidebar({ onLogout, unreadCount = 0 }) {
+export function SuperAdminSidebar({ onLogout, unreadCount = 0, isOpen, onClose }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
+  }, []);
+
   const nav = [
     { label: "Dashboard",         icon: <IC.Dashboard />, path: "/superadmin/dashboard" },
     { label: "Tenant Management", icon: <IC.Tenant />,    path: "/superadmin/tenants" },
@@ -488,64 +495,101 @@ export function SuperAdminSidebar({ onLogout, unreadCount = 0 }) {
   ];
   const isActive = (path) => location.pathname.includes(path.split("/").pop());
 
+  const sidebarStyle = {
+    width: "250px",
+    flexShrink: 0,
+    background: "linear-gradient(180deg, #0f1c2e 0%, #0d1a28 100%)",
+    display: "flex",
+    flexDirection: "column",
+    height: "100vh",
+    padding: "20px 12px",
+    gap: "4px",
+    overflowY: "auto",
+    transition: "transform 0.3s ease",
+    ...(isMobile ? {
+      position: "fixed",
+      top: 0,
+      left: 0,
+      zIndex: 200,
+      transform: isOpen ? "translateX(0)" : "translateX(-100%)",
+    } : {
+      position: "sticky",
+      top: 0,
+    }),
+  };
+
   return (
-    <aside style={{
-      width: "250px", flexShrink: 0,
-      background: "linear-gradient(180deg, #0f1c2e 0%, #0d1a28 100%)",
-      display: "flex", flexDirection: "column",
-      height: "100vh", position: "sticky", top: 0,
-      padding: "20px 12px", gap: "4px", overflowY: "auto",
-    }}>
-      <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "4px 6px 20px" }}>
-        <img src="/assets/images/logo.png" alt="Logo" style={{ height: "46px", objectFit: "contain", flexShrink: 0 }} />
-        <span style={{ fontSize: "15px", fontWeight: "800", color: "#fff", letterSpacing: "-0.3px", whiteSpace: "nowrap" }}>EarlyPath</span>
-      </div>
-
-      <p style={{ fontSize: "10px", fontWeight: "700", color: "rgba(255,255,255,0.25)", letterSpacing: "1.2px", padding: "0 14px 4px", textTransform: "uppercase" }}>Main Menu</p>
-      
-      {nav.map(n => (
-        <button key={n.label} onClick={() => navigate(n.path)}
-          onMouseEnter={e => { if (!isActive(n.path)) e.currentTarget.style.background = "rgba(255,255,255,0.05)"; }}
-          onMouseLeave={e => { if (!isActive(n.path)) e.currentTarget.style.background = "transparent"; }}
+    <>
+      {/* Overlay hanya di mobile */}
+      {isMobile && isOpen && (
+        <div
+          onClick={onClose}
           style={{
-            display: "flex", alignItems: "center", gap: "11px",
-            width: "100%", padding: "10px 14px", borderRadius: "10px",
-            background: isActive(n.path) ? "rgba(74,158,255,0.12)" : "transparent",
-            border: isActive(n.path) ? "1px solid rgba(74,158,255,0.22)" : "1px solid transparent",
-            color: isActive(n.path) ? "#4a9eff" : "rgba(255,255,255,0.6)",
-            fontSize: "13.5px", fontWeight: isActive(n.path) ? "600" : "500",
-            cursor: "pointer", transition: "all 0.2s", textAlign: "left",
-          }}>
-          <span style={{ opacity: isActive(n.path) ? 1 : 0.75, flexShrink: 0 }}>{n.icon}</span>
-          <span style={{ flex: 1 }}>{n.label}</span>
-          {n.badge > 0 && (
-            <span style={{ background: "#ef4444", color: "#fff", borderRadius: "99px", fontSize: "10px", fontWeight: "700", padding: "1px 6px", minWidth: "18px", textAlign: "center" }}>
-              {n.badge}
-            </span>
-          )}
-        </button>
-      ))}
+            position: "fixed", inset: 0,
+            background: "rgba(0,0,0,0.5)",
+            zIndex: 199,
+          }}
+        />
+      )}
 
-      <div style={{ flex: 1 }} />
-      <div style={{ borderTop: "1px solid rgba(255,255,255,0.07)", paddingTop: "14px", display: "flex", alignItems: "center", gap: "10px" }}>
-        <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: "linear-gradient(135deg,#2d7dd2,#4a9eff)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: "800", color: "#fff", flexShrink: 0 }}>SA</div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: "12.5px", fontWeight: "700", color: "#fff" }}>Super Admin</div>
-          <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)" }}>earlypath.id</div>
+      <aside style={sidebarStyle}>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "4px 6px 20px" }}>
+          <img src="/assets/images/logo.png" alt="Logo" style={{ height: "46px", objectFit: "contain", flexShrink: 0 }} />
+          <span style={{ fontSize: "15px", fontWeight: "800", color: "#fff", letterSpacing: "-0.3px", whiteSpace: "nowrap" }}>EarlyPath</span>
+          {/* Tombol close di mobile */}
+          {isMobile && (
+            <button onClick={onClose} style={{ marginLeft: "auto", background: "transparent", border: "none", color: "rgba(255,255,255,0.5)", cursor: "pointer", padding: "4px", display: "flex" }}>
+              <IC.Close />
+            </button>
+          )}
         </div>
-        <button onClick={onLogout} title="Logout"
-          style={{ background: "transparent", border: "none", color: "rgba(255,255,255,0.35)", cursor: "pointer", padding: "4px", borderRadius: "6px", display: "flex", transition: "all 0.2s" }}
-          onMouseEnter={e => { e.currentTarget.style.color = "#f87171"; e.currentTarget.style.background = "rgba(248,113,113,0.1)"; }}
-          onMouseLeave={e => { e.currentTarget.style.color = "rgba(255,255,255,0.35)"; e.currentTarget.style.background = "transparent"; }}>
-          <IC.Logout />
-        </button>
-      </div>
-    </aside>
+
+        <p style={{ fontSize: "10px", fontWeight: "700", color: "rgba(255,255,255,0.25)", letterSpacing: "1.2px", padding: "0 14px 4px", textTransform: "uppercase" }}>Main Menu</p>
+
+        {nav.map(n => (
+          <button key={n.label} onClick={() => { navigate(n.path); if (isMobile) onClose(); }}
+            onMouseEnter={e => { if (!isActive(n.path)) e.currentTarget.style.background = "rgba(255,255,255,0.05)"; }}
+            onMouseLeave={e => { if (!isActive(n.path)) e.currentTarget.style.background = "transparent"; }}
+            style={{
+              display: "flex", alignItems: "center", gap: "11px",
+              width: "100%", padding: "10px 14px", borderRadius: "10px",
+              background: isActive(n.path) ? "rgba(74,158,255,0.12)" : "transparent",
+              border: isActive(n.path) ? "1px solid rgba(74,158,255,0.22)" : "1px solid transparent",
+              color: isActive(n.path) ? "#4a9eff" : "rgba(255,255,255,0.6)",
+              fontSize: "13.5px", fontWeight: isActive(n.path) ? "600" : "500",
+              cursor: "pointer", transition: "all 0.2s", textAlign: "left",
+            }}>
+            <span style={{ opacity: isActive(n.path) ? 1 : 0.75, flexShrink: 0 }}>{n.icon}</span>
+            <span style={{ flex: 1 }}>{n.label}</span>
+            {n.badge > 0 && (
+              <span style={{ background: "#ef4444", color: "#fff", borderRadius: "99px", fontSize: "10px", fontWeight: "700", padding: "1px 6px", minWidth: "18px", textAlign: "center" }}>
+                {n.badge}
+              </span>
+            )}
+          </button>
+        ))}
+
+        <div style={{ flex: 1 }} />
+        <div style={{ borderTop: "1px solid rgba(255,255,255,0.07)", paddingTop: "14px", display: "flex", alignItems: "center", gap: "10px" }}>
+          <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: "linear-gradient(135deg,#2d7dd2,#4a9eff)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: "800", color: "#fff", flexShrink: 0 }}>SA</div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: "12.5px", fontWeight: "700", color: "#fff" }}>Super Admin</div>
+            <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)" }}>earlypath.id</div>
+          </div>
+          <button onClick={onLogout} title="Logout"
+            style={{ background: "transparent", border: "none", color: "rgba(255,255,255,0.35)", cursor: "pointer", padding: "4px", borderRadius: "6px", display: "flex", transition: "all 0.2s" }}
+            onMouseEnter={e => { e.currentTarget.style.color = "#f87171"; e.currentTarget.style.background = "rgba(248,113,113,0.1)"; }}
+            onMouseLeave={e => { e.currentTarget.style.color = "rgba(255,255,255,0.35)"; e.currentTarget.style.background = "transparent"; }}>
+            <IC.Logout />
+          </button>
+        </div>
+      </aside>
+    </>
   );
 }
 
 // ── Topbar ────────────────────────────────────────────────────────────────────
-function Topbar({ title, sub }) {
+function Topbar({ title, sub, onMenuClick }) {
   return (
     <header style={{
       height: "56px", background: "#fff",
@@ -553,11 +597,29 @@ function Topbar({ title, sub }) {
       display: "flex", alignItems: "center", justifyContent: "space-between",
       padding: "0 26px", position: "sticky", top: 0, zIndex: 50,
     }}>
-      <div style={{ display: "flex", alignItems: "center" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+        {/* Hamburger — hanya tampil di mobile via inline media query trick */}
+        <button
+          onClick={onMenuClick}
+          style={{
+            display: "none", // override via CSS class di bawah
+            background: "transparent", border: "none", cursor: "pointer",
+            color: "#475569", padding: "4px", borderRadius: "6px",
+            alignItems: "center",
+          }}
+          className="topbar-hamburger"
+        >
+          {/* Hamburger icon */}
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="3" y1="6" x2="21" y2="6"/>
+            <line x1="3" y1="12" x2="21" y2="12"/>
+            <line x1="3" y1="18" x2="21" y2="18"/>
+          </svg>
+        </button>
         <span style={{ fontSize: "15px", fontWeight: "700", color: "#1e293b" }}>{title}</span>
         {sub && <><span style={{ fontSize: "13px", color: "#94a3b8", margin: "0 6px" }}>/</span><span style={{ fontSize: "13px", color: "#94a3b8" }}>{sub}</span></>}
       </div>
-      <span style={{ fontSize: "12px", color: "#94a3b8", whiteSpace: "nowrap" }}>{today()}</span>
+      <span style={{ fontSize: "12px", color: "#94a3b8", whiteSpace: "nowrap" }} className="topbar-date">{today()}</span>
     </header>
   );
 }
@@ -621,7 +683,7 @@ function DashboardPage() {
   const sD = total > 0 ? (susp / total) * C : 0;
 
   return (
-    <main style={{ flex: 1, padding: "28px 28px 40px", overflowY: "auto", background: "#f8fafc" }}>
+    <main style={{ flex: 1, padding: "28px 28px 40px", overflowY: "auto", background: "#f8fafc" }} className="main-page-padding">
       <div style={{ marginBottom: "28px" }}>
         <div style={{ fontSize: "20px", fontWeight: "800", color: "#0f172a" }}>Good morning, Super Admin !</div>
         <div style={{ fontSize: "13px", color: "#64748b", marginTop: "3px" }}>Here's a summary of today's platform activity.</div>
@@ -646,7 +708,7 @@ function DashboardPage() {
       </div>
 
       {/* Charts row */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: "20px" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: "20px" }} className="dashboard-charts-grid">
       {/* Growth chart */}
         <div style={{ background: "#fff", borderRadius: "16px", padding: "22px 24px", boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
           <div style={{ marginBottom: "14px" }}>
@@ -760,7 +822,7 @@ function TenantManagementPage() {
   const statusLabel = { active: "Active", suspended: "Suspended", inactive: "Inactive" };
 
   return (
-    <main style={{ flex: 1, padding: "28px 28px 40px", overflowY: "auto", background: "#f8fafc" }}>
+    <main style={{ flex: 1, padding: "28px 28px 40px", overflowY: "auto", background: "#f8fafc" }} className="main-page-padding">
       <div style={{ marginBottom: "22px" }}>
         <div style={{ fontSize: "20px", fontWeight: "800", color: "#0f172a" }}>Tenant Management</div>
         <div style={{ fontSize: "13px", color: "#64748b", marginTop: "3px" }}>All registered companies on the platform.</div>
@@ -821,7 +883,8 @@ function TenantManagementPage() {
             <div style={{ padding: "12px 18px", borderBottom: "1px solid #f1f5f9" }}>
               <span style={{ fontSize: "12px", color: "#64748b" }}>Showing <strong style={{ color: "#1e293b" }}>{tenants.length}</strong> tenants</span>
             </div>
-            <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
+            <div className="tenant-table-wrap">
+              <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
               <thead>
                 <tr style={{ background: "#f8fafc" }}>
                   {[
@@ -896,8 +959,57 @@ function TenantManagementPage() {
               </tbody>
             </table>
             {tenants.length === 0 && (
-              <div style={{ padding: "48px 0", textAlign: "center", color: "#94a3b8", fontSize: "13.5px" }}>No tenants found</div>
-            )}
+    <div style={{ padding: "48px 0", textAlign: "center", color: "#94a3b8", fontSize: "13.5px" }}>No tenants found</div>
+  )}
+</div>
+
+      {/* MOBILE CARDS */}
+      <div className="tenant-card-wrap">
+        {tenants.map((t, i) => {
+          const ac = avatarColors[i % avatarColors.length];
+          const isActive = t.status === "active";
+          const label = statusLabel[t.status] ?? t.status;
+          return (
+            <div key={t.id} style={{ padding: "14px 16px", borderBottom: "1px solid #f1f5f9" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
+                {t.logo_path
+                  ? <img src={`${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.split("/api")[0] : "http://localhost:8000"}/storage/${t.logo_path}`}
+                      alt={t.name} style={{ width: "36px", height: "36px", borderRadius: "9px", objectFit: "cover", flexShrink: 0, border: "1px solid #f1f5f9" }}
+                      onError={e => { e.target.style.display = "none"; e.target.nextSibling.style.display = "flex"; }} />
+                  : null}
+                <div style={{ width: "36px", height: "36px", borderRadius: "9px", background: `${ac}18`, display: t.logo_path ? "none" : "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: "800", color: ac, flexShrink: 0 }}>
+                  {initials(t.name)}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: "13.5px", fontWeight: "700", color: "#1e293b", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.name}</div>
+                  <div style={{ fontSize: "11px", color: "#94a3b8", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.email}</div>
+                </div>
+                <span style={{ background: isActive ? "#f0fdf4" : "#fff1f2", color: isActive ? "#15803d" : "#be123c", border: `1px solid ${isActive ? "#bbf7d0" : "#fecdd3"}`, borderRadius: "6px", fontSize: "11px", fontWeight: "700", padding: "3px 8px", display: "inline-flex", alignItems: "center", gap: "4px", flexShrink: 0 }}>
+                  <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: isActive ? "#16a34a" : "#e11d48", display: "inline-block" }} />
+                  {label}
+                </span>
+              </div>
+              <div style={{ display: "flex", gap: "8px", marginBottom: "10px" }}>
+                {[{ label: "Users", value: t.users_count ?? 0 }, { label: "Vacancies", value: t.vacancies_count ?? 0 }, { label: "Registered", value: t.created_at ?? "—" }].map(s => (
+                  <div key={s.label} style={{ flex: 1, background: "#f8fafc", borderRadius: "8px", padding: "7px 10px", textAlign: "center" }}>
+                    <div style={{ fontSize: "13px", fontWeight: "700", color: "#1e293b" }}>{s.value}</div>
+                    <div style={{ fontSize: "10px", color: "#94a3b8", marginTop: "1px" }}>{s.label}</div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ display: "flex", gap: "8px" }}>
+                <button onClick={() => setSelectedTenant(t)} style={{ flex: 1, padding: "8px", borderRadius: "8px", border: "1px solid #e2e8f0", background: "#fff", fontSize: "12px", fontWeight: "600", color: "#475569", cursor: "pointer" }}>Detail</button>
+                <button onClick={() => toggleStatus(t.id, t.status)} style={{ flex: 1, padding: "8px", borderRadius: "8px", border: `1px solid ${isActive ? "#fecdd3" : "#bbf7d0"}`, background: isActive ? "#fff1f2" : "#f0fdf4", fontSize: "12px", fontWeight: "600", color: isActive ? "#be123c" : "#15803d", cursor: "pointer" }}>
+                  {isActive ? "Suspend" : "Activate"}
+                </button>
+              </div>
+            </div>
+          );
+        })}
+        {tenants.length === 0 && (
+          <div style={{ padding: "48px 0", textAlign: "center", color: "#94a3b8", fontSize: "13.5px" }}>No tenants found</div>
+        )}
+      </div>
           </>
         )}
       </div>
@@ -960,7 +1072,7 @@ const handleTabChange = (newTab) => {
   };
 
   return (
-    <main style={{ flex: 1, padding: "28px 28px 40px", overflowY: "auto", background: "#f8fafc" }}>
+    <main style={{ flex: 1, padding: "28px 28px 40px", overflowY: "auto", background: "#f8fafc" }} className="main-page-padding">
       <div style={{ marginBottom: "22px" }}>
         <div style={{ fontSize: "20px", fontWeight: "800", color: "#0f172a" }}>User Management</div>
         <div style={{ fontSize: "13px", color: "#64748b", marginTop: "3px" }}>All registered users across tenants.</div>
@@ -1125,6 +1237,7 @@ export default function SuperAdminPages() {
   const [logoutModal, setLogoutModal] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("auth_token"));
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => { setIsLoggedIn(!!localStorage.getItem("auth_token")); }, []);
 
@@ -1150,18 +1263,34 @@ export default function SuperAdminPages() {
   const DashboardLayout = ({ children, pageTitle }) => (
     <div style={{ display: "flex", minHeight: "100vh", background: "#f8fafc", fontFamily: "'Poppins','Inter',sans-serif" }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; }
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 99px; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-        .fade-in { animation: fadeIn 0.35s ease both; }
-      `}</style>
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; }
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 99px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  .fade-in { animation: fadeIn 0.35s ease both; }
+.tenant-card-wrap { display: none; }
+@media (max-width: 768px) {
+  .topbar-hamburger { display: flex !important; }
+  .dashboard-charts-grid { grid-template-columns: 1fr !important; }
+  .messages-grid { grid-template-columns: 1fr !important; }
+  .main-page-padding { padding: 16px 14px 32px !important; }
+   .topbar-date { display: none; }
+  .tenant-table-wrap { display: none; }
+  .tenant-card-wrap { display: block; }
+}
+`}</style>
 
-       <SuperAdminSidebar onLogout={() => setLogoutModal(true)} unreadCount={unreadCount} />
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
-        <Topbar title={pageTitle.title} sub={pageTitle.sub} />
+      <SuperAdminSidebar
+      onLogout={() => setLogoutModal(true)}
+      unreadCount={unreadCount}
+      isOpen={sidebarOpen}
+      onClose={() => setSidebarOpen(false)}
+    />
+    <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
+      <Topbar title={pageTitle.title} sub={pageTitle.sub} onMenuClick={() => setSidebarOpen(true)} />
+
         {children}
       </div>
       {logoutModal && (
