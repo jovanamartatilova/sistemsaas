@@ -38,7 +38,7 @@ import ResetPasswordStaff   from './pages/Admin/ResetPasswordStaff';
 // Main
 import LandingPage  from './pages/Main/LandingPage';
 import ProfilePage  from './pages/Main/ProfilePage';
-import PreviewOnboarding from "./pages/Main/PreviewOnboarding";
+import PreviewOnboarding from "./pages/Main/PreviewOnBoarding";
 
 
 // Super Admin
