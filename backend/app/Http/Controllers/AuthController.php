@@ -81,14 +81,10 @@ class AuthController extends Controller
             $company = $user->company ?: $user->employee?->company ?: Company::where('email', $user->email)->first();
             $role = strtolower((string) ($user->role ?? ''));
 
+            // If user has no role, return null (do NOT auto-assign)
+            // Users should explicitly choose their role through onboarding
             if (!$role) {
-                if ($company) {
-                    $role = 'admin';
-                } elseif ($user->candidate()->exists()) {
-                    $role = 'candidate';
-                } else {
-                    $role = 'candidate';
-                }
+                $role = null;
             }
 
             $redirectPath = match ($role) {
@@ -97,10 +93,12 @@ class AuthController extends Controller
                 'super_admin', 'superadmin' => '/superadmin/dashboard',
                 'candidate' => '/candidate/dashboard',
                 'staff', 'admin' => '/dashboard',
-                default => '/dashboard',
+                null => '/onboarding', // Users without role go to onboarding
+                default => '/onboarding',
             };
 
-            $isNewUser = $role === 'candidate' && !$company && !$user->candidate()->exists();
+            // Only consider user "new" if they're a candidate without profile
+            $isNewUser = $role === 'candidate' && !$user->candidate()->exists();
 
             $token = $user->createToken('auth_token')->plainTextToken;
 
@@ -211,6 +209,14 @@ class AuthController extends Controller
                     'message' => 'Company created successfully',
                     'company' => $company,
                     'company_token' => $companyToken,
+                    'user' => [
+                        'id_user' => $user->id_user,
+                        'name' => $user->name,
+                        'email' => $user->email,
+                        'role' => 'admin',
+                    ],
+                    'role' => 'admin',
+                    'user_type' => 'admin',
                 ], 201);
 
             } catch (\Exception $e) {
@@ -262,6 +268,14 @@ class AuthController extends Controller
             return response()->json([
                 'message' => 'Candidate profile created successfully',
                 'candidate_profile' => $candidate,
+                'user' => [
+                    'id_user' => $user->id_user,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'role' => 'candidate',
+                ],
+                'role' => 'candidate',
+                'user_type' => 'candidate',
             ], 201);
 
         } catch (ValidationException $e) {
@@ -506,7 +520,6 @@ class AuthController extends Controller
                         'id_company' => $companyId,
                         'role'       => $roleName,
                         'is_active'  => true,
-                        'activation_token' => null, // Clear token if it exists
                     ]);
 
                     // Extract name parts from existing user (existing data is source of truth)
@@ -524,7 +537,6 @@ class AuthController extends Controller
                         'role'             => $roleName,
                         'password'         => Hash::make($validated['password']),
                         'is_active'        => true,
-                        'activation_token' => null,
                     ]);
                     $firstName = $validated['first_name'];
                     $lastName  = $validated['last_name'] ?? '';

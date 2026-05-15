@@ -1,15 +1,27 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../stores/authStore";
+import { api } from "../api";
+import PasswordInput from "./PasswordInput";
+import { validatePassword } from "../utils/passwordValidator";
+
+const IconKey = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+    <circle cx="8" cy="16" r="3"/>
+    <path d="M16 10l3-3m0 0l-3-3m3 3h-6"/>
+  </svg>
+);
 
 export default function OnboardingModal({ isOpen, onClose }) {
   const isDark = localStorage.getItem("theme") !== "light";
   const navigate = useNavigate();
   const { user, token } = useAuthStore();
 
-  const [choice, setChoice] = useState(null);
+  const [step, setStep] = useState("choice"); // choice, company_form, candidate_form, invitation_input
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [invitationCode, setInvitationCode] = useState("");
+  const [inviteData, setInviteData] = useState(null);
 
   const [companyForm, setCompanyForm] = useState({
     name: "",
@@ -25,25 +37,20 @@ export default function OnboardingModal({ isOpen, onClose }) {
     major: "",
   });
 
-  const [step, setStep] = useState("choice");
-
   if (!isOpen) return null;
-
-  const handleChoice = (selected) => {
-    setChoice(selected);
-    setStep(`${selected}_form`);
-  };
 
   const handleBack = () => {
     setStep("choice");
-    setChoice(null);
     setErrorMsg("");
   };
 
   const handleClose = () => {
+    // Just close the modal - don't navigate
+    // Parent component (SignUp) will handle navigation if needed
     setStep("choice");
-    setChoice(null);
     setErrorMsg("");
+    setInvitationCode("");
+    setInviteData(null);
     setCompanyForm({ name: "", phone: "", address: "", password: "" });
     setCandidateForm({ phone: "", institution: "", education_level: "", major: "" });
     onClose();
@@ -54,45 +61,53 @@ export default function OnboardingModal({ isOpen, onClose }) {
     setLoading(true);
     setErrorMsg("");
 
-    if (companyForm.password.length < 8) {
-      setErrorMsg("Password must be at least 8 characters");
+    // Validate password
+    const { valid: isPasswordValid, errors: passwordErrors } = validatePassword(companyForm.password);
+    if (!isPasswordValid) {
+      setErrorMsg(passwordErrors[0] || "Invalid password");
       setLoading(false);
       return;
     }
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/create-company`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
+      const response = await api('/create-company', {
+        method: 'POST',
+        data: {
           name: companyForm.name,
           phone: companyForm.phone,
           address: companyForm.address,
           password: companyForm.password,
-        }),
+        },
+        headers: { 'Authorization': `Bearer ${token}` }
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        if (data.errors) throw new Error(Object.values(data.errors).flat().join(", "));
-        throw new Error(data.message || "Failed to create company");
+      if (!response || !response.message) {
+        throw new Error('Failed to create company');
       }
 
-      localStorage.setItem("company", JSON.stringify(data.company));
+      // Update store and localStorage with new role
+      useAuthStore.setState(state => ({
+        ...state,
+        company: response.company || null,
+        user: response.user || state.user,
+      }));
+
+      localStorage.setItem("company", JSON.stringify(response.company));
       localStorage.setItem("user_type", "admin");
       localStorage.setItem("is_new_user", "false");
+      
+      if (response.user) {
+        localStorage.setItem("user", JSON.stringify(response.user));
+      }
 
-      useAuthStore.setState({ company: data.company });
-
+      // Close modal and navigate in sequence to avoid race conditions
       handleClose();
-      navigate("/dashboard");
+      setTimeout(() => {
+        navigate("/dashboard", { replace: true });
+      }, 100);
     } catch (err) {
-      setErrorMsg(err.message);
+      console.error('Company submit error:', err);
+      setErrorMsg(err.response?.data?.message || err.message || 'Failed to create company');
     } finally {
       setLoading(false);
     }
@@ -104,38 +119,87 @@ export default function OnboardingModal({ isOpen, onClose }) {
     setErrorMsg("");
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/create-candidate-profile`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
+      const response = await api('/create-candidate-profile', {
+        method: 'POST',
+        data: {
           phone: candidateForm.phone,
           institution: candidateForm.institution,
           education_level: candidateForm.education_level,
           major: candidateForm.major,
-        }),
+        },
+        headers: { 'Authorization': `Bearer ${token}` }
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        if (data.errors) throw new Error(Object.values(data.errors).flat().join(", "));
-        throw new Error(data.message || "Failed to create candidate profile");
+      if (!response || !response.message) {
+        throw new Error('Failed to create candidate profile');
       }
 
-      localStorage.setItem("candidate_profile", JSON.stringify(data.candidate_profile));
+      // Update store and localStorage with new role
+      useAuthStore.setState(state => ({
+        ...state,
+        candidate_profile: response.candidate_profile || null,
+        user: response.user || state.user,
+      }));
+
+      localStorage.setItem("candidate_profile", JSON.stringify(response.candidate_profile));
       localStorage.setItem("user_type", "candidate");
       localStorage.setItem("is_new_user", "false");
+      
+      if (response.user) {
+        localStorage.setItem("user", JSON.stringify(response.user));
+      }
 
-      useAuthStore.setState({ candidate_profile: data.candidate_profile });
+      const handleCompanySubmit = async (e) => {
+        useAuthStore.setState(state => ({
+          ...state,
+          company: response.company || null,
+          user: response.user || state.user,
+        }));
+        localStorage.setItem("company", JSON.stringify(response.company));
+        localStorage.setItem("user_type", "admin");
+        
+        navigate("/dashboard", { replace: true });
+      };
 
-      handleClose();
-      navigate("/candidate/dashboard");
     } catch (err) {
-      setErrorMsg(err.message);
+      console.error('Candidate submit error:', err);
+      setErrorMsg(err.response?.data?.message || err.message || 'Failed to create candidate profile');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleInvitationSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setErrorMsg("");
+
+    if (!invitationCode.trim()) {
+      setErrorMsg("Please enter an invitation code");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const validationRes = await api(`/invitation-codes/validate/${invitationCode.trim()}`);
+      
+      if (!validationRes.valid) {
+        throw new Error('Invalid invitation code');
+      }
+
+      setInviteData({
+        code: invitationCode,
+        companyId: validationRes.invitation?.id_company,
+        roleId: validationRes.invitation?.id_role,
+        redirectRole: validationRes.redirect_role
+      });
+
+      const inviteRole = validationRes.redirect_role || 'candidate';
+      setStep(inviteRole === 'candidate' ? 'candidate_form' : 'company_form');
+
+    } catch (err) {
+      console.error('Invitation validation error:', err);
+      setErrorMsg(err.response?.data?.message || err.message || 'Invalid invitation code');
     } finally {
       setLoading(false);
     }
@@ -200,11 +264,13 @@ export default function OnboardingModal({ isOpen, onClose }) {
             {step === "choice" && "Choose Your Path"}
             {step === "company_form" && "Start a Company"}
             {step === "candidate_form" && "Start an Internship"}
+            {step === "invitation_input" && "Enter Invitation Code"}
           </h2>
           <p className="text-xs text-center mt-1" style={{ color: isDark ? "rgba(255,255,255,0.45)" : "rgba(30,40,60,0.55)" }}>
             {step === "choice" && `Hello ${user?.name || "User"}! Choose one of the options below`}
             {step === "company_form" && "Fill in your company details to get started"}
             {step === "candidate_form" && "Complete your profile as a candidate"}
+            {step === "invitation_input" && "Provide the code you received to join"}
           </p>
         </div>
 
@@ -227,7 +293,7 @@ export default function OnboardingModal({ isOpen, onClose }) {
           {step === "choice" && (
             <div className="space-y-3">
               <button
-                onClick={() => handleChoice("company")}
+                onClick={() => setStep("company_form")}
                 className="w-full p-4 rounded-xl text-left transition-all duration-300 flex items-center gap-4"
                 style={{
                   background: isDark ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.8)",
@@ -266,7 +332,7 @@ export default function OnboardingModal({ isOpen, onClose }) {
               </button>
 
               <button
-                onClick={() => handleChoice("candidate")}
+                onClick={() => setStep("candidate_form")}
                 className="w-full p-4 rounded-xl text-left transition-all duration-300 flex items-center gap-4"
               style={{
                   background: isDark ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.8)",
@@ -303,7 +369,97 @@ export default function OnboardingModal({ isOpen, onClose }) {
                   <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </button>
+
+              <button
+                onClick={() => setStep("invitation_input")}
+                className="w-full p-4 rounded-xl text-left transition-all duration-300 flex items-center gap-4"
+                style={{
+                  background: isDark ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.8)",
+                  border: isDark ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(0,0,0,0.1)",
+                  boxShadow: isDark ? "none" : "0 2px 8px rgba(0,0,0,0.06)",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "rgba(245,158,11,0.1)";
+                  e.currentTarget.style.borderColor = "rgba(245,158,11,0.3)";
+                  e.currentTarget.style.boxShadow = "0 4px 16px rgba(245,158,11,0.15)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.8)";
+                  e.currentTarget.style.borderColor = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.1)";
+                  e.currentTarget.style.boxShadow = isDark ? "none" : "0 2px 8px rgba(0,0,0,0.06)";
+                }}
+              >
+                <div
+                  className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ background: "rgba(245,158,11,0.15)" }}
+                >
+                  <IconKey />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold" style={{ color: isDark ? "#fff" : "#1a2332" }}>I Have an Invitation Code</h3>
+                  <p className="text-xs" style={{ color: isDark ? "rgba(255,255,255,0.5)" : "rgba(30,40,60,0.55)" }}>
+                    Join using your invitation code
+                  </p>
+                </div>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5">
+                  <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
             </div>
+          )}
+
+          {/* Step: Invitation Code Input */}
+          {step === "invitation_input" && (
+            <form onSubmit={handleInvitationSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1.5" style={{ color: isDark ? "rgba(255,255,255,0.8)" : "rgba(30,40,60,0.8)" }}>
+                  Invitation Code
+                </label>
+                <input
+                  type="text"
+                  value={invitationCode}
+                  onChange={(e) => setInvitationCode(e.target.value.toUpperCase())}
+                  placeholder="e.g. INV-ABC123XYZ"
+                  autoFocus
+                  className="w-full px-4 py-3 rounded-xl placeholder-gray-500 outline-none transition-all duration-200 font-mono tracking-wider"
+                  style={{
+                    ...inputBase,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.75px'
+                  }}
+                  onFocus={(e) => Object.assign(e.target.style, inputFocus)}
+                  onBlur={(e) => Object.assign(e.target.style, inputBase)}
+                />
+                <p className="text-xs mt-2" style={{ color: isDark ? "rgba(255,255,255,0.3)" : "rgba(30,40,60,0.3)" }}>
+                  You should have received this code from your company or team administrator
+                </p>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={handleBack}
+                  className="flex-1 py-3 rounded-xl font-medium text-sm transition-all duration-200"
+                  style={{
+                    background: isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.05)",
+                    color: isDark ? "rgba(255,255,255,0.7)" : "rgba(30,40,60,0.7)",
+                    border: isDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(0,0,0,0.1)",
+                  }}
+                >
+                  Back
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading || !invitationCode.trim()}
+                  className="flex-1 py-3 rounded-xl font-semibold text-white text-sm transition-all duration-200"
+                  style={{
+                    background: loading || !invitationCode.trim() ? "rgba(74,158,255,0.5)" : "linear-gradient(135deg, #2d7dd2 0%, #4a9eff 100%)",
+                  }}
+                >
+                  {loading ? "Validating..." : "Validate & Continue"}
+                </button>
+              </div>
+            </form>
           )}
 
           {/* Step: Company Form */}
@@ -361,19 +517,13 @@ export default function OnboardingModal({ isOpen, onClose }) {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1.5" style={{ color: isDark ? "rgba(255,255,255,0.8)" : "rgba(30,40,60,0.8)" }}>
-                  Company Password
-                </label>
-                <input
-                  type="password"
+                <PasswordInput
                   value={companyForm.password}
-                  onChange={(e) => setCompanyForm({ ...companyForm, password: e.target.value })}
-                  placeholder="Minimum 8 characters"
-                  required
-                  className="w-full px-4 py-3 rounded-xl text-white placeholder-gray-500 outline-none transition-all duration-200"
-                  style={inputBase}
-                  onFocus={(e) => Object.assign(e.target.style, inputFocus)}
-                  onBlur={(e) => Object.assign(e.target.style, inputBase)}
+                  onChange={(val) => setCompanyForm({ ...companyForm, password: val })}
+                  label="Company Password"
+                  isDark={isDark}
+                  showStrength={true}
+                  showRules={true}
                 />
                 <p className="text-xs mt-1.5" style={{ color: isDark ? "rgba(255,255,255,0.3)" : "rgba(30,40,60,0.3)" }}>
                   A separate password for company dashboard login

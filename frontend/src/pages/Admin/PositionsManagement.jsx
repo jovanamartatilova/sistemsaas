@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore";
 import axios from "axios";
@@ -50,6 +50,8 @@ const Icon = {
     Lock:         () => <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>,
     Unlock:       () => <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>,
     Copy:         () => <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>,
+    Menu:         () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" /></svg>,
+    Close:        () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>,
 };
 
 // ── Helpers ──────────────────────────────────────────────────────
@@ -63,35 +65,34 @@ const formatDate = (dateStr) => {
 // ── Toast ─────────────────────────────────────────────────────────
 function Toast({ msg, type, visible }) {
     return (
-        <div style={{
-            position: "fixed", bottom: 28, right: 28, zIndex: 500,
-            background: type === "success" ? "#064e3b" : "#7f1d1d",
-            color: "#fff", padding: "12px 20px", borderRadius: 12, fontSize: 13, fontWeight: 500,
-            boxShadow: "0 8px 32px rgba(0,0,0,.14)",
-            transform: visible ? "translateY(0)" : "translateY(80px)",
-            opacity: visible ? 1 : 0,
-            transition: "all .3s cubic-bezier(.34,1.56,.64,1)",
-            pointerEvents: "none",
-            display: "flex", alignItems: "center", gap: 8,
-        }}>
+        <div className="fixed bottom-6 right-4 sm:right-7 z-50 pointer-events-none flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-medium shadow-xl transition-all duration-300"
+            style={{
+                background: type === "success" ? "#064e3b" : "#7f1d1d",
+                color: "#fff",
+                transform: visible ? "translateY(0)" : "translateY(80px)",
+                opacity: visible ? 1 : 0,
+                maxWidth: "calc(100vw - 32px)",
+            }}
+        >
             {type === "success"
-                ? <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-                : <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                ? <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12" /></svg>
+                : <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
             }
-            {msg}
+            <span className="truncate">{msg}</span>
         </div>
     );
 }
 
 function SectionTitle({ children, style }) {
     return (
-        <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: ".8px", textTransform: "uppercase", color: "#64748b", marginBottom: 14, display: "flex", alignItems: "center", gap: 10, ...style }}>
+        <div className="flex items-center gap-2.5 text-xs font-bold uppercase tracking-widest mb-3.5" style={{ color: "#64748b", ...style }}>
             {children}
-            <div style={{ flex: 1, height: 1, background: "#e2e8f0", opacity: 0.7 }} />
+            <div className="flex-1 h-px opacity-70" style={{ background: "#e2e8f0" }} />
         </div>
     );
 }
 
+// ── SideItem ─────────────────────────────────────────────────────
 function SideItem({ icon, label, active, badge, onClick }) {
     const [hov, setHov] = useState(false);
     return (
@@ -99,20 +100,18 @@ function SideItem({ icon, label, active, badge, onClick }) {
             onClick={onClick}
             onMouseEnter={() => setHov(true)}
             onMouseLeave={() => setHov(false)}
+            className="flex items-center gap-3 w-full px-3.5 py-2.5 rounded-xl text-sm font-medium cursor-pointer transition-all text-left border"
             style={{
-                display: "flex", alignItems: "center", gap: "11px",
-                width: "100%", padding: "10px 14px", borderRadius: "10px",
                 background: active ? "rgba(74,158,255,0.12)" : hov ? "rgba(255,255,255,0.05)" : "transparent",
-                border: active ? "1px solid rgba(74,158,255,0.22)" : "1px solid transparent",
+                borderColor: active ? "rgba(74,158,255,0.22)" : "transparent",
                 color: active ? "#4a9eff" : "rgba(255,255,255,0.6)",
-                fontSize: "13.5px", fontWeight: active ? "600" : "500",
-                cursor: "pointer", transition: "all 0.2s", textAlign: "left",
+                fontWeight: active ? "600" : "500",
             }}
         >
             <span style={{ opacity: active ? 1 : 0.75 }}>{icon}</span>
-            <span style={{ flex: 1 }}>{label}</span>
+            <span className="flex-1">{label}</span>
             {badge != null && badge > 0 && (
-                <span style={{ background: "#4a9eff", color: "#fff", borderRadius: "100px", fontSize: "11px", fontWeight: "700", padding: "1px 7px", minWidth: "20px", textAlign: "center" }}>
+                <span className="rounded-full text-xs font-bold px-2 py-0.5 min-w-[20px] text-center text-white" style={{ background: "#4a9eff", fontSize: "11px" }}>
                     {badge}
                 </span>
             )}
@@ -120,36 +119,68 @@ function SideItem({ icon, label, active, badge, onClick }) {
     );
 }
 
-// ── CandidateItem ──────────────────────────────────────────────────
+// ── CandidateItem ─────────────────────────────────────────────────
 function CandidateItem({ sub }) {
     const [expanded, setExpanded] = useState(false);
-    const docBtn = { display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", border: "1px solid #e2e8f0", borderRadius: 8, background: "#fff", fontSize: 12, fontWeight: 600, color: "#475569", cursor: "pointer", transition: "all .15s", textDecoration: "none" };
+
+    const statusStyle = {
+        background: sub.status === "accepted" ? "#ecfdf5" : sub.status === "rejected" ? "#fef2f2" : "#fff7ed",
+        color: sub.status === "accepted" ? "#059669" : sub.status === "rejected" ? "#dc2626" : "#c2410c",
+        border: `1px solid ${sub.status === "accepted" ? "#10b98133" : sub.status === "rejected" ? "#ef444433" : "#f9731633"}`,
+    };
+
     return (
-        <div style={{ border: "1px solid #e2e8f0", borderRadius: 12, overflow: "hidden", background: expanded ? "#f8fafc" : "#fff", transition: "all .2s" }}>
-            <div onClick={() => setExpanded(!expanded)} style={{ padding: "14px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#eff6ff", color: "#3b82f6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 800 }}>
+        <div className="border border-slate-200 rounded-xl overflow-hidden transition-all" style={{ background: expanded ? "#f8fafc" : "#fff" }}>
+            {/* Header row — wraps gracefully on mobile */}
+            <div
+                onClick={() => setExpanded(!expanded)}
+                className="px-4 py-3.5 flex items-center justify-between gap-3 cursor-pointer flex-wrap"
+            >
+                <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-extrabold flex-shrink-0" style={{ background: "#eff6ff", color: "#3b82f6" }}>
                         {(sub.user?.name || "U").slice(0, 1).toUpperCase()}
                     </div>
-                    <div style={{ textAlign: "left" }}>
-                        <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>{sub.user?.name}</div>
-                        <div style={{ fontSize: 12, color: "#64748b" }}>Email: <span style={{ color: "#2563c4", fontWeight: 600 }}>{sub.user?.email || "-"}</span></div>
+                    <div className="text-left min-w-0">
+                        <div className="text-sm font-bold truncate" style={{ color: "#0f172a" }}>{sub.user?.name}</div>
+                        <div className="text-xs truncate" style={{ color: "#64748b" }}>
+                            Email: <span className="font-semibold" style={{ color: "#2563c4" }}>{sub.user?.email || "-"}</span>
+                        </div>
                     </div>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 8px", borderRadius: 6, background: sub.status === "accepted" ? "#ecfdf5" : sub.status === "rejected" ? "#fef2f2" : "#fff7ed", color: sub.status === "accepted" ? "#059669" : sub.status === "rejected" ? "#dc2626" : "#c2410c", border: `1px solid ${sub.status === "accepted" ? "#10b98133" : sub.status === "rejected" ? "#ef444433" : "#f9731633"}`, textTransform: "capitalize" }}>
+                <div className="flex items-center gap-3 flex-shrink-0">
+                    <span className="text-xs font-bold px-2 py-1 rounded capitalize" style={statusStyle}>
                         {sub.status || "Pending"}
                     </span>
-                    <div style={{ transform: expanded ? "rotate(90deg)" : "rotate(0deg)", transition: "0.2s", color: "#64748b" }}><Icon.ChevronRight /></div>
+                    <div className="transition-transform" style={{ transform: expanded ? "rotate(90deg)" : "rotate(0deg)", color: "#64748b" }}>
+                        <Icon.ChevronRight />
+                    </div>
                 </div>
             </div>
+
+            {/* Expanded documents */}
             {expanded && (
-                <div style={{ padding: "0 20px 20px", marginTop: -4, textAlign: "left" }}>
-                    <div style={{ height: 1.5, background: "#e2e8f0", marginBottom: 16, opacity: 0.5 }} />
-                    <div style={{ fontSize: 12, fontWeight: 700, color: "#64748b", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.5px" }}>Candidate Documents</div>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                        {sub.cv_file && <a href={`${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.split("/api")[0] : "http://localhost:8000"}/storage/${sub.cv_file}`} target="_blank" rel="noopener noreferrer" style={docBtn}><Icon.FileText /> CV / Resume</a>}
-                        {sub.portfolio_file && <a href={`${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.split("/api")[0] : "http://localhost:8000"}/storage/${sub.portfolio_file}`} target="_blank" rel="noopener noreferrer" style={docBtn}><Icon.FileText /> Additional Portfolio</a>}
+                <div className="px-4 pb-4 text-left">
+                    <div className="h-px mb-4 opacity-50" style={{ background: "#e2e8f0" }} />
+                    <div className="text-xs font-bold uppercase tracking-wide mb-2.5" style={{ color: "#64748b" }}>Candidate Documents</div>
+                    <div className="flex flex-wrap gap-2">
+                        {sub.cv_file && (
+                            <a href={`${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.split("/api")[0] : "http://localhost:8000"}/storage/${sub.cv_file}`}
+                                target="_blank" rel="noopener noreferrer"
+                                className="flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-semibold no-underline transition-colors hover:bg-slate-50"
+                                style={{ color: "#475569" }}
+                            >
+                                <Icon.FileText /> CV / Resume
+                            </a>
+                        )}
+                        {sub.portfolio_file && (
+                            <a href={`${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.split("/api")[0] : "http://localhost:8000"}/storage/${sub.portfolio_file}`}
+                                target="_blank" rel="noopener noreferrer"
+                                className="flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-semibold no-underline transition-colors hover:bg-slate-50"
+                                style={{ color: "#475569" }}
+                            >
+                                <Icon.FileText /> Additional Portfolio
+                            </a>
+                        )}
                     </div>
                 </div>
             )}
@@ -161,31 +192,42 @@ function CandidateItem({ sub }) {
 function SubmissionModal({ open, program, onClose }) {
     if (!open) return null;
     return (
-        <div onClick={(e) => e.target === e.currentTarget && onClose()}
-            style={{ position: "fixed", inset: 0, background: "rgba(10,22,40,.55)", backdropFilter: "blur(4px)", zIndex: 200, display: "flex", alignItems: "flex-start", justifyContent: "center", padding: 24, overflowY: "auto" }}>
-            <div style={{ background: "#fff", borderRadius: 20, width: "100%", maxWidth: 720, display: "flex", flexDirection: "column", boxShadow: "0 20px 60px rgba(0,0,0,.18)", margin: "auto 0" }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "22px 28px 18px", borderBottom: "1px solid #e2e8f0", position: "relative" }}>
-                    <div style={{ textAlign: "center" }}>
-                        <div style={{ fontSize: 17, fontWeight: 800, color: "#0f172a" }}>Candidate List</div>
-                        <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>Viewing candidates for {program?.position_name} in program {program?.vacancy_title}.</div>
+        /* Overlay — p-4 keeps modal off screen edges on phones */
+        <div
+            onClick={(e) => e.target === e.currentTarget && onClose()}
+            className="fixed inset-0 z-40 flex items-start justify-center p-4 overflow-y-auto"
+            style={{ background: "rgba(10,22,40,.55)", backdropFilter: "blur(4px)" }}
+        >
+            <div className="bg-white rounded-2xl w-full max-w-xl flex flex-col my-auto" style={{ boxShadow: "0 20px 60px rgba(0,0,0,.18)" }}>
+                {/* Header */}
+                <div className="relative flex items-center justify-center px-6 py-5 border-b border-slate-200 text-center">
+                    <div>
+                        <div className="text-base font-extrabold" style={{ color: "#0f172a" }}>Candidate List</div>
+                        <div className="text-xs mt-0.5" style={{ color: "#64748b" }}>
+                            Viewing candidates for {program?.position_name} in program {program?.vacancy_title}.
+                        </div>
                     </div>
-                    <button onClick={onClose} style={{ position: "absolute", top: 22, right: 28, width: 34, height: 34, borderRadius: 8, border: "1px solid #e2e8f0", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 16, color: "#64748b" }}>✕</button>
+                    <button onClick={onClose} className="absolute top-4 right-5 w-8 h-8 rounded-lg border border-slate-200 bg-white flex items-center justify-center cursor-pointer text-base" style={{ color: "#64748b" }}>✕</button>
                 </div>
-                <div style={{ padding: "24px 28px", overflowY: "auto", maxHeight: "65vh" }}>
+
+                {/* Body */}
+                <div className="p-5 md:p-6 overflow-y-auto" style={{ maxHeight: "65vh" }}>
                     {(!program?.applicants || program.applicants.length === 0) ? (
-                        <div style={{ padding: "40px 0", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
-                            <div style={{ width: 80, height: 80, background: "#f1f5f9", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", color: "#94a3b8", marginBottom: 20 }}><Icon.Users /></div>
-                            <h3 style={{ fontSize: 18, fontWeight: 800, color: "#0f172a", marginBottom: 10 }}>No Candidates Yet</h3>
-                            <p style={{ fontSize: 14, color: "#64748b", maxWidth: 340, lineHeight: 1.6 }}>Currently there are no candidates for this position.</p>
+                        <div className="py-10 flex flex-col items-center text-center">
+                            <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ background: "#f1f5f9", color: "#94a3b8" }}><Icon.Users /></div>
+                            <h3 className="text-lg font-extrabold mb-2" style={{ color: "#0f172a" }}>No Candidates Yet</h3>
+                            <p className="text-sm leading-relaxed max-w-xs" style={{ color: "#64748b" }}>Currently there are no candidates for this position.</p>
                         </div>
                     ) : (
-                        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                        <div className="flex flex-col gap-3">
                             {program.applicants.map((sub, idx) => <CandidateItem key={sub.id_submission || idx} sub={sub} />)}
                         </div>
                     )}
                 </div>
-                <div style={{ padding: "18px 28px", borderTop: "1px solid #e2e8f0", display: "flex", justifyContent: "flex-end" }}>
-                    <button onClick={onClose} style={{ padding: "8px 24px", borderRadius: 10, border: "1.5px solid #e2e8f0", background: "#fff", fontSize: 13.5, fontWeight: 700, color: "#475569", cursor: "pointer" }}>Close</button>
+
+                {/* Footer */}
+                <div className="px-5 md:px-6 py-4 border-t border-slate-200 flex justify-end">
+                    <button onClick={onClose} className="px-5 py-2 rounded-xl border border-slate-200 bg-white text-sm font-bold cursor-pointer" style={{ color: "#475569" }}>Close</button>
                 </div>
             </div>
         </div>
@@ -196,32 +238,56 @@ function SubmissionModal({ open, program, onClose }) {
 function ProgramCard({ program, onEdit, onDelete }) {
     const [hov, setHov] = useState(false);
     const statusColor = program.vacancy_status === "published" ? "#10b981" : program.vacancy_status === "closed" ? "#ef4444" : "#94a3b8";
+
     return (
         <div
             onClick={() => onEdit(program)}
+            onMouseEnter={() => setHov(true)}
+            onMouseLeave={() => setHov(false)}
+            className="bg-white border border-slate-200 rounded-2xl flex flex-col overflow-hidden cursor-pointer transition-all text-left"
             style={{
-                background: "#fff", border: "1px solid #e2e8f0", borderRadius: 16,
-                display: "flex", flexDirection: "column",
+                borderTop: `3px solid ${statusColor}`,
                 boxShadow: hov ? "0 12px 32px rgba(0,0,0,.08)" : "0 1px 3px rgba(0,0,0,.06)",
-                overflow: "hidden", transition: "all .2s ease", cursor: "pointer",
-                position: "relative", borderTop: `3px solid ${statusColor}`, textAlign: "left"
             }}
-            onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
         >
-            <div style={{ width: "100%", height: 160, background: program.vacancy_photo ? `url(${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.split("/api")[0] : "http://localhost:8000"}/storage/${program.vacancy_photo}) center/cover` : "#e2e8f0", position: "relative" }}>
-                <div style={{ position: "absolute", top: 12, left: 12, background: "rgba(255,255,255,0.9)", backdropFilter: "blur(4px)", padding: "4px 10px", borderRadius: 20, fontSize: 11, fontWeight: 700, color: "#64748b", border: "1px solid rgba(0,0,0,0.1)", textTransform: "uppercase" }}>{program.vacancy_status}</div>
-                <div style={{ position: "absolute", top: 12, right: 12, display: "flex", gap: 6 }}>
-                    <button onClick={(e) => { e.stopPropagation(); onDelete(program); }} style={{ width: 32, height: 32, borderRadius: 8, border: "none", background: "rgba(255,255,255,0.9)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#ef4444" }}><Icon.Trash /></button>
+            {/* Cover image */}
+            <div className="w-full relative" style={{ height: 140 }}>
+                <div className="absolute inset-0"
+                    style={{ background: program.vacancy_photo ? `url(${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.split("/api")[0] : "http://localhost:8000"}/storage/${program.vacancy_photo}) center/cover` : "#e2e8f0" }}
+                />
+                {/* Status badge */}
+                <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full text-xs font-bold uppercase border"
+                    style={{ background: "rgba(255,255,255,0.9)", color: "#64748b", border: "1px solid rgba(0,0,0,0.1)", backdropFilter: "blur(4px)" }}>
+                    {program.vacancy_status}
                 </div>
+                {/* Delete button */}
+                <button
+                    onClick={(e) => { e.stopPropagation(); onDelete(program); }}
+                    className="absolute top-3 right-3 w-8 h-8 rounded-lg flex items-center justify-center cursor-pointer border-none"
+                    style={{ background: "rgba(255,255,255,0.9)", color: "#ef4444" }}
+                >
+                    <Icon.Trash />
+                </button>
             </div>
-            <div style={{ padding: "20px 24px" }}>
-                <h3 style={{ fontSize: 18, fontWeight: 800, color: "#000", marginBottom: 4 }}>{program.position_name}</h3>
-                <p style={{ fontSize: 13, color: "#64748b", marginBottom: 16 }}>{program.vacancy_title}</p>
-                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#64748b" }}><Icon.Cal /><span>{formatDate(program.vacancy_start_date)} - {formatDate(program.vacancy_end_date)}</span></div>
-                    <div style={{ display: "flex", gap: 8 }}>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: "#2563eb", background: "#eff6ff", padding: "4px 10px", borderRadius: 8, border: "1px solid #dbeafe" }}>{program.position_quota || 0} Quota</span>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: "#64748b", background: "#f8fafc", padding: "4px 10px", borderRadius: 8, border: "1px solid #e2e8f0" }}>{program.applicants?.length || 0} Candidates</span>
+
+            {/* Body */}
+            <div className="p-4 md:p-5 flex flex-col gap-3">
+                <div>
+                    <h3 className="text-base md:text-lg font-extrabold mb-1" style={{ color: "#000" }}>{program.position_name}</h3>
+                    <p className="text-xs md:text-sm" style={{ color: "#64748b" }}>{program.vacancy_title}</p>
+                </div>
+                <div className="flex flex-col gap-2">
+                    <div className="flex items-center gap-2 text-xs" style={{ color: "#64748b" }}>
+                        <Icon.Cal />
+                        <span>{formatDate(program.vacancy_start_date)} - {formatDate(program.vacancy_end_date)}</span>
+                    </div>
+                    <div className="flex gap-2 flex-wrap">
+                        <span className="text-xs font-bold px-2.5 py-1 rounded-lg border" style={{ color: "#2563eb", background: "#eff6ff", border: "1px solid #dbeafe" }}>
+                            {program.position_quota || 0} Quota
+                        </span>
+                        <span className="text-xs font-bold px-2.5 py-1 rounded-lg border border-slate-200" style={{ color: "#64748b", background: "#f8fafc" }}>
+                            {program.applicants?.length || 0} Candidates
+                        </span>
                     </div>
                 </div>
             </div>
@@ -230,95 +296,95 @@ function ProgramCard({ program, onEdit, onDelete }) {
 }
 
 // ── CatalogItem ───────────────────────────────────────────────────
+// FIXED: On mobile, button labels hide to show icons only, preventing overflow
 function CatalogItem({ item, onEdit, onDelete, onLock, onDuplicate }) {
     const [hov, setHov] = useState(false);
 
-    const btnBase = {
-        display: "flex", alignItems: "center", gap: 5,
-        padding: "6px 12px", borderRadius: 8, fontSize: 12, fontWeight: 600,
-        cursor: "pointer", transition: "all .15s", border: "1px solid #e2e8f0",
-        background: "#fff", color: "#475569", fontFamily: "inherit",
-    };
+    const btnBase = "flex items-center gap-1 md:gap-1.5 px-2 md:px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-all border";
 
     return (
         <div
-            onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
-            style={{
-                padding: "16px 24px", display: "flex", alignItems: "center",
-                justifyContent: "space-between", borderBottom: "1px solid #f1f5f9",
-                background: hov ? "#f8fafc" : "#fff", transition: "background 0.2s",
-            }}
+            onMouseEnter={() => setHov(true)}
+            onMouseLeave={() => setHov(false)}
+            className="px-4 md:px-6 py-3.5 md:py-4 flex items-center justify-between border-b border-slate-50 transition-colors"
+            style={{ background: hov ? "#f8fafc" : "#fff" }}
         >
             {/* Left: name + badges */}
-            <div style={{ textAlign: "left", display: "flex", flexDirection: "column", gap: 4 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <span style={{ fontSize: 14.5, fontWeight: 700, color: "#0f172a" }}>{item.name}</span>
+            <div className="text-left flex flex-col gap-1 min-w-0 mr-3">
+                <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-sm font-bold truncate" style={{ color: "#0f172a" }}>{item.name}</span>
                     {item.locked && (
-                        <span style={{
-                            display: "inline-flex", alignItems: "center", gap: 4,
-                            fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 6,
-                            background: "#fef3c7", color: "#92400e", border: "1px solid #fde68a",
-                        }}>
+                        <span className="inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded whitespace-nowrap"
+                            style={{ background: "#fef3c7", color: "#92400e", border: "1px solid #fde68a" }}>
                             <Icon.Lock /> Locked
                         </span>
                     )}
                 </div>
-                <div style={{ fontSize: 12, color: "#94a3b8" }}>
+                <div className="text-xs" style={{ color: "#94a3b8" }}>
                     {item.competencies?.length || 0} competencies
                 </div>
             </div>
 
-            {/* Right: action buttons */}
-            <div style={{ display: "flex", gap: 6, opacity: hov ? 1 : 0.5, transition: "opacity 0.2s" }}>
-                {/* Duplicate — always enabled */}
+            {/* Right: action buttons
+                Labels visible on md+, icon-only on mobile to prevent overflow */}
+            <div className="flex gap-1.5 flex-shrink-0 transition-opacity" style={{ opacity: hov ? 1 : 0.55 }}>
+
+                {/* Duplicate */}
                 <button
                     onClick={() => onDuplicate(item)}
-                    style={{ ...btnBase, color: "#2563c4", borderColor: "#bfdbfe", background: "#eff6ff" }}
                     title="Duplicate this position"
+                    className={`${btnBase} border-blue-200 bg-blue-50`}
+                    style={{ color: "#2563c4" }}
                 >
-                    <Icon.Copy /> Duplicate
+                    <Icon.Copy />
+                    <span className="hidden sm:inline">Duplicate</span>
                 </button>
 
-                {/* Lock / Unlock toggle */}
+                {/* Lock / Unlock */}
                 <button
                     onClick={() => onLock(item)}
+                    title={item.locked ? "Unlock this position" : "Lock this position"}
+                    className={`${btnBase}`}
                     style={{
-                        ...btnBase,
                         color: item.locked ? "#92400e" : "#475569",
                         borderColor: item.locked ? "#fde68a" : "#e2e8f0",
                         background: item.locked ? "#fffbeb" : "#fff",
                     }}
-                    title={item.locked ? "Unlock this position" : "Lock this position"}
                 >
-                    {item.locked ? <><Icon.Unlock /> Unlock</> : <><Icon.Lock /> Lock</>}
+                    {item.locked ? <Icon.Unlock /> : <Icon.Lock />}
+                    <span className="hidden md:inline">{item.locked ? "Unlock" : "Lock"}</span>
                 </button>
 
-                {/* Edit — disabled when locked */}
+                {/* Edit */}
                 <button
                     onClick={() => !item.locked && onEdit(item)}
                     disabled={item.locked}
+                    title={item.locked ? "Unlock position to edit" : "Edit position"}
+                    className={`${btnBase} border-slate-200`}
                     style={{
-                        ...btnBase,
+                        background: "#fff",
+                        color: "#475569",
                         cursor: item.locked ? "not-allowed" : "pointer",
                         opacity: item.locked ? 0.4 : 1,
                     }}
-                    title={item.locked ? "Unlock position to edit" : "Edit position"}
                 >
-                    <Icon.Edit /> Edit
+                    <Icon.Edit />
+                    <span className="hidden sm:inline">Edit</span>
                 </button>
 
-                {/* Delete — disabled when locked */}
+                {/* Delete */}
                 <button
                     onClick={() => !item.locked && onDelete(item.id_position)}
                     disabled={item.locked}
+                    title={item.locked ? "Unlock position to delete" : "Delete position"}
+                    className={`${btnBase}`}
                     style={{
-                        ...btnBase,
                         color: item.locked ? "#cbd5e1" : "#ef4444",
                         borderColor: item.locked ? "#f1f5f9" : "#fee2e2",
+                        background: "#fff",
                         cursor: item.locked ? "not-allowed" : "pointer",
                         opacity: item.locked ? 0.4 : 1,
                     }}
-                    title={item.locked ? "Unlock position to delete" : "Delete position"}
                 >
                     <Icon.Trash />
                 </button>
@@ -338,15 +404,11 @@ function PositionModal({ open, item, onClose, onSave }) {
         if (open) {
             setForm({
                 name: item?.name || "",
-                competencies: (item?.competencies || []).map(c => ({ 
-                    name: c.name || "", 
-                    learning_hours: c.learning_hours || 0, 
-                    description: c.description || "" 
+                competencies: (item?.competencies || []).map(c => ({
+                    name: c.name || "", learning_hours: c.learning_hours || 0, description: c.description || ""
                 })),
                 selection_flow: (item?.selection_flow || []).map(f => ({
-                    type: f.type || "",
-                    name: f.name || "",
-                    description: f.description || ""
+                    type: f.type || "", name: f.name || "", description: f.description || ""
                 }))
             });
         }
@@ -355,9 +417,7 @@ function PositionModal({ open, item, onClose, onSave }) {
     if (!open) return null;
 
     const handleCompChange = (i, field, val) => {
-        const next = [...form.competencies];
-        next[i][field] = val;
-        setForm({ ...form, competencies: next });
+        const next = [...form.competencies]; next[i][field] = val; setForm({ ...form, competencies: next });
     };
 
     const handleGenerateAI = async (i) => {
@@ -374,9 +434,7 @@ function PositionModal({ open, item, onClose, onSave }) {
     };
 
     const handleFlowChange = (i, field, val) => {
-        const next = [...form.selection_flow];
-        next[i][field] = val;
-        setForm({ ...form, selection_flow: next });
+        const next = [...form.selection_flow]; next[i][field] = val; setForm({ ...form, selection_flow: next });
     };
 
     const handleGenerateAIFlow = async (i) => {
@@ -392,108 +450,157 @@ function PositionModal({ open, item, onClose, onSave }) {
         finally { setGeneratingFlowIndex(null); }
     };
 
+    // Shared input style — kept inline for easy override
     const inp = { textAlign: "left", border: "1.5px solid #e2e8f0", borderRadius: 8, padding: "8px 12px", fontFamily: "inherit", fontSize: 13, color: "#0f172a", background: "#fff", outline: "none", width: "100%", transition: "all .15s" };
 
     return (
-        <div onClick={(e) => e.target === e.currentTarget && onClose()}
-            style={{ position: "fixed", inset: 0, background: "rgba(10,22,40,.55)", backdropFilter: "blur(4px)", zIndex: 300, display: "flex", alignItems: "flex-start", justifyContent: "center", padding: 24, overflowY: "auto" }}>
-            <div style={{ background: "#fff", borderRadius: 20, width: "100%", maxWidth: 640, boxShadow: "0 20px 60px rgba(0,0,0,.18)", margin: "auto 0" }}>
-                <div style={{ padding: "22px 28px", borderBottom: "1px solid #e2e8f0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <div style={{ textAlign: "left" }}>
-                        <h2 style={{ fontSize: 17, fontWeight: 800, color: "#0f172a", margin: 0 }}>{item?.id_position ? "Edit Position" : "Add New Position"}</h2>
-                        <p style={{ fontSize: 12, color: "#64748b", margin: "4px 0 0" }}>Enter position details and competencies.</p>
+        <div
+            onClick={(e) => e.target === e.currentTarget && onClose()}
+            className="fixed inset-0 z-50 flex items-start justify-center p-4 overflow-y-auto"
+            style={{ background: "rgba(10,22,40,.55)", backdropFilter: "blur(4px)" }}
+        >
+            <div className="bg-white rounded-2xl w-full max-w-xl my-auto" style={{ boxShadow: "0 20px 60px rgba(0,0,0,.18)" }}>
+                {/* Header */}
+                <div className="px-5 md:px-7 py-5 border-b border-slate-200 flex justify-between items-center">
+                    <div className="text-left">
+                        <h2 className="text-base font-extrabold m-0" style={{ color: "#0f172a" }}>
+                            {item?.id_position ? "Edit Position" : "Add New Position"}
+                        </h2>
+                        <p className="text-xs mt-1" style={{ color: "#64748b" }}>Enter position details and competencies.</p>
                     </div>
-                    <button onClick={onClose} style={{ border: "none", background: "none", fontSize: 18, color: "#64748b", cursor: "pointer" }}>✕</button>
+                    <button onClick={onClose} className="border-none bg-transparent text-lg cursor-pointer" style={{ color: "#64748b" }}>✕</button>
                 </div>
-                <div style={{ padding: 28, maxHeight: "60vh", overflowY: "auto" }}>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                        <div style={{ textAlign: "left" }}>
-                            <label style={{ fontSize: 12, fontWeight: 700, color: "#475569", display: "block", marginBottom: 6 }}>NAME</label>
-                            <input style={inp} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="e.g. Frontend Developer" />
-                        </div>
 
-                        {/* Selection Flow */}
-                        <div style={{ textAlign: "left" }}>
-                            <label style={{ fontSize: 12, fontWeight: 700, color: "#475569", display: "block", marginBottom: 12 }}>SELECTION FLOW</label>
-                            {form.selection_flow.map((f, i) => (
-                                <div key={i} style={{ padding: 16, border: "1px solid #e2e8f0", borderRadius: 12, background: "#f8fafc", position: "relative", marginBottom: 12 }}>
-                                    <div style={{ display: "grid", gridTemplateColumns: f.type === "screening" ? "1fr" : "1fr 1fr", gap: 12, marginBottom: f.type === "screening" ? 0 : 12 }}>
-                                        <div>
-                                            <label style={{ fontSize: 10, fontWeight: 700, color: "#64748b", textTransform: "uppercase", marginBottom: 4, display: "block" }}>Stage Type</label>
-                                            <select style={inp} value={f.type} onChange={e => {
-                                                const newType = e.target.value;
-                                                handleFlowChange(i, "type", newType);
-                                                if (newType === "screening") { handleFlowChange(i, "name", "Screening CV & Portfolio"); handleFlowChange(i, "description", ""); }
-                                                else { handleFlowChange(i, "name", ""); }
-                                            }}>
-                                                <option value="">-- Select Type --</option>
-                                                <option value="screening">Screening (CV/Porto)</option>
-                                                <option value="test">Test / Assessment</option>
-                                                <option value="interview">Interview</option>
-                                            </select>
-                                        </div>
-                                        {f.type !== "screening" && (
-                                            <div>
-                                                <label style={{ fontSize: 10, fontWeight: 700, color: "#64748b", textTransform: "uppercase", marginBottom: 4, display: "block" }}>Stage Title / Activity</label>
-                                                <input style={inp} value={f.name} onChange={e => handleFlowChange(i, "name", e.target.value)} placeholder="e.g. Wawancara User" />
-                                            </div>
-                                        )}
+                {/* Scrollable body */}
+                <div className="px-5 md:px-7 py-5 flex flex-col gap-4 overflow-y-auto" style={{ maxHeight: "60vh" }}>
+
+                    {/* Position name */}
+                    <div className="text-left">
+                        <label className="text-xs font-bold block mb-1.5" style={{ color: "#475569" }}>NAME</label>
+                        <input style={inp} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="e.g. Frontend Developer" />
+                    </div>
+
+                    {/* ── Selection Flow ─────────────────────────────── */}
+                    <div className="text-left">
+                        <label className="text-xs font-bold block mb-3" style={{ color: "#475569" }}>SELECTION FLOW</label>
+                        {form.selection_flow.map((f, i) => (
+                            <div key={i} className="p-4 border border-slate-200 rounded-xl relative mb-3" style={{ background: "#f8fafc" }}>
+                                {/* Stage type + title — stacks on mobile via flex-col sm:grid */}
+                                <div className={`flex flex-col gap-3 mb-3 ${f.type !== "screening" ? "sm:grid sm:grid-cols-2" : ""}`}>
+                                    <div>
+                                        <label className="text-xs font-bold uppercase tracking-wide block mb-1" style={{ color: "#64748b" }}>Stage Type</label>
+                                        <select style={inp} value={f.type} onChange={e => {
+                                            const newType = e.target.value;
+                                            handleFlowChange(i, "type", newType);
+                                            if (newType === "screening") { handleFlowChange(i, "name", "Screening CV & Portfolio"); handleFlowChange(i, "description", ""); }
+                                            else { handleFlowChange(i, "name", ""); }
+                                        }}>
+                                            <option value="">-- Select Type --</option>
+                                            <option value="screening">Screening (CV/Porto)</option>
+                                            <option value="test">Test / Assessment</option>
+                                            <option value="interview">Interview</option>
+                                        </select>
                                     </div>
                                     {f.type !== "screening" && (
-                                        <>
-                                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                                                <label style={{ fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.5px" }}>Instructions / Description</label>
-                                                <button type="button" onClick={() => handleGenerateAIFlow(i)} disabled={generatingFlowIndex === i}
-                                                    style={{ display: "flex", alignItems: "center", gap: 5, background: "linear-gradient(135deg, #10b981, #059669)", color: "#fff", border: "none", borderRadius: 6, padding: "5px 12px", fontSize: 10, fontWeight: 700, cursor: generatingFlowIndex === i ? "default" : "pointer", opacity: generatingFlowIndex === i ? 0.7 : 1, boxShadow: "0 2px 6px rgba(16,185,129,.3)", fontFamily: "inherit" }}>
-                                                    <Icon.Sparkles /> {generatingFlowIndex === i ? "Generating..." : "Generate AI"}
-                                                </button>
-                                            </div>
-                                            <textarea style={{ ...inp, minHeight: 80 }} value={f.description} onChange={e => handleFlowChange(i, "description", e.target.value)} placeholder="What HR should evaluate in this stage..." />
-                                        </>
+                                        <div>
+                                            <label className="text-xs font-bold uppercase tracking-wide block mb-1" style={{ color: "#64748b" }}>Stage Title / Activity</label>
+                                            <input style={inp} value={f.name} onChange={e => handleFlowChange(i, "name", e.target.value)} placeholder="e.g. Wawancara User" />
+                                        </div>
                                     )}
-                                    <button onClick={() => setForm({ ...form, selection_flow: form.selection_flow.filter((_, j) => j !== i) })} style={{ position: "absolute", top: -8, right: -8, width: 24, height: 24, borderRadius: "50%", border: "1px solid #fee2e2", background: "#fff", color: "#ef4444", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
                                 </div>
-                            ))}
-                            <button onClick={() => setForm({ ...form, selection_flow: [...form.selection_flow, { type: "", name: "", description: "" }] })} style={{ width: "100%", padding: "10px", border: "1.5px dashed #e2e8f0", borderRadius: 12, background: "none", color: "#64748b", fontSize: 12.5, fontWeight: 700, cursor: "pointer", marginBottom: 12, fontFamily: "inherit" }}>+ Add Selection Stage</button>
-                        </div>
 
-                        {/* Competencies */}
-                        <div style={{ textAlign: "left" }}>
-                            <label style={{ fontSize: 12, fontWeight: 700, color: "#475569", display: "block", marginBottom: 12 }}>COMPETENCIES</label>
-                            {form.competencies.map((c, i) => (
-                                <div key={i} style={{ padding: 16, border: "1px solid #e2e8f0", borderRadius: 12, background: "#f8fafc", position: "relative", marginBottom: 12 }}>
-                                    <div style={{ display: "grid", gridTemplateColumns: "1fr 100px", gap: 12, marginBottom: 12 }}>
-                                        <input style={inp} value={c.name} onChange={e => handleCompChange(i, "name", e.target.value)} placeholder="Competency name" />
-                                        <input style={inp} type="number" value={c.learning_hours} onChange={e => handleCompChange(i, "learning_hours", e.target.value)} placeholder="Hours" />
-                                    </div>
-                                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                                        <label style={{ fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.5px" }}>Description</label>
-                                        <button onClick={() => handleGenerateAI(i)} disabled={generatingIndex === i}
-                                            style={{ display: "flex", alignItems: "center", gap: 5, background: "linear-gradient(135deg, #6366f1, #8b5cf6)", color: "#fff", border: "none", borderRadius: 6, padding: "5px 12px", fontSize: 10, fontWeight: 700, cursor: generatingIndex === i ? "default" : "pointer", opacity: generatingIndex === i ? 0.7 : 1, boxShadow: "0 2px 6px rgba(99,102,241,.3)", fontFamily: "inherit" }}>
-                                            <Icon.Sparkles /> {generatingIndex === i ? "Generating..." : "Generate AI"}
-                                        </button>
-                                    </div>
-                                    <textarea style={{ ...inp, minHeight: 80 }} value={c.description} onChange={e => handleCompChange(i, "description", e.target.value)} placeholder="Short description..." />
-                                    <button onClick={() => setForm({ ...form, competencies: form.competencies.filter((_, j) => j !== i) })} style={{ position: "absolute", top: -8, right: -8, width: 24, height: 24, borderRadius: "50%", border: "1px solid #fee2e2", background: "#fff", color: "#ef4444", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
+                                {/* AI description for non-screening steps */}
+                                {f.type !== "screening" && (
+                                    <>
+                                        <div className="flex justify-between items-center mb-1.5 flex-wrap gap-2">
+                                            <label className="text-xs font-bold uppercase tracking-wide" style={{ color: "#64748b" }}>Instructions / Description</label>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleGenerateAIFlow(i)}
+                                                disabled={generatingFlowIndex === i}
+                                                className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-bold border-none cursor-pointer"
+                                                style={{ background: "linear-gradient(135deg, #10b981, #059669)", color: "#fff", opacity: generatingFlowIndex === i ? 0.7 : 1, boxShadow: "0 2px 6px rgba(16,185,129,.3)", fontFamily: "inherit" }}
+                                            >
+                                                <Icon.Sparkles />
+                                                {generatingFlowIndex === i ? "Generating..." : "Generate AI"}
+                                            </button>
+                                        </div>
+                                        <textarea style={{ ...inp, minHeight: 80 }} value={f.description} onChange={e => handleFlowChange(i, "description", e.target.value)} placeholder="What HR should evaluate in this stage..." />
+                                    </>
+                                )}
+
+                                {/* Remove button */}
+                                <button
+                                    onClick={() => setForm({ ...form, selection_flow: form.selection_flow.filter((_, j) => j !== i) })}
+                                    className="absolute -top-2 -right-2 w-6 h-6 rounded-full border flex items-center justify-center cursor-pointer text-sm"
+                                    style={{ background: "#fff", color: "#ef4444", borderColor: "#fee2e2" }}
+                                >✕</button>
+                            </div>
+                        ))}
+                        <button
+                            onClick={() => setForm({ ...form, selection_flow: [...form.selection_flow, { type: "", name: "", description: "" }] })}
+                            className="w-full py-2.5 border-dashed border-2 border-slate-200 rounded-xl bg-transparent text-xs font-bold cursor-pointer mb-3"
+                            style={{ color: "#64748b", fontFamily: "inherit" }}
+                        >+ Add Selection Stage</button>
+                    </div>
+
+                    {/* ── Competencies ───────────────────────────────── */}
+                    <div className="text-left">
+                        <label className="text-xs font-bold block mb-3" style={{ color: "#475569" }}>COMPETENCIES</label>
+                        {form.competencies.map((c, i) => (
+                            <div key={i} className="p-4 border border-slate-200 rounded-xl relative mb-3" style={{ background: "#f8fafc" }}>
+                                {/* Name + hours — stacks on mobile */}
+                                <div className="flex flex-col sm:grid gap-3 mb-3" style={{ gridTemplateColumns: "1fr 100px" }}>
+                                    <input style={inp} value={c.name} onChange={e => handleCompChange(i, "name", e.target.value)} placeholder="Competency name" />
+                                    <input style={inp} type="number" value={c.learning_hours} onChange={e => handleCompChange(i, "learning_hours", e.target.value)} placeholder="Hours" />
                                 </div>
-                            ))}
-                            <button onClick={() => setForm({ ...form, competencies: [...form.competencies, { name: "", learning_hours: "", description: "" }] })} style={{ width: "100%", padding: "10px", border: "1.5px dashed #e2e8f0", borderRadius: 12, background: "none", color: "#64748b", fontSize: 12.5, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>+ Add Competency</button>
-                        </div>
+
+                                {/* Description + AI */}
+                                <div className="flex justify-between items-center mb-1.5 flex-wrap gap-2">
+                                    <label className="text-xs font-bold uppercase tracking-wide" style={{ color: "#64748b" }}>Description</label>
+                                    <button
+                                        onClick={() => handleGenerateAI(i)}
+                                        disabled={generatingIndex === i}
+                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-bold border-none cursor-pointer"
+                                        style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)", color: "#fff", opacity: generatingIndex === i ? 0.7 : 1, boxShadow: "0 2px 6px rgba(99,102,241,.3)", fontFamily: "inherit" }}
+                                    >
+                                        <Icon.Sparkles />
+                                        {generatingIndex === i ? "Generating..." : "Generate AI"}
+                                    </button>
+                                </div>
+                                <textarea style={{ ...inp, minHeight: 80 }} value={c.description} onChange={e => handleCompChange(i, "description", e.target.value)} placeholder="Short description..." />
+
+                                {/* Remove */}
+                                <button
+                                    onClick={() => setForm({ ...form, competencies: form.competencies.filter((_, j) => j !== i) })}
+                                    className="absolute -top-2 -right-2 w-6 h-6 rounded-full border flex items-center justify-center cursor-pointer text-sm"
+                                    style={{ background: "#fff", color: "#ef4444", borderColor: "#fee2e2" }}
+                                >✕</button>
+                            </div>
+                        ))}
+                        <button
+                            onClick={() => setForm({ ...form, competencies: [...form.competencies, { name: "", learning_hours: "", description: "" }] })}
+                            className="w-full py-2.5 border-dashed border-2 border-slate-200 rounded-xl bg-transparent text-xs font-bold cursor-pointer"
+                            style={{ color: "#64748b", fontFamily: "inherit" }}
+                        >+ Add Competency</button>
                     </div>
                 </div>
-                <div style={{ padding: "18px 28px", borderTop: "1px solid #e2e8f0", display: "flex", justifyContent: "flex-end", gap: 10 }}>
-                    <button onClick={onClose} style={{ padding: "10px 20px", borderRadius: 10, border: "1px solid #e2e8f0", background: "#fff", fontWeight: 700, fontSize: 13, color: "#64748b", cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
-                    <button onClick={() => {
-                        // Ensure learning_hours are integers
-                        const cleanedForm = {
-                            ...form,
-                            competencies: form.competencies.map(c => ({
-                                ...c,
-                                learning_hours: parseInt(c.learning_hours, 10) || 0
-                            }))
-                        };
-                        onSave(item?.id_position, cleanedForm);
-                    }} style={{ padding: "10px 24px", borderRadius: 10, border: "none", background: "#2563c4", color: "#fff", fontWeight: 800, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>Save</button>
+
+                {/* Footer */}
+                <div className="px-5 md:px-7 py-4 border-t border-slate-200 flex justify-end gap-2.5">
+                    <button
+                        onClick={onClose}
+                        className="px-4 py-2.5 rounded-xl border border-slate-200 bg-white font-bold text-xs cursor-pointer"
+                        style={{ color: "#64748b", fontFamily: "inherit" }}
+                    >Cancel</button>
+                    <button
+                        onClick={() => {
+                            const cleanedForm = { ...form, competencies: form.competencies.map(c => ({ ...c, learning_hours: parseInt(c.learning_hours, 10) || 0 })) };
+                            onSave(item?.id_position, cleanedForm);
+                        }}
+                        className="px-5 py-2.5 rounded-xl border-none font-extrabold text-xs text-white cursor-pointer"
+                        style={{ background: "#2563c4", fontFamily: "inherit" }}
+                    >Save</button>
                 </div>
             </div>
         </div>
@@ -504,16 +611,70 @@ function PositionModal({ open, item, onClose, onSave }) {
 function ConfirmModal({ open, title, message, confirmLabel, confirmColor = "#ef4444", onConfirm, onCancel }) {
     if (!open) return null;
     return (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(10,22,40,.5)", zIndex: 400, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <div style={{ background: "#fff", borderRadius: 16, padding: 28, width: 360, textAlign: "left", boxShadow: "0 20px 60px rgba(0,0,0,.18)" }}>
-                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: "#0f172a" }}>{title}</h3>
-                <p style={{ fontSize: 13, color: "#64748b", margin: "10px 0 20px", lineHeight: 1.6 }}>{message}</p>
-                <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-                    <button onClick={onCancel} style={{ padding: "8px 18px", borderRadius: 9, border: "1px solid #e2e8f0", background: "#fff", fontSize: 13, fontWeight: 700, color: "#64748b", cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
-                    <button onClick={onConfirm} style={{ padding: "8px 18px", borderRadius: 9, border: "none", background: confirmColor, fontSize: 13, fontWeight: 700, color: "#fff", cursor: "pointer", fontFamily: "inherit" }}>{confirmLabel}</button>
+        /* p-4 ensures modal never touches edges on phones */
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(10,22,40,.5)" }}>
+            <div className="bg-white rounded-2xl p-6 w-full max-w-sm text-left" style={{ boxShadow: "0 20px 60px rgba(0,0,0,.18)" }}>
+                <h3 className="text-base font-extrabold m-0" style={{ color: "#0f172a" }}>{title}</h3>
+                <p className="text-sm leading-relaxed my-3" style={{ color: "#64748b" }}>{message}</p>
+                <div className="flex gap-2.5 justify-end">
+                    <button
+                        onClick={onCancel}
+                        className="px-4 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold cursor-pointer"
+                        style={{ color: "#64748b", fontFamily: "inherit" }}
+                    >Cancel</button>
+                    <button
+                        onClick={onConfirm}
+                        className="px-4 py-2 rounded-xl border-none text-xs font-bold text-white cursor-pointer"
+                        style={{ background: confirmColor, fontFamily: "inherit" }}
+                    >{confirmLabel}</button>
                 </div>
             </div>
         </div>
+    );
+}
+
+// ── Sidebar (shared for desktop + mobile overlay) ─────────────────
+function SidebarContent({ navItems, navItems2, comp, companyName, initials, navigate, onLogout, onClose }) {
+    return (
+        <>
+            <Link to="/" onClick={onClose} className="flex items-center gap-2.5 px-1.5 pb-5 no-underline">
+                <img src="/assets/images/logo.png" alt="Logo" className="h-11 object-contain flex-shrink-0" />
+                <span className="text-base font-extrabold text-white tracking-tight whitespace-nowrap">EarlyPath</span>
+            </Link>
+            <p className="text-xs font-bold px-3.5 pb-1 pt-1.5 uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.25)" }}>Main Menu</p>
+            {navItems.map((n) => (
+                <SideItem key={n.label} icon={n.icon} label={n.label} active={n.label === "Positions Management"}
+                    onClick={() => { if (n.path !== "/positions") navigate(n.path); if (onClose) onClose(); }} />
+            ))}
+            <div className="h-px mx-2 my-3" style={{ background: "rgba(255,255,255,0.07)" }} />
+            <p className="text-xs font-bold px-3.5 pb-1 uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.25)" }}>Others</p>
+            {navItems2.map((n) => (
+                <SideItem key={n.label} icon={n.icon} label={n.label} active={false}
+                    onClick={() => { navigate(n.path); if (onClose) onClose(); }} />
+            ))}
+            <div className="flex-1" />
+            <div className="border-t pt-3.5 flex items-center gap-2.5" style={{ borderColor: "rgba(255,255,255,0.07)" }}>
+                {comp?.logo_path
+                    ? <img src={`${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.split("/api")[0] : "http://localhost:8000"}/storage/${comp.logo_path}`}
+                        alt="Logo" className="w-9 h-9 rounded-xl object-cover" />
+                    : <div className="w-9 h-9 rounded-xl flex-shrink-0 flex items-center justify-center text-xs font-extrabold text-white"
+                        style={{ background: "linear-gradient(135deg, #2d7dd2, #4a9eff)" }}>{initials}</div>
+                }
+                <div className="flex-1 min-w-0">
+                    <div className="text-xs font-bold text-white truncate" style={{ fontSize: "12.5px" }}>{companyName}</div>
+                    <div className="text-xs" style={{ color: "rgba(255,255,255,0.4)", fontSize: "11px" }}>Admin</div>
+                </div>
+                <button
+                    onClick={onLogout}
+                    className="bg-transparent border-none cursor-pointer p-1 rounded-md flex transition-colors"
+                    style={{ color: "rgba(255,255,255,0.35)" }}
+                    onMouseEnter={e => { e.currentTarget.style.color = "#f87171"; e.currentTarget.style.background = "rgba(248,113,113,0.1)"; }}
+                    onMouseLeave={e => { e.currentTarget.style.color = "rgba(255,255,255,0.35)"; e.currentTarget.style.background = "transparent"; }}
+                >
+                    <Icon.Logout />
+                </button>
+            </div>
+        </>
     );
 }
 
@@ -522,25 +683,24 @@ export default function PositionsManagement() {
     const navigate = useNavigate();
     const { logout, token } = useAuthStore();
 
-    const [programs, setPrograms]               = useState([]);
-    const [catalog, setCatalog]                 = useState([]);
-    const [loading, setLoading]                 = useState(true);
-    const [catalogLoading, setCatalogLoading]   = useState(false);
+    const [programs, setPrograms]             = useState([]);
+    const [catalog, setCatalog]               = useState([]);
+    const [loading, setLoading]               = useState(true);
+    const [catalogLoading, setCatalogLoading] = useState(false);
     const [isCatalogVisible, setIsCatalogVisible] = useState(false);
-    const [filter, setFilter]                   = useState("all");
-    const [search, setSearch]                   = useState("");
+    const [filter, setFilter]                 = useState("all");
+    const [search, setSearch]                 = useState("");
+    const [sidebarOpen, setSidebarOpen]       = useState(false);
 
-    const [selectedProg, setSelectedProg]       = useState(null);
-    const [deletingProg, setDeletingProg]       = useState(null);
+    const [selectedProg, setSelectedProg]           = useState(null);
+    const [deletingProg, setDeletingProg]           = useState(null);
     const [editingCatalogItem, setEditingCatalogItem] = useState(null);
 
     const [submissionModalOpen, setSubmissionModalOpen] = useState(false);
-    const [posModalOpen, setPosModalOpen]       = useState(false);
+    const [posModalOpen, setPosModalOpen]     = useState(false);
     const [logoutModalOpen, setLogoutModalOpen] = useState(false);
 
-    // Confirm modal state
     const [confirmModal, setConfirmModal] = useState({ open: false, title: "", message: "", confirmLabel: "", confirmColor: "#ef4444", onConfirm: null });
-
     const [toast, setToast] = useState({ msg: "", type: "success", visible: false });
 
     const showToast = (msg, type = "success") => {
@@ -555,6 +715,13 @@ export default function PositionsManagement() {
     const closeConfirm = () => setConfirmModal(m => ({ ...m, open: false, onConfirm: null }));
 
     useEffect(() => { fetchPrograms(); fetchCatalog(); }, []);
+
+    // Close sidebar on resize to desktop
+    useEffect(() => {
+        const handleResize = () => { if (window.innerWidth >= 1024) setSidebarOpen(false); };
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+    }, []);
 
     const fetchCatalog = async () => {
         try {
@@ -574,7 +741,6 @@ export default function PositionsManagement() {
         finally { setLoading(false); }
     };
 
-    // ── Lock / Unlock ───────────────────────────────────────────
     const handleLock = (item) => {
         const isLocked = item.locked;
         showConfirm({
@@ -588,11 +754,7 @@ export default function PositionsManagement() {
                 closeConfirm();
                 try {
                     const action = isLocked ? "unlock" : "lock";
-                    await axios.post(
-                        `${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/positions/catalog/${item.id_position}/${action}`,
-                        {},
-                        { headers: { Authorization: `Bearer ${token}` } }
-                    );
+                    await axios.post(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/positions/catalog/${item.id_position}/${action}`, {}, { headers: { Authorization: `Bearer ${token}` } });
                     showToast(`Position ${action}ed successfully.`);
                     fetchCatalog();
                 } catch (e) {
@@ -602,7 +764,6 @@ export default function PositionsManagement() {
         });
     };
 
-    // ── Duplicate ───────────────────────────────────────────────
     const handleDuplicate = (item) => {
         showConfirm({
             title: `Duplicate "${item.name}"?`,
@@ -612,13 +773,9 @@ export default function PositionsManagement() {
             onConfirm: async () => {
                 closeConfirm();
                 try {
-                    const duplicateUrl = `${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/positions/catalog/${item.id_position}/duplicate`;
-                    const config = { headers: { Authorization: `Bearer ${token}` } };
-                    const res = await axios.post(duplicateUrl, null, config);
+                    await axios.post(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/positions/catalog/${item.id_position}/duplicate`, null, { headers: { Authorization: `Bearer ${token}` } });
                     showToast(`"${item.name}" duplicated successfully and added to catalog.`);
-                    // Auto-expand catalog to show the duplicate
                     setIsCatalogVisible(true);
-                    // Refresh both catalog and programs to show duplicate in the grid
                     fetchCatalog();
                     fetchPrograms();
                 } catch (e) {
@@ -628,7 +785,6 @@ export default function PositionsManagement() {
         });
     };
 
-    // ── Delete catalog ──────────────────────────────────────────
     const handleDeleteCatalog = (id) => {
         showConfirm({
             title: "Delete Position?",
@@ -640,7 +796,6 @@ export default function PositionsManagement() {
                 try {
                     await axios.delete(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/positions/catalog/${id}`, { headers: { Authorization: `Bearer ${token}` } });
                     showToast("Position deleted.");
-                    // Close modal and refresh both catalog and programs
                     setPosModalOpen(false);
                     setEditingCatalogItem(null);
                     fetchCatalog();
@@ -652,13 +807,12 @@ export default function PositionsManagement() {
         });
     };
 
-    // ── Delete program ──────────────────────────────────────────
     const handleDeleteProgram = async (prog) => {
         try {
             await axios.delete(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/programs/${prog.id_vacancy}/${prog.id_position}`, { headers: { Authorization: `Bearer ${token}` } });
             showToast("Program removed.");
             fetchPrograms();
-        } catch (err) {
+        } catch {
             showToast("Failed to remove.", "error");
         }
     };
@@ -666,17 +820,14 @@ export default function PositionsManagement() {
     const comp = (() => { try { return JSON.parse(localStorage.getItem("company")); } catch { return null; } })();
     const companyName = comp?.name || "Admin";
     const initials = companyName.slice(0, 2).toUpperCase();
-    const SIDEBAR_W = 250;
 
     const navItems = [
-        { label: "Dashboard",            icon: <Icon.Dashboard />, path: "/dashboard" },
-        { label: "User Management",       icon: <Icon.Users />,    path: "/users" },
-        { label: "Program Management",    icon: <Icon.Lowongan />, path: "/programs" },
-        { label: "Positions Management",  icon: <Icon.Program />,  path: "/positions" },
+        { label: "Dashboard",           icon: <Icon.Dashboard />, path: "/dashboard" },
+        { label: "User Management",      icon: <Icon.Users />,    path: "/users" },
+        { label: "Program Management",   icon: <Icon.Lowongan />, path: "/programs" },
+        { label: "Positions Management", icon: <Icon.Program />,  path: "/positions" },
     ];
-    const navItems2 = [
-        { label: "Settings", icon: <Icon.Pengaturan />, path: "/settings" },
-    ];
+    const navItems2 = [{ label: "Settings", icon: <Icon.Pengaturan />, path: "/settings" }];
 
     const filtered = programs.filter(p => {
         const ms = (p.position_name || "").toLowerCase().includes(search.toLowerCase()) || (p.vacancy_title || "").toLowerCase().includes(search.toLowerCase());
@@ -684,137 +835,181 @@ export default function PositionsManagement() {
         return ms && mf;
     });
 
-    return (
-        <div style={{ display: "flex", minHeight: "100vh", background: "#f8fafc", fontFamily: "'Poppins', sans-serif" }}>
-            <style>{`* { box-sizing: border-box; } ::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: rgba(0,0,0,.12); border-radius: 99px; } @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } } .fade-in { animation: fadeIn 0.35s ease both; }`}</style>
+    const sidebarProps = { navItems, navItems2, comp, companyName, initials, navigate, onLogout: () => setLogoutModalOpen(true) };
 
-            {/* SIDEBAR */}
-            <aside style={{ width: SIDEBAR_W, flexShrink: 0, background: "linear-gradient(180deg, #0f1c2e 0%, #0d1a28 100%)", display: "flex", flexDirection: "column", height: "100vh", position: "sticky", top: 0, padding: "20px 12px", gap: "4px", overflowY: "auto" }}>
-                <Link to="/" style={{ display: "flex", alignItems: "center", gap: "10px", padding: "4px 6px 20px", textDecoration: "none" }}>
-                    <img src="/assets/images/logo.png" alt="Logo" style={{ height: "46px" }} />
-                    <span style={{ fontSize: "15px", fontWeight: "800", color: "#fff", letterSpacing: "-0.3px" }}>EarlyPath</span>
-                </Link>
-                <p style={{ fontSize: "10px", fontWeight: "700", color: "rgba(255,255,255,0.25)", letterSpacing: "1.2px", padding: "6px 14px 4px", textTransform: "uppercase" }}>Main Menu</p>
-                {navItems.map((n) => (
-                    <SideItem key={n.label} icon={n.icon} label={n.label} active={n.label === "Positions Management"} onClick={() => { if (n.path !== "/positions") navigate(n.path); }} />
-                ))}
-                <div style={{ height: "1px", background: "rgba(255,255,255,0.07)", margin: "12px 8px" }} />
-                <p style={{ fontSize: "10px", fontWeight: "700", color: "rgba(255,255,255,0.25)", letterSpacing: "1.2px", padding: "0 14px 4px", textTransform: "uppercase" }}>Others</p>
-                {navItems2.map((n) => (
-                    <SideItem key={n.label} icon={n.icon} label={n.label} active={false} onClick={() => navigate(n.path)} />
-                ))}
-                <div style={{ flex: 1 }} />
-                <div style={{ borderTop: "1px solid rgba(255,255,255,0.07)", paddingTop: "14px", display: "flex", alignItems: "center", gap: "10px" }}>
-                    {comp?.logo_path
-                        ? <img src={`${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.split("/api")[0] : "http://localhost:8000"}/storage/${comp.logo_path}`} alt="Logo" style={{ width: "36px", height: "36px", borderRadius: "10px", objectFit: "cover" }} />
-                        : <div style={{ width: "36px", height: "36px", borderRadius: "10px", flexShrink: 0, background: "linear-gradient(135deg, #2d7dd2, #4a9eff)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "13px", fontWeight: "800", color: "#fff" }}>{initials}</div>
-                    }
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: "12.5px", fontWeight: "700", color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{companyName}</div>
-                        <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)" }}>Admin</div>
-                    </div>
-                    <button onClick={() => setLogoutModalOpen(true)} style={{ background: "transparent", border: "none", color: "rgba(255,255,255,0.35)", cursor: "pointer", padding: "4px", borderRadius: "6px", transition: "all 0.2s", display: "flex" }}
-                        onMouseEnter={e => { e.currentTarget.style.color = "#f87171"; e.currentTarget.style.background = "rgba(248,113,113,0.1)"; }}
-                        onMouseLeave={e => { e.currentTarget.style.color = "rgba(255,255,255,0.35)"; e.currentTarget.style.background = "transparent"; }}>
-                        <Icon.Logout />
-                    </button>
+    return (
+        <div className="flex min-h-screen bg-slate-50" style={{ fontFamily: "'Poppins', sans-serif" }}>
+            <style>{`
+                * { box-sizing: border-box; }
+                ::-webkit-scrollbar { width: 5px; }
+                ::-webkit-scrollbar-track { background: transparent; }
+                ::-webkit-scrollbar-thumb { background: rgba(0,0,0,.12); border-radius: 99px; }
+                @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+                .fade-in { animation: fadeIn 0.35s ease both; }
+                @keyframes slideIn { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+                .sidebar-slide { animation: slideIn 0.25s ease both; }
+            `}</style>
+
+            {/* ── MOBILE SIDEBAR OVERLAY ─────────────────────────── */}
+            {sidebarOpen && (
+                <div className="fixed inset-0 z-40 lg:hidden" style={{ background: "rgba(0,0,0,0.5)" }} onClick={() => setSidebarOpen(false)}>
+                    <aside
+                        className="sidebar-slide absolute left-0 top-0 bottom-0 flex flex-col gap-1 overflow-y-auto overflow-x-hidden p-5"
+                        style={{ width: "260px", background: "linear-gradient(180deg, #0f1c2e 0%, #0d1a28 100%)" }}
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <div className="flex items-center justify-between mb-1">
+                            <span className="text-base font-extrabold text-white">Menu</span>
+                            <button onClick={() => setSidebarOpen(false)} className="text-white/50 border-none bg-transparent cursor-pointer p-1"><Icon.Close /></button>
+                        </div>
+                        <SidebarContent {...sidebarProps} onClose={() => setSidebarOpen(false)} />
+                    </aside>
                 </div>
+            )}
+
+            {/* ── DESKTOP SIDEBAR ────────────────────────────────── */}
+            <aside className="hidden lg:flex flex-col flex-shrink-0 h-screen sticky top-0 overflow-y-auto overflow-x-hidden gap-1 p-3"
+                style={{ width: "250px", background: "linear-gradient(180deg, #0f1c2e 0%, #0d1a28 100%)" }}>
+                <SidebarContent {...sidebarProps} onClose={null} />
             </aside>
 
-            {/* MAIN */}
-            <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
-                <header style={{ height: 56, background: "#fff", borderBottom: "1px solid #e2e8f0", display: "flex", alignItems: "center", padding: "0 24px", position: "sticky", top: 0, zIndex: 50 }}>
-                    <div style={{ flex: 1, textAlign: "left" }}>
-                        <span style={{ fontSize: "15px", fontWeight: "700", color: "#1e293b" }}>Positions Management</span>
-                        <span style={{ fontSize: "13px", color: "#94a3b8", margin: "0 6px" }}>/</span>
-                        <span style={{ fontSize: "13px", color: "#94a3b8" }}>Management</span>
+            {/* ── MAIN ───────────────────────────────────────────── */}
+            <div className="flex-1 flex flex-col min-w-0">
+
+                {/* Topbar */}
+                <header className="h-14 bg-white border-b border-slate-200 flex items-center px-4 md:px-6 gap-3 sticky top-0 z-30">
+                    <button
+                        onClick={() => setSidebarOpen(true)}
+                        className="lg:hidden flex items-center justify-center w-9 h-9 rounded-lg border border-slate-200 bg-slate-50 cursor-pointer text-slate-600 flex-shrink-0"
+                    >
+                        <Icon.Menu />
+                    </button>
+                    <div className="flex-1 text-left">
+                        <span className="text-sm font-bold" style={{ color: "#1e293b" }}>Positions Management</span>
+                        <span className="text-xs mx-1.5" style={{ color: "#94a3b8" }}>/</span>
+                        <span className="text-xs" style={{ color: "#94a3b8" }}>Management</span>
                     </div>
                 </header>
 
-                <main style={{ padding: 28, flex: 1, textAlign: "left" }} className="fade-in">
-                    {/* Page header */}
-                    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 24, gap: 12, flexWrap: "wrap" }}>
+                {/* Page body */}
+                <main className="p-4 md:p-6 lg:p-7 pb-12 flex-1 text-left fade-in">
+
+                    {/* ── Page header — stacks on mobile ──────────── */}
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
                         <div>
-                            <div style={{ fontSize: 20, fontWeight: 800, color: "#0f172a", lineHeight: 1.2 }}>Positions Management</div>
-                            <div style={{ fontSize: 13, color: "#64748b", marginTop: 3 }}>Manage position catalog and program linkages.</div>
+                            <div className="text-lg md:text-xl font-extrabold" style={{ color: "#0f172a" }}>Positions Management</div>
+                            <div className="text-xs md:text-sm mt-0.5" style={{ color: "#64748b" }}>Manage position catalog and program linkages.</div>
                         </div>
-                        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: "8px", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px", padding: "7px 14px", width: "240px" }}>
+                        {/* Search + Add button row */}
+                        <div className="flex items-center gap-2.5 flex-wrap">
+                            <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 flex-1 sm:flex-none sm:w-56">
                                 <Icon.Search />
-                                <input placeholder="Search position or program..." value={search} onChange={e => setSearch(e.target.value)}
-                                    style={{ border: "none", background: "transparent", outline: "none", fontSize: "13px", color: "#64748b", width: "100%", fontFamily: "inherit" }} />
+                                <input
+                                    placeholder="Search position or program..."
+                                    value={search}
+                                    onChange={e => setSearch(e.target.value)}
+                                    className="border-none bg-transparent outline-none text-xs w-full"
+                                    style={{ color: "#64748b", fontFamily: "inherit" }}
+                                />
                             </div>
                             {isCatalogVisible && (
-                                <button onClick={() => { setEditingCatalogItem(null); setPosModalOpen(true); }}
-                                    style={{ display: "flex", alignItems: "center", gap: 7, background: "#2563c4", color: "#fff", border: "none", borderRadius: 8, padding: "10px 18px", fontFamily: "inherit", fontSize: 13, fontWeight: 600, cursor: "pointer", boxShadow: "0 2px 8px rgba(37,99,235,.3)" }}>
-                                    <Icon.Plus /> Add Position
+                                <button
+                                    onClick={() => { setEditingCatalogItem(null); setPosModalOpen(true); }}
+                                    className="flex items-center gap-1.5 text-white border-none rounded-lg px-4 py-2 text-xs font-semibold cursor-pointer flex-shrink-0"
+                                    style={{ background: "#2563c4", boxShadow: "0 2px 8px rgba(37,99,235,.3)", fontFamily: "inherit" }}
+                                >
+                                    <Icon.Plus />
+                                    <span>Add Position</span>
                                 </button>
                             )}
                         </div>
                     </div>
 
-                    {/* ── Position Catalog ─────────────────────────────── */}
-                    <div style={{ marginBottom: 40 }}>
-                        <div onClick={() => setIsCatalogVisible(!isCatalogVisible)}
-                            style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", background: isCatalogVisible ? "#eff6ff" : "#fff", border: "1px solid #e2e8f0", borderRadius: 12, cursor: "pointer", transition: "background 0.2s" }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                                <div style={{ color: "#2563c4", transform: isCatalogVisible ? "rotate(90deg)" : "rotate(0deg)", transition: "0.2s" }}><Icon.ChevronRight /></div>
-                                <div style={{ fontSize: 13, fontWeight: 800, color: "#475569", textTransform: "uppercase" }}>Position Catalog</div>
-                                {!isCatalogVisible && <span style={{ fontSize: 12, color: "#94a3b8" }}>({catalog.length} positions)</span>}
+                    {/* ── Position Catalog ─────────────────────────── */}
+                    <div className="mb-10">
+                        {/* Accordion toggle */}
+                        <div
+                            onClick={() => setIsCatalogVisible(!isCatalogVisible)}
+                            className="flex items-center justify-between px-4 py-3 border border-slate-200 rounded-xl cursor-pointer transition-colors"
+                            style={{ background: isCatalogVisible ? "#eff6ff" : "#fff" }}
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="transition-transform" style={{ color: "#2563c4", transform: isCatalogVisible ? "rotate(90deg)" : "rotate(0deg)" }}>
+                                    <Icon.ChevronRight />
+                                </div>
+                                <div className="text-xs font-extrabold uppercase tracking-wide" style={{ color: "#475569" }}>Position Catalog</div>
+                                {!isCatalogVisible && (
+                                    <span className="text-xs" style={{ color: "#94a3b8" }}>({catalog.length} positions)</span>
+                                )}
                             </div>
                             {isCatalogVisible && (
-                                <div style={{ display: "flex", gap: 8 }}>
-                                    <span style={{ fontSize: 11, color: "#94a3b8" }}>{catalog.filter(c => c.locked).length} locked</span>
+                                <div className="hidden sm:flex gap-2 text-xs" style={{ color: "#94a3b8" }}>
+                                    <span>{catalog.filter(c => c.locked).length} locked</span>
                                     <span style={{ color: "#cbd5e1" }}>·</span>
-                                    <span style={{ fontSize: 11, color: "#94a3b8" }}>{catalog.filter(c => !c.locked).length} unlocked</span>
+                                    <span>{catalog.filter(c => !c.locked).length} unlocked</span>
                                 </div>
                             )}
                         </div>
 
+                        {/* Catalog list */}
                         {isCatalogVisible && (
-                            <div style={{ background: "#fff", borderRadius: 16, border: "1px solid #e2e8f0", overflow: "hidden", marginTop: 12 }}>
+                            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden mt-3">
                                 {catalogLoading ? (
-                                    <div style={{ padding: 40, textAlign: "center", color: "#94a3b8", fontSize: 13 }}>Loading positions...</div>
+                                    <div className="py-10 text-center text-xs" style={{ color: "#94a3b8" }}>Loading positions...</div>
                                 ) : catalog.length === 0 ? (
-                                    <div style={{ padding: 40, textAlign: "center", color: "#94a3b8", fontSize: 13 }}>No positions yet. Add your first position.</div>
-                                ) : (
-                                    catalog.map(item => (
-                                        <CatalogItem
-                                            key={item.id_position}
-                                            item={item}
-                                            onEdit={(it) => { setEditingCatalogItem(it); setPosModalOpen(true); }}
-                                            onDelete={handleDeleteCatalog}
-                                            onLock={handleLock}
-                                            onDuplicate={handleDuplicate}
-                                        />
-                                    ))
-                                )}
+                                    <div className="py-10 text-center text-xs" style={{ color: "#94a3b8" }}>No positions yet. Add your first position.</div>
+                                ) : catalog.map(item => (
+                                    <CatalogItem
+                                        key={item.id_position}
+                                        item={item}
+                                        onEdit={(it) => { setEditingCatalogItem(it); setPosModalOpen(true); }}
+                                        onDelete={handleDeleteCatalog}
+                                        onLock={handleLock}
+                                        onDuplicate={handleDuplicate}
+                                    />
+                                ))}
                             </div>
                         )}
                     </div>
 
-                    {/* ── Program Positions ────────────────────────────── */}
+                    {/* ── Program Positions ────────────────────────── */}
                     <SectionTitle style={{ marginBottom: 18 }}>Program Positions</SectionTitle>
-                    <div style={{ display: "flex", gap: 8, marginBottom: 22, flexWrap: "wrap" }}>
+
+                    {/* Filter pills */}
+                    <div className="flex gap-2 mb-5 flex-wrap">
                         {[
                             { key: "all",       label: "All",       count: programs.length },
                             { key: "published", label: "Published", count: programs.filter(p => p.vacancy_status === "published").length },
                             { key: "closed",    label: "Closed",    count: programs.filter(p => p.vacancy_status === "closed").length },
                         ].map(t => (
-                            <button key={t.key} onClick={() => setFilter(t.key)}
-                                style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 16px", borderRadius: "100px", border: `1.5px solid ${filter === t.key ? "#2563c4" : "#e2e8f0"}`, background: filter === t.key ? "#2563c4" : "#fff", color: filter === t.key ? "#fff" : "#64748b", fontSize: "13px", fontWeight: "600", cursor: "pointer", transition: "all .15s", fontFamily: "inherit" }}>
+                            <button
+                                key={t.key}
+                                onClick={() => setFilter(t.key)}
+                                className="flex items-center gap-2 px-4 py-2 rounded-full border text-xs font-semibold cursor-pointer transition-all"
+                                style={{
+                                    borderColor: filter === t.key ? "#2563c4" : "#e2e8f0",
+                                    background: filter === t.key ? "#2563c4" : "#fff",
+                                    color: filter === t.key ? "#fff" : "#64748b",
+                                    fontFamily: "inherit",
+                                }}
+                            >
                                 <span>{t.label}</span>
-                                <span style={{ background: filter === t.key ? "rgba(255,255,255,0.2)" : "#f1f5f9", padding: "1px 7px", borderRadius: "10px", fontSize: "11px", fontWeight: "700" }}>{t.count}</span>
+                                <span className="px-1.5 py-0.5 rounded-full text-xs font-bold"
+                                    style={{ background: filter === t.key ? "rgba(255,255,255,0.2)" : "#f1f5f9" }}>
+                                    {t.count}
+                                </span>
                             </button>
                         ))}
                     </div>
 
+                    {/* Program cards grid
+                        minmax(280px) instead of 320px for better phone fit */}
                     {loading ? (
-                        <div style={{ textAlign: "center", padding: 40, color: "#94a3b8", fontSize: 13 }}>Loading programs...</div>
+                        <div className="py-10 text-center text-xs" style={{ color: "#94a3b8" }}>Loading programs...</div>
                     ) : filtered.length === 0 ? (
-                        <div style={{ textAlign: "center", padding: 60, color: "#94a3b8", fontSize: 13 }}>No programs found.</div>
+                        <div className="py-16 text-center text-xs" style={{ color: "#94a3b8" }}>No programs found.</div>
                     ) : (
-                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(320px,1fr))", gap: 20 }}>
+                        <div className="grid gap-4 md:gap-5" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))" }}>
                             {filtered.map((p, i) => (
                                 <ProgramCard key={i} program={p}
                                     onEdit={(prog) => { setSelectedProg(prog); setSubmissionModalOpen(true); }}
@@ -826,8 +1021,12 @@ export default function PositionsManagement() {
                 </main>
             </div>
 
-            {/* ── Modals ──────────────────────────────────────────── */}
-            <SubmissionModal open={submissionModalOpen} program={selectedProg} onClose={() => { setSubmissionModalOpen(false); setSelectedProg(null); }} />
+            {/* ── Modals ─────────────────────────────────────────── */}
+            <SubmissionModal
+                open={submissionModalOpen}
+                program={selectedProg}
+                onClose={() => { setSubmissionModalOpen(false); setSelectedProg(null); }}
+            />
 
             <PositionModal
                 open={posModalOpen}
@@ -835,7 +1034,9 @@ export default function PositionsManagement() {
                 onClose={() => { setPosModalOpen(false); setEditingCatalogItem(null); }}
                 onSave={async (id, data) => {
                     try {
-                        const url = id ? `${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/positions/catalog/${id}` : `${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/positions/catalog`;
+                        const url = id
+                            ? `${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/positions/catalog/${id}`
+                            : `${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/positions/catalog`;
                         await axios[id ? "put" : "post"](url, data, { headers: { Authorization: `Bearer ${token}` } });
                         showToast(`Position ${id ? "updated" : "created"} successfully.`);
                         fetchCatalog();
@@ -860,7 +1061,7 @@ export default function PositionsManagement() {
                 />
             )}
 
-            {/* Generic confirm modal (lock/unlock/duplicate/delete catalog) */}
+            {/* Generic confirm (lock/unlock/duplicate/delete catalog) */}
             <ConfirmModal
                 open={confirmModal.open}
                 title={confirmModal.title}

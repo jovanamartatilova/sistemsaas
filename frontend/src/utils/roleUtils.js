@@ -3,6 +3,16 @@
  * Backend mungkin mengirim dengan nama field yang berbeda
  */
 
+/**
+ * Get the user's main role (for routing and access control)
+ * Never returns a fallback - returns null if no role detected
+ */
+export function getUserRole(user) {
+  if (!user) return null;
+  const role = user.role || null;
+  return role;
+}
+
 export function getScopedRole(user) {
   if (!user) return null;
 

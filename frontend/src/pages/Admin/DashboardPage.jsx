@@ -60,6 +60,16 @@ const IC = {
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
         </svg>
     ),
+    Menu: () => (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
+        </svg>
+    ),
+    Close: () => (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
+    ),
 };
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -89,19 +99,17 @@ function today() {
 // ── Tab Bar ───────────────────────────────────────────────────────────────────
 function TabBar({ tabs, active, onChange }) {
     return (
-        <div style={{ display: "flex", gap: "2px", background: "#f1f5f9", borderRadius: "8px", padding: "3px", flexShrink: 0 }}>
+        <div className="flex gap-0.5 bg-slate-100 rounded-lg p-1 flex-shrink-0">
             {tabs.map(t => (
                 <button
                     key={t}
                     onClick={() => onChange(t)}
+                    className="px-3 py-1.5 rounded-md border-none text-xs font-medium cursor-pointer transition-all whitespace-nowrap"
                     style={{
-                        padding: "5px 14px", borderRadius: "6px", border: "none",
                         background: active === t ? "#fff" : "transparent",
                         color: active === t ? "#1e293b" : "#94a3b8",
-                        fontSize: "12px", fontWeight: active === t ? "700" : "500",
-                        cursor: "pointer", transition: "all 0.15s",
+                        fontWeight: active === t ? "700" : "500",
                         boxShadow: active === t ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
-                        whiteSpace: "nowrap",
                     }}
                 >{t}</button>
             ))}
@@ -117,20 +125,18 @@ function SideItem({ icon, label, active, badge, onClick }) {
             onClick={onClick}
             onMouseEnter={() => setHov(true)}
             onMouseLeave={() => setHov(false)}
+            className="flex items-center gap-3 w-full px-3.5 py-2.5 rounded-xl text-sm font-medium cursor-pointer transition-all text-left border"
             style={{
-                display: "flex", alignItems: "center", gap: "11px",
-                width: "100%", padding: "10px 14px", borderRadius: "10px",
                 background: active ? "rgba(74,158,255,0.12)" : hov ? "rgba(255,255,255,0.05)" : "transparent",
-                border: active ? "1px solid rgba(74,158,255,0.22)" : "1px solid transparent",
+                borderColor: active ? "rgba(74,158,255,0.22)" : "transparent",
                 color: active ? "#4a9eff" : "rgba(255,255,255,0.6)",
-                fontSize: "13.5px", fontWeight: active ? "600" : "500",
-                cursor: "pointer", transition: "all 0.2s", textAlign: "left",
+                fontWeight: active ? "600" : "500",
             }}
         >
             <span style={{ opacity: active ? 1 : 0.75 }}>{icon}</span>
-            <span style={{ flex: 1 }}>{label}</span>
+            <span className="flex-1">{label}</span>
             {badge != null && badge > 0 && (
-                <span style={{ background: "#4a9eff", color: "#fff", borderRadius: "100px", fontSize: "11px", fontWeight: "700", padding: "1px 7px", minWidth: "20px", textAlign: "center" }}>
+                <span className="text-white rounded-full text-xs font-bold px-1.5 py-0.5 min-w-[20px] text-center" style={{ background: "#4a9eff", fontSize: "11px" }}>
                     {badge}
                 </span>
             )}
@@ -141,26 +147,22 @@ function SideItem({ icon, label, active, badge, onClick }) {
 // ── Stat Card ─────────────────────────────────────────────────────────────────
 function StatCard({ icon, iconBg, iconColor, title, value, sub, barColors }) {
     return (
-        <div style={{
-            background: "#fff", borderRadius: "16px", padding: "22px 24px",
-            boxShadow: "0 1px 4px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)",
-            display: "flex", flexDirection: "column", gap: "6px", minWidth: 0,
-        }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                <div style={{ width: "38px", height: "38px", borderRadius: "10px", background: iconBg, display: "flex", alignItems: "center", justifyContent: "center", color: iconColor }}>
+        <div className="bg-white rounded-2xl p-4 md:p-5 flex flex-col gap-1.5 min-w-0" style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)" }}>
+            <div className="flex justify-between items-start">
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: iconBg, color: iconColor }}>
                     {icon}
                 </div>
             </div>
-            <div style={{ fontSize: "28px", fontWeight: "800", color: "#1e293b", letterSpacing: "-1px", marginTop: "8px" }}>{value}</div>
-            <div style={{ fontSize: "13px", color: "#64748b", fontWeight: "500" }}>{title}</div>
+            <div className="text-2xl md:text-3xl font-extrabold mt-2" style={{ color: "#1e293b", letterSpacing: "-1px" }}>{value}</div>
+            <div className="text-xs font-medium" style={{ color: "#64748b" }}>{title}</div>
             {barColors && (
-                <div style={{ display: "flex", gap: "3px", marginTop: "10px", alignItems: "flex-end", height: "28px" }}>
+                <div className="flex gap-0.5 mt-2 items-end" style={{ height: "28px" }}>
                     {barColors.map((c, i) => (
-                        <div key={i} style={{ flex: 1, background: c, borderRadius: "3px 3px 0 0", height: `${30 + Math.sin(i) * 20}%`, opacity: 0.4, minHeight: "4px" }} />
+                        <div key={i} className="flex-1 rounded-t" style={{ background: c, height: `${30 + Math.sin(i) * 20}%`, opacity: 0.4, minHeight: "4px" }} />
                     ))}
                 </div>
             )}
-            {sub && <div style={{ fontSize: "12px", color: "#94a3b8", marginTop: "4px" }}>{sub}</div>}
+            {sub && <div className="text-xs mt-1" style={{ color: "#94a3b8" }}>{sub}</div>}
         </div>
     );
 }
@@ -172,8 +174,8 @@ function DonutChart({ data, total }) {
     const size = 110;
 
     return (
-        <div style={{ display: "flex", alignItems: "center", gap: "32px", flexWrap: "wrap", justifyContent: "center", padding: "10px 0", width: "100%" }}>
-            <div style={{ position: "relative", width: `${size}px`, height: `${size}px`, flexShrink: 0 }}>
+        <div className="flex items-center flex-wrap justify-center gap-6 md:gap-8 py-2 w-full px-2">
+            <div className="relative flex-shrink-0" style={{ width: `${size}px`, height: `${size}px` }}>
                 <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
                     {isEmpty ? (
                         <circle cx={size / 2} cy={size / 2} r={size / 2 - 10} fill="none" stroke="#e2e8f0" strokeWidth="20" />
@@ -197,23 +199,23 @@ function DonutChart({ data, total }) {
                         });
                     })()}
                 </svg>
-                <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-                    <div style={{ fontSize: "18px", fontWeight: "800", color: "#1e293b" }}>{totalCount}</div>
-                    <div style={{ fontSize: "10px", color: "#94a3b8", fontWeight: "600" }}>Total</div>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <div className="text-lg font-extrabold" style={{ color: "#1e293b" }}>{totalCount}</div>
+                    <div className="text-xs font-semibold" style={{ color: "#94a3b8", fontSize: "10px" }}>Total</div>
                 </div>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "6px", flex: 1, minWidth: "110px" }}>
+            <div className="flex flex-col gap-1.5 flex-1" style={{ minWidth: "110px" }}>
                 {isEmpty ? (
-                    <p style={{ fontSize: "12px", color: "#94a3b8" }}>No data available</p>
+                    <p className="text-xs" style={{ color: "#94a3b8" }}>No data available</p>
                 ) : data.map((d, i) => {
                     const pct = totalCount > 0 ? Math.round((d.count / totalCount) * 100) : 0;
                     return (
-                        <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "6px" }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: d.color, flexShrink: 0 }} />
-                                <span style={{ fontSize: "12px", color: "#64748b", textTransform: "capitalize", fontWeight: "500" }}>{d.label}</span>
+                        <div key={i} className="flex items-center justify-between gap-1.5">
+                            <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: d.color }} />
+                                <span className="text-xs font-medium capitalize" style={{ color: "#64748b" }}>{d.label}</span>
                             </div>
-                            <span style={{ fontSize: "12px", fontWeight: "800", color: "#1e293b" }}>{pct}%</span>
+                            <span className="text-xs font-extrabold" style={{ color: "#1e293b" }}>{pct}%</span>
                         </div>
                     );
                 })}
@@ -225,9 +227,9 @@ function DonutChart({ data, total }) {
 // ── Line Chart ────────────────────────────────────────────────────────────────
 function LineChart({ data, categories = CANDIDATE_CATS, idPrefix = "chart" }) {
     if (!data || data.length < 2) return (
-        <div style={{ height: "100px", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: "8px", border: "1px dashed #e2e8f0", borderRadius: "12px" }}>
+        <div className="h-24 flex items-center justify-center flex-col gap-2 border border-dashed border-slate-200 rounded-xl">
             <IC.Laporan />
-            <p style={{ fontSize: "13px", color: "#94a3b8" }}>No data yet</p>
+            <p className="text-xs" style={{ color: "#94a3b8" }}>No data yet</p>
         </div>
     );
     const [hIdx, setHIdx] = useState(null);
@@ -244,8 +246,8 @@ function LineChart({ data, categories = CANDIDATE_CATS, idPrefix = "chart" }) {
         return p;
     };
     return (
-        <div style={{ width: "100%", height: "220px", position: "relative" }}>
-            <svg viewBox={`0 0 ${width} ${height}`} style={{ width: "100%", height: "100%", overflow: "visible" }} onMouseLeave={() => setHIdx(null)}>
+        <div className="w-full relative" style={{ height: "220px" }}>
+            <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full overflow-visible" onMouseLeave={() => setHIdx(null)}>
                 <defs>
                     {categories.map(cat => (
                         <linearGradient key={cat.key} id={`grad-${idPrefix}-${cat.key}`} x1="0" y1="0" x2="0" y2="1">
@@ -282,22 +284,23 @@ function LineChart({ data, categories = CANDIDATE_CATS, idPrefix = "chart" }) {
                 ))}
             </svg>
             {hIdx !== null && (
-                <div style={{
-                    position: "absolute", left: `${(getX(hIdx) / width) * 100}%`, top: "10%",
-                    transform: "translateX(-50%)", background: "#fff", borderRadius: "12px",
-                    padding: "12px 16px", boxShadow: "0 10px 25px rgba(0,0,0,0.12), 0 4px 8px rgba(0,0,0,0.06)",
-                    border: "1px solid #e2e8f0", pointerEvents: "none", zIndex: 100, minWidth: "140px",
-                }}>
-                    <div style={{ fontSize: "13px", fontWeight: "800", color: "#1e293b", marginBottom: "8px", borderBottom: "1px solid #f1f5f9", paddingBottom: "6px" }}>
+                <div className="absolute z-50 pointer-events-none rounded-xl border border-slate-200"
+                    style={{
+                        left: `${(getX(hIdx) / width) * 100}%`, top: "10%",
+                        transform: "translateX(-50%)", background: "#fff",
+                        padding: "12px 16px", boxShadow: "0 10px 25px rgba(0,0,0,0.12)", minWidth: "140px",
+                    }}
+                >
+                    <div className="text-xs font-extrabold pb-1.5 mb-2 border-b border-slate-100" style={{ color: "#1e293b" }}>
                         {data[hIdx].month} 2026
                     </div>
                     {categories.map(cat => (
-                        <div key={cat.key} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px", marginBottom: "4px" }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                                <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: cat.color }} />
-                                <span style={{ fontSize: "12px", color: "#64748b", fontWeight: "500" }}>{cat.label}</span>
+                        <div key={cat.key} className="flex items-center justify-between gap-2 mb-1">
+                            <div className="flex items-center gap-1.5">
+                                <div className="w-2 h-2 rounded-full" style={{ background: cat.color }} />
+                                <span className="text-xs font-medium" style={{ color: "#64748b" }}>{cat.label}</span>
                             </div>
-                            <span style={{ fontSize: "12px", fontWeight: "800", color: "#1e293b" }}>{data[hIdx][cat.key] || 0}</span>
+                            <span className="text-xs font-extrabold" style={{ color: "#1e293b" }}>{data[hIdx][cat.key] || 0}</span>
                         </div>
                     ))}
                 </div>
@@ -309,11 +312,11 @@ function LineChart({ data, categories = CANDIDATE_CATS, idPrefix = "chart" }) {
 // ── Empty States ──────────────────────────────────────────────────────────────
 function EmptyTable({ icon, title, sub }) {
     return (
-        <div style={{ padding: "40px 0", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: "10px" }}>
-            <div style={{ color: "#cbd5e1", width: "32px", height: "32px" }}>{icon}</div>
+        <div className="py-10 text-center flex flex-col items-center gap-2.5">
+            <div className="text-slate-300 w-8 h-8">{icon}</div>
             <div>
-                <p style={{ fontSize: "14px", color: "#94a3b8" }}>{title}</p>
-                {sub && <p style={{ fontSize: "12px", color: "#cbd5e1", marginTop: "4px" }}>{sub}</p>}
+                <p className="text-sm" style={{ color: "#94a3b8" }}>{title}</p>
+                {sub && <p className="text-xs mt-1" style={{ color: "#cbd5e1" }}>{sub}</p>}
             </div>
         </div>
     );
@@ -321,9 +324,9 @@ function EmptyTable({ icon, title, sub }) {
 
 function LoadingSpinner() {
     return (
-        <div style={{ padding: "48px 0", textAlign: "center", color: "#94a3b8", fontSize: "13px" }}>
-            <div style={{ display: "inline-block", width: "20px", height: "20px", border: "2px solid #e2e8f0", borderTopColor: "#3b82f6", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
-            <div style={{ marginTop: "10px" }}>Searching...</div>
+        <div className="py-12 text-center text-xs" style={{ color: "#94a3b8" }}>
+            <div className="inline-block w-5 h-5 border-2 border-slate-200 rounded-full animate-spin" style={{ borderTopColor: "#3b82f6" }} />
+            <div className="mt-2.5">Searching...</div>
         </div>
     );
 }
@@ -335,6 +338,8 @@ export default function DashboardPage() {
     const [company, setCompany] = useState(null);
     const [activeNav, setActiveNav] = useState("Dashboard");
     const [logoutModalOpen, setLogoutModalOpen] = useState(false);
+    // ── NEW: mobile sidebar toggle ──────────────────────────────────────────
+    const [sidebarOpen, setSidebarOpen] = useState(false);
 
     // Tab states
     const [chartTab, setChartTab] = useState("Candidates");
@@ -384,6 +389,13 @@ export default function DashboardPage() {
         return () => clearTimeout(t);
     }, [candidateSearch]);
 
+    // Close sidebar on resize to desktop
+    useEffect(() => {
+        const handleResize = () => { if (window.innerWidth >= 1024) setSidebarOpen(false); };
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+    }, []);
+
     const companyName = company?.name || "Admin";
     const companyRole = company?.role || "Admin";
     const initials = companyName.slice(0, 2).toUpperCase();
@@ -421,7 +433,6 @@ export default function DashboardPage() {
         color: empStatusColors[d.employee_status] || "#94a3b8",
     }));
 
-    // ── Employee helpers ───────────────────────────────────────────────────────
     const filteredEmployees = (liveStats.recent_employees || []).filter(e =>
         !employeeSearch ||
         e.full_name?.toLowerCase().includes(employeeSearch.toLowerCase()) ||
@@ -443,9 +454,7 @@ export default function DashboardPage() {
             resigned:  { label: "Resigned", bg: "#f8fafc", color: "#64748b", border: "#e2e8f0" },
             terminated:{ label: "Terminated", bg: "#fef2f2", color: "#dc2626", border: "#fecaca" },
         }[normalized];
-
         if (config) return config;
-
         const pretty = status ? status.toString().replace(/[_-]+/g, " ") : "Full Time";
         return { label: pretty.replace(/\b\w/g, c => c.toUpperCase()), bg: "#f8fafc", color: "#64748b", border: "#e2e8f0" };
     };
@@ -469,11 +478,57 @@ export default function DashboardPage() {
         a.style.visibility = "hidden"; document.body.appendChild(a); a.click(); document.body.removeChild(a);
     };
 
-    const SIDEBAR_W = 250;
-    const TOPBAR_H = 56;
+    // ── Sidebar component (shared between desktop sticky + mobile overlay) ─────
+    const SidebarContent = ({ onClose }) => (
+        <>
+            <Link to="/" onClick={onClose} className="flex items-center gap-2.5 px-1.5 pb-5 no-underline">
+                <img src="/assets/images/logo.png" alt="EarlyPath" className="h-11 object-contain flex-shrink-0" />
+                <span className="text-base font-extrabold text-white whitespace-nowrap tracking-tight">EarlyPath</span>
+            </Link>
+            <p className="text-xs font-bold px-3.5 pb-1 pt-1.5 uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.25)" }}>Main Menu</p>
+            {navItems.map(n => (
+                <SideItem key={n.label} icon={n.icon} label={n.label} badge={n.badge}
+                    active={activeNav === n.label}
+                    onClick={() => { setActiveNav(n.label); if (n.path) navigate(n.path); if (onClose) onClose(); }}
+                />
+            ))}
+            <div className="h-px mx-2 my-3" style={{ background: "rgba(255,255,255,0.07)" }} />
+            <p className="text-xs font-bold px-3.5 pb-1 uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.25)" }}>Others</p>
+            {navItems2.map(n => (
+                <SideItem key={n.label} icon={n.icon} label={n.label} active={activeNav === n.label}
+                    onClick={() => { navigate(n.path); setActiveNav(n.label); if (onClose) onClose(); }}
+                />
+            ))}
+            <div className="flex-1" />
+            <div className="border-t pt-3.5 flex items-center gap-2.5" style={{ borderColor: "rgba(255,255,255,0.07)" }}>
+                {company?.logo_path ? (
+                    <img
+                        src={`${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.split("/api")[0] : "http://localhost:8000"}/storage/${company.logo_path}`}
+                        alt="Logo" className="w-9 h-9 rounded-xl object-cover"
+                    />
+                ) : (
+                    <div className="w-9 h-9 rounded-xl flex-shrink-0 flex items-center justify-center text-xs font-extrabold text-white" style={{ background: "linear-gradient(135deg, #2d7dd2, #4a9eff)" }}>
+                        {initials}
+                    </div>
+                )}
+                <div className="flex-1 min-w-0">
+                    <div className="text-xs font-bold text-white truncate" style={{ fontSize: "12.5px" }}>{companyName}</div>
+                    <div className="text-xs capitalize" style={{ color: "rgba(255,255,255,0.4)", fontSize: "11px" }}>{companyRole}</div>
+                </div>
+                <button
+                    onClick={() => setLogoutModalOpen(true)}
+                    title="Logout"
+                    className="bg-transparent border-none cursor-pointer p-1 rounded-md flex transition-colors"
+                    style={{ color: "rgba(255,255,255,0.35)" }}
+                    onMouseEnter={e => { e.currentTarget.style.color = "#f87171"; e.currentTarget.style.background = "rgba(248,113,113,0.1)"; }}
+                    onMouseLeave={e => { e.currentTarget.style.color = "rgba(255,255,255,0.35)"; e.currentTarget.style.background = "transparent"; }}
+                ><IC.Logout /></button>
+            </div>
+        </>
+    );
 
     return (
-        <div style={{ display: "flex", minHeight: "100vh", background: "#f8fafc", fontFamily: "'Poppins', 'Segoe UI', sans-serif" }}>
+        <div className="flex min-h-screen bg-slate-50" style={{ fontFamily: "'Poppins', 'Segoe UI', sans-serif" }}>
             <style>{`
                 * { box-sizing: border-box; margin: 0; padding: 0; }
                 ::-webkit-scrollbar { width: 5px; }
@@ -482,116 +537,110 @@ export default function DashboardPage() {
                 @keyframes spin { to { transform: rotate(360deg); } }
                 @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
                 .fade-in { animation: fadeIn 0.35s ease both; }
+                @keyframes slideIn { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+                .sidebar-slide { animation: slideIn 0.25s ease both; }
             `}</style>
 
-            {/* ── SIDEBAR ──────────────────────────────────────────────────── */}
-            <aside style={{
-                width: `${SIDEBAR_W}px`, flexShrink: 0,
-                background: "linear-gradient(180deg, #0f1c2e 0%, #0d1a28 100%)",
-                display: "flex", flexDirection: "column", height: "100vh",
-                position: "sticky", top: 0, overflowY: "auto", overflowX: "hidden",
-                padding: "20px 12px", gap: "4px",
-            }}>
-                <Link to="/" style={{ display: "flex", alignItems: "center", gap: "10px", padding: "4px 6px 20px", textDecoration: "none" }}>
-                    <img src="/assets/images/logo.png" alt="EarlyPath" style={{ height: "46px", objectFit: "contain", flexShrink: 0 }} />
-                    <span style={{ fontSize: "15px", fontWeight: "800", color: "#fff", letterSpacing: "-0.3px", whiteSpace: "nowrap" }}>EarlyPath</span>
-                </Link>
-                <p style={{ fontSize: "10px", fontWeight: "700", color: "rgba(255,255,255,0.25)", letterSpacing: "1.2px", padding: "6px 14px 4px", textTransform: "uppercase" }}>Main Menu</p>
-                {navItems.map(n => (
-                    <SideItem key={n.label} icon={n.icon} label={n.label} badge={n.badge}
-                        active={activeNav === n.label}
-                        onClick={() => { setActiveNav(n.label); if (n.path) navigate(n.path); }}
-                    />
-                ))}
-                <div style={{ height: "1px", background: "rgba(255,255,255,0.07)", margin: "12px 8px" }} />
-                <p style={{ fontSize: "10px", fontWeight: "700", color: "rgba(255,255,255,0.25)", letterSpacing: "1.2px", padding: "0px 14px 4px", textTransform: "uppercase" }}>Others</p>
-                {navItems2.map(n => (
-                    <SideItem key={n.label} icon={n.icon} label={n.label} active={activeNav === n.label}
-                        onClick={() => { navigate(n.path); setActiveNav(n.label); }}
-                    />
-                ))}
-                <div style={{ flex: 1 }} />
-                <div style={{ borderTop: "1px solid rgba(255,255,255,0.07)", paddingTop: "14px", display: "flex", alignItems: "center", gap: "10px" }}>
-                    {company?.logo_path ? (
-                        <img src={`${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.split("/api")[0] : "http://localhost:8000"}/storage/${company.logo_path}`} alt="Logo" style={{ width: "36px", height: "36px", borderRadius: "10px", objectFit: "cover" }} />
-                    ) : (
-                        <div style={{ width: "36px", height: "36px", borderRadius: "10px", flexShrink: 0, background: "linear-gradient(135deg, #2d7dd2, #4a9eff)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "13px", fontWeight: "800", color: "#fff" }}>
-                            {initials}
+            {/* ── MOBILE SIDEBAR OVERLAY ──────────────────────────────────── */}
+            {sidebarOpen && (
+                <div
+                    className="fixed inset-0 z-40 lg:hidden"
+                    style={{ background: "rgba(0,0,0,0.5)" }}
+                    onClick={() => setSidebarOpen(false)}
+                >
+                    <aside
+                        className="sidebar-slide absolute left-0 top-0 bottom-0 flex flex-col gap-1 overflow-y-auto overflow-x-hidden p-5"
+                        style={{ width: "260px", background: "linear-gradient(180deg, #0f1c2e 0%, #0d1a28 100%)" }}
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <div className="flex items-center justify-between mb-1">
+                            <span className="text-base font-extrabold text-white">Menu</span>
+                            <button onClick={() => setSidebarOpen(false)} className="text-white/50 border-none bg-transparent cursor-pointer p-1">
+                                <IC.Close />
+                            </button>
                         </div>
-                    )}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: "12.5px", fontWeight: "700", color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{companyName}</div>
-                        <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", textTransform: "capitalize" }}>{companyRole}</div>
-                    </div>
-                    <button onClick={() => setLogoutModalOpen(true)} title="Logout"
-                        style={{ background: "transparent", border: "none", color: "rgba(255,255,255,0.35)", cursor: "pointer", padding: "4px", borderRadius: "6px", transition: "all 0.2s", display: "flex" }}
-                        onMouseEnter={e => { e.currentTarget.style.color = "#f87171"; e.currentTarget.style.background = "rgba(248,113,113,0.1)"; }}
-                        onMouseLeave={e => { e.currentTarget.style.color = "rgba(255,255,255,0.35)"; e.currentTarget.style.background = "transparent"; }}
-                    ><IC.Logout /></button>
+                        <SidebarContent onClose={() => setSidebarOpen(false)} />
+                    </aside>
                 </div>
+            )}
+
+            {/* ── DESKTOP SIDEBAR (sticky, hidden on mobile) ───────────────── */}
+            <aside className="hidden lg:flex flex-col flex-shrink-0 h-screen sticky top-0 overflow-y-auto overflow-x-hidden gap-1 p-3"
+                style={{ width: "250px", background: "linear-gradient(180deg, #0f1c2e 0%, #0d1a28 100%)" }}
+            >
+                <SidebarContent onClose={null} />
             </aside>
 
-            {/* ── MAIN CONTENT ─────────────────────────────────────────────── */}
-            <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
+            {/* ── MAIN CONTENT ──────────────────────────────────────────────── */}
+            <div className="flex-1 flex flex-col min-w-0">
 
-                {/* ── TOPBAR ─────────────────────────────────────────────────── */}
-                <header style={{
-                    height: `${TOPBAR_H}px`, background: "#fff", borderBottom: "1px solid #e2e8f0",
-                    display: "flex", alignItems: "center", padding: "0 24px", gap: "16px",
-                    position: "sticky", top: 0, zIndex: 50,
-                }}>
-                    <div style={{ flex: 1 }}>
-                        <span style={{ fontSize: "15px", fontWeight: "700", color: "#1e293b" }}>Dashboard</span>
-                        <span style={{ fontSize: "13px", color: "#94a3b8", margin: "0 6px" }}>/</span>
-                        <span style={{ fontSize: "13px", color: "#94a3b8" }}>Overview</span>
-                    </div>
-                    <button onClick={exportToCSV}
-                        style={{ display: "flex", alignItems: "center", gap: "8px", background: "#fff", border: "1px solid #e2e8f0", borderRadius: "10px", padding: "8px 16px", cursor: "pointer", fontSize: "13px", fontWeight: "600", color: "#1e293b", transition: "all 0.2s" }}
-                        onMouseEnter={e => { e.currentTarget.style.background = "#f8fafc"; e.currentTarget.style.borderColor = "#cbd5e1"; }}
-                        onMouseLeave={e => { e.currentTarget.style.background = "#fff"; e.currentTarget.style.borderColor = "#e2e8f0"; }}
+                {/* ── TOPBAR ──────────────────────────────────────────────── */}
+                <header className="h-14 bg-white border-b border-slate-200 flex items-center px-4 md:px-6 gap-3 sticky top-0 z-30">
+                    {/* Hamburger — visible only below lg */}
+                    <button
+                        onClick={() => setSidebarOpen(true)}
+                        className="lg:hidden flex items-center justify-center w-9 h-9 rounded-lg border border-slate-200 bg-slate-50 cursor-pointer text-slate-600 flex-shrink-0"
                     >
-                        <IC.Download /> Export CSV
+                        <IC.Menu />
                     </button>
-                    <button style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px", width: "38px", height: "38px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#64748b" }}>
+
+                    <div className="flex-1 min-w-0">
+                        <span className="text-sm font-bold" style={{ color: "#1e293b" }}>Dashboard</span>
+                        <span className="text-xs mx-1.5" style={{ color: "#94a3b8" }}>/</span>
+                        <span className="text-xs" style={{ color: "#94a3b8" }}>Overview</span>
+                    </div>
+
+                    {/* Export — label hidden on small screens */}
+                    <button
+                        onClick={exportToCSV}
+                        className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-2 cursor-pointer text-xs font-semibold transition-colors hover:bg-slate-50 hover:border-slate-300 flex-shrink-0"
+                        style={{ color: "#1e293b" }}
+                    >
+                        <IC.Download />
+                        <span className="hidden sm:inline">Export CSV</span>
+                    </button>
+
+                    <button className="bg-slate-50 border border-slate-200 rounded-xl w-9 h-9 flex items-center justify-center cursor-pointer flex-shrink-0" style={{ color: "#64748b" }}>
                         <IC.Bell />
                     </button>
-                    <span style={{ fontSize: "12px", color: "#94a3b8", whiteSpace: "nowrap" }}>{today()}</span>
+
+                    {/* Date — hidden on mobile */}
+                    <span className="hidden md:block text-xs whitespace-nowrap flex-shrink-0" style={{ color: "#94a3b8" }}>{today()}</span>
                 </header>
 
-                {/* ── PAGE BODY ──────────────────────────────────────────────── */}
-                <main style={{ flex: 1, padding: "28px 28px 40px", overflowY: "auto", textAlign: "left" }} className="fade-in">
+                {/* ── PAGE BODY ─────────────────────────────────────────────── */}
+                <main className="flex-1 p-4 md:p-6 lg:p-7 pb-10 overflow-y-auto text-left fade-in">
 
                     {/* Page header */}
-                    <div style={{ marginBottom: "28px" }}>
-                        <div style={{ fontSize: 20, fontWeight: 800, color: "#0f172a", lineHeight: 1.2 }}>{getGreeting()}, {companyName}</div>
-                        <div style={{ fontSize: 13, color: "#64748b", marginTop: 3 }}>Here's a summary of platform activity today.</div>
+                    <div className="mb-6 md:mb-7">
+                        <div className="text-lg md:text-xl font-extrabold" style={{ color: "#0f172a", lineHeight: 1.2 }}>{getGreeting()}, {companyName}</div>
+                        <div className="text-xs md:text-sm mt-0.5" style={{ color: "#64748b" }}>Here's a summary of platform activity today.</div>
                     </div>
 
-                    {/* ── STAT CARDS — all 5 same size ─────────────────────── */}
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "20px", marginBottom: "24px" }}>
+                    {/* ── STAT CARDS
+                         2 cols on mobile → 3 on md → 5 on xl ──────────── */}
+                    <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 md:gap-4 lg:gap-5 mb-5 md:mb-6">
                         {stats.map((s, i) => <StatCard key={i} {...s} />)}
                     </div>
 
-                    {/* ── MIDDLE ROW: Chart + Distribution ─────────────────── */}
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: "20px", marginBottom: "20px" }}>
+                    {/* ── MIDDLE ROW: Chart + Distribution
+                         stacked on mobile/tablet → side-by-side on lg ─── */}
+                    <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] xl:grid-cols-[1fr_340px] gap-4 md:gap-5 mb-4 md:mb-5">
 
-                        {/* Line Chart with tabs */}
-                        <div style={{ background: "#fff", borderRadius: "12px", padding: "14px 18px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px", gap: "12px", flexWrap: "wrap" }}>
+                        {/* Line Chart */}
+                        <div className="bg-white rounded-xl p-4 md:p-5" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+                            <div className="flex flex-wrap justify-between items-center gap-3 mb-3">
                                 <div>
-                                    <p style={{ fontSize: "15px", fontWeight: "700", color: "#1e293b" }}>Statistics</p>
-                                    <p style={{ fontSize: "12px", color: "#94a3b8" }}>Last 6 months</p>
+                                    <p className="text-sm font-bold" style={{ color: "#1e293b" }}>Statistics</p>
+                                    <p className="text-xs" style={{ color: "#94a3b8" }}>Last 6 months</p>
                                 </div>
-                                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                                    <TabBar tabs={["Candidates", "Employees"]} active={chartTab} onChange={setChartTab} />
-                                </div>
+                                <TabBar tabs={["Candidates", "Employees"]} active={chartTab} onChange={setChartTab} />
                             </div>
-                            {/* Legend */}
-                            <div style={{ display: "flex", gap: "16px", marginBottom: "4px" }}>
+                            <div className="flex gap-4 mb-1 flex-wrap">
                                 {(chartTab === "Candidates" ? CANDIDATE_CATS : EMPLOYEE_CATS).map(x => (
-                                    <div key={x.key} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                                        <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: x.color }} />
-                                        <span style={{ fontSize: "12px", color: "#64748b" }}>{x.label}</span>
+                                    <div key={x.key} className="flex items-center gap-1.5">
+                                        <div className="w-2 h-2 rounded-full" style={{ background: x.color }} />
+                                        <span className="text-xs" style={{ color: "#64748b" }}>{x.label}</span>
                                     </div>
                                 ))}
                             </div>
@@ -601,19 +650,19 @@ export default function DashboardPage() {
                             }
                         </div>
 
-                        {/* Status Distribution with tabs */}
-                        <div style={{ background: "#fff", borderRadius: "12px", padding: "14px 18px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)", display: "flex", flexDirection: "column", gap: "10px" }}>
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                        {/* Status Distribution */}
+                        <div className="bg-white rounded-xl p-4 md:p-5 flex flex-col gap-2.5" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+                            <div className="flex justify-between items-start">
                                 <div>
-                                    <p style={{ fontSize: "15px", fontWeight: "700", color: "#1e293b" }}>Status Distribution</p>
-                                    <p style={{ fontSize: "12px", color: "#94a3b8" }}>
+                                    <p className="text-sm font-bold" style={{ color: "#1e293b" }}>Status Distribution</p>
+                                    <p className="text-xs" style={{ color: "#94a3b8" }}>
                                         {distribTab === "Candidates" ? `${liveStats.total_applicants} candidates` : `${liveStats.total_employees} employees`}
                                     </p>
                                 </div>
-                                <button onClick={() => navigate("/users")} style={{ fontSize: "12.5px", color: "#4a9eff", background: "none", border: "none", cursor: "pointer", fontWeight: "600" }}>Details →</button>
+                                <button onClick={() => navigate("/users")} className="text-xs font-semibold bg-transparent border-none cursor-pointer" style={{ color: "#4a9eff" }}>Details →</button>
                             </div>
                             <TabBar tabs={["Candidates", "Employees"]} active={distribTab} onChange={setDistribTab} />
-                            <div style={{ flex: 1, display: "flex", alignItems: "center" }}>
+                            <div className="flex-1 flex items-center">
                                 {distribTab === "Candidates"
                                     ? <DonutChart data={candidateDistrib} total={liveStats.total_applicants} />
                                     : <DonutChart data={employeeDistrib} total={liveStats.total_employees} />
@@ -622,197 +671,212 @@ export default function DashboardPage() {
                         </div>
                     </div>
 
-                    {/* ── BOTTOM ROW: Table + Right Column ─────────────────── */}
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: "20px" }}>
+                    {/* ── BOTTOM ROW: Table + Right Column
+                         stacked on mobile/tablet → side-by-side on lg ─── */}
+                    <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] xl:grid-cols-[1fr_340px] gap-4 md:gap-5">
 
-                        {/* Table with Candidate / Employee tabs */}
-                        <div style={{ background: "#fff", borderRadius: "16px", padding: "22px 24px", boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
-                            {/* Table header row */}
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "12px" }}>
+                        {/* ── TABLE CARD ────────────────────────────────────── */}
+                        <div className="bg-white rounded-2xl p-4 md:p-6" style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
+                            {/* Table toolbar */}
+                            <div className="flex flex-wrap justify-between items-center gap-3 mb-4">
                                 <TabBar
                                     tabs={["Candidates", "Employees"]}
                                     active={tableTab}
                                     onChange={t => { setTableTab(t); setCandidateSearch(""); setEmployeeSearch(""); }}
                                 />
-                                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                                    <div style={{ display: "flex", alignItems: "center", gap: "8px", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px", padding: "7px 14px", width: "230px" }}>
-                                        <IC.Search />
-                                        <input
-                                            placeholder={tableTab === "Candidates" ? "Search name or email..." : "Search name or dept..."}
-                                            value={tableTab === "Candidates" ? candidateSearch : employeeSearch}
-                                            onChange={e => tableTab === "Candidates" ? setCandidateSearch(e.target.value) : setEmployeeSearch(e.target.value)}
-                                            style={{ border: "none", background: "transparent", outline: "none", fontSize: "13px", color: "#64748b", width: "100%", fontFamily: "inherit" }}
-                                        />
-                                    </div>
+                                {/* Search input */}
+                                <div className="flex items-center gap-2 rounded-xl px-3.5 py-2 border border-slate-200 bg-slate-50 w-full sm:w-auto" style={{ minWidth: 0, maxWidth: "260px" }}>
+                                    <IC.Search />
+                                    <input
+                                        placeholder={tableTab === "Candidates" ? "Search name or email..." : "Search name or dept..."}
+                                        value={tableTab === "Candidates" ? candidateSearch : employeeSearch}
+                                        onChange={e => tableTab === "Candidates" ? setCandidateSearch(e.target.value) : setEmployeeSearch(e.target.value)}
+                                        className="border-none bg-transparent outline-none text-xs w-full"
+                                        style={{ color: "#64748b", fontFamily: "inherit" }}
+                                    />
                                 </div>
                             </div>
 
-                            {/* ── CANDIDATES TABLE ───────────────────────────── */}
-                            {tableTab === "Candidates" && (
-                                <>
-                                    <div style={{ display: "grid", gridTemplateColumns: "2fr 2fr 1fr 1fr", gap: "12px", padding: "8px 12px", borderRadius: "8px", background: "#f8fafc", marginBottom: "4px" }}>
-                                        {["NAME", "PROGRAM", "STATUS", "APPLIED DATE"].map(h => (
-                                            <span key={h} style={{ fontSize: "11px", fontWeight: "700", color: "#94a3b8", letterSpacing: "0.5px" }}>{h}</span>
-                                        ))}
-                                    </div>
-                                    {tableLoading ? <LoadingSpinner />
-                                        : liveStats.recent_applicants?.length > 0 ? (
-                                            liveStats.recent_applicants.map((app, idx) => (
-                                                <div key={idx} style={{
-                                                    display: "grid", gridTemplateColumns: "2fr 2fr 1fr 1fr", gap: "12px",
-                                                    padding: "14px 12px", borderBottom: idx === liveStats.recent_applicants.length - 1 ? "none" : "1px solid #f1f5f9",
-                                                    alignItems: "center",
-                                                }}>
-                                                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                                                        <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: "#eff6ff", color: "#3b82f6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: "700", flexShrink: 0 }}>
-                                                            {(app.user?.name || "U").slice(0, 2).toUpperCase()}
+                            {/* Scrollable table wrapper — prevents horizontal overflow */}
+                            <div className="overflow-x-auto -mx-1 px-1">
+
+                                {/* ── CANDIDATES TABLE ──────────────────────── */}
+                                {tableTab === "Candidates" && (
+                                    <div style={{ minWidth: "560px" }}>
+                                        <div className="grid gap-3 px-3 py-2 rounded-lg mb-1" style={{ gridTemplateColumns: "2fr 2fr 1fr 1fr", background: "#f8fafc" }}>
+                                            {["NAME", "PROGRAM", "STATUS", "APPLIED DATE"].map(h => (
+                                                <span key={h} className="text-xs font-bold tracking-wide" style={{ color: "#94a3b8" }}>{h}</span>
+                                            ))}
+                                        </div>
+                                        {tableLoading ? <LoadingSpinner />
+                                            : liveStats.recent_applicants?.length > 0 ? (
+                                                liveStats.recent_applicants.map((app, idx) => (
+                                                    <div key={idx}
+                                                        className="grid gap-3 px-3 py-3.5 items-center"
+                                                        style={{
+                                                            gridTemplateColumns: "2fr 2fr 1fr 1fr",
+                                                            borderBottom: idx === liveStats.recent_applicants.length - 1 ? "none" : "1px solid #f1f5f9",
+                                                        }}
+                                                    >
+                                                        <div className="flex items-center gap-2.5">
+                                                            <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0" style={{ background: "#eff6ff", color: "#3b82f6" }}>
+                                                                {(app.user?.name || "U").slice(0, 2).toUpperCase()}
+                                                            </div>
+                                                            <div className="min-w-0">
+                                                                <div className="text-sm font-semibold truncate" style={{ color: "#1e293b" }}>{app.user?.name}</div>
+                                                                <div className="text-xs truncate" style={{ color: "#94a3b8" }}>{app.user?.email}</div>
+                                                            </div>
+                                                        </div>
+                                                        <div className="min-w-0">
+                                                            <div className="text-sm font-semibold truncate" style={{ color: "#1e293b" }}>{app.vacancy?.title || "Unknown"}</div>
+                                                            <div className="text-xs truncate" style={{ color: "#94a3b8" }}>{app.position?.name}</div>
                                                         </div>
                                                         <div>
-                                                            <div style={{ fontSize: "13.5px", fontWeight: "600", color: "#1e293b" }}>{app.user?.name}</div>
-                                                            <div style={{ fontSize: "11px", color: "#94a3b8" }}>{app.user?.email}</div>
+                                                            <span className="text-xs font-bold px-2 py-1 rounded capitalize" style={{
+                                                                background: app.status === "accepted" ? "#f0fdf4" : app.status === "rejected" ? "#fef2f2" : "#fff7ed",
+                                                                color: app.status === "accepted" ? "#16a34a" : app.status === "rejected" ? "#dc2626" : "#d97706",
+                                                                border: `1px solid ${app.status === "accepted" ? "#bbf7d0" : app.status === "rejected" ? "#fecaca" : "#fed7aa"}`,
+                                                            }}>{app.status || "Pending"}</span>
                                                         </div>
-                                                    </div>
-                                                    <div>
-                                                        <div style={{ fontSize: "13.5px", fontWeight: "600", color: "#1e293b" }}>{app.vacancy?.title || "Unknown"}</div>
-                                                        <div style={{ fontSize: "11px", color: "#94a3b8" }}>{app.position?.name}</div>
-                                                    </div>
-                                                    <div>
-                                                        <span style={{
-                                                            fontSize: "11px", fontWeight: "700", padding: "3px 8px", borderRadius: "6px", textTransform: "capitalize",
-                                                            background: app.status === "accepted" ? "#f0fdf4" : app.status === "rejected" ? "#fef2f2" : "#fff7ed",
-                                                            color: app.status === "accepted" ? "#16a34a" : app.status === "rejected" ? "#dc2626" : "#d97706",
-                                                            border: `1px solid ${app.status === "accepted" ? "#bbf7d0" : app.status === "rejected" ? "#fecaca" : "#fed7aa"}`,
-                                                        }}>{app.status || "Pending"}</span>
-                                                    </div>
-                                                    <span style={{ fontSize: "12.5px", color: "#64748b" }}>
-                                                        {app.submitted_at ? new Date(app.submitted_at).toLocaleDateString() : "Just now"}
-                                                    </span>
-                                                </div>
-                                            ))
-                                        ) : <EmptyTable icon={<IC.Users />} title="No candidates yet" sub="Candidates will appear after someone applies" />
-                                    }
-                                </>
-                            )}
-
-                            {/* ── EMPLOYEES TABLE ────────────────────────────── */}
-                            {tableTab === "Employees" && (
-                                <>
-                                    <div style={{ display: "grid", gridTemplateColumns: "2fr 1.5fr 1.5fr 1fr 1fr", gap: "12px", padding: "8px 12px", borderRadius: "8px", background: "#f8fafc", marginBottom: "4px" }}>
-                                        {["NAME", "DEPARTMENT", "POSITION", "STATUS", "JOINED"].map(h => (
-                                            <span key={h} style={{ fontSize: "11px", fontWeight: "700", color: "#94a3b8", letterSpacing: "0.5px" }}>{h}</span>
-                                        ))}
-                                    </div>
-                                    {filteredEmployees.length > 0 ? (
-                                        filteredEmployees.map((emp, idx) => {
-                                            const st = formatEmployeeStatus(emp.employee_status);
-                                            return (
-                                                <div key={idx} style={{
-                                                    display: "grid", gridTemplateColumns: "2fr 1.5fr 1.5fr 1fr 1fr", gap: "12px",
-                                                    padding: "14px 12px", borderBottom: idx === filteredEmployees.length - 1 ? "none" : "1px solid #f1f5f9",
-                                                    alignItems: "center",
-                                                }}>
-                                                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                                                        <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: "#f5f3ff", color: "#7c3aed", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: "700", flexShrink: 0 }}>
-                                                            {(emp.full_name || "E").slice(0, 2).toUpperCase()}
-                                                        </div>
-                                                        <div style={{ fontSize: "13.5px", fontWeight: "600", color: "#1e293b", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{emp.full_name || "—"}</div>
-                                                    </div>
-                                                    <span style={{ fontSize: "13px", color: "#64748b", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{emp.department || "—"}</span>
-                                                    <span style={{ fontSize: "13px", color: "#64748b", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{emp.position || "—"}</span>
-                                                    <div>
-                                                        <span style={{ fontSize: "11px", fontWeight: "700", padding: "3px 8px", borderRadius: "999px", textTransform: "none", background: st.bg, color: st.color, border: `1px solid ${st.border}` }}>
-                                                            {st.label}
+                                                        <span className="text-xs" style={{ color: "#64748b" }}>
+                                                            {app.submitted_at ? new Date(app.submitted_at).toLocaleDateString() : "Just now"}
                                                         </span>
                                                     </div>
-                                                    <span style={{ fontSize: "12.5px", color: "#64748b" }}>
-                                                        {emp.joined_at_display || (emp.joined_at ? new Date(emp.joined_at).toLocaleDateString() : "—")}
-                                                    </span>
-                                                </div>
-                                            );
-                                        })
-                                    ) : <EmptyTable icon={<IC.Users />} title="No employees found" sub="Employees will appear here once added" />}
-                                </>
-                            )}
+                                                ))
+                                            ) : <EmptyTable icon={<IC.Users />} title="No candidates yet" sub="Candidates will appear after someone applies" />
+                                        }
+                                    </div>
+                                )}
+
+                                {/* ── EMPLOYEES TABLE ───────────────────────── */}
+                                {tableTab === "Employees" && (
+                                    <div style={{ minWidth: "600px" }}>
+                                        <div className="grid gap-3 px-3 py-2 rounded-lg mb-1" style={{ gridTemplateColumns: "2fr 1.5fr 1.5fr 1fr 1fr", background: "#f8fafc" }}>
+                                            {["NAME", "DEPARTMENT", "POSITION", "STATUS", "JOINED"].map(h => (
+                                                <span key={h} className="text-xs font-bold tracking-wide" style={{ color: "#94a3b8" }}>{h}</span>
+                                            ))}
+                                        </div>
+                                        {filteredEmployees.length > 0 ? (
+                                            filteredEmployees.map((emp, idx) => {
+                                                const st = formatEmployeeStatus(emp.employee_status);
+                                                return (
+                                                    <div key={idx}
+                                                        className="grid gap-3 px-3 py-3.5 items-center"
+                                                        style={{
+                                                            gridTemplateColumns: "2fr 1.5fr 1.5fr 1fr 1fr",
+                                                            borderBottom: idx === filteredEmployees.length - 1 ? "none" : "1px solid #f1f5f9",
+                                                        }}
+                                                    >
+                                                        <div className="flex items-center gap-2.5 min-w-0">
+                                                            <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0" style={{ background: "#f5f3ff", color: "#7c3aed" }}>
+                                                                {(emp.full_name || "E").slice(0, 2).toUpperCase()}
+                                                            </div>
+                                                            <div className="text-sm font-semibold truncate" style={{ color: "#1e293b" }}>{emp.full_name || "—"}</div>
+                                                        </div>
+                                                        <span className="text-xs truncate" style={{ color: "#64748b" }}>{emp.department || "—"}</span>
+                                                        <span className="text-xs truncate" style={{ color: "#64748b" }}>{emp.position || "—"}</span>
+                                                        <div>
+                                                            <span className="text-xs font-bold px-2 py-1 rounded-full" style={{ background: st.bg, color: st.color, border: `1px solid ${st.border}` }}>
+                                                                {st.label}
+                                                            </span>
+                                                        </div>
+                                                        <span className="text-xs" style={{ color: "#64748b" }}>
+                                                            {emp.joined_at_display || (emp.joined_at ? new Date(emp.joined_at).toLocaleDateString() : "—")}
+                                                        </span>
+                                                    </div>
+                                                );
+                                            })
+                                        ) : <EmptyTable icon={<IC.Users />} title="No employees found" sub="Employees will appear here once added" />}
+                                    </div>
+                                )}
+                            </div>{/* end overflow-x-auto */}
                         </div>
 
-                        {/* ── RIGHT COLUMN ───────────────────────────────────── */}
-                        <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+                        {/* ── RIGHT COLUMN ──────────────────────────────────── */}
+                        <div className="flex flex-col gap-4 md:gap-5">
 
                             {/* Most Popular Programs */}
-                            <div style={{ background: "#fff", borderRadius: "16px", padding: "20px 22px", boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
-                                <div style={{ marginBottom: "14px" }}>
-                                    <p style={{ fontSize: "14px", fontWeight: "700", color: "#1e293b" }}>Most Popular Programs</p>
-                                    <p style={{ fontSize: "11.5px", color: "#94a3b8" }}>By number of candidates</p>
+                            <div className="bg-white rounded-2xl p-5 md:p-6" style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
+                                <div className="mb-3.5">
+                                    <p className="text-sm font-bold" style={{ color: "#1e293b" }}>Most Popular Programs</p>
+                                    <p className="text-xs" style={{ color: "#94a3b8", fontSize: "11.5px" }}>By number of candidates</p>
                                 </div>
                                 {liveStats.popular_programs?.length > 0 ? (
-                                    <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                                    <div className="flex flex-col gap-0.5">
                                         {liveStats.popular_programs.map((p, i) => (
-                                            <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 0", borderBottom: i < liveStats.popular_programs.length - 1 ? "1px solid #f8fafc" : "none" }}>
-                                                <div>
-                                                    <div style={{ fontSize: "13px", fontWeight: "600", color: "#1e293b" }}>{p.title}</div>
-                                                    <div style={{ fontSize: "11px", color: "#94a3b8" }}>{p.type}</div>
+                                            <div key={i} className="flex items-center justify-between py-2" style={{ borderBottom: i < liveStats.popular_programs.length - 1 ? "1px solid #f8fafc" : "none" }}>
+                                                <div className="min-w-0 mr-2">
+                                                    <div className="text-xs font-semibold truncate" style={{ color: "#1e293b" }}>{p.title}</div>
+                                                    <div className="text-xs" style={{ color: "#94a3b8" }}>{p.type}</div>
                                                 </div>
-                                                <div style={{ background: "#eff6ff", color: "#3b82f6", padding: "2px 8px", borderRadius: "6px", fontSize: "11px", fontWeight: "700", flexShrink: 0 }}>{p.count}</div>
+                                                <div className="text-xs font-bold px-2 py-0.5 rounded flex-shrink-0" style={{ background: "#eff6ff", color: "#3b82f6" }}>{p.count}</div>
                                             </div>
                                         ))}
                                     </div>
                                 ) : <EmptyTable icon={<IC.Laporan />} title="No programs yet" />}
                             </div>
 
-                            {/* Recent Activity — merged Candidates + Employees */}
-                            <div style={{ background: "#fff", borderRadius: "16px", padding: "20px 22px", boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
-                                <p style={{ fontSize: "14px", fontWeight: "700", color: "#1e293b", marginBottom: "14px" }}>Recent Activity</p>
+                            {/* Recent Activity */}
+                            <div className="bg-white rounded-2xl p-5 md:p-6" style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
+                                <p className="text-sm font-bold mb-3.5" style={{ color: "#1e293b" }}>Recent Activity</p>
                                 {liveStats.recent_activity?.length > 0 ? (
-                                    <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                                    <div className="flex flex-col gap-3">
                                         {liveStats.recent_activity.map((act, i) => (
-                                            <div key={i} style={{ display: "flex", gap: "10px", position: "relative" }}>
+                                            <div key={i} className="flex gap-2.5 relative">
                                                 {i < liveStats.recent_activity.length - 1 && (
-                                                    <div style={{ position: "absolute", left: "11px", top: "24px", bottom: "-12px", width: "1px", background: "#f1f5f9" }} />
+                                                    <div className="absolute w-px bg-slate-100" style={{ left: "11px", top: "24px", bottom: "-12px" }} />
                                                 )}
-                                                <div style={{ width: "22px", height: "22px", borderRadius: "50%", background: "#f8fafc", border: "1px solid #e2e8f0", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1, flexShrink: 0 }}>
-                                                    <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: act.type === "employee" ? "#7c3aed" : act.status === "accepted" ? "#22c55e" : "#3b82f6" }} />
+                                                <div className="w-5 h-5 rounded-full border border-slate-200 flex items-center justify-center z-10 flex-shrink-0 bg-slate-50">
+                                                    <div className="w-1.5 h-1.5 rounded-full" style={{ background: act.type === "employee" ? "#7c3aed" : act.status === "accepted" ? "#22c55e" : "#3b82f6" }} />
                                                 </div>
-                                                <div style={{ flex: 1, minWidth: 0 }}>
-                                                    <p style={{ fontSize: "12.5px", color: "#1e293b", fontWeight: "500", lineHeight: 1.4 }}>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-xs font-medium leading-snug" style={{ color: "#1e293b" }}>
                                                         <strong>{act.user}</strong>{" "}
                                                         {act.type === "employee" ? "joined" : "applied to"}{" "}
                                                         <strong>{act.program}</strong>
                                                     </p>
-                                                    <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "3px" }}>
-                                                        <p style={{ fontSize: "10.5px", color: "#94a3b8" }}>
+                                                    <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                                                        <p className="text-xs" style={{ color: "#94a3b8", fontSize: "10.5px" }}>
                                                             {act.time ? new Date(act.time).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : ""}
                                                         </p>
-                                                        <span style={{
-                                                            fontSize: "10px", fontWeight: "700", padding: "1px 6px", borderRadius: "4px",
-                                                            background: act.type === "employee" ? "#f5f3ff" : "#eff6ff",
-                                                            color: act.type === "employee" ? "#7c3aed" : "#3b82f6",
-                                                        }}>
-                                                            {act.type === "employee" ? "Employee" : "Candidate"}
-                                                        </span>
+                                                        <span className="text-xs font-bold px-1.5 py-0.5 rounded"
+                                                            style={{
+                                                                fontSize: "10px",
+                                                                background: act.type === "employee" ? "#f5f3ff" : "#eff6ff",
+                                                                color: act.type === "employee" ? "#7c3aed" : "#3b82f6",
+                                                            }}
+                                                        >{act.type === "employee" ? "Employee" : "Candidate"}</span>
                                                     </div>
                                                 </div>
                                             </div>
                                         ))}
                                     </div>
-                                ) : (
-                                    <EmptyTable icon={<IC.Bell />} title="No activity yet" sub="Activity will appear here" />
-                                )}
+                                ) : <EmptyTable icon={<IC.Bell />} title="No activity yet" sub="Activity will appear here" />}
                             </div>
                         </div>
                     </div>
                 </main>
             </div>
 
-            {/* ── LOGOUT MODAL ─────────────────────────────────────────────── */}
+            {/* ── LOGOUT MODAL ──────────────────────────────────────────────── */}
             {logoutModalOpen && (
-                <div style={{ position: "fixed", inset: 0, background: "rgba(10,22,40,.5)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <div style={{ background: "#fff", borderRadius: 16, padding: 28, width: 360, boxShadow: "0 20px 60px rgba(0,0,0,.18)", textAlign: "left" }}>
-                        <div style={{ color: "#3b82f6", marginBottom: 16 }}><IC.Users /></div>
-                        <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 6, color: "#0f172a" }}>Sign Out?</div>
-                        <div style={{ fontSize: 13, color: "#64748b", lineHeight: 1.6, marginBottom: 20 }}>Are you sure you want to sign out from your company account?</div>
-                        <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-                            <button onClick={() => setLogoutModalOpen(false)} style={{ padding: "10px 18px", borderRadius: 10, border: "1px solid #e2e8f0", background: "#fff", fontSize: 13, fontWeight: 700, color: "#64748b", cursor: "pointer" }}>Cancel</button>
-                            <button onClick={async () => { await logout(); navigate("/", { replace: true }); }} style={{ padding: "10px 18px", borderRadius: 10, border: "none", background: "#ef4444", fontSize: 13, fontWeight: 700, color: "#fff", cursor: "pointer" }}>Yes, Sign Out</button>
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(10,22,40,.5)" }}>
+                    {/* p-4 on mobile ensures the modal never touches screen edges */}
+                    <div className="bg-white rounded-2xl p-6 md:p-7 w-full max-w-sm" style={{ boxShadow: "0 20px 60px rgba(0,0,0,.18)" }}>
+                        <div className="mb-4" style={{ color: "#3b82f6" }}><IC.Users /></div>
+                        <div className="text-base font-extrabold mb-1.5" style={{ color: "#0f172a" }}>Sign Out?</div>
+                        <div className="text-sm leading-relaxed mb-5" style={{ color: "#64748b" }}>Are you sure you want to sign out from your company account?</div>
+                        <div className="flex gap-2.5 justify-end">
+                            <button
+                                onClick={() => setLogoutModalOpen(false)}
+                                className="px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-bold cursor-pointer"
+                                style={{ color: "#64748b" }}
+                            >Cancel</button>
+                            <button
+                                onClick={async () => { await logout(); navigate("/", { replace: true }); }}
+                                className="px-4 py-2.5 rounded-xl border-none text-xs font-bold text-white cursor-pointer"
+                                style={{ background: "#ef4444" }}
+                            >Yes, Sign Out</button>
                         </div>
                     </div>
                 </div>
