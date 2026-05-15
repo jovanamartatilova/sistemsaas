@@ -93,7 +93,7 @@ const PIPELINE_COLORS = {
 function StatCard({ icon, iconBg, iconColor, title, value, sub, barColors }) {
   return (
     <div style={{
-      background: "#fff", borderRadius: "16px", padding: "22px 24px",
+      background: "#fff", borderRadius: "16px", padding: "16px 18px",
       boxShadow: "0 1px 4px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)",
       display: "flex", flexDirection: "column", gap: "4px",
     }}>
@@ -106,10 +106,10 @@ function StatCard({ icon, iconBg, iconColor, title, value, sub, barColors }) {
           {icon}
         </div>
       </div>
-      <div style={{ fontSize: "28px", fontWeight: "800", color: "#1e293b", letterSpacing: "-1px", marginTop: "10px", textAlign: "left" }}>
+      <div style={{ fontSize: "22px", fontWeight: "800", color: "#1e293b", letterSpacing: "-0.5px", marginTop: "8px", textAlign: "left" }}>
         {value ?? 0}
       </div>
-      <div style={{ fontSize: "13px", color: "#64748b", fontWeight: "500", textAlign: "left" }}>{title}</div>
+      <div style={{ fontSize: "12px", color: "#64748b", fontWeight: "500", textAlign: "left" }}>{title}</div>
       {barColors && (
         <div style={{ display: "flex", gap: "3px", marginTop: "10px", alignItems: "flex-end", height: "26px" }}>
           {barColors.map((c, i) => (
@@ -334,7 +334,7 @@ export default function DashboardHR() {
       .hr-fadein { animation: fadeIn 0.3s ease both; }
       .row-hover:hover { background: #f8fafc; }
       
-      /* Style untuk dropdown filter status dengan warna */
+      /* Status filter dropdown */
       .status-filter {
         padding: 7px 14px;
         border-radius: 10px;
@@ -344,56 +344,66 @@ export default function DashboardHR() {
         font-family: inherit;
         cursor: pointer;
         outline: none;
-        min-width: 140px;
+        min-width: 120px;
       }
-      
-      /* Warna text berdasarkan value yang dipilih */
       .status-filter[value=""] { color: #64748b; }
       .status-filter[value="screening"] { color: #92400e; background: #fefce8; border-color: #fde68a; }
       .status-filter[value="test"] { color: #1d4ed8; background: #eff6ff; border-color: #bfdbfe; }
       .status-filter[value="interview"] { color: #6d28d9; background: #f5f3ff; border-color: #ddd6fe; }
       .status-filter[value="accepted"] { color: #15803d; background: #f0fdf4; border-color: #bbf7d0; }
       .status-filter[value="rejected"] { color: #be123c; background: #fff1f2; border-color: #fecdd3; }
-      
-      /* Warna option di dropdown */
-      .status-filter option {
-        background: white;
-        color: #1e293b;
-        padding: 8px;
-      }
+      .status-filter option { background: white; color: #1e293b; padding: 8px; }
       .status-filter option[value="screening"] { color: #92400e; }
       .status-filter option[value="test"] { color: #1d4ed8; }
       .status-filter option[value="interview"] { color: #6d28d9; }
       .status-filter option[value="accepted"] { color: #15803d; }
       .status-filter option[value="rejected"] { color: #be123c; }
+
+      /* ── Responsive ── */
+      @media (max-width: 768px) {
+        .hr-main-wrap { padding-top: 56px !important; }
+        .hr-main-content { padding: 16px 12px 32px !important; }
+        .hr-stat-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 12px !important; }
+        .hr-bottom-grid { grid-template-columns: 1fr !important; }
+        .hr-topbar { padding: 0 12px !important; }
+        .hr-topbar-date { display: none !important; }
+        .hr-filter-bar { flex-wrap: wrap !important; gap: 8px !important; }
+        .hr-search-box { width: 100% !important; }
+        .hr-table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .hr-table-inner { min-width: 560px; }
+      }
+      @media (max-width: 480px) {
+        .hr-stat-grid { grid-template-columns: 1fr !important; }
+        .hr-page-heading { font-size: 17px !important; }
+      }
     `}</style>
 
       {/* Sidebar */}
       <SidebarHR user={user} onLogout={() => setShowLogout(true)} />
 
       {/* Main */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
+      <div className="hr-main-wrap" style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
 
         {/* Topbar */}
-        <header style={{
-          height: "56px", background: "#fff", borderBottom: "1px solid #e2e8f0",
-          display: "flex", alignItems: "center", padding: "0 28px", gap: "16px",
+        <header className="hr-topbar" style={{
+          height: "52px", background: "#fff", borderBottom: "1px solid #e2e8f0",
+          display: "flex", alignItems: "center", padding: "0 20px", gap: "16px",
           position: "sticky", top: 0, zIndex: 50,
         }}>
-          <div style={{ flex: 1, display: "flex", alignItems: "start", gap: "6px" }}>
-            <span style={{ fontSize: "15px", fontWeight: "700", color: "#1e293b" }}>Dashboard</span>
-            <span style={{ fontSize: "13px", color: "#94a3b8", margin: "0 6px" }}>/</span>
+          <div style={{ flex: 1, display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+            <span style={{ fontSize: "13.5px", fontWeight: "700", color: "#1e293b" }}>Dashboard</span>
+            <span style={{ fontSize: "13px", color: "#94a3b8", margin: "0 4px" }}>/</span>
             <span style={{ fontSize: "13px", color: "#94a3b8" }}>Overview</span>
           </div>
-          <span style={{ fontSize: "12px", color: "#94a3b8", whiteSpace: "nowrap" }}>{todayStr()}</span>
+          <span className="hr-topbar-date" style={{ fontSize: "12px", color: "#94a3b8", whiteSpace: "nowrap" }}>{todayStr()}</span>
         </header>
 
         {/* Content */}
-        <main style={{ flex: 1, padding: "28px 28px 40px", overflowY: "auto" }} className="hr-fadein">
+        <main className="hr-fadein hr-main-content" style={{ flex: 1, padding: "18px 20px 32px", overflowY: "auto" }}>
 
           {/* Page heading */}
-          <div style={{ marginBottom: "28px", display: "flex", flexDirection: "column", gap: "4px", textAlign: "left" }}>
-            <div style={{ fontSize: "20px", fontWeight: "800", color: "#0f172a", lineHeight: 1.2 }}>
+          <div style={{ marginBottom: "24px", display: "flex", flexDirection: "column", gap: "4px", textAlign: "left" }}>
+            <div className="hr-page-heading" style={{ fontSize: "20px", fontWeight: "800", color: "#0f172a", lineHeight: 1.2 }}>
               {getGreeting()}, {data.user?.name?.split(" ")[0] || "HR"}!
             </div>
             <div style={{ fontSize: "13px", color: "#64748b", marginTop: "4px" }}>
@@ -402,30 +412,30 @@ export default function DashboardHR() {
           </div>
 
           {/* Stat Cards */}
-          <div style={{
+          <div className="hr-stat-grid" style={{
             display: "grid", gridTemplateColumns: "repeat(4,1fr)",
-            gap: "20px", marginBottom: "24px",
+            gap: "14px", marginBottom: "18px",
           }}>
             {statCards.map((card, i) => <StatCard key={i} {...card} />)}
           </div>
 
           {/* Bottom grid: table + pipeline */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: "20px", borderTop: "1px solid #f1f5f9", }}>
+          <div className="hr-bottom-grid" style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: "20px", borderTop: "1px solid #f1f5f9" }}>
 
             {/* Recent Candidates Table */}
             <div style={{
               background: "#fff", borderRadius: "16px", overflow: "hidden",
               boxShadow: "0 1px 4px rgba(0,0,0,0.05)"
             }}>
-              <div style={{
+              <div className="hr-filter-bar" style={{
                 display: "flex", alignItems: "center", justifyContent: "space-between",
-                padding: "20px 24px", borderBottom: "1px solid #f1f5f9",
+                padding: "10px 16px", borderBottom: "1px solid #f1f5f9", flexWrap: "wrap", gap: "10px",
               }}>
                 <div>
-                  <p style={{ fontSize: "15px", fontWeight: "700", color: "#1e293b", margin: 0, textAlign: "left" }}>Recent Candidates</p>
+                  <p style={{ fontSize: "13px", fontWeight: "700", color: "#1e293b", margin: 0, textAlign: "left" }}>Recent Candidates</p>
                   <p style={{ fontSize: "12px", color: "#94a3b8", marginTop: "2px" }}>Latest applicants requiring action</p>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
                   {/* Filter Status Dropdown */}
                   <select
                     value={statusFilter}
@@ -467,17 +477,17 @@ export default function DashboardHR() {
                   </select>
 
                   {/* Search Box */}
-                  <div style={{
+                  <div className="hr-search-box" style={{
                     display: "flex", alignItems: "center", gap: "8px",
                     background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px",
-                    padding: "7px 14px", width: "220px",
+                    padding: "5px 10px", minWidth: "140px",
                   }}>
                     <IC.Search />
                     <input
                       placeholder="Search candidates..."
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
-                      style={{ border: "none", background: "transparent", outline: "none", fontSize: "13px", color: "#64748b", width: "100%", fontFamily: "inherit" }}
+                      style={{ border: "none", background: "transparent", outline: "none", fontSize: "12px", color: "#64748b", width: "100%", fontFamily: "inherit" }}
                     />
                   </div>
 
@@ -494,15 +504,18 @@ export default function DashboardHR() {
                 </div>
               </div>
 
+              {/* Table scroll wrapper */}
+              <div className="hr-table-scroll">
+              <div className="hr-table-inner">
               {/* Table header */}
               <div style={{
                 display: "grid", gridTemplateColumns: "2fr 1.4fr 1fr 1.4fr",
-                gap: "12px", padding: "10px 24px",
+                gap: "12px", padding: "10px 20px",
                 background: "#f8fafc", borderBottom: "1px solid #f1f5f9",
               }}>
                 {["CANDIDATE", "POSITION", "STATUS", "ACTION"].map((h) => (
                   <span key={h} style={{ 
-                    fontSize: "10.5px", fontWeight: "700", color: "#94a3b8", 
+                    fontSize: "10px", fontWeight: "700", color: "#94a3b8", 
                     letterSpacing: "0.06em",
                     textAlign: h === "CANDIDATE" ? "left" : "center",
                     display: "block"
@@ -529,29 +542,19 @@ export default function DashboardHR() {
                     className="row-hover"
                     style={{
                       display: "grid", gridTemplateColumns: "2fr 1.4fr 1fr 1.4fr",
-                      gap: "12px", padding: "14px 24px", alignItems: "center",
+                      gap: "8px", padding: "9px 16px", alignItems: "center",
                       borderBottom: i < data.recent_candidates.length - 1 ? "1px solid #f8fafc" : "none",
                       transition: "background 0.15s",
                     }}
                   >
-                    {/* Name + email */}
-                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                      <div style={{
-                        width: "32px", height: "32px", borderRadius: "50%", flexShrink: 0,
-                        background: "#eff6ff", color: "#3b82f6",
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        fontSize: "11px", fontWeight: "700",
-                      }}>
-                        {(c.name || "?").slice(0, 2).toUpperCase()}
-                      </div>
-                      <div>
-                        <div style={{ fontSize: "13px", fontWeight: "600", color: "#1e293b" }}>{c.name}</div>
-                        <div style={{ fontSize: "11px", color: "#94a3b8", marginTop: "1px" }}>{c.email}</div>
-                      </div>
+                    {/* Name + email — no avatar bubble */}
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: "12.5px", fontWeight: "600", color: "#1e293b", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{c.name}</div>
+                      <div style={{ fontSize: "11px", color: "#94a3b8", marginTop: "1px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{c.email}</div>
                     </div>
 
                     {/* Position */}
-                    <div style={{ fontSize: "13px", color: "#475569", textAlign: "center" }}>{c.position}</div>
+                    <div style={{ fontSize: "11.5px", color: "#475569", textAlign: "center", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.position}</div>
 
                     {/* Status badge */}
                     <div style={{ textAlign: "center" }}>
@@ -594,6 +597,8 @@ export default function DashboardHR() {
                   </div>
                 ))
               )}
+              </div>{/* end table-inner */}
+              </div>{/* end table-scroll */}
             </div>
 
             {/* Pipeline Panel */}

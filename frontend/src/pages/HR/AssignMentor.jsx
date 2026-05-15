@@ -68,23 +68,23 @@ function todayStr() {
 function StatCard({ icon, iconBg, iconColor, title, value, sub, barColors }) {
   return (
     <div style={{
-      background: "#fff", borderRadius: "16px", padding: "22px 24px",
+      background: "#fff", borderRadius: "16px", padding: "16px 18px",
       boxShadow: "0 1px 4px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)",
       display: "flex", flexDirection: "column", gap: "4px",
     }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
         <div style={{
-          width: "38px", height: "38px", borderRadius: "10px",
+          width: "34px", height: "34px", borderRadius: "10px",
           background: iconBg, display: "flex", alignItems: "center",
           justifyContent: "center", color: iconColor,
         }}>
           {icon}
         </div>
       </div>
-      <div style={{ fontSize: "28px", fontWeight: "800", color: "#1e293b", letterSpacing: "-1px", marginTop: "10px", textAlign: "left" }}>
+      <div style={{ fontSize: "22px", fontWeight: "800", color: "#1e293b", letterSpacing: "-0.5px", marginTop: "8px", textAlign: "left" }}>
         {value ?? 0}
       </div>
-      <div style={{ fontSize: "13px", color: "#64748b", fontWeight: "500", textAlign: "left" }}>{title}</div>
+      <div style={{ fontSize: "12px", color: "#64748b", fontWeight: "500", textAlign: "left" }}>{title}</div>
       {barColors && (
         <div style={{ display: "flex", gap: "3px", marginTop: "10px", alignItems: "flex-end", height: "26px" }}>
           {barColors.map((c, i) => (
@@ -360,39 +360,51 @@ export default function AssignMentorHR() {
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 99px; }
-        @keyframes spin { 
-          to { transform: rotate(360deg); } 
-        }
+        @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
         .hr-fadein { animation: fadeIn 0.3s ease both; }
         .row-hover:hover { background: #f8fafc !important; }
         select { appearance: auto; }
+        @media (max-width: 768px) {
+          .am-main-wrap { padding-top: 56px !important; }
+          .am-main { padding: 16px 12px 32px !important; }
+          .am-stat-grid { grid-template-columns: repeat(2,1fr) !important; gap:12px !important; }
+          .am-bottom-grid { grid-template-columns: 1fr !important; }
+          .am-topbar { padding: 0 12px !important; }
+          .am-topbar-date { display: none !important; }
+          .am-search-wrap { flex-wrap: wrap !important; gap: 8px !important; }
+          .am-table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+          .am-table-inner { min-width: 700px; }
+        }
+        @media (max-width: 480px) {
+          .am-stat-grid { grid-template-columns: 1fr !important; }
+        }
       `}</style>
 
       {/* Sidebar */}
       <SidebarHR user={user} onLogout={() => setShowLogout(true)} />
 
       {/* Main */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
+      <div className="am-main-wrap" style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
 
         {/* Topbar */}
-        <header style={{
+        <header className="am-topbar" style={{
           height: "56px", background: "#fff", borderBottom: "1px solid #e2e8f0",
           display: "flex", alignItems: "center", padding: "0 28px", gap: "16px",
           position: "sticky", top: 0, zIndex: 50,
         }}>
-          <div style={{ flex: 1, display: "flex", alignItems: "center", gap: "6px" }}>
+          <div style={{ flex: 1, display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
             <span style={{ fontSize: "15px", fontWeight: "700", color: "#1e293b" }}>Dashboard</span>
             <span style={{ fontSize: "13px", color: "#94a3b8", margin: "0 2px" }}>/</span>
             <span style={{ fontSize: "13px", color: "#94a3b8" }}>Administration</span>
             <span style={{ fontSize: "13px", color: "#94a3b8", margin: "0 2px" }}>/</span>
             <span style={{ fontSize: "13px", color: "#1e293b", fontWeight: "600" }}>Assign Mentor</span>
           </div>
-          <span style={{ fontSize: "12px", color: "#94a3b8", whiteSpace: "nowrap" }}>{todayStr()}</span>
+          <span className="am-topbar-date" style={{ fontSize: "12px", color: "#94a3b8", whiteSpace: "nowrap" }}>{todayStr()}</span>
         </header>
 
         {/* Content */}
-        <main style={{ flex: 1, padding: "28px 28px 40px", overflowY: "auto" }} className="hr-fadein">
+        <main className="hr-fadein am-main" style={{ flex: 1, padding: "28px 28px 40px", overflowY: "auto" }}>
 
           {/* Page heading */}
           <div style={{ marginBottom: "28px", display: "flex", flexDirection: "column", gap: "4px", textAlign: "left" }}>
@@ -405,12 +417,12 @@ export default function AssignMentorHR() {
           </div>
 
           {/* Stat Cards */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "20px", marginBottom: "24px" }}>
+          <div className="am-stat-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "20px", marginBottom: "24px" }}>
             {statCards.map((card, i) => <StatCard key={i} {...card} />)}
           </div>
 
           {/* Bottom grid: table + mentor panel */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: "20px" }}>
+          <div className="am-bottom-grid" style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: "20px" }}>
 
             {/* Interns Table */}
             <div style={{
@@ -428,12 +440,14 @@ export default function AssignMentorHR() {
                   <p style={{ fontSize: "12px", color: "#94a3b8", marginTop: "2px" }}>Select a mentor for each intern, then click Assign</p>
                 </div>
 
-                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                  <div style={{
-                    display: "flex", alignItems: "center", gap: "8px",
-                    background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px",
-                    padding: "7px 14px", width: "240px",
-                  }}>
+              <div className="am-search-wrap" style={{
+                display: "flex", alignItems: "center", gap: "12px",
+              }}>
+                <div style={{
+                  display: "flex", alignItems: "center", gap: "8px",
+                  background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px",
+                  padding: "7px 14px", minWidth: "200px", flex: 1,
+                }}>
                     <IC.Search />
                     <input
                       placeholder="Search by name or email..."
@@ -444,7 +458,7 @@ export default function AssignMentorHR() {
                         fontSize: "13px", color: "#64748b", width: "100%", fontFamily: "inherit",
                       }}
                     />
-                  </div>
+                </div>
 
                   <ActionBtn
                     label={autoLoading ? "Assigning..." : "Auto-assign Unassigned"}
@@ -453,21 +467,24 @@ export default function AssignMentorHR() {
                     disabled={unassigned === 0 || autoLoading}
                     onClick={() => setShowAutoConfirm(true)}
                   />
-                </div>
+              </div>
               </div>
 
+              {/* Table scroll wrapper */}
+              <div className="am-table-scroll">
+              <div className="am-table-inner">
               {/* Table header */}
               <div style={{
                 display: "grid", gridTemplateColumns: "2fr 1fr 1.2fr 0.8fr 1.8fr 1fr",
-                gap: "12px", padding: "10px 24px",
+                gap: "8px", padding: "8px 16px",
                 background: "#f8fafc", borderBottom: "1px solid #f1f5f9",
               }}>
                 {["INTERN", "POSITION", "PROGRAM", "TYPE", "ASSIGN MENTOR", "ACTION"].map((h) => (
                   <span key={h} style={{ 
-                    fontSize: "10.5px", fontWeight: "700", color: "#94a3b8", 
+                    fontSize: "10px", fontWeight: "700", color: "#94a3b8", 
                     letterSpacing: "0.06em", 
                     textAlign: h === "INTERN" ? "left" : "center", 
-                    display: "block" 
+                    display: "flex", alignItems: "center", justifyContent: h === "INTERN" ? "flex-start" : "center"
                   }}>
                     {h}
                   </span>
@@ -502,32 +519,22 @@ export default function AssignMentorHR() {
                       className="row-hover"
                       style={{
                         display: "grid", gridTemplateColumns: "2fr 1fr 1.2fr 0.8fr 1.8fr 1fr",
-                        gap: "12px", padding: "14px 24px", alignItems: "center",
+                        gap: "8px", padding: "9px 16px", alignItems: "center",
                         borderBottom: i < data.interns.length - 1 ? "1px solid #f8fafc" : "none",
                         transition: "background 0.15s",
                         background: "#fff",
                       }}
                     >
-                      {/* Name + email */}
-                      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                        <div style={{
-                          width: "32px", height: "32px", borderRadius: "50%", flexShrink: 0,
-                          background: "#eff6ff", color: "#3b82f6",
-                          display: "flex", alignItems: "center", justifyContent: "center",
-                          fontSize: "11px", fontWeight: "700",
-                        }}>
-                          {(intern.name || "?").slice(0, 2).toUpperCase()}
-                        </div>
-                        <div>
-                          <div style={{ fontSize: "13px", fontWeight: "600", color: "#1e293b" }}>{intern.name}</div>
-                          <div style={{ fontSize: "11px", color: "#94a3b8", marginTop: "1px" }}>{intern.email}</div>
-                        </div>
+                      {/* Name + email — no avatar bubble */}
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontSize: "clamp(11px,1.1vw,13px)", fontWeight: "600", color: "#1e293b", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{intern.name}</div>
+                        <div style={{ fontSize: "clamp(10px,0.9vw,11px)", color: "#94a3b8", marginTop: "1px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{intern.email}</div>
                       </div>
 
                       {/* Position */}
-                      <div style={{ fontSize: "13px", color: "#475569", textAlign: "center" }}>{intern.position}</div>
+                      <div style={{ fontSize: "clamp(11px,1vw,12.5px)", color: "#475569", textAlign: "center", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{intern.position}</div>
                       {/* Program */}
-                      <div style={{ fontSize: "13px", color: "#475569", textAlign: "center" }}>{intern.program}</div>
+                      <div style={{ fontSize: "clamp(11px,1vw,12.5px)", color: "#475569", textAlign: "center", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{intern.program}</div>
 
                       {/* Type badge */}
                       <div style={{ textAlign: "center" }}>
@@ -594,6 +601,8 @@ export default function AssignMentorHR() {
                   );
                 })
               )}
+              </div>{/* end am-table-inner */}
+              </div>{/* end am-table-scroll */}
             </div>
 
             {/* Mentor Overview Panel */}

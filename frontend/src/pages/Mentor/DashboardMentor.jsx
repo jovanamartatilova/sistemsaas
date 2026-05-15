@@ -10,45 +10,45 @@ import { LoadingSpinner } from "../../components/LoadingSpinner";
 
 // ─── STYLES ───────────────────────────────────────────────────────────────────
 const s = {
-  app: { display: "flex", minHeight: "100vh", background: "#f1f5f9", fontFamily: "'Poppins', 'Segoe UI', sans-serif", fontSize: "14px", color: "#1e293b", gap: 0 },
+  app: { display: "flex", minHeight: "100vh", background: "#f1f5f9", fontFamily: "'Poppins', 'Segoe UI', sans-serif", fontSize: "13px", color: "#1e293b", gap: 0 },
   main: { flex: 1, display: "flex", flexDirection: "column", minHeight: "100vh", gap: 0, overflow: "hidden" },
-  topbar: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 28px", background: "#fff", borderBottom: "1px solid #e2e8f0", position: "sticky", top: 0, zIndex: 50, flexShrink: 0 },
-  bc: { display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "#64748b" },
+  topbar: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 20px", background: "#fff", borderBottom: "1px solid #e2e8f0", position: "sticky", top: 0, zIndex: 50, flexShrink: 0 },
+  bc: { display: "flex", alignItems: "center", gap: "6px", fontSize: "12.5px", color: "#64748b" },
   bcSep: { color: "#cbd5e1" },
   bcActive: { color: "#1e293b", fontWeight: 600 },
-  topbarDate: { fontSize: "12px", color: "#64748b", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "6px", padding: "5px 10px" },
-  content: { padding: "28px", flex: 1, overflowY: "auto" },
-  h1: { fontSize: "22px", fontWeight: 700, color: "#0f172a", margin: 0 },
-  subtitle: { fontSize: "13px", color: "#64748b", marginTop: "4px", marginBottom: "20px" },
-  badge: (bg, color) => ({ display: "inline-flex", padding: "3px 9px", borderRadius: "6px", fontSize: "12px", fontWeight: 500, background: bg, color }),
+  topbarDate: { fontSize: "11px", color: "#64748b", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "6px", padding: "4px 8px" },
+  content: { padding: "18px", flex: 1, overflowY: "auto" },
+  h1: { fontSize: "18px", fontWeight: 700, color: "#0f172a", margin: 0 },
+  subtitle: { fontSize: "12px", color: "#64748b", marginTop: "4px", marginBottom: "16px" },
+  badge: (bg, color) => ({ display: "inline-flex", padding: "3px 9px", borderRadius: "6px", fontSize: "11px", fontWeight: 500, background: bg, color }),
   tableWrap: { overflowX: "auto" },
-  typeBadge: (isTeam) => ({ fontSize: "12px", color: isTeam ? "#1e40af" : "#334155", background: isTeam ? "#dbeafe" : "#f1f5f9", padding: "2px 8px", borderRadius: "5px", display: "inline-block" }),
-  grid4: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "16px", marginBottom: "24px" },
-  stat: { background: "#fff", borderRadius: "12px", padding: "18px 20px", border: "1px solid #e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" },
-  statTop: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px" },
-  statLabel: { fontSize: "13px", fontWeight: 600, color: "#64748b" },
+  typeBadge: (isTeam) => ({ fontSize: "11px", color: isTeam ? "#1e40af" : "#334155", background: isTeam ? "#dbeafe" : "#f1f5f9", padding: "2px 7px", borderRadius: "5px", display: "inline-block" }),
+  grid4: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "12px", marginBottom: "18px" },
+  stat: { background: "#fff", borderRadius: "12px", padding: "14px 16px", border: "1px solid #e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" },
+  statTop: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" },
+  statLabel: { fontSize: "12px", fontWeight: 600, color: "#64748b" },
   statBadge: (bg, color) => ({ fontSize: "10px", fontWeight: 600, padding: "2px 7px", borderRadius: "10px", background: bg, color }),
-  statVal: { fontSize: "28px", fontWeight: 800, color: "#0f172a", lineHeight: 1, marginBottom: "4px" },
-  statBar: { height: "3px", background: "#f1f5f9", borderRadius: "10px", overflow: "hidden", margin: "8px 0" },
+  statVal: { fontSize: "22px", fontWeight: 800, color: "#0f172a", lineHeight: 1, marginBottom: "4px" },
+  statBar: { height: "3px", background: "#f1f5f9", borderRadius: "10px", overflow: "hidden", margin: "6px 0" },
   statFill: (w, c) => ({ height: "100%", borderRadius: "10px", width: w, background: c }),
   statSub: { fontSize: "11px", color: "#94a3b8" },
   card: { background: "#fff", borderRadius: "12px", border: "1px solid #e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,0.04)", overflow: "hidden" },
-  ch: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 24px", borderBottom: "1px solid #f1f5f9" },
-  ct: { fontSize: "15px", fontWeight: 700, color: "#0f172a" },
-  cs: { fontSize: "12px", color: "#94a3b8", marginTop: "1px" },
+  ch: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", borderBottom: "1px solid #f1f5f9" },
+  ct: { fontSize: "13.5px", fontWeight: 700, color: "#0f172a" },
+  cs: { fontSize: "11px", color: "#94a3b8", marginTop: "1px" },
   table: { width: "100%", borderCollapse: "collapse", tableLayout: "fixed" },
   thead: { background: "#f8fafc", borderBottom: "1px solid #e2e8f0" },
-  th: { padding: "10px 16px", textAlign: "center", fontSize: "10px", fontWeight: 700, color: "#94a3b8", letterSpacing: "0.06em", textTransform: "uppercase", whiteSpace: "nowrap" },
-  td: { padding: "13px 16px", fontSize: "13px", color: "#334155", borderBottom: "1px solid #f8fafc", verticalAlign: "middle", textAlign: "center" },
-  cname: { fontWeight: 600, color: "#0f172a", fontSize: "13px", display: "block" },
-  cemail: { fontSize: "11px", color: "#94a3b8", display: "block", marginTop: "1px" },
-  progWrap: { width: "80px", height: "6px", background: "#f1f5f9", borderRadius: "10px", overflow: "hidden" },
+  th: { padding: "8px 12px", textAlign: "center", fontSize: "10px", fontWeight: 700, color: "#94a3b8", letterSpacing: "0.06em", textTransform: "uppercase", whiteSpace: "nowrap" },
+  td: { padding: "9px 12px", fontSize: "12px", color: "#334155", borderBottom: "1px solid #f8fafc", verticalAlign: "middle", textAlign: "center" },
+  cname: { fontWeight: 600, color: "#0f172a", fontSize: "12.5px", display: "block" },
+  cemail: { fontSize: "10.5px", color: "#94a3b8", display: "block", marginTop: "1px" },
+  progWrap: { width: "70px", height: "5px", background: "#f1f5f9", borderRadius: "10px", overflow: "hidden" },
   progFill: (w, c) => ({ height: "100%", borderRadius: "10px", width: w, background: c }),
-  acts: { display: "flex", gap: "6px" },
-  btnView: { padding: "4px 10px", borderRadius: "6px", fontSize: "11px", fontWeight: 500, cursor: "pointer", border: "1px solid #e2e8f0", background: "#fff", color: "#334155", fontFamily: "inherit", textDecoration: "none", display: "inline-flex", alignItems: "center" },
-  btnScore: { padding: "4px 10px", borderRadius: "6px", fontSize: "11px", fontWeight: 500, cursor: "pointer", border: "1px solid #c4b5fd", background: "#f5f3ff", color: "#7c3aed", fontFamily: "inherit", textDecoration: "none", display: "inline-flex", alignItems: "center" },
-  btnPrimary: { padding: "7px 16px", background: "#8b5cf6", color: "#fff", border: "none", borderRadius: "8px", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit", textDecoration: "none", display: "inline-block" },
-  btnOutline: { padding: "7px 14px", background: "#f8fafc", color: "#334155", border: "1px solid #e2e8f0", borderRadius: "10px", fontSize: "13px", fontWeight: 500, cursor: "pointer", fontFamily: "inherit" },
+  acts: { display: "flex", gap: "5px" },
+  btnView: { padding: "3px 8px", borderRadius: "6px", fontSize: "11px", fontWeight: 500, cursor: "pointer", border: "1px solid #e2e8f0", background: "#fff", color: "#334155", fontFamily: "inherit", textDecoration: "none", display: "inline-flex", alignItems: "center" },
+  btnScore: { padding: "3px 8px", borderRadius: "6px", fontSize: "11px", fontWeight: 500, cursor: "pointer", border: "1px solid #c4b5fd", background: "#f5f3ff", color: "#7c3aed", fontFamily: "inherit", textDecoration: "none", display: "inline-flex", alignItems: "center" },
+  btnPrimary: { padding: "6px 14px", background: "#8b5cf6", color: "#fff", border: "none", borderRadius: "8px", fontSize: "12px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit", textDecoration: "none", display: "inline-block" },
+  btnOutline: { padding: "6px 12px", background: "#f8fafc", color: "#334155", border: "1px solid #e2e8f0", borderRadius: "10px", fontSize: "12px", fontWeight: 500, cursor: "pointer", fontFamily: "inherit" },
 };
 
 export default function DashboardMentor() {
@@ -314,17 +314,33 @@ useEffect(() => {
 
   return (
     <div style={s.app}>
-      <style>{`* { box-sizing: border-box; margin: 0; padding: 0; } ::-webkit-scrollbar { width: 5px; } @keyframes spin { to { transform: rotate(360deg); } } ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 99px; } tr:last-child td { border-bottom: none; }`}</style>
+      <style>{`
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        ::-webkit-scrollbar { width: 5px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 99px; }
+        tr:last-child td { border-bottom: none; }
+        @media (max-width: 768px) {
+          .dm-main { overflow: auto !important; padding-top: 56px !important; }
+          .dm-topbar { padding: 10px 14px !important; }
+          .dm-topbar-date { display: none !important; }
+          .dm-content { padding: 16px 12px !important; }
+          .dm-card-header { flex-direction: column !important; align-items: flex-start !important; gap: 10px !important; }
+          .dm-card-actions { flex-wrap: wrap !important; gap: 8px !important; }
+          .dm-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+          .dm-table-inner { min-width: 540px; }
+        }
+      `}</style>
       <SidebarMentor mentor={mentor} onLogout={handleLogout} />
-      <main style={s.main}>
-        <div style={s.topbar}>
+      <main className="dm-main" style={s.main}>
+        <div className="dm-topbar" style={s.topbar}>
           <div style={s.bc}>
             <span>Dashboard</span><span style={s.bcSep}>/</span>
             <span style={s.bcActive}>Overview</span>
           </div>
-          <div style={s.topbarDate}>{new Date().toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}</div>
+          <div className="dm-topbar-date" style={s.topbarDate}>{new Date().toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}</div>
         </div>
-        <div style={s.content}>
+        <div className="dm-content" style={s.content}>
           <h1 style={s.h1}>Good morning, Mentor!</h1>
           <p style={s.subtitle}>Summary of your intern supervision today.</p>
 
@@ -355,7 +371,7 @@ useEffect(() => {
           </div>
 
           <div style={s.card}>
-            <div style={{ padding: "18px 24px", borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ padding: "18px 24px", borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px" }}>
               
               {/* Left: Title & Subtitle */}
               <div style={{ textAlign: "left" }}>
@@ -364,7 +380,7 @@ useEffect(() => {
               </div>
 
               {/* Right: Tabs + Filters + Export */}
-              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <div className="dm-card-actions" style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                 
                 {/* Tabs */}
                 <div style={{ display: "flex", gap: "2px", background: "#f1f5f9", borderRadius: "10px", padding: "3px" }}>
@@ -373,8 +389,8 @@ useEffect(() => {
                       key={tab}
                       onClick={() => { setActiveTab(tab); setBatchFilter(''); }}
                       style={{
-                        padding: "6px 20px", borderRadius: "8px", border: "none", cursor: "pointer",
-                        fontSize: "13px", fontWeight: 600, fontFamily: "inherit",
+                        padding: "5px 12px", borderRadius: "8px", border: "none", cursor: "pointer",
+                        fontSize: "12px", fontWeight: 600, fontFamily: "inherit",
                         background: activeTab === tab ? "#fff" : "transparent",
                         color: activeTab === tab ? "#0f172a" : "#64748b",
                         boxShadow: activeTab === tab ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
@@ -390,7 +406,7 @@ useEffect(() => {
                 <div style={{
                   display: "flex", alignItems: "center", gap: "8px",
                   background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px",
-                  padding: "7px 14px", width: "220px", height: "34px"
+                  padding: "5px 10px", width: "160px", height: "30px"
                 }}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
@@ -410,7 +426,7 @@ useEffect(() => {
                   value={batchFilter}
                   onChange={e => setBatchFilter(e.target.value)}
                   style={{
-                    padding: "7.5px 12px", borderRadius: "10px", border: "1px solid #e2e8f0", background: "#f8fafc", color: "#334155", fontSize: "13px", fontFamily: "inherit", outline: "none", height: "34px", cursor: "pointer"
+                    padding: "5px 10px", borderRadius: "10px", border: "1px solid #e2e8f0", background: "#f8fafc", color: "#334155", fontSize: "12px", fontFamily: "inherit", outline: "none", height: "30px", cursor: "pointer"
                   }}
                 >
                   <option value="">All Batch</option>
@@ -424,7 +440,7 @@ useEffect(() => {
                   <button
                     onClick={() => setExportDropdown(v => !v)}
                     style={{ 
-                      padding: "7px 14px", background: "#fff", color: "#334155", border: "1px solid #e2e8f0", borderRadius: "10px", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: "6px", height: "34px"
+                      padding: "5px 10px", background: "#fff", color: "#334155", border: "1px solid #e2e8f0", borderRadius: "10px", fontSize: "12px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: "6px", height: "30px"
                     }}
                   >
                     Export CSV
@@ -478,7 +494,8 @@ useEffect(() => {
               </div>
             </div>
 
-            <div style={s.tableWrap}>
+            <div className="dm-table-wrap" style={s.tableWrap}>
+              <div className="dm-table-inner">
               {activeTab === "individual" ? (
                 // ─── INDIVIDUAL TABLE ───────────────────────────────────────────
                 <table style={s.table}>
@@ -626,6 +643,7 @@ teams
                   );
                 })()
               )}
+              </div>{/* end dm-table-inner */}
             </div>
           </div>
         </div>

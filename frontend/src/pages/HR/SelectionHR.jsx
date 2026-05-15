@@ -623,20 +623,41 @@ const handleLogout = () => {
   return (
     <div style={{ display:'flex', minHeight:'100vh', background:'#f8fafc', fontFamily:"'Poppins', sans-serif" }}>
       <SidebarHR user={user} onLogout={() => setShowLogoutModal(true)} />
+      <style>{`
+        @keyframes spin{to{transform:rotate(360deg)}}
+        @keyframes fadeSlide{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+        @media (max-width: 768px) {
+          .sel-main-wrap { padding-top: 56px !important; }
+          .sel-main { padding: 16px 12px 32px !important; }
+          .sel-topbar { padding: 0 12px !important; }
+          .sel-topbar-date { display: none !important; }
+          .sel-page-header { flex-direction: column !important; align-items: flex-start !important; gap: 10px !important; }
+          .sel-subfilter { flex-direction: column !important; align-items: flex-start !important; gap: 8px !important; }
+          .sel-table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+          .sel-table-inner { min-width: 820px; }
+        }
+        /* Responsive clamp fonts for all table content */
+        .sel-table-inner { font-size: clamp(11px, 1.1vw, 13px); }
+        .sel-cell-name { font-size: clamp(11.5px, 1.1vw, 13px); font-weight: 700; color: #1e293b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .sel-cell-email { font-size: clamp(10px, 0.9vw, 11.5px); color: #94a3b8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .sel-cell-uni { font-size: clamp(10.5px, 1vw, 12.5px); color: #475569; font-weight: 500; overflow-wrap: break-word; word-break: break-word; white-space: normal; line-height: 1.35; }
+        .sel-action-btn { padding: clamp(4px,0.4vw,6px) clamp(8px,0.8vw,12px) !important; font-size: clamp(10px,0.95vw,11.5px) !important; white-space: nowrap; }
+        .sel-doc-btn { padding: clamp(3px,0.35vw,5px) clamp(6px,0.7vw,10px) !important; font-size: clamp(10px,0.9vw,11.5px) !important; }
+      `}</style>
 
-      <div style={{ flex:1, display:'flex', flexDirection:'column', minWidth:0 }}>
+      <div className="sel-main-wrap" style={{ flex:1, display:'flex', flexDirection:'column', minWidth:0 }}>
         {/* Header */}
-        <header style={{ height:'56px', background:'#fff', borderBottom:'1px solid #e2e8f0', display:'flex', alignItems:'center', padding:'0 28px', gap:'16px', position:'sticky', top:0, zIndex:50 }}>
-          <div style={{ flex:1, display:'flex', alignItems:'center', gap:'6px' }}>
+        <header className="sel-topbar" style={{ height:'56px', background:'#fff', borderBottom:'1px solid #e2e8f0', display:'flex', alignItems:'center', padding:'0 28px', gap:'16px', position:'sticky', top:0, zIndex:50 }}>
+          <div style={{ flex:1, display:'flex', alignItems:'center', gap:'6px', flexWrap:'wrap' }}>
             <span style={{ fontSize:'15px', fontWeight:'700', color:'#1e293b' }}>Dashboard</span>
             <span style={{ fontSize:'13px', color:'#94a3b8', margin:'0 6px' }}>/</span>
             <span style={{ fontSize:'13px', color:'#94a3b8' }}>Selection Flow</span>
           </div>
-          <span style={{ fontSize:'12px', color:'#94a3b8' }}>{todayStr()}</span>
+          <span className="sel-topbar-date" style={{ fontSize:'12px', color:'#94a3b8' }}>{todayStr()}</span>
         </header>
 
-        <main style={{ flex:1, padding:'28px', overflowY:'auto' }}>
-          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'24px' }}>
+        <main className="sel-main" style={{ flex:1, padding:'28px', overflowY:'auto' }}>
+          <div className="sel-page-header" style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'24px' }}>
             <div>
               <h1 style={{ fontSize:'22px', fontWeight:'800', color:'#0f172a', margin:0 }}>Selection Management</h1>
               <p style={{ fontSize:'13px', color:'#64748b', marginTop:'4px' }}>Manage candidate stages dynamically based on position requirements.</p>
@@ -733,7 +754,7 @@ const handleLogout = () => {
               </div>
 
               {/* Sub-filters row */}
-              <div style={{ padding:'12px 20px', background:'#f8fafc', display:'flex', alignItems:'center', justifyContent:'space-between', borderTop:'1px solid #f1f5f9' }}>
+              <div className="sel-subfilter" style={{ padding:'12px 20px', background:'#f8fafc', display:'flex', alignItems:'center', justifyContent:'space-between', borderTop:'1px solid #f1f5f9' }}>
                 <div style={{ display:'flex', alignItems:'center', gap:'12px' }}>
                   {activeTab === 'stage' && currentStage && (
                     <div style={{ fontSize:'13px', fontWeight:'600', color:'#64748b' }}>
@@ -773,7 +794,9 @@ const handleLogout = () => {
             {smartRankActive && <AIBanner count={displayCandidates.length} />}
 
             {/* Table Header */}
-            <div style={{ display:'grid', gridTemplateColumns:gridCols, gap:'12px', padding:'12px 24px', background:'#fcfcfd', borderBottom:'1px solid #f1f5f9' }}>
+            <div className="sel-table-scroll">
+            <div className="sel-table-inner">
+            <div style={{ display:'grid', gridTemplateColumns:gridCols, gap:'8px', padding:'9px 16px', background:'#fcfcfd', borderBottom:'1px solid #f1f5f9' }}>
               {headerCols.map(h=>(
                 <div key={h} style={{ 
                   fontSize:'10px', fontWeight:'700', color: h==='RANK & MATCH'?'#6366f1':'#94a3b8', 
@@ -800,27 +823,22 @@ const handleLogout = () => {
 
                   return (
                     <div key={c.id_submission}>
-                      <div style={{ display:'grid', gridTemplateColumns:gridCols, gap:'12px', padding:'16px 24px', alignItems:'center', borderBottom: !isSumOpen&&i<displayCandidates.length-1?'1px solid #f1f5f9':'none', background: aiData?.rank===1?'rgba(99,102,241,0.02)':'transparent' }}>
+                      <div style={{ display:'grid', gridTemplateColumns:gridCols, gap:'8px', padding:'9px 16px', alignItems:'center', borderBottom: !isSumOpen&&i<displayCandidates.length-1?'1px solid #f1f5f9':'none', background: aiData?.rank===1?'rgba(99,102,241,0.02)':'transparent' }}>
 
-                        {/* Candidate */}
-                        <div style={{ display:'flex', alignItems:'center', gap:'10px', textAlign:'left' }}>
-                          <div style={{ width:'34px', height:'34px', borderRadius:'50%', background:'#eff6ff', color:'#3b82f6', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'12px', fontWeight:'700', flexShrink:0 }}>
-                            {(c.name||'?').slice(0,2).toUpperCase()}
-                          </div>
+                        {/* Candidate — no avatar bubble */}
+                        <div style={{ display:'flex', alignItems:'flex-start', gap:'0', textAlign:'left', minWidth: 0 }}>
                           <div style={{ minWidth:0 }}>
                             <div style={{ display:'flex', alignItems:'center', gap:'5px', flexWrap:'wrap' }}>
-                              <span style={{ fontSize:'13px', fontWeight:'700', color:'#1e293b', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{c.name}</span>
+                              <span className="sel-cell-name">{c.name}</span>
                               {aiData?.suggestion && <SuggestionBadge suggestion={aiData.suggestion} />}
                             </div>
-                            <div style={{ fontSize:'11.5px', color:'#94a3b8', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{c.email}</div>
+                            <div className="sel-cell-email">{c.email}</div>
                           </div>
                         </div>
 
-                        {/* University */}
-                        <div style={{ fontSize:'12.5px', color:'#475569', fontWeight:'500', textAlign:'left', minWidth:0, wordBreak:'break-word', whiteSpace:'normal', lineHeight:'1.4' }}>
-                          {c.university ? (
-                            <span style={{ display:'block', wordBreak:'break-word' }}>{c.university}</span>
-                          ) : '-'}
+                        {/* University — word-wrap, prefer 1 line, clamp font */}
+                        <div className="sel-cell-uni">
+                          {c.university || '-'}
                         </div>
 
                         {/* Stage-specific columns — unchanged from original */}
@@ -899,39 +917,40 @@ const handleLogout = () => {
                           </div>
                         ) : (
                           // Normal notes column
-                          <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:'6px', justifyContent:'center' }}>
+                          <div style={{ display:'flex', alignItems:'center', justifyContent:'center' }}>
                             {c.hr_notes ? (
-                              <div style={{ fontSize:'12px', color:'#475569', whiteSpace:'pre-wrap', wordBreak:'break-word', background:'#f8fafc', border:'1px solid #e2e8f0', padding:'6px 10px', borderRadius:'8px', cursor:'pointer', width:'100%', maxWidth:'200px' }} onClick={()=>setNotesCandidate(c)} title='Click to edit note'>{c.hr_notes}</div>
+                              <div style={{ fontSize:'11px', color:'#475569', whiteSpace:'pre-wrap', wordBreak:'break-word', background:'#f8fafc', border:'1px solid #e2e8f0', padding:'4px 8px', borderRadius:'6px', cursor:'pointer', maxWidth:'120px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }} onClick={()=>setNotesCandidate(c)} title={c.hr_notes}>{c.hr_notes}</div>
                             ) : (
-                              <button onClick={()=>setNotesCandidate(c)} style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:'4px', padding:'6px 12px', borderRadius:'8px', border:'1px dashed #cbd5e1', background:'#fff', color:'#64748b', fontSize:'11.5px', fontWeight:'600', cursor:'pointer', transition:'all 0.15s' }} onMouseEnter={e=>{e.currentTarget.style.borderColor='#3b82f6';e.currentTarget.style.color='#3b82f6';e.currentTarget.style.background='#f0f7ff'}} onMouseLeave={e=>{e.currentTarget.style.borderColor='#cbd5e1';e.currentTarget.style.color='#64748b';e.currentTarget.style.background='#fff'}}>
-                                <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2'><path d='M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7'/><path d='M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z'/></svg>
+                              <button onClick={()=>setNotesCandidate(c)} style={{ display:'flex', alignItems:'center', gap:'4px', padding:'4px 8px', borderRadius:'6px', border:'1px dashed #cbd5e1', background:'#fff', color:'#64748b', fontSize:'10.5px', fontWeight:'600', cursor:'pointer', transition:'all 0.15s', whiteSpace:'nowrap' }} onMouseEnter={e=>{e.currentTarget.style.borderColor='#3b82f6';e.currentTarget.style.color='#3b82f6';e.currentTarget.style.background='#f0f7ff'}} onMouseLeave={e=>{e.currentTarget.style.borderColor='#cbd5e1';e.currentTarget.style.color='#64748b';e.currentTarget.style.background='#fff'}}>
+                                <svg width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2'><path d='M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7'/><path d='M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z'/></svg>
                                 Add Notes
                               </button>
                             )}
                           </div>
                         )}
 
-                        {/* Actions */}
-                        <div style={{ display:'flex', gap:'6px', justifyContent:'center', alignItems:'center' }}>
+                        {/* Actions — centered, Pass+Reject inline, summary icon below centered */}
+                        <div style={{ display:'flex', flexDirection:'column', gap:'4px', alignItems:'center', justifyContent:'center' }}>
                           {activeTab!=='final' && (
-                            <>
+                            <div style={{ display:'flex', gap:'4px', justifyContent:'center', alignItems:'center' }}>
                               <ActionBtn label={activeSubStageIndex===selectionFlow.length-1?'Accept':'Pass'} variant='green' onClick={()=>handlePass(c)} />
                               <ActionBtn label='Reject' variant='red' onClick={()=>setConfirmAction({type:'reject',candidate:c})} />
-                            </>
+                            </div>
                           )}
-                          {/* ── NEW: Quick Summary button ── */}
                           {activeTab!=='final' && (
-                            <IconBtn
-                              icon={<IC.AlignLeft />}
-                              title='Quick Summary — auto-generate candidate profile summary'
-                              onClick={() => handleSummary(c.id_submission)}
-                              active={isSumOpen}
-                              bgHov='#eff6ff'
-                              color='#64748b'
-                            />
+                            <div style={{ display:'flex', justifyContent:'center' }}>
+                              <IconBtn
+                                icon={<IC.AlignLeft />}
+                                title='Quick Summary'
+                                onClick={() => handleSummary(c.id_submission)}
+                                active={isSumOpen}
+                                bgHov='#eff6ff'
+                                color='#64748b'
+                              />
+                            </div>
                           )}
-                          {activeTab==='final'&&c.status==='accepted'&&<span style={{ fontSize:'12px', fontWeight:'600', color:'#10b981', background:'#ecfdf5', padding:'4px 10px', borderRadius:'20px' }}>Accepted</span>}
-                          {activeTab==='final'&&c.status==='rejected'&&<span style={{ fontSize:'12px', fontWeight:'600', color:'#ef4444', background:'#fef2f2', padding:'4px 10px', borderRadius:'20px' }}>Rejected</span>}
+                          {activeTab==='final'&&c.status==='accepted'&&<span style={{ fontSize:'11px', fontWeight:'600', color:'#10b981', background:'#ecfdf5', padding:'3px 8px', borderRadius:'20px', whiteSpace:'nowrap' }}>Accepted</span>}
+                          {activeTab==='final'&&c.status==='rejected'&&<span style={{ fontSize:'11px', fontWeight:'600', color:'#ef4444', background:'#fef2f2', padding:'3px 8px', borderRadius:'20px', whiteSpace:'nowrap' }}>Rejected</span>}
                         </div>
                       </div>
 
@@ -950,7 +969,9 @@ const handleLogout = () => {
                   );
                 })
               )}
-            </div>
+            </div>{/* end table body */}
+            </div>{/* end sel-table-inner */}
+            </div>{/* end sel-table-scroll */}
           </div>
         </main>
       </div>

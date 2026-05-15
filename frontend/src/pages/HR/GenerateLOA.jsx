@@ -410,36 +410,49 @@ export default function GenerateLoAHR() {
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 99px; }
-        @keyframes spin { 
-          to { transform: rotate(360deg); } 
-        }
+        @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
         .loa-fadein { animation: fadeIn 0.3s ease both; }
         .row-hover:hover { background: #f8fafc; }
+        @media (max-width: 768px) {
+          .loa-main-wrap { padding-top: 56px !important; }
+          .loa-main { padding: 16px 12px 32px !important; }
+          .loa-stat-grid { grid-template-columns: repeat(2,1fr) !important; gap:12px !important; }
+          .loa-topbar { padding: 0 12px !important; }
+          .loa-topbar-date { display: none !important; }
+          .loa-card-header { flex-direction: column !important; align-items: flex-start !important; }
+          .loa-card-actions { flex-wrap: wrap !important; gap: 8px !important; }
+          .loa-bulk-btns { flex-wrap: wrap !important; gap: 6px !important; }
+          .loa-table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+          .loa-table-inner { min-width: 680px; }
+        }
+        @media (max-width: 480px) {
+          .loa-stat-grid { grid-template-columns: 1fr !important; }
+        }
       `}</style>
 
       {/* Sidebar */}
       <SidebarHR user={user} onLogout={() => setShowLogout(true)} />
 
       {/* Main */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
+      <div className="loa-main-wrap" style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
 
         {/* Topbar */}
-        <header style={{
+        <header className="loa-topbar" style={{
           height: "56px", background: "#fff", borderBottom: "1px solid #e2e8f0",
           display: "flex", alignItems: "center", padding: "0 28px", gap: "16px",
           position: "sticky", top: 0, zIndex: 50,
         }}>
-          <div style={{ flex: 1, display: "flex", alignItems: "center", gap: "6px" }}>
+          <div style={{ flex: 1, display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
             <span style={{ fontSize: "15px", fontWeight: "700", color: "#1e293b" }}>Administration</span>
             <span style={{ fontSize: "13px", color: "#94a3b8", margin: "0 6px" }}>/</span>
             <span style={{ fontSize: "13px", color: "#94a3b8" }}>Generate LoA</span>
           </div>
-          <span style={{ fontSize: "12px", color: "#94a3b8", whiteSpace: "nowrap" }}>{todayStr()}</span>
+          <span className="loa-topbar-date" style={{ fontSize: "12px", color: "#94a3b8", whiteSpace: "nowrap" }}>{todayStr()}</span>
         </header>
 
         {/* Content */}
-        <main style={{ flex: 1, padding: "28px 28px 40px", overflowY: "auto" }} className="loa-fadein">
+        <main className="loa-fadein loa-main" style={{ flex: 1, padding: "28px 28px 40px", overflowY: "auto" }}>
 
           {/* Page heading */}
           <div style={{ marginBottom: "28px", display: "flex", flexDirection: "column", gap: "4px", textAlign: "left" }}>
@@ -456,7 +469,7 @@ export default function GenerateLoAHR() {
 
 
           {/* Stat Cards */}
-          <div style={{
+          <div className="loa-stat-grid" style={{
             display: "grid", gridTemplateColumns: "repeat(3, 1fr)",
             gap: "20px", marginBottom: "24px",
           }}>
@@ -469,80 +482,83 @@ export default function GenerateLoAHR() {
             boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
           }}>
             {/* Card header */}
-            <div style={{
-              display: "flex", alignItems: "center", justifyContent: "space-between",
-              padding: "20px 24px", borderBottom: "1px solid #f1f5f9",
-              flexWrap: "wrap", gap: "12px",
+            <div className="loa-card-header" style={{
+              display: "flex", flexDirection: "column",
+              padding: "14px 20px", borderBottom: "1px solid #f1f5f9", gap: "10px",
             }}>
+              {/* Title */}
               <div>
-                <p style={{ fontSize: "15px", fontWeight: "700", color: "#1e293b", margin: 0, textAlign: "left" }}>
-                  Accepted Candidates
-                </p>
-                <p style={{ fontSize: "12px", color: "#94a3b8", marginTop: "2px" }}>
-                  Select intern to generate LoA
-                </p>
+                <p style={{ fontSize: "15px", fontWeight: "700", color: "#1e293b", margin: 0 }}>Accepted Candidates</p>
+                <p style={{ fontSize: "12px", color: "#94a3b8", marginTop: "2px" }}>Select intern to generate LoA</p>
               </div>
-              
-              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                <div style={{
-                  display: "flex", alignItems: "center", gap: "8px",
-                  background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px",
-                  padding: "7px 14px", width: "240px",
-                }}>
-                  <IC.Search />
-                  <input
-                    placeholder="Search by name or email..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
+
+              {/* Filter row: left = search + type, right = bulk buttons */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", flexWrap: "nowrap", minWidth: 0 }}>
+                {/* Left: search + type filter */}
+                <div className="loa-card-actions" style={{ display: "flex", alignItems: "center", gap: "6px", flexShrink: 1, minWidth: 0, flexWrap: "nowrap" }}>
+                  <div style={{
+                    display: "flex", alignItems: "center", gap: "6px",
+                    background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "8px",
+                    padding: "5px 10px", width: "clamp(120px, 18vw, 240px)", flexShrink: 1,
+                  }}>
+                    <IC.Search />
+                    <input
+                      placeholder="Search by name or email..."
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      style={{
+                        border: "none", background: "transparent", outline: "none",
+                        fontSize: "clamp(10px,1vw,13px)", color: "#64748b", width: "100%", fontFamily: "inherit",
+                      }}
+                    />
+                  </div>
+
+                  <select
+                    value={typeFilter}
+                    onChange={(e) => setTypeFilter(e.target.value)}
                     style={{
-                      border: "none", background: "transparent", outline: "none",
-                      fontSize: "13px", color: "#64748b", width: "100%", fontFamily: "inherit",
+                      padding: "5px 10px", borderRadius: "8px", border: "1px solid #e2e8f0",
+                      background: "#f8fafc", fontSize: "clamp(10px,1vw,13px)", color: "#475569", outline: "none",
+                      fontFamily: "inherit", cursor: "pointer", flexShrink: 0,
                     }}
-                  />
+                  >
+                    <option value="all">All Types</option>
+                    <option value="individual">Individual</option>
+                    <option value="team">Team</option>
+                  </select>
                 </div>
 
-                <select
-                  value={typeFilter}
-                  onChange={(e) => setTypeFilter(e.target.value)}
-                  style={{
-                    padding: "7.5px 12px", borderRadius: "10px", border: "1px solid #e2e8f0",
-                    background: "#f8fafc", fontSize: "13px", color: "#475569", outline: "none",
-                    fontFamily: "inherit", cursor: "pointer", height: "34px",
-                  }}
-                >
-                  <option value="all">All Types</option>
-                  <option value="individual">Individual</option>
-                  <option value="team">Team</option>
-                </select>
-                
-                <div style={{ display: "flex", gap: "8px" }}>
+                {/* Right: bulk buttons */}
+                <div className="loa-bulk-btns" style={{ display: "flex", gap: "6px", flexShrink: 0, flexWrap: "nowrap" }}>
                   <button
                     onClick={handleBulkGenerate}
                     disabled={bulkLoading}
                     style={{
-                      display: "flex", alignItems: "center", gap: "6px",
-                      padding: "8px 14px", background: bulkLoading ? "#dcfce7" : "#f0fdf4",
-                      color: "#16a34a", border: "1px solid #86efac", borderRadius: "10px",
-                      fontSize: "12px", fontWeight: "700", cursor: bulkLoading ? "not-allowed" : "pointer",
-                      fontFamily: "'Poppins','Segoe UI',sans-serif", transition: "background 0.15s",
-                      opacity: bulkLoading ? 0.7 : 1, whiteSpace: "nowrap"
+                      display: "flex", alignItems: "center", gap: "4px",
+                      padding: "clamp(4px,0.5vw,8px) clamp(8px,1vw,14px)",
+                      background: bulkLoading ? "#dcfce7" : "#f0fdf4",
+                      color: "#16a34a", border: "1px solid #86efac", borderRadius: "8px",
+                      fontSize: "clamp(10px,0.95vw,12px)", fontWeight: "700",
+                      cursor: bulkLoading ? "not-allowed" : "pointer",
+                      fontFamily: "inherit", opacity: bulkLoading ? 0.7 : 1, whiteSpace: "nowrap"
                     }}
                     title="Generate LoA for all accepted candidates"
                   >
                     <IC.FilePlus />
                     {bulkLoading ? "Generating…" : "Bulk Generate"}
                   </button>
-                  
+
                   <button
                     onClick={handleBulkRegenerate}
                     disabled={bulkLoading}
                     style={{
-                      display: "flex", alignItems: "center", gap: "6px",
-                      padding: "8px 14px", background: bulkLoading ? "#fef3c7" : "#fffbeb",
-                      color: "#92400e", border: "1px solid #fde68a", borderRadius: "10px",
-                      fontSize: "12px", fontWeight: "700", cursor: bulkLoading ? "not-allowed" : "pointer",
-                      fontFamily: "'Poppins','Segoe UI',sans-serif", transition: "background 0.15s",
-                      opacity: bulkLoading ? 0.7 : 1, whiteSpace: "nowrap"
+                      display: "flex", alignItems: "center", gap: "4px",
+                      padding: "clamp(4px,0.5vw,8px) clamp(8px,1vw,14px)",
+                      background: bulkLoading ? "#fef3c7" : "#fffbeb",
+                      color: "#92400e", border: "1px solid #fde68a", borderRadius: "8px",
+                      fontSize: "clamp(10px,0.95vw,12px)", fontWeight: "700",
+                      cursor: bulkLoading ? "not-allowed" : "pointer",
+                      fontFamily: "inherit", opacity: bulkLoading ? 0.7 : 1, whiteSpace: "nowrap"
                     }}
                     title="Regenerate all existing LoA documents"
                   >
@@ -554,12 +570,13 @@ export default function GenerateLoAHR() {
                     onClick={handleBulkSend}
                     disabled={bulkLoading}
                     style={{
-                      display: "flex", alignItems: "center", gap: "6px",
-                      padding: "8px 14px", background: bulkLoading ? "#dbeafe" : "#eff6ff",
-                      color: "#1d4ed8", border: "1px solid #bfdbfe", borderRadius: "10px",
-                      fontSize: "12px", fontWeight: "700", cursor: bulkLoading ? "not-allowed" : "pointer",
-                      fontFamily: "'Poppins','Segoe UI',sans-serif", transition: "background 0.15s",
-                      opacity: bulkLoading ? 0.7 : 1, whiteSpace: "nowrap"
+                      display: "flex", alignItems: "center", gap: "4px",
+                      padding: "clamp(4px,0.5vw,8px) clamp(8px,1vw,14px)",
+                      background: bulkLoading ? "#dbeafe" : "#eff6ff",
+                      color: "#1d4ed8", border: "1px solid #bfdbfe", borderRadius: "8px",
+                      fontSize: "clamp(10px,0.95vw,12px)", fontWeight: "700",
+                      cursor: bulkLoading ? "not-allowed" : "pointer",
+                      fontFamily: "inherit", opacity: bulkLoading ? 0.7 : 1, whiteSpace: "nowrap"
                     }}
                     title="Send all generated LoA documents to interns"
                   >
@@ -570,18 +587,21 @@ export default function GenerateLoAHR() {
               </div>
             </div>
 
+            {/* Table scroll wrapper */}
+            <div className="loa-table-scroll">
+            <div className="loa-table-inner">
             {/* Table header */}
             <div style={{
               display: "grid",
-              gridTemplateColumns: "2fr 1.2fr 1.8fr 0.7fr 1fr 1.1fr",
-              gap: "12px", padding: "10px 24px",
+              gridTemplateColumns: "1.8fr 1.1fr 1.6fr 0.8fr 1fr 1.2fr",
+              gap: "8px", padding: "9px 24px",
               background: "#f8fafc", borderBottom: "1px solid #f1f5f9",
             }}>
               {["INTERN", "POSITION", "PROGRAM", "TYPE", "LOA STATUS", "ACTION"].map((h) => (
                 <span key={h} style={{ 
-                  fontSize: "10.5px", fontWeight: "700", color: "#94a3b8", 
+                  fontSize: "clamp(9px,0.9vw,10.5px)", fontWeight: "700", color: "#94a3b8", 
                   letterSpacing: "0.06em",
-                  textAlign: h === "CANDIDATE" ? "left" : "center",
+                  textAlign: h === "INTERN" ? "left" : "center",
                   display: "block"
                 }}>
                   {h}
@@ -620,52 +640,43 @@ export default function GenerateLoAHR() {
                     className="row-hover"
                     style={{
                       display: "grid",
-                      gridTemplateColumns: "2fr 1.2fr 1.8fr 0.7fr 1fr 1.1fr",
-                      gap: "12px", padding: "14px 24px", alignItems: "center",
+                      gridTemplateColumns: "1.8fr 1.1fr 1.6fr 0.8fr 1fr 1.2fr",
+                      gap: "8px", padding: "9px 24px", alignItems: "center",
                       borderBottom: i < data.candidates.length - 1 ? "1px solid #f8fafc" : "none",
                       transition: "background 0.15s",
                     }}
                   >
-                    {/* Candidate */}
-                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                      <div style={{
-                        width: "32px", height: "32px", borderRadius: "50%", flexShrink: 0,
-                        background: "#eff6ff", color: "#3b82f6",
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        fontSize: "11px", fontWeight: "700",
-                      }}>
-                        {(c.name || "?").slice(0, 2).toUpperCase()}
-                      </div>
-                      <div>
-                        <div style={{ fontSize: "13px", fontWeight: "600", color: "#1e293b" }}>{c.name}</div>
-                        <div style={{ fontSize: "11px", color: "#94a3b8", marginTop: "1px" }}>{c.email}</div>
-                      </div>
+                    {/* Intern name */}
+                    <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", minWidth: 0 }}>
+                      <div style={{ fontSize: "clamp(11px,1.1vw,13px)", fontWeight: "600", color: "#1e293b", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{c.name}</div>
+                      <div style={{ fontSize: "clamp(10px,0.9vw,11px)", color: "#94a3b8", marginTop: "1px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{c.email}</div>
                     </div>
 
                     {/* Position */}
-                    <div style={{ fontSize: "13px", color: "#475569", textAlign: "center" }}>{c.position}</div>
+                    <div style={{ fontSize: "clamp(11px,1.1vw,13px)", color: "#475569", textAlign: "center" }}>{c.position}</div>
 
                     {/* Program */}
-                    <div style={{ fontSize: "13px", color: "#475569", textAlign: "center" }}>{c.program}</div>
+                    <div style={{ fontSize: "clamp(11px,1.1vw,13px)", color: "#475569", textAlign: "center" }}>{c.program}</div>
 
                     {/* Type */}
-                    <div style={{ fontSize: "13px", color: "#475569", textTransform: 'capitalize', textAlign: "center" }}>
+                    <div style={{ fontSize: "clamp(11px,1.1vw,13px)", color: "#475569", textTransform: 'capitalize', textAlign: "center" }}>
                       {c.type === "team" ? "Team" : "Individual"}
                     </div>
 
                     {/* LoA Status */}
-                    <div style={{ textAlign: "center" }}>
+                    <div style={{ textAlign: "center", display: "flex", justifyContent: "center" }}>
                       <span style={{
                         display: "inline-flex", padding: "3px 10px", borderRadius: "20px",
-                        fontSize: "11px", fontWeight: "600",
+                        fontSize: "clamp(10px,0.9vw,11px)", fontWeight: "600",
                         background: st.bg, color: st.color, border: `1px solid ${st.border}`,
+                        whiteSpace: "nowrap",
                       }}>
                         {st.label}
                       </span>
                     </div>
 
                     {/* Actions */}
-                    <div style={{ display: "flex", gap: "6px", alignItems: "center", justifyContent: "center" }}>
+                    <div style={{ display: "flex", gap: "3px", alignItems: "center", justifyContent: "center", flexWrap: "nowrap" }}>
                       {/* Preview */}
                       {c.has_file && (
                         <ActionBtn
@@ -724,6 +735,8 @@ export default function GenerateLoAHR() {
                 );
               })
             )}
+            </div>{/* end loa-table-inner */}
+            </div>{/* end loa-table-scroll */}
           </div>
         </main>
       </div>

@@ -351,18 +351,32 @@ const confirmLogout = async () => {
 
   return (
     <div style={s.app}>
-    <style>{`* { box-sizing: border-box; margin: 0; padding: 0; } ::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 99px; } @keyframes spin { to { transform: rotate(360deg); } } textarea:focus, input:focus, select:focus { border-color: #a78bfa !important; box-shadow: 0 0 0 3px rgba(139,92,246,0.08); }`}</style>
+    <style>{`
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      ::-webkit-scrollbar { width: 5px; }
+      ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 99px; }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      textarea:focus, input:focus, select:focus { border-color: #a78bfa !important; box-shadow: 0 0 0 3px rgba(139,92,246,0.08); }
+      @media (max-width: 768px) {
+        .isc-main { overflow: auto !important; padding-top: 56px !important; }
+        .isc-topbar { padding: 10px 14px !important; }
+        .isc-topbar-date { display: none !important; }
+        .isc-content { padding: 14px 10px !important; }
+        .isc-layout { grid-template-columns: 1fr !important; }
+        .isc-left-panel { position: static !important; }
+      }
+    `}</style>
       <SidebarMentor mentor={mentor} onLogout={handleLogout} />
-      <main style={s.main}>
-        <div style={s.topbar}>
+      <main className="isc-main" style={s.main}>
+        <div className="isc-topbar" style={s.topbar}>
           <div style={s.bc}>
             <span>Dashboard</span><span style={s.bcSep}>/</span>
             <span>Assessment</span><span style={s.bcSep}>/</span>
             <span style={s.bcActive}>Input Score</span>
           </div>
-          <div style={s.topbarDate}>{new Date().toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}</div>
+          <div className="isc-topbar-date" style={s.topbarDate}>{new Date().toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}</div>
         </div>
-        <div style={s.content}>
+        <div className="isc-content" style={s.content}>
           <h1 style={s.h1}>Input Score</h1>
           <p style={s.subtitle}>Select an intern to input scores for each of their competencies. The average is calculated automatically.</p>
           
@@ -372,9 +386,9 @@ const confirmLogout = async () => {
             </div>
           )}
 
-        <div style={s.layout}>
+        <div className="isc-layout" style={s.layout}>
           {/* ── PANEL KIRI: Daftar Intern ── */}
-          <div style={{ background: "#fff", borderRadius: "12px", border: "1px solid #e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,0.04)", display: "flex", flexDirection: "column", overflow: "hidden", position: "sticky", top: "80px" }}>
+          <div className="isc-left-panel" style={{ background: "#fff", borderRadius: "12px", border: "1px solid #e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,0.04)", display: "flex", flexDirection: "column", overflow: "hidden", position: "sticky", top: "80px" }}>
             <div style={{ padding: "18px 20px", borderBottom: "1px solid #f1f5f9" }}>
               <div style={s.ct}>Intern List</div>
               <div style={{ ...s.cs, marginTop: "4px" }}>{unScoredInterns.length} interns</div>

@@ -498,29 +498,23 @@ function IndividualRow({ candidate, onDetail, onNotes, onViewDoc, irActive }) {
   return (
     <>
       <div style={{
-        display: 'grid', gridTemplateColumns: gridCols, gap: '12px',
-        padding: '14px 24px', alignItems: 'center', borderBottom: '1px solid #f1f5f9',
+        display: 'grid', gridTemplateColumns: gridCols, gap: '8px',
+        padding: '9px 16px', alignItems: 'center', borderBottom: '1px solid #f1f5f9',
         background: candidate.relevance_percent >= 70 ? 'rgba(16,185,129,0.02)' : 'transparent',
       }}>
-        {/* Candidate */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: '#f1f5f9', color: '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: '700', flexShrink: 0 }}>
-            {(candidate.name || '?').slice(0, 2).toUpperCase()}
-          </div>
+        {/* Candidate — no avatar bubble */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <div style={{ minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: '13px', fontWeight: '700', color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{candidate.name}</span>
+              <span className="cand-cell-name">{candidate.name}</span>
               {candidate._classification && <ClassificationBadge classification={candidate._classification} />}
             </div>
-            <div style={{ fontSize: '11.5px', color: '#94a3b8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{candidate.email}</div>
+            <div className="cand-cell-email">{candidate.email}</div>
           </div>
         </div>
 
-        {/* University */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: '#475569', minWidth: 0 }}>
-          <div style={{ flexShrink: 0 }}><IC.MapPin /></div>
-          <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{candidate.university || '-'}</span>
-        </div>
+        {/* University — word-wrap, clamp font */}
+        <div className="cand-cell-uni">{candidate.university || '-'}</div>
 
         {/* Documents */}
         <div>
@@ -574,7 +568,7 @@ function GroupRow({ candidate, onDetail, onNotes, onViewDoc, irActive }) {
 
   return (
     <>
-      <div style={{ display: 'grid', gridTemplateColumns: gridCols, gap: '12px', padding: '14px 24px', alignItems: 'center', borderBottom: '1px solid #f1f5f9', background: expanded ? '#fafbff' : 'transparent' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: gridCols, gap: '8px', padding: '9px 16px', alignItems: 'center', borderBottom: '1px solid #f1f5f9', background: expanded ? '#fafbff' : 'transparent' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <button onClick={() => setExpanded(v => !v)} style={{ width: '28px', height: '28px', borderRadius: '7px', border: '1px solid #dbeafe', background: '#eff6ff', color: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, transition: 'all 0.2s' }}>
             {expanded ? <IC.ChevronDown /> : <IC.ChevronRight />}
@@ -602,13 +596,10 @@ function GroupRow({ candidate, onDetail, onNotes, onViewDoc, irActive }) {
       </div>
 
       {expanded && members.map((m, i) => (
-        <div key={i} style={{ display: 'grid', gridTemplateColumns: gridCols, gap: '12px', padding: '10px 24px', alignItems: 'center', borderBottom: '1px solid #f8fafc', background: '#f8fafc' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingLeft: '48px' }}>
-            <div style={{ width: '26px', height: '26px', borderRadius: '50%', background: '#dbeafe', color: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: '700', flexShrink: 0 }}>
-              {(m.name || '?').slice(0, 2).toUpperCase()}
-            </div>
-            <div>
-              <div style={{ fontSize: '12.5px', fontWeight: '600', color: '#334155', display: 'flex', alignItems: 'center', gap: '5px' }}>
+        <div key={i} style={{ display: 'grid', gridTemplateColumns: gridCols, gap: '8px', padding: '7px 16px', alignItems: 'center', borderBottom: '1px solid #f8fafc', background: '#f8fafc' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingLeft: '36px' }}>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: '12px', fontWeight: '600', color: '#334155', display: 'flex', alignItems: 'center', gap: '5px' }}>
                 {m.name}
                 {m.is_leader && <span style={{ fontSize: '9.5px', fontWeight: '600', padding: '1px 6px', borderRadius: '20px', background: '#fef9c3', color: '#854d0e', border: '1px solid #fde68a' }}>Leader</span>}
                 {m._classification && <ClassificationBadge classification={m._classification} />}
@@ -864,23 +855,43 @@ export default function CandidateHR() {
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#f8fafc', fontFamily: "'Poppins', sans-serif" }}>
       <SidebarHR user={user} onLogout={() => setShowLogoutModal(true)} />
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @media (max-width: 768px) {
+          .cand-main-wrap { padding-top: 56px !important; }
+          .cand-main { padding: 16px 12px 32px !important; }
+          .cand-topbar { padding: 0 12px !important; }
+          .cand-topbar-date { display: none !important; }
+          .cand-page-header { flex-direction: column !important; align-items: flex-start !important; gap: 10px !important; }
+          .cand-filter-bar { flex-direction: column !important; align-items: flex-start !important; }
+          .cand-filter-right { margin-left: 0 !important; width: 100% !important; }
+          .cand-search { min-width: unset !important; width: 100% !important; }
+          .cand-table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+          .cand-table-inner { min-width: 640px; }
+        }
+        /* Responsive clamp fonts */
+        .cand-table-inner { font-size: clamp(11px, 1.1vw, 13px); }
+        .cand-cell-name { font-size: clamp(11.5px,1.1vw,12.5px); font-weight:700; color:#1e293b; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .cand-cell-email { font-size: clamp(10px,0.9vw,11px); color:#94a3b8; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .cand-cell-uni { font-size: clamp(10.5px,1vw,12px); color:#475569; font-weight:500; overflow-wrap:break-word; word-break:break-word; white-space:normal; line-height:1.35; }
+      `}</style>
 
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+      <div className="cand-main-wrap" style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
 
         {/* Header */}
-        <header style={{ height: '56px', background: '#fff', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', padding: '0 28px', gap: '16px', position: 'sticky', top: 0, zIndex: 50 }}>
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ fontSize: '15px', fontWeight: '700', color: '#1e293b' }}>Dashboard</span>
+        <header className="cand-topbar" style={{ height: '52px', background: '#fff', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', padding: '0 20px', gap: '16px', position: 'sticky', top: 0, zIndex: 50 }}>
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '13.5px', fontWeight: '700', color: '#1e293b' }}>Dashboard</span>
             <span style={{ fontSize: '13px', color: '#94a3b8', margin: '0 6px' }}>/</span>
             <span style={{ fontSize: '13px', color: '#94a3b8' }}>Candidates</span>
           </div>
-          <span style={{ fontSize: '12px', color: '#94a3b8' }}>{todayStr()}</span>
+          <span className="cand-topbar-date" style={{ fontSize: '12px', color: '#94a3b8' }}>{todayStr()}</span>
         </header>
 
-        <main style={{ flex: 1, padding: '28px', overflowY: 'auto' }}>
+        <main className="cand-main" style={{ flex: 1, padding: '18px 20px', overflowY: 'auto' }}>
 
           {/* Page Title + Classify Batch */}
-          <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+          <div className="cand-page-header" style={{ marginBottom: '20px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
             <div>
               <h1 style={{ fontSize: '22px', fontWeight: '800', color: '#0f172a', margin: 0 }}>Candidate Management</h1>
               <p style={{ fontSize: '13px', color: '#64748b', marginTop: '4px' }}>
@@ -925,7 +936,7 @@ export default function CandidateHR() {
           <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02)' }}>
 
             {/* Filters Bar */}
-            <div style={{ padding: '16px 20px', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+            <div className="cand-filter-bar" style={{ padding: '16px 20px', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
 
               {/* Type Filter */}
               <div style={{ display: 'flex', gap: '6px' }}>
@@ -951,7 +962,7 @@ export default function CandidateHR() {
               </select>
 
               {/* IR Search section */}
-              <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+              <div className="cand-filter-right" style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
 
                 {/* Search Mode Toggle */}
                 <SearchModeToggle mode={searchMode} onChange={(m) => { setSearchMode(m); setSearch(''); setIrResults(null); }} />
@@ -974,7 +985,7 @@ export default function CandidateHR() {
                 )}
 
                 {/* Search Input */}
-                <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '8px', background: irActive ? '#f0fdf4' : '#f8fafc', border: `1px solid ${irActive ? '#86efac' : '#e2e8f0'}`, borderRadius: '8px', padding: '6px 12px', minWidth: '240px', transition: 'all 0.2s' }}>
+                <div className="cand-search" style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '8px', background: irActive ? '#f0fdf4' : '#f8fafc', border: `1px solid ${irActive ? '#86efac' : '#e2e8f0'}`, borderRadius: '8px', padding: '6px 12px', minWidth: '240px', transition: 'all 0.2s' }}>
                   {irLoading
                     ? <div style={{ width: '15px', height: '15px', border: '2px solid #e2e8f0', borderTopColor: '#3b82f6', borderRadius: '50%', animation: 'spin 0.6s linear infinite', flexShrink: 0 }} />
                     : <IC.Search />
@@ -1012,7 +1023,9 @@ export default function CandidateHR() {
             )}
 
             {/* Table Header */}
-            <div style={{ display: 'grid', gridTemplateColumns: gridCols, gap: '12px', padding: '10px 24px', background: '#fcfcfd', borderBottom: '1px solid #f1f5f9' }}>
+            <div className="cand-table-scroll">
+            <div className="cand-table-inner">
+            <div style={{ display: 'grid', gridTemplateColumns: gridCols, gap: '8px', padding: '8px 16px', background: '#fcfcfd', borderBottom: '1px solid #f1f5f9' }}>
               {headerCols.map(h => (
                 <div key={h} style={{ 
                   fontSize: '10px', fontWeight: '700', color: h === 'RELEVANCE' ? '#3b82f6' : '#94a3b8', 
@@ -1056,6 +1069,8 @@ export default function CandidateHR() {
                 )
               )}
             </div>
+            </div>{/* end cand-table-inner */}
+            </div>{/* end cand-table-scroll */}
           </div>
 
           {/* Legend */}
