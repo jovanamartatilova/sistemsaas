@@ -25,12 +25,12 @@ function CertificateCard({ id_certificate, certificate_number, file_path, final_
         </div>
 
         {/* Row 2: icon + text + score + download — all horizontal */}
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
           <div className="w-8 h-8 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center flex-shrink-0">
             <Award size={15} className="text-emerald-500" />
           </div>
 
-          <div className="flex-1 min-w-0 text-left">
+          <div className="flex-1 min-w-0 text-left overflow-hidden">
             <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-0.5 truncate">
               {program || 'Internship Program'}
             </p>
@@ -47,7 +47,7 @@ function CertificateCard({ id_certificate, certificate_number, file_path, final_
             href={file_path}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex-shrink-0 flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors whitespace-nowrap"
+            className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors w-full sm:w-auto justify-center"
           >
             <Download size={12} />
             Download PDF
@@ -237,7 +237,7 @@ export default function CertificatesPage() {
         onLogout={handleLogout} 
       />
 
-      <main className="ml-56 flex-1 px-6 py-6 space-y-5 min-w-0">
+      <main className="md:ml-56 pt-14 md:pt-0 flex-1 px-4 py-4 md:px-6 md:py-6 space-y-5 min-w-0 overflow-x-hidden">
         {loading && (
           <LoadingSpinner message="Loading certificates..." />
         )}

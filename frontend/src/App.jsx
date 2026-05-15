@@ -113,7 +113,7 @@ export default function App() {
                 <Route path="/c/:idCompany/staff/login"       element={<LoginStaff />} />
                 <Route path="/c/:idCompany/staff/forgot-password"   element={<ForgotPasswordStaff />} />
                 <Route path="/c/:idCompany/staff/reset-password"    element={<ResetPasswordStaff />} />
-                <Route path="/onboarding" element={<PreviewOnBoarding />} />
+                <Route path="/onboarding" element={<PreviewOnboarding />} />
 
                 {/* Team Invitation - Public */}
                 <Route path="/join-team/:token" element={<JoinTeamPage />} />

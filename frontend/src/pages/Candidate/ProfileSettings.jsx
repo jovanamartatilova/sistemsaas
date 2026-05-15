@@ -500,7 +500,7 @@ export default function ProfileSettings() {
           company={JSON.parse(localStorage.getItem("company"))}
           onLogout={handleLogout} 
         />
-        <main className="ml-56 flex-1 flex items-center justify-center">
+        <main className="md:ml-56 pt-14 md:pt-0 flex-1 flex items-center justify-center">
           <LoadingSpinner message="Loading profile..." />
         </main>
       </div>
@@ -531,7 +531,7 @@ export default function ProfileSettings() {
         company={JSON.parse(localStorage.getItem("company"))}
         onLogout={handleLogout} 
       />
-      <div className="ml-56 flex-1 flex flex-col">
+      <div className="md:ml-56 pt-14 md:pt-0 flex-1 flex flex-col">
         <main className="p-6">
           <ProfileContent userData={userData} setUserData={setUserData} />
         </main>
