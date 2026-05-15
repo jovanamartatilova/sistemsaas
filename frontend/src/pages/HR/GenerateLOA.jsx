@@ -414,17 +414,14 @@ export default function GenerateLoAHR() {
         @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
         .loa-fadein { animation: fadeIn 0.3s ease both; }
         .row-hover:hover { background: #f8fafc; }
+        .loa-table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%; }
         @media (max-width: 768px) {
-          .loa-main-wrap { padding-top: 56px !important; }
-          .loa-main { padding: 16px 12px 32px !important; }
-          .loa-stat-grid { grid-template-columns: repeat(2,1fr) !important; gap:12px !important; }
-          .loa-topbar { padding: 0 12px !important; }
-          .loa-topbar-date { display: none !important; }
-          .loa-card-header { flex-direction: column !important; align-items: flex-start !important; }
-          .loa-card-actions { flex-wrap: wrap !important; gap: 8px !important; }
-          .loa-bulk-btns { flex-wrap: wrap !important; gap: 6px !important; }
-          .loa-table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-          .loa-table-inner { min-width: 680px; }
+          .loa-main { padding: 16px 12px !important; }
+          .loa-card-header { padding: 12px 16px !important; }
+          .loa-filter-row { flex-wrap: wrap !important; gap: 12px !important; }
+          .loa-card-actions { flex-grow: 1 !important; width: 100% !important; justify-content: flex-start !important; }
+          .loa-bulk-btns { flex-grow: 1 !important; width: 100% !important; justify-content: flex-start !important; }
+          .loa-table-inner { min-width: 900px !important; }
         }
         @media (max-width: 480px) {
           .loa-stat-grid { grid-template-columns: 1fr !important; }
@@ -493,7 +490,7 @@ export default function GenerateLoAHR() {
               </div>
 
               {/* Filter row: left = search + type, right = bulk buttons */}
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", flexWrap: "nowrap", minWidth: 0 }}>
+              <div className="loa-filter-row" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", flexWrap: "nowrap", minWidth: 0 }}>
                 {/* Left: search + type filter */}
                 <div className="loa-card-actions" style={{ display: "flex", alignItems: "center", gap: "6px", flexShrink: 1, minWidth: 0, flexWrap: "nowrap" }}>
                   <div style={{
@@ -676,7 +673,7 @@ export default function GenerateLoAHR() {
                     </div>
 
                     {/* Actions */}
-                    <div style={{ display: "flex", gap: "3px", alignItems: "center", justifyContent: "center", flexWrap: "nowrap" }}>
+                    <div style={{ display: "flex", gap: "3px", alignItems: "center", justifyContent: "center", flexWrap: "wrap" }}>
                       {/* Preview */}
                       {c.has_file && (
                         <ActionBtn
@@ -721,15 +718,6 @@ export default function GenerateLoAHR() {
                         />
                       )}
 
-                      {/* Download */}
-                      {c.has_file && (
-                        <ActionBtn
-                          icon={<IC.Download />}
-                          variant="blue"
-                          onClick={() => handleDownload(c.file_url, c.id_submission)}
-                          title="Download LoA"
-                        />
-                      )}
                     </div>
                   </div>
                 );

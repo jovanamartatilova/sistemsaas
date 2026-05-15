@@ -446,9 +446,10 @@ const applyCerts = (data) => {
           .cert-topbar { padding: 10px 14px !important; }
           .cert-topbar-date { display: none !important; }
           .cert-content { padding: 14px 10px !important; }
-          .cert-card-header { flex-direction: column !important; align-items: flex-start !important; gap: 10px !important; }
-          .cert-card-actions { flex-wrap: wrap !important; gap: 8px !important; }
-          .cert-bulk-btns { flex-wrap: wrap !important; gap: 8px !important; }
+          .cert-card-header { padding: 12px 10px !important; }
+          .cert-filter-row { flex-wrap: wrap !important; gap: 12px !important; }
+          .cert-card-actions { flex-grow: 1 !important; width: 100% !important; justify-content: flex-start !important; }
+          .cert-bulk-btns { flex-grow: 1 !important; width: 100% !important; justify-content: flex-start !important; }
         }
       `}</style>
       <SidebarMentor mentor={mentor} onLogout={handleLogoutClick} />
@@ -477,7 +478,7 @@ const applyCerts = (data) => {
             </div>
 
             {/* Filter row: left = tabs + search, right = bulk buttons */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", flexWrap: "nowrap", minWidth: 0 }}>
+            <div className="cert-filter-row" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", flexWrap: "nowrap", minWidth: 0 }}>
               {/* Left: tab toggle + search */}
               <div className="cert-card-actions" style={{ display: "flex", alignItems: "center", gap: "6px", flexShrink: 1, minWidth: 0, flexWrap: "nowrap" }}>
                 {/* Tab toggle */}
