@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useAuthStore } from "../../stores/authStore";
 import { getDashboardPathByRole } from "../../utils/roleUtils";
+import PasswordInput from "../../components/PasswordInput";
+import { validatePassword } from "../../utils/passwordValidator";
 
 // ── SVG Icon Components ──────────────────────────────────────────────
 const Icon = {
@@ -100,6 +103,7 @@ const Icon = {
 export default function ActivateAccount() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { setUser } = useAuthStore();
   const code = searchParams.get("code");
   const token = searchParams.get("token");
   const activationValue = code || token;
@@ -228,12 +232,16 @@ export default function ActivateAccount() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMsg("");
-    if (form.password !== form.password_confirmation) {
-      setErrorMsg("Passwords do not match");
+    
+    // Validate password
+    const { valid: isPasswordValid, errors: passwordErrors } = validatePassword(form.password);
+    if (!isPasswordValid) {
+      setErrorMsg(passwordErrors[0] || "Invalid password");
       return;
     }
-    if (form.password.length < 8) {
-      setErrorMsg("Password must be at least 8 characters long");
+    
+    if (form.password !== form.password_confirmation) {
+      setErrorMsg("Passwords do not match");
       return;
     }
     setLoading(true);
@@ -262,10 +270,21 @@ export default function ActivateAccount() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || "Activation failed");
 
+      // Update localStorage
       localStorage.setItem("auth_token", data.token);
       localStorage.setItem("hr_token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
       localStorage.setItem("company", JSON.stringify(data.company));
+      localStorage.setItem("user_type", data.redirect_role || data.user?.role);
+
+      // Update auth store
+      useAuthStore.setState(state => ({
+        ...state,
+        token: data.token,
+        user: data.user,
+        company: data.company,
+        isAuthenticated: true,
+      }));
 
       const role = data.redirect_role || data.user?.role;
       const companyId = data.company?.id_company ?? data.user?.id_company;
@@ -643,66 +662,24 @@ export default function ActivateAccount() {
               </div>
 
               {/* Password */}
-              <div>
-                <label className="block text-sm font-medium mb-1.5" style={{ color: isDark ? "rgba(255,255,255,0.8)" : "rgba(30,40,60,0.8)" }}>Password</label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    value={form.password}
-                    onChange={e => setForm({ ...form, password: e.target.value })}
-                    placeholder="Minimum 8 characters"
-                    required
-                    className="w-full px-4 py-3 pr-12 rounded-xl text-white placeholder-gray-500 outline-none transition-all duration-200"
-                    style={inputBase}
-                    onFocus={e => Object.assign(e.target.style, inputFocus)}
-                    onBlur={e => Object.assign(e.target.style, inputBase)}
-                  />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1"
-                    style={{ color: "rgba(255,255,255,0.4)", background: "none", border: "none", cursor: "pointer" }}>
-                    {showPassword ? <Icon.EyeOff /> : <Icon.Eye />}
-                  </button>
-                </div>
-                {form.password.length > 0 && (
-                  <div className="mt-2">
-                    <div className="flex gap-1 mb-1">
-                      {[1, 2, 3, 4].map(i => (
-                        <div key={i} className="flex-1 h-1 rounded-full transition-all duration-300"
-                          style={{ background: i <= strength.level ? strength.color : "rgba(255,255,255,0.1)" }} />
-                      ))}
-                    </div>
-                    <p className="text-xs" style={{ color: strength.color }}>Strength: {strength.label}</p>
-                  </div>
-                )}
-              </div>
+              <PasswordInput
+                value={form.password}
+                onChange={val => setForm({ ...form, password: val })}
+                label="Password"
+                isDark={isDark}
+                showStrength={true}
+                showRules={true}
+              />
 
               {/* Confirm Password */}
-              <div>
-                <label className="block text-sm font-medium mb-1.5" style={{ color: isDark ? "rgba(255,255,255,0.8)" : "rgba(30,40,60,0.8)" }}>Confirm Password</label>
-                <div className="relative">
-                  <input
-                    type={showConfirm ? "text" : "password"}
-                    value={form.password_confirmation}
-                    onChange={e => setForm({ ...form, password_confirmation: e.target.value })}
-                    placeholder="Re-enter password"
-                    required
-                    className="w-full px-4 py-3 pr-12 rounded-xl text-white placeholder-gray-500 outline-none transition-all duration-200"
-                    style={inputBase}
-                    onFocus={e => Object.assign(e.target.style, inputFocus)}
-                    onBlur={e => Object.assign(e.target.style, inputBase)}
-                  />
-                  <button type="button" onClick={() => setShowConfirm(!showConfirm)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1"
-                    style={{ color: "rgba(255,255,255,0.4)", background: "none", border: "none", cursor: "pointer" }}>
-                    {showConfirm ? <Icon.EyeOff /> : <Icon.Eye />}
-                  </button>
-                  {form.password_confirmation && (
-                    <div className="absolute right-10 top-1/2 -translate-y-1/2">
-                      {form.password === form.password_confirmation ? <Icon.Check /> : <Icon.Cross />}
-                    </div>
-                  )}
-                </div>
-              </div>
+              <PasswordInput
+                value={form.password_confirmation}
+                onChange={val => setForm({ ...form, password_confirmation: val })}
+                label="Confirm Password"
+                isDark={isDark}
+                showStrength={false}
+                showRules={false}
+              />
 
               <button type="submit" disabled={loading}
                 className="w-full py-3.5 rounded-xl font-semibold text-white text-sm transition-all duration-200 mt-2"

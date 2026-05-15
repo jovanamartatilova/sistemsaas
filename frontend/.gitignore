@@ -1,3 +1,21 @@
+# Dependencies
+node_modules
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Production
+/dist
+/dist-ssr
+*.local
+
+# Environment
+.env
+.env.local
+.env.*.local
+.env.backup
+.env.production
+
 # Logs
 logs
 *.log
@@ -6,12 +24,6 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
-.env
-
-node_modules
-dist
-dist-ssr
-*.local
 
 # Editor directories and files
 .vscode/*
@@ -23,6 +35,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+.eslintcache
+.eslintignore
 
-/backend/bootstrap/cache/*
-!/backend/bootstrap/cache/.gitignore

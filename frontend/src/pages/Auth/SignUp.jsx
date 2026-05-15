@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore";
 import OnboardingModal from "../../components/OnboardingModal";
+import PasswordInput from "../../components/PasswordInput";
+import { validatePassword } from "../../utils/passwordValidator";
 
 export default function SignUp() {
   const navigate = useNavigate();
@@ -30,13 +32,15 @@ export default function SignUp() {
     e.preventDefault();
     setErrorMsg("");
 
-    if (form.password !== form.password_confirmation) {
-      setErrorMsg("Passwords do not match");
+    // Validate password
+    const { valid: isPasswordValid, errors: passwordErrors } = validatePassword(form.password);
+    if (!isPasswordValid) {
+      setErrorMsg(passwordErrors[0] || "Invalid password");
       return;
     }
 
-    if (form.password.length < 8) {
-      setErrorMsg("Password must be at least 8 characters");
+    if (form.password !== form.password_confirmation) {
+      setErrorMsg("Passwords do not match");
       return;
     }
 
@@ -250,84 +254,24 @@ const inputBase = {
               </div>
 
               {/* Password */}
-              <div>
-                <label className="block text-sm font-medium mb-1.5 text-left" style={{ color: isDark ? "rgba(255,255,255,0.8)" : "rgba(20,30,50,0.85)" }}>
-                  Password
-                </label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    name="password"
-                    value={form.password}
-                    onChange={handleChange}
-                    placeholder="••••••••"
-                    required
-                    className="w-full px-4 py-3 pr-12 rounded-xl text-white placeholder-gray-500 outline-none transition-all duration-200"
-                    style={inputBase}
-                    onFocus={(e) => Object.assign(e.target.style, inputFocus)}
-                    onBlur={(e) => Object.assign(e.target.style, inputBase)}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 transition-opacity hover:opacity-100"
-                    style={{ color: "#64748b" }}
-                  >
-                    {showPassword ? (
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94" />
-                        <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19" />
-                        <line x1="1" y1="1" x2="23" y2="23" />
-                      </svg>
-                    ) : (
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                        <circle cx="12" cy="12" r="3" />
-                      </svg>
-                    )}
-                  </button>
-                </div>
-              </div>
+              <PasswordInput
+                value={form.password}
+                onChange={(val) => setForm({ ...form, password: val })}
+                label="Password"
+                isDark={isDark}
+                showStrength={true}
+                showRules={true}
+              />
 
               {/* Confirm Password */}
-              <div>
-                <label className="block text-sm font-medium mb-1.5 text-left" style={{ color: isDark ? "rgba(255,255,255,0.8)" : "rgba(20,30,50,0.85)" }}>
-                Confirm Password
-              </label>
-                <div className="relative">
-                  <input
-                    type={showConfirmPassword ? "text" : "password"}
-                    name="password_confirmation"
-                    value={form.password_confirmation}
-                    onChange={handleChange}
-                    placeholder="••••••••"
-                    required
-                    className="w-full px-4 py-3 pr-12 rounded-xl text-white placeholder-gray-500 outline-none transition-all duration-200"
-                    style={inputBase}
-                    onFocus={(e) => Object.assign(e.target.style, inputFocus)}
-                    onBlur={(e) => Object.assign(e.target.style, inputBase)}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 transition-opacity hover:opacity-100"
-                    style={{ color: "#64748b" }}
-                  >
-                    {showConfirmPassword ? (
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94" />
-                        <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19" />
-                        <line x1="1" y1="1" x2="23" y2="23" />
-                      </svg>
-                    ) : (
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                        <circle cx="12" cy="12" r="3" />
-                      </svg>
-                    )}
-                  </button>
-                </div>
-              </div>
+              <PasswordInput
+                value={form.password_confirmation}
+                onChange={(val) => setForm({ ...form, password_confirmation: val })}
+                label="Confirm Password"
+                isDark={isDark}
+                showStrength={false}
+                showRules={false}
+              />
 
               {/* Terms & Policy */}
               <div className="flex items-start gap-3">
@@ -416,7 +360,6 @@ const inputBase = {
         isOpen={showOnboarding} 
         onClose={() => {
           setShowOnboarding(false);
-          navigate("/onboarding");
         }} 
       />
     </>

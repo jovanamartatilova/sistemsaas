@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useParams, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from './stores/authStore';
 import PrivateRoute from './components/PrivateRoute';
+import { initSession, isSessionValid, clearSession } from './utils/sessionManager';
 
 // Auth
 import LoginPage         from './pages/Auth/Login';
@@ -12,7 +13,6 @@ import ActivateAccount   from './pages/Auth/ActivateAccount';
 import Onboarding from "./components/OnboardingModal";
 
 // Candidate
-import LoginCandidate           from './pages/Candidate/LoginCandidate';
 import ForgotPasswordCandidate  from './pages/Candidate/ForgotPasswordCandidate';
 import ResetPasswordCandidate   from './pages/Candidate/ResetPasswordCandidate';
 import CandidateDashboard       from './pages/Candidate/CandidateDashboard';
@@ -31,7 +31,6 @@ import ProgramManagement    from './pages/Admin/ProgramManagement';
 import PositionsManagement  from './pages/Admin/PositionsManagement';
 import UserManagement       from './pages/Admin/UserManagement';
 import SettingsAdmin        from './pages/Admin/SettingsAdmin';
-import LoginStaff           from './pages/Admin/LoginStaff';
 import ForgotPasswordStaff  from './pages/Admin/ForgotPasswordStaff';
 import ResetPasswordStaff   from './pages/Admin/ResetPasswordStaff';
 
@@ -79,19 +78,53 @@ const CandidateRegisterRedirect = () => {
 const DashboardRouter = () => {
     const { user, company } = useAuthStore();
     const storedUserType = localStorage.getItem('user_type');
-    const hasCandidateProfile = !!localStorage.getItem('candidate_profile');
-    const role = user?.role || user?.user_type || storedUserType || company?.role || (hasCandidateProfile ? 'candidate' : null);
-
-    if (!role || role === 'new') return <Navigate to="/onboarding" replace />;
     
-    if (role === 'mentor') return <Navigate to="/mentor/dashboard" replace />;
-    if (role === 'hr') return <Navigate to="/hr/dashboard" replace />;
+    // Resolve role without any fallback to 'candidate'
+    const role = user?.role || user?.user_type || storedUserType || company?.role || null;
+
+    // If no role, redirect to onboarding
+    if (!role || role === 'new' || role === 'null' || role === '') {
+        return <Navigate to="/onboarding" replace />;
+    }
+    
+    const normalizedRole = String(role || "").trim().toLowerCase();
+    
+    if (normalizedRole === "mentor") return <Navigate to="/mentor/dashboard" replace />;
+    if (normalizedRole === "hr") return <Navigate to="/hr/dashboard" replace />;
     
     return <DashboardPage />;
 };
 
 // App
 export default function App() {
+    const { hydrateFromStorage, logoutSilent, isAuthenticated } = useAuthStore();
+
+    useEffect(() => {
+    if (!isAuthenticated) return;
+
+    // Kalau sessionStorage kosong tapi localStorage ada token
+    // berarti ini fresh load setelah browser ditutup ATAU
+    // ini pertama kali session manager dipasang
+    // Hanya logout kalau memang pernah ada session sebelumnya
+    const hadSession = sessionStorage.getItem('had_session');
+    
+    if (!isSessionValid() && hadSession === 'true') {
+        // Browser sempat ditutup, ada session sebelumnya → logout
+        logoutSilent();
+        return;
+    }
+
+    // Start session baru
+    sessionStorage.setItem('had_session', 'true');
+    
+    const cleanup = initSession(() => {
+        clearSession();
+        logoutSilent();
+    });
+
+    return cleanup;
+}, [isAuthenticated, logoutSilent]);
+
     return (
         <BrowserRouter>
             <Routes>
@@ -107,10 +140,10 @@ export default function App() {
                 {/* Company — Public */}
                 <Route path="/c/:idCompany"                   element={<LandingPage />} />
                 <Route path="/c/:idCompany/register"          element={<CandidateRegisterRedirect />} />
-                <Route path="/c/:idCompany/login"             element={<LoginCandidate />} />
+                <Route path="/c/:idCompany/login"             element={<Navigate to="/onboarding" replace />} />
                 <Route path="/c/:idCompany/forgot-password"   element={<ForgotPasswordCandidate />} />
                 <Route path="/c/:idCompany/reset-password"    element={<ResetPasswordCandidate />} />
-                <Route path="/c/:idCompany/staff/login"       element={<LoginStaff />} />
+                <Route path="/c/:idCompany/staff/login"       element={<Navigate to="/onboarding" replace />} />
                 <Route path="/c/:idCompany/staff/forgot-password"   element={<ForgotPasswordStaff />} />
                 <Route path="/c/:idCompany/staff/reset-password"    element={<ResetPasswordStaff />} />
                 <Route path="/onboarding" element={<PreviewOnboarding />} />

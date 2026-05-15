@@ -506,8 +506,15 @@ const theme = {
     const user = JSON.parse(localStorage.getItem("user"));
     const company = authCompany || JSON.parse(localStorage.getItem("company"));
     const storedUserType = localStorage.getItem("user_type");
-    const hasCandidateProfile = !!localStorage.getItem("candidate_profile");
-    const resolvedRole = user?.role || user?.user_type || storedUserType || (hasCandidateProfile ? "candidate" : null);
+    
+    // Resolve role without fallback to 'candidate'
+    const resolvedRole = user?.role || user?.user_type || storedUserType || company?.role || null;
+    
+    // If no role, return null to show onboarding CTA instead
+    if (!resolvedRole || resolvedRole === 'null' || resolvedRole === '') {
+      return null;
+    }
+    
     const normalizedRole = String(resolvedRole || "").trim().toLowerCase();
 
     if (user) {
@@ -516,7 +523,24 @@ const theme = {
       if (normalizedRole === "mentor") return "/mentor/dashboard";
       if (normalizedRole === "super_admin" || normalizedRole === "superadmin") return "/superadmin/dashboard";
     }
-    return normalizedRole === "candidate" || normalizedRole === "apprentice" ? "/candidate/dashboard" : "/dashboard";
+    return "/onboarding";
+  };
+
+  // Helper: Check if user has a role
+  const userHasRole = () => {
+    const user = JSON.parse(localStorage.getItem("user"));
+    const company = authCompany || JSON.parse(localStorage.getItem("company"));
+    const storedUserType = localStorage.getItem("user_type");
+    const resolvedRole = user?.role || user?.user_type || storedUserType || company?.role || null;
+    return !!resolvedRole && resolvedRole !== 'null' && resolvedRole !== '';
+  };
+
+  // Helper: Get button label and path for authenticated users
+  const getAuthButtonConfig = () => {
+    if (userHasRole()) {
+      return { label: "Dashboard", path: getDashboardPath(), icon: "layout" };
+    }
+    return { label: "Choose Your Role", path: "/onboarding", icon: "compass" };
   };
 
   useEffect(() => {
@@ -614,11 +638,11 @@ const theme = {
                     <div style={{ fontSize: "13px", fontWeight: "700", color: isDark ? "#fff" : "#0f172a", marginBottom: "2px" }}>{authUser?.name || authUser?.full_name}</div>
                     <div style={{ fontSize: "11px", color: isDark ? "rgba(255,255,255,0.5)" : "rgba(30,40,60,0.6)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{authUser?.email}</div>
                   </div>
-                  <div onClick={() => { setShowDropdown(false); navigate(getDashboardPath()); }}
+                  <div onClick={() => { setShowDropdown(false); const btnConfig = getAuthButtonConfig(); navigate(btnConfig.path); }}
                     style={{ display: "flex", alignItems: "center", gap: "10px", padding: "12px 16px", color: isDark ? "#fff" : "#0f172a", fontSize: "14px", fontWeight: "500", cursor: "pointer", borderRadius: "10px", transition: "0.2s" }}
                     onMouseEnter={e => e.currentTarget.style.background = "rgba(74,158,255,0.1)"}
                     onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-                  ><IconLayout /> Dashboard</div>
+                  >{userHasRole() ? <IconLayout /> : <IconUsers />} {getAuthButtonConfig().label}</div>
                   <div onClick={() => { setShowDropdown(false); setLogoutModalOpen(true); }}
                     style={{ display: "flex", alignItems: "center", gap: "10px", padding: "12px 16px", color: "#fb7185", fontSize: "14px", fontWeight: "500", cursor: "pointer", borderRadius: "10px", transition: "0.2s" }}
                     onMouseEnter={e => e.currentTarget.style.background = "rgba(251,113,133,0.1)"}
@@ -651,7 +675,7 @@ const theme = {
               </>
             ) : (
               <>
-                <button onClick={() => navigate(getDashboardPath())} style={{ display: "flex", alignItems: "center", gap: "8px", background: "transparent", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", padding: "10px", borderRadius: "8px", fontSize: "14px", cursor: "pointer" }}><IconLayout /> Dashboard</button>
+                <button onClick={() => { const btnConfig = getAuthButtonConfig(); navigate(btnConfig.path); }} style={{ display: "flex", alignItems: "center", gap: "8px", background: "transparent", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", padding: "10px", borderRadius: "8px", fontSize: "14px", cursor: "pointer" }}>{userHasRole() ? <IconLayout /> : <IconUsers />} {getAuthButtonConfig().label}</button>
                 <button onClick={() => { setLogoutModalOpen(true); }} style={{ display: "flex", alignItems: "center", gap: "8px", background: "rgba(251,113,133,0.1)", border: "1px solid rgba(251,113,133,0.3)", color: "#fb7185", padding: "10px", borderRadius: "8px", fontSize: "14px", fontWeight: "600", cursor: "pointer" }}><IconLogOut size={16} /> Logout</button>
               </>
             )}
