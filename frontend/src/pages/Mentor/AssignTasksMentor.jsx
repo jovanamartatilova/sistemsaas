@@ -428,15 +428,28 @@ export default function AssignTasksMentor() {
 
   return (
     <div style={s.app}>
-      <style>{`* { box-sizing: border-box; } ::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 99px; }`}</style>
+      <style>{`
+        * { box-sizing: border-box; }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 99px; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        @media (max-width: 768px) {
+          .at-main { overflow: auto !important; padding-top: 56px !important; }
+          .at-topbar { padding: 10px 14px !important; }
+          .at-content { padding: 14px 10px !important; }
+          .at-page-header { flex-direction: column !important; align-items: flex-start !important; gap: 10px !important; }
+          .at-table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+          .at-table-inner { min-width: 600px; }
+        }
+      `}</style>
       <SidebarMentor mentor={user} onLogout={() => setLogoutModal(true)} />
-      <main style={s.main}>
-        <div style={s.topbar}>
+      <main className="at-main" style={s.main}>
+        <div className="at-topbar" style={s.topbar}>
           <div style={s.bc}><span>Dashboard</span><span style={s.bcSep}>/</span><span>Assessment</span><span style={s.bcSep}>/</span><span style={s.bcActive}>Assign Tasks</span></div>
         </div>
 
-        <div style={s.content}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+        <div className="at-content" style={s.content}>
+          <div className="at-page-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
             <div>
               <h1 style={s.h1}>Assign Tasks</h1>
               <p style={s.subtitle}>Create projects, set daily/weekly targets, and review intern submissions.</p>
@@ -445,6 +458,8 @@ export default function AssignTasksMentor() {
           </div>
 
           <div style={s.card}>
+            <div className="at-table-scroll">
+            <div className="at-table-inner">
             <table style={s.table}>
               <colgroup><col style={{ width: "30%" }} /><col style={{ width: "18%" }} /><col style={{ width: "13%" }} /><col style={{ width: "13%" }} /><col style={{ width: "14%" }} /><col style={{ width: "12%" }} /></colgroup>
               <thead style={s.thead}><tr><th style={s.th}>Project / Task</th><th style={s.th}>Assigned To</th><th style={s.th}>Frequency</th><th style={s.th}>Details</th><th style={s.th}>Status</th><th style={s.th}>Logbook</th></tr></thead>
@@ -600,6 +615,8 @@ export default function AssignTasksMentor() {
                 })}
               </tbody>
             </table>
+            </div>{/* end at-table-inner */}
+            </div>{/* end at-table-scroll */}
           </div>
         </div>
       </main>

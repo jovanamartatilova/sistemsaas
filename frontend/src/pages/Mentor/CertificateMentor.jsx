@@ -435,18 +435,34 @@ const applyCerts = (data) => {
   }
   return (
     <div style={s.app}>
-      <style>{`* { box-sizing: border-box; margin: 0; padding: 0; } ::-webkit-scrollbar { width: 5px; } @keyframes spin { to { transform: rotate(360deg); } } ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 99px; } tr:last-child td { border-bottom: none; }`}</style>
+      <style>{`
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        ::-webkit-scrollbar { width: 5px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 99px; }
+        tr:last-child td { border-bottom: none; }
+        @media (max-width: 768px) {
+          .cert-main { overflow: auto !important; padding-top: 56px !important; }
+          .cert-topbar { padding: 10px 14px !important; }
+          .cert-topbar-date { display: none !important; }
+          .cert-content { padding: 14px 10px !important; }
+          .cert-card-header { padding: 12px 10px !important; }
+          .cert-filter-row { flex-wrap: wrap !important; gap: 12px !important; }
+          .cert-card-actions { flex-grow: 1 !important; width: 100% !important; justify-content: flex-start !important; }
+          .cert-bulk-btns { flex-grow: 1 !important; width: 100% !important; justify-content: flex-start !important; }
+        }
+      `}</style>
       <SidebarMentor mentor={mentor} onLogout={handleLogoutClick} />
-      <main style={s.main}>
-        <div style={s.topbar}>
+      <main className="cert-main" style={s.main}>
+        <div className="cert-topbar" style={s.topbar}>
           <div style={s.bc}>
             <span>Dashboard</span><span style={s.bcSep}>/</span>
             <span>Others</span><span style={s.bcSep}>/</span>
             <span style={s.bcActive}>Certificate</span>
           </div>
-          <div style={s.topbarDate}>{new Date().toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}</div>
+          <div className="cert-topbar-date" style={s.topbarDate}>{new Date().toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}</div>
         </div>
-        <div style={s.content}>
+        <div className="cert-content" style={s.content}>
           <h1 style={s.h1}>Certificate</h1>
           <p style={s.subtitle}>Generate and manage certificates for interns who have passed all competency assessments.</p>
 
@@ -454,69 +470,82 @@ const applyCerts = (data) => {
 
           <div style={s.card}>
            {/* Card Header */}
-          <div style={{ padding: "18px 24px", borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            
+          <div className="cert-card-header" style={{ padding: "14px 16px", borderBottom: "1px solid #f1f5f9", display: "flex", flexDirection: "column", gap: "10px" }}>
+            {/* Title */}
             <div style={{ textAlign: "left" }}>
               <div style={s.ct}>Certificate List</div>
               <div style={s.cs}>Interns who have completed all competency assessments</div>
             </div>
 
-            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-              <div style={{ display: "flex", background: "#f1f5f9", borderRadius: "10px", padding: "3px", gap: "2px" }}>
-                {["Individual", "Team"].map(tab => (
-                  <button
-                    key={tab}
-                    onClick={() => setActiveTab(tab)}
-                    style={{
-                      padding: "6px 24px", borderRadius: "8px", border: "none",
-                      fontSize: "13px", fontWeight: activeTab === tab ? 700 : 500,
-                      color: activeTab === tab ? "#0f172a" : "#94a3b8",
-                      background: activeTab === tab ? "#fff" : "transparent",
-                      cursor: "pointer", fontFamily: "inherit",
-                      boxShadow: activeTab === tab ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
-                      transition: "all 0.15s",
-                    }}
-                  >
-                    {tab}
-                  </button>
-                ))}
+            {/* Filter row: left = tabs + search, right = bulk buttons */}
+            <div className="cert-filter-row" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", flexWrap: "nowrap", minWidth: 0 }}>
+              {/* Left: tab toggle + search */}
+              <div className="cert-card-actions" style={{ display: "flex", alignItems: "center", gap: "6px", flexShrink: 1, minWidth: 0, flexWrap: "nowrap" }}>
+                {/* Tab toggle */}
+                <div style={{ display: "flex", background: "#f1f5f9", borderRadius: "8px", padding: "2px", gap: "2px", flexShrink: 0 }}>
+                  {["Individual", "Team"].map(tab => (
+                    <button
+                      key={tab}
+                      onClick={() => setActiveTab(tab)}
+                      style={{
+                        padding: "4px 10px", borderRadius: "6px", border: "none",
+                        fontSize: "clamp(10px, 0.95vw, 12px)", fontWeight: activeTab === tab ? 700 : 500,
+                        color: activeTab === tab ? "#0f172a" : "#94a3b8",
+                        background: activeTab === tab ? "#fff" : "transparent",
+                        cursor: "pointer", fontFamily: "inherit",
+                        boxShadow: activeTab === tab ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
+                        transition: "all 0.15s", whiteSpace: "nowrap",
+                      }}
+                    >
+                      {tab}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Search */}
+                <div style={{
+                  display: "flex", alignItems: "center", gap: "6px",
+                  background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "8px",
+                  padding: "4px 8px", width: "clamp(100px, 14vw, 180px)", flexShrink: 1,
+                }}>
+                  <IC.Search />
+                  <input
+                    placeholder="Search by name..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    style={{ border: "none", background: "transparent", outline: "none", fontSize: "clamp(10px,0.95vw,12px)", color: "#64748b", width: "100%", fontFamily: "inherit" }}
+                  />
+                  {search && (
+                    <span onClick={() => setSearch("")} style={{ cursor: "pointer", color: "#94a3b8", fontSize: "14px", lineHeight: 1, flexShrink: 0 }}>×</span>
+                  )}
+                </div>
               </div>
 
-              <div style={{
-                display: "flex", alignItems: "center", gap: "8px",
-                background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px",
-                padding: "7px 14px", width: "220px", height: "34px"
-              }}>
-                <IC.Search />
-                <input
-                  placeholder="Search by name..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  style={{ border: "none", background: "transparent", outline: "none", fontSize: "13px", color: "#64748b", width: "100%", fontFamily: "inherit" }}
-                />
-                {search && (
-                  <span onClick={() => setSearch("")} style={{ cursor: "pointer", color: "#94a3b8", fontSize: "16px", lineHeight: 1 }}>×</span>
-                )}
-              </div>
-              
-              <div style={{ display: "flex", gap: "8px" }}>
+              {/* Right: bulk buttons */}
+              <div className="cert-bulk-btns" style={{ display: "flex", gap: "6px", flexShrink: 0, flexWrap: "nowrap" }}>
                 <button
                   style={{
-                    padding: "7px 14px", background: "#f0fdf4", color: "#15803d", border: "1px solid #86efac",
-                    borderRadius: "10px", fontSize: "13px", fontWeight: 700, cursor: bulkGenerating ? "not-allowed" : "pointer",
-                    display: "flex", alignItems: "center", gap: "6px", fontFamily: "inherit", opacity: bulkGenerating ? 0.7 : 1, whiteSpace: "nowrap"
+                    padding: "clamp(4px,0.4vw,6px) clamp(7px,0.8vw,12px)",
+                    background: "#f0fdf4", color: "#15803d", border: "1px solid #86efac",
+                    borderRadius: "7px", fontSize: "clamp(10px,0.95vw,12px)", fontWeight: 600,
+                    cursor: bulkGenerating ? "not-allowed" : "pointer",
+                    display: "flex", alignItems: "center", gap: "4px",
+                    fontFamily: "inherit", opacity: bulkGenerating ? 0.7 : 1, whiteSpace: "nowrap"
                   }}
                   onClick={handleBulkGenerate} disabled={bulkGenerating}
                 >
                   <IC.FilePlus />
                   Bulk Generate
                 </button>
-                
+
                 <button
                   style={{
-                    padding: "7px 14px", background: "#fffbeb", color: "#b45309", border: "1px solid #fde68a",
-                    borderRadius: "10px", fontSize: "13px", fontWeight: 700, cursor: bulkGenerating ? "not-allowed" : "pointer",
-                    display: "flex", alignItems: "center", gap: "6px", fontFamily: "inherit", opacity: bulkGenerating ? 0.7 : 1, whiteSpace: "nowrap"
+                    padding: "clamp(4px,0.4vw,6px) clamp(7px,0.8vw,12px)",
+                    background: "#fffbeb", color: "#b45309", border: "1px solid #fde68a",
+                    borderRadius: "7px", fontSize: "clamp(10px,0.95vw,12px)", fontWeight: 600,
+                    cursor: bulkGenerating ? "not-allowed" : "pointer",
+                    display: "flex", alignItems: "center", gap: "4px",
+                    fontFamily: "inherit", opacity: bulkGenerating ? 0.7 : 1, whiteSpace: "nowrap"
                   }}
                   onClick={handleBulkRegenerate} disabled={bulkGenerating}
                 >
@@ -526,9 +555,12 @@ const applyCerts = (data) => {
 
                 <button
                   style={{
-                    padding: "7px 14px", background: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe",
-                    borderRadius: "10px", fontSize: "13px", fontWeight: 700, cursor: bulkSending ? "not-allowed" : "pointer",
-                    display: "flex", alignItems: "center", gap: "6px", fontFamily: "inherit", opacity: bulkSending ? 0.7 : 1, whiteSpace: "nowrap"
+                    padding: "clamp(4px,0.4vw,6px) clamp(7px,0.8vw,12px)",
+                    background: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe",
+                    borderRadius: "7px", fontSize: "clamp(10px,0.95vw,12px)", fontWeight: 600,
+                    cursor: bulkSending ? "not-allowed" : "pointer",
+                    display: "flex", alignItems: "center", gap: "4px",
+                    fontFamily: "inherit", opacity: bulkSending ? 0.7 : 1, whiteSpace: "nowrap"
                   }}
                   onClick={handleBulkSend} disabled={bulkSending}
                 >

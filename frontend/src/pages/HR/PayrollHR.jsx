@@ -341,26 +341,53 @@ export default function PayrollHR() {
 );
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#f8fafc" }}>
+    <div style={{ display: "flex", minHeight: "100vh", background: "#f8fafc", fontFamily: "'Poppins','Segoe UI',sans-serif" }}>
       <SidebarHR user={user} onLogout={() => setShowLogoutModal(true)} />
+      <style>{`
+        * { box-sizing: border-box; }
+        .table-row-hover:hover { background: #f8fafc !important; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        @media (max-width: 768px) {
+          .pr-wrap { padding-top: 56px !important; }
+          .pr-main { padding: 16px 12px 32px !important; }
+          .pr-stat-grid { grid-template-columns: repeat(2,1fr) !important; gap:12px !important; }
+          .pr-page-header { flex-direction: column !important; align-items: flex-start !important; gap: 10px !important; }
+          .pr-filter-bar { flex-direction: column !important; align-items: flex-start !important; }
+          .pr-filter-top { flex-wrap: wrap !important; }
+          .pr-filter-bottom { flex-wrap: wrap !important; }
+          .pr-date-hide { display: none !important; }
+        }
+        @media (max-width: 480px) {
+          .pr-stat-grid { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
 
-      <main style={{ flex: 1, padding: "32px 40px", overflowY: "auto" }}>
-        {/* Header */}
-        <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "30px" }}>
-          <div>
-            <nav style={{ fontSize: "12px", color: "#64748b", marginBottom: "8px", display: "flex", gap: "6px" }}>
-              <span>Payroll</span> <span style={{ opacity: 0.5 }}>/</span> <span style={{ color: "#2563eb", fontWeight: 600 }}>Overview</span>
-            </nav>
-            <h1 style={{ fontSize: "24px", fontWeight: "800", color: "#0f172a", margin: 0, letterSpacing: "-0.5px" }}>Payroll</h1>
-            <p style={{ fontSize: "13px", color: "#64748b", marginTop: "4px" }}>Manage stipend and payment for paid internship participants.</p>
+      <div className="pr-wrap" style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: "100vh", minWidth: 0 }}>
+        {/* Sticky Topbar */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 20px", background: "#fff", borderBottom: "1px solid #e2e8f0", position: "sticky", top: 0, zIndex: 50, flexShrink: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "#64748b" }}>
+            <span>Dashboard</span>
+            <span style={{ color: "#cbd5e1" }}>/</span>
+            <span>Administration</span>
+            <span style={{ color: "#cbd5e1" }}>/</span>
+            <span style={{ color: "#1e293b", fontWeight: 600 }}>Payroll</span>
           </div>
-          <div style={{ fontSize: "13px", fontWeight: "600", color: "#475569", background: "#fff", padding: "8px 16px", borderRadius: "10px", boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}>
-            {todayStr()}
+          <span className="pr-date-hide" style={{ fontSize: "12px", color: "#64748b", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "6px", padding: "4px 10px" }}>{todayStr()}</span>
+        </div>
+
+        <main className="pr-main-wrap pr-main" style={{ flex: 1, padding: "20px 24px", overflowY: "auto" }}>
+        {/* Page Title */}
+        <header className="pr-page-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
+          <div>
+            <h1 style={{ fontSize: "20px", fontWeight: "800", color: "#0f172a", margin: 0, letterSpacing: "-0.3px" }}>Payroll</h1>
+            <p style={{ fontSize: "12.5px", color: "#64748b", marginTop: "3px" }}>Manage stipend and payment for paid internship participants.</p>
           </div>
         </header>
 
         {/* Stats Grid */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "24px", marginBottom: "32px" }}>
+        <div className="pr-stat-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "24px", marginBottom: "32px" }}>
           <StatCard
             icon={<IC.Users />} iconBg="#eff6ff" iconColor="#2563eb"
             title="Total Interns" value={data.stats.total_interns}
@@ -393,23 +420,23 @@ export default function PayrollHR() {
         <div style={{ background: "#fff", borderRadius: "16px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)", border: "1px solid #e2e8f0" }}>
           
           {/* Action & Filter Bar */}
-          <div style={{ padding: "24px", borderBottom: "1px solid #f1f5f9", display: "flex", flexDirection: "column", gap: "20px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div className="pr-filter-bar" style={{ padding: "24px", borderBottom: "1px solid #f1f5f9", display: "flex", flexDirection: "column", gap: "20px" }}>
+            <div className="pr-filter-top" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <div>
                 <div style={{ fontSize: "15px", fontWeight: "700", color: "#1e293b" }}>Payroll List</div>
                 <div style={{ fontSize: "12px", color: "#94a3b8", marginTop: "2px" }}>Intern payroll records — {period}</div>
               </div>
 
-              <div style={{ display: "flex", gap: "10px" }}>
+              <div style={{ display: "flex", gap: "8px", marginLeft: "auto", paddingLeft: "32px" }}>
                 {["active", "completed", ""].map((s) => (
                   <button
                     key={s}
                     onClick={() => setAppStatus(s)}
                     style={{
-                      padding: "6px 14px", borderRadius: "8px", fontSize: "12px", fontWeight: "600",
+                      padding: "6px 16px", borderRadius: "8px", fontSize: "12px", fontWeight: "600",
                       cursor: "pointer", border: `1px solid ${appStatus === s ? "#2563eb" : "#e2e8f0"}`,
                       background: appStatus === s ? "#eff6ff" : "#fff", color: appStatus === s ? "#2563eb" : "#64748b",
-                      fontFamily: "inherit", transition: "all 0.15s",
+                      fontFamily: "inherit", transition: "all 0.15s", whiteSpace: "nowrap",
                     }}
                   >
                     {s === "" ? "Show All" : s.charAt(0).toUpperCase() + s.slice(1)}
@@ -418,7 +445,7 @@ export default function PayrollHR() {
               </div>
             </div>
 
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div className="pr-filter-bottom" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
                 <div style={{ position: "relative" }}>
                   <span style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }}><IC.Search /></span>
@@ -602,6 +629,7 @@ export default function PayrollHR() {
           </div>
         </div>
       </main>
+      </div>
 
       {showStipendModal && (
         <ManageStipendModal 
@@ -616,12 +644,7 @@ export default function PayrollHR() {
       {showLogoutModal && <LogoutModal onConfirm={logoutUser} onCancel={() => setShowLogoutModal(false)} />}
       <HRToastStack toasts={toasts} onDismiss={removeToast} />
 
-      <style>{`
-        .table-row-hover:hover { background: #f8fafc !important; }
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; borderRadius: 10px; }
-      `}</style>
+      <style>{''}</style>
     </div>
   );
 }

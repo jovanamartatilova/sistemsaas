@@ -79,25 +79,25 @@ function IconBtn({ icon, title, onClick, color = '#475569', bgHov = '#f1f5f9' })
 function StatCard({ icon, iconBg, iconColor, title, value, sub, barColors }) {
   return (
     <div style={{
-      background: '#fff', borderRadius: '16px', padding: '22px 24px',
+      background: '#fff', borderRadius: '16px', padding: '16px 18px',
       boxShadow: '0 1px 4px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)',
       display: 'flex', flexDirection: 'column', gap: '4px',
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div style={{
-          width: '38px', height: '38px', borderRadius: '10px',
+          width: '34px', height: '34px', borderRadius: '10px',
           background: iconBg, display: 'flex', alignItems: 'center',
           justifyContent: 'center', color: iconColor,
         }}>
           {icon}
         </div>
       </div>
-      <div style={{ fontSize: '28px', fontWeight: '800', color: '#1e293b', letterSpacing: '-1px', marginTop: '10px', textAlign: 'left' }}>
+      <div style={{ fontSize: '22px', fontWeight: '800', color: '#1e293b', letterSpacing: '-0.5px', marginTop: '8px', textAlign: 'left' }}>
         {value ?? 0}
       </div>
-      <div style={{ fontSize: '13px', color: '#64748b', fontWeight: '500', textAlign: 'left' }}>{title}</div>
+      <div style={{ fontSize: '12px', color: '#64748b', fontWeight: '500', textAlign: 'left' }}>{title}</div>
       {barColors && (
-        <div style={{ display: 'flex', gap: '3px', marginTop: '10px', alignItems: 'flex-end', height: '26px' }}>
+        <div style={{ display: 'flex', gap: '3px', marginTop: '8px', alignItems: 'flex-end', height: '22px' }}>
           {barColors.map((c, i) => (
             <div key={i} style={{
               flex: 1, background: c, borderRadius: '3px 3px 0 0',
@@ -106,7 +106,7 @@ function StatCard({ icon, iconBg, iconColor, title, value, sub, barColors }) {
           ))}
         </div>
       )}
-      {sub && <div style={{ fontSize: '11.5px', color: '#94a3b8', marginTop: '2px', textAlign: 'left' }}>{sub}</div>}
+      {sub && <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px', textAlign: 'left' }}>{sub}</div>}
     </div>
   );
 }
@@ -222,67 +222,49 @@ function InternRow({ intern, onDetail, isLast }) {
 
   return (
     <div style={{
-      display: 'grid', gridTemplateColumns: '1.8fr 1fr 1.1fr 1fr 0.8fr 0.7fr', gap: '12px',
-      padding: '14px 24px', alignItems: 'center',
+      display: 'grid', gridTemplateColumns: '1.8fr 1fr 1.1fr 1fr 0.8fr 0.7fr', gap: '8px',
+      padding: '10px 16px', alignItems: 'center',
       borderBottom: isLast ? 'none' : '1px solid #f1f5f9',
     }}>
-      {/* Intern */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-        <div style={{
-          width: '34px', height: '34px', borderRadius: '50%', flexShrink: 0,
-          background: 'linear-gradient(135deg, #dbeafe, #bfdbfe)', color: '#1d4ed8',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: '700',
-        }}>
-          {(intern.name || '?').slice(0, 2).toUpperCase()}
-        </div>
-        <div style={{ minWidth: 0 }}>
-          <div style={{ fontSize: '13px', fontWeight: '700', color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{intern.name}</div>
-          <div style={{ fontSize: '11.5px', color: '#94a3b8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{intern.email}</div>
-        </div>
+      {/* Intern — no avatar bubble */}
+      <div style={{ minWidth: 0 }}>
+        <div style={{ fontSize: '12.5px', fontWeight: '700', color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{intern.name}</div>
+        <div style={{ fontSize: '11px', color: '#94a3b8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{intern.email}</div>
       </div>
 
       {/* University */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: '#475569', minWidth: 0, justifyContent: 'center' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11.5px', color: '#475569', minWidth: 0, justifyContent: 'center', overflow: 'hidden' }}>
         <div style={{ flexShrink: 0 }}><IC.MapPin /></div>
-        <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{intern.university || '-'}</span>
+        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{intern.university || '-'}</span>
       </div>
 
-      {/* Mentor */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0, justifyContent: 'center' }}>
+      {/* Mentor — no avatar bubble */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', minWidth: 0, justifyContent: 'center', overflow: 'hidden' }}>
         {intern.mentor_name ? (
-          <>
-            <div style={{
-              width: '22px', height: '22px', borderRadius: '50%', flexShrink: 0,
-              background: '#fef9c3', color: '#854d0e',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', fontWeight: '700',
-            }}>
-              {(intern.mentor_name || '?').slice(0, 2).toUpperCase()}
-            </div>
-            <span style={{ fontSize: '12px', fontWeight: '600', color: '#475569', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{intern.mentor_name}</span>
-          </>
+          <span style={{ fontSize: '11.5px', fontWeight: '600', color: '#475569', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0 }}>{intern.mentor_name}</span>
         ) : (
-          <span style={{ fontSize: '11.5px', color: '#fbbf24', fontWeight: '600' }}>Unassigned</span>
+          <span style={{ fontSize: '11px', color: '#fbbf24', fontWeight: '600' }}>Unassigned</span>
         )}
       </div>
 
       {/* Start Date + Days */}
-      <div style={{ textAlign: 'center' }}>
-        <div style={{ fontSize: '12px', color: '#475569', fontWeight: '600' }}>{fmtDate(intern.start_date)}</div>
+      <div style={{ textAlign: 'center', minWidth: 0 }}>
+        <div style={{ fontSize: '11.5px', color: '#475569', fontWeight: '600' }}>{fmtDate(intern.start_date)}</div>
         {days !== null && (
-          <div style={{ fontSize: '10.5px', color: '#94a3b8', marginTop: '1px' }}>{days}d active</div>
+          <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '1px' }}>{days}d active</div>
         )}
       </div>
 
       {/* Position */}
-      <div style={{ fontSize: '12px', color: '#475569', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'flex', justifyContent: 'center' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+      <div style={{ fontSize: '11.5px', color: '#475569', overflow: 'hidden', minWidth: 0, display: 'flex', justifyContent: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '3px', overflow: 'hidden' }}>
           <IC.Briefcase />
-          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{intern.position || '-'}</span>
+          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{intern.position || '-'}</span>
         </div>
       </div>
 
       {/* Status + Action */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'center' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', justifyContent: 'center', minWidth: 0 }}>
         <StatusBadge status={intern.status} />
         <IconBtn icon={<IC.Eye />} title="View Detail" onClick={() => onDetail(intern)} />
       </div>
@@ -360,42 +342,79 @@ useEffect(() => {
   };
 
   if (loading) return (
-  <div style={{ display: "flex", minHeight: "100vh", background: "#f8fafc", fontFamily: "'Poppins', 'Segoe UI', sans-serif" }}>
-    <SidebarHR user={user} onLogout={() => setShowLogout(true)} />
-    <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <LoadingSpinner fullScreen={false} message="Loading interns.." />
+    <div style={{ display: "flex", minHeight: "100vh", background: "#f8fafc", fontFamily: "'Poppins', 'Segoe UI', sans-serif" }}>
+      <SidebarHR user={user} onLogout={() => setShowLogoutModal(true)} />
+      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <LoadingSpinner fullScreen={false} message="Loading interns.." />
+      </div>
     </div>
-  </div>
-);
+  );
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#f8fafc', fontFamily: "'Poppins', sans-serif" }}>
       <SidebarHR user={user} onLogout={() => setShowLogoutModal(true)} />
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
 
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+        /* ── Fullscreen proportionality ── */
+        .ai-main-wrap { min-width: 0; }
+        .ai-main { padding: clamp(16px, 3vw, 32px); }
+        .ai-topbar { padding: 0 clamp(16px, 3vw, 28px); }
+
+        /* ── Stat grid ── */
+        .ai-stat-grid { grid-template-columns: repeat(4, 1fr); gap: clamp(12px, 2vw, 20px); }
+        @media (max-width: 1024px) { .ai-stat-grid { grid-template-columns: repeat(2, 1fr) !important; } }
+        @media (max-width: 640px)  { .ai-stat-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; } }
+        @media (max-width: 400px)  { .ai-stat-grid { grid-template-columns: 1fr !important; } }
+
+        /* ── Table scroll ── */
+        .ai-table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .ai-table-inner  { min-width: 580px; }
+
+        /* ── Filter bar ── */
+        .ai-filter-bar { flex-wrap: wrap; }
+        .ai-search-box { min-width: 160px; }
+
+        /* ── Mobile topbar ── */
+        @media (max-width: 768px) {
+          .ai-main-wrap  { padding-top: 56px !important; }
+          .ai-topbar     { padding: 0 12px !important; }
+          .ai-topbar-date { display: none !important; }
+          .ai-main       { padding: 14px 10px 28px !important; }
+          .ai-filter-bar { gap: 8px !important; }
+          .ai-search-box { margin-left: 0 !important; width: 100% !important; }
+
+          /* Detail modal full-width on mobile */
+          .ai-modal-box  { max-width: 100% !important; margin: 0 !important; border-radius: 16px 16px 0 0 !important; }
+          .ai-modal-wrap { align-items: flex-end !important; padding: 0 !important; }
+        }
+      `}</style>
+
+      <div className="ai-main-wrap" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+
         {/* Header */}
-        <header style={{
+        <header className="ai-topbar" style={{
           height: '56px', background: '#fff', borderBottom: '1px solid #e2e8f0',
-          display: 'flex', alignItems: 'center', padding: '0 28px', gap: '16px', position: 'sticky', top: 0, zIndex: 50,
+          display: 'flex', alignItems: 'center', gap: '16px', position: 'sticky', top: 0, zIndex: 50,
         }}>
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ fontSize: '15px', fontWeight: '700', color: '#1e293b' }}>Dashboard</span>
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 'clamp(13px, 1.5vw, 15px)', fontWeight: '700', color: '#1e293b' }}>Dashboard</span>
             <span style={{ fontSize: '13px', color: '#94a3b8', margin: '0 6px' }}>/</span>
-            <span style={{ fontSize: '13px', color: '#94a3b8' }}>Active Intern</span>
+            <span style={{ fontSize: 'clamp(12px, 1.3vw, 13px)', color: '#94a3b8' }}>Active Intern</span>
           </div>
-          <span style={{ fontSize: '12px', color: '#94a3b8' }}>{todayStr()}</span>
+          <span className="ai-topbar-date" style={{ fontSize: '12px', color: '#94a3b8', whiteSpace: 'nowrap' }}>{todayStr()}</span>
         </header>
 
-        <main style={{ flex: 1, padding: '28px', overflowY: 'auto' }}>
+        <main className="ai-main" style={{ flex: 1, overflowY: 'auto' }}>
 
           {/* Title */}
-          <div style={{ marginBottom: '24px' }}>
-            <h1 style={{ fontSize: '22px', fontWeight: '800', color: '#0f172a', margin: 0 }}>Active Interns</h1>
-            <p style={{ fontSize: '13px', color: '#64748b', marginTop: '4px' }}>Candidates who have been accepted and assigned a mentor.</p>
+          <div style={{ marginBottom: '20px' }}>
+            <h1 style={{ fontSize: 'clamp(18px, 2.5vw, 22px)', fontWeight: '800', color: '#0f172a', margin: 0 }}>Active Interns</h1>
+            <p style={{ fontSize: 'clamp(11px, 1.2vw, 13px)', color: '#64748b', marginTop: '4px' }}>Candidates who have been accepted and assigned a mentor.</p>
           </div>
 
           {/* Stats */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '24px' }}>
+          <div className="ai-stat-grid" style={{ display: 'grid', marginBottom: '20px' }}>
             <StatCard
               icon={<IC.Users />} iconBg="#eff6ff" iconColor="#3b82f6"
               title="Total Interns" value={stats.total}
@@ -430,9 +449,9 @@ useEffect(() => {
           <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02)' }}>
 
             {/* Filter Bar */}
-            <div style={{ padding: '14px 20px', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+            <div className="ai-filter-bar" style={{ padding: 'clamp(10px,1.5vw,14px) clamp(12px,2vw,20px)', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '10px' }}>
               {/* Status tabs */}
-              <div style={{ display: 'flex', gap: '6px' }}>
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                 {STATUS_OPTIONS.map(o => {
                   const active = statusFilter === o.value;
                   return (
@@ -440,10 +459,17 @@ useEffect(() => {
                       key={o.value}
                       onClick={() => setStatusFilter(o.value)}
                       style={{
-                        padding: '6px 14px', borderRadius: '8px', fontSize: '12.5px', fontWeight: '600',
-                        cursor: 'pointer', border: `1px solid ${active ? '#86efac' : '#e2e8f0'}`,
-                        background: active ? '#f0fdf4' : '#fff', color: active ? '#15803d' : '#64748b',
-                        fontFamily: 'inherit', transition: 'all 0.15s',
+                        padding: 'clamp(4px,0.6vw,6px) clamp(10px,1.2vw,14px)',
+                        borderRadius: '8px',
+                        fontSize: 'clamp(11px, 1.1vw, 12.5px)',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        border: `1px solid ${active ? '#86efac' : '#e2e8f0'}`,
+                        background: active ? '#f0fdf4' : '#fff',
+                        color: active ? '#15803d' : '#64748b',
+                        fontFamily: 'inherit',
+                        transition: 'all 0.15s',
+                        whiteSpace: 'nowrap',
                       }}
                     >
                       {o.label}
@@ -456,7 +482,7 @@ useEffect(() => {
               <select
                 value={positionFilter}
                 onChange={e => setPositionFilter(e.target.value)}
-                style={{ padding: '6px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#fff', fontSize: '12.5px', color: '#475569', outline: 'none', cursor: 'pointer' }}
+                style={{ padding: 'clamp(4px,0.6vw,6px) clamp(8px,1vw,12px)', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#fff', fontSize: 'clamp(11px, 1.1vw, 12.5px)', color: '#475569', outline: 'none', cursor: 'pointer', maxWidth: '160px' }}
               >
                 <option value="">All Positions</option>
                 {positions.map(pos => (
@@ -465,32 +491,36 @@ useEffect(() => {
               </select>
 
               {/* Search */}
-              <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '6px 12px', minWidth: '220px' }}>
+              <div className="ai-search-box" style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: 'clamp(4px,0.6vw,6px) clamp(8px,1vw,12px)' }}>
                 <IC.Search />
                 <input
                   placeholder="Search intern or mentor..."
                   value={search}
                   onChange={e => setSearch(e.target.value)}
-                  style={{ border: 'none', outline: 'none', fontSize: '12.5px', width: '100%', background: 'transparent', color: '#1e293b', fontFamily: 'inherit' }}
+                  style={{ border: 'none', outline: 'none', fontSize: 'clamp(11px, 1.1vw, 12.5px)', width: '100%', minWidth: '120px', background: 'transparent', color: '#1e293b', fontFamily: 'inherit' }}
                 />
               </div>
             </div>
 
+            {/* Table */}
+            <div className="ai-table-scroll">
+            <div className="ai-table-inner">
+
             {/* Table Header */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1.8fr 1fr 1.1fr 1fr 0.8fr 0.7fr', gap: '12px', padding: '10px 24px', background: '#fcfcfd', borderBottom: '1px solid #f1f5f9' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1.8fr 1fr 1.1fr 1fr 0.8fr 0.7fr', gap: '8px', padding: 'clamp(8px,1vw,10px) clamp(12px,2vw,24px)', background: '#fcfcfd', borderBottom: '1px solid #f1f5f9' }}>
               {['INTERN', 'UNIVERSITY', 'MENTOR', 'START DATE', 'POSITION', 'STATUS'].map(h => (
-                <div key={h} style={{ 
-                  fontSize: '10px', fontWeight: '700', color: '#94a3b8', 
+                <div key={h} style={{
+                  fontSize: 'clamp(9px, 0.8vw, 10px)', fontWeight: '700', color: '#94a3b8',
                   letterSpacing: '0.05em',
                   textAlign: h === 'INTERN' ? 'left' : 'center',
                   display: 'flex',
-                  justifyContent: h === 'INTERN' ? 'flex-start' : 'center'
+                  justifyContent: h === 'INTERN' ? 'flex-start' : 'center',
                 }}>{h}</div>
               ))}
             </div>
 
             {/* Table Body */}
-            <div style={{ minHeight: '300px' }}>
+            <div style={{ minHeight: '200px' }}>
               {tableLoading ? (
                 <div style={{ padding: '40px', textAlign: 'center', color: '#94a3b8', fontSize: '13px' }}>Loading...</div>
               ) : interns.length === 0 ? (
@@ -508,7 +538,11 @@ useEffect(() => {
                 ))
               )}
             </div>
-          </div>
+
+            </div>{/* end ai-table-inner */}
+            </div>{/* end ai-table-scroll */}
+
+          </div>{/* end Main Card */}
         </main>
       </div>
 
@@ -519,25 +553,26 @@ useEffect(() => {
 
       {/* Logout Modal */}
       {showLogoutModal && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(10,22,40,0.5)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ position: "fixed", inset: 0, background: "rgba(10,22,40,0.5)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: '16px' }}>
           <div style={{
-            background: "#fff", borderRadius: "16px", padding: "28px", width: "360px",
+            background: "#fff", borderRadius: "16px", padding: "clamp(20px,3vw,28px)",
+            width: "100%", maxWidth: "360px",
             boxShadow: "0 20px 60px rgba(0,0,0,0.18)", fontFamily: "'Poppins','Segoe UI',sans-serif",
           }}>
-            <div style={{ fontSize: "16px", fontWeight: "700", color: "#0f172a", marginBottom: "6px" }}>Sign Out?</div>
-            <div style={{ fontSize: "13px", color: "#64748b", lineHeight: 1.6, marginBottom: "24px" }}>
+            <div style={{ fontSize: "clamp(14px,1.5vw,16px)", fontWeight: "700", color: "#0f172a", marginBottom: "6px" }}>Sign Out?</div>
+            <div style={{ fontSize: "clamp(12px,1.2vw,13px)", color: "#64748b", lineHeight: 1.6, marginBottom: "20px" }}>
               Are you sure you want to sign out from your HR account?
             </div>
             <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
               <button onClick={() => setShowLogoutModal(false)} style={{
-                padding: "9px 18px", borderRadius: "10px", border: "1px solid #e2e8f0",
-                background: "#fff", fontSize: "13px", fontWeight: "600", color: "#64748b", cursor: "pointer", fontFamily: "inherit",
+                padding: "8px 16px", borderRadius: "10px", border: "1px solid #e2e8f0",
+                background: "#fff", fontSize: "clamp(11px,1.1vw,13px)", fontWeight: "600", color: "#64748b", cursor: "pointer", fontFamily: "inherit",
               }}>
                 Cancel
               </button>
               <button onClick={handleLogout} style={{
-                padding: "9px 18px", borderRadius: "10px", border: "none",
-                background: "#ef4444", fontSize: "13px", fontWeight: "700", color: "#fff", cursor: "pointer", fontFamily: "inherit",
+                padding: "8px 16px", borderRadius: "10px", border: "none",
+                background: "#ef4444", fontSize: "clamp(11px,1.1vw,13px)", fontWeight: "700", color: "#fff", cursor: "pointer", fontFamily: "inherit",
               }}>
                 Yes, Sign Out
               </button>
@@ -550,3 +585,4 @@ useEffect(() => {
     </div>
   );
 }
+
