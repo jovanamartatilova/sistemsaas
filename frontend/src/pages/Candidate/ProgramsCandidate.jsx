@@ -381,18 +381,14 @@ function JoinTeamModal({ onClose, onJoined }) {
   );
 }
 
-// ── Competency Item ───────────────────────────────────────────────
 function CompetencyItem({ name, description, learning_hours }) {
   return (
-    <div className="flex items-start gap-3 p-3 bg-white border border-slate-200 rounded-xl">
-      <div className="mt-0.5 flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center bg-indigo-50 border border-indigo-100 text-indigo-600">
-        <BookOpen size={14} />
-      </div>
+    <div className="flex items-start gap-3 p-3 bg-slate-50 border border-slate-100 rounded-xl">
       <div className="min-w-0 flex-1 text-left">
-        <p className="text-sm font-semibold text-slate-700 leading-tight mb-1">{name}</p>
-        {description && <p className="text-[11px] text-slate-500 line-clamp-2">{description}</p>}
+        <p className="text-xs font-semibold text-slate-700 leading-tight mb-1">{name}</p>
+        {description && <p className="text-[11px] text-slate-400 line-clamp-2 leading-relaxed">{description}</p>}
       </div>
-      <span className="flex-shrink-0 text-[10px] px-2 py-1 rounded-md font-bold border bg-slate-50 text-slate-600 border-slate-200">
+      <span className="flex-shrink-0 text-[10px] px-2 py-1 rounded-xl font-bold bg-white border border-slate-200 text-slate-500 whitespace-nowrap">
         {learning_hours} hrs
       </span>
     </div>
@@ -401,7 +397,6 @@ function CompetencyItem({ name, description, learning_hours }) {
 
 // ── Program Card ──────────────────────────────────────────────────
 function ProgramCard({ program, onOpenInvitation, onChooseRole }) {
-  const [expanded, setExpanded] = useState(true);
   const [invLinks, setInvLinks] = useState([]);
   const [copiedLink, setCopiedLink] = useState(null);
   const { name, description, batch, company, competencies, status, has_loa, loa_file_url, team } = program;
@@ -414,19 +409,15 @@ function ProgramCard({ program, onOpenInvitation, onChooseRole }) {
   const hasTeam = !!team;
 
   useEffect(() => {
-     console.log("ROLE:", userRole, "isLeader:", isLeader);
-      if (!isLeader) return;
-      const load = async () => {
+    if (!isLeader) return;
+    const load = async () => {
       try {
         const res = await fetch(`${API_BASE_URL}/team-invitations`, {
           headers: { Authorization: `Bearer ${getToken()}` },
         });
         const data = await res.json();
         const list = data.data || data || [];
-        console.log("TEAM-INVITATIONS RAW:", JSON.stringify(list));
-        const relevant = list;
-        console.log("RELEVANT:", JSON.stringify(relevant));
-        setInvLinks(relevant);
+        setInvLinks(list);
       } catch { /* ignore */ }
     };
     load();
@@ -438,13 +429,6 @@ function ProgramCard({ program, onOpenInvitation, onChooseRole }) {
     setTimeout(() => setCopiedLink(null), 2000);
   };
 
-  const getStatusBadge = () => {
-    if (isAccepted) return <span className="px-3 py-1 bg-emerald-50 text-emerald-600 border border-emerald-200 rounded-full text-[11px] font-bold flex items-center gap-1.5 whitespace-nowrap"><CheckCircle size={12} /> ACCEPTED</span>;
-    if (isPending) return <span className="px-3 py-1 bg-amber-50 text-amber-600 border border-amber-200 rounded-full text-[11px] font-bold flex items-center gap-1.5 whitespace-nowrap"><Clock size={12} /> IN REVIEW</span>;
-    if (isRejected) return <span className="px-3 py-1 bg-rose-50 text-rose-600 border border-rose-200 rounded-full text-[11px] font-bold flex items-center gap-1.5 whitespace-nowrap"><AlertCircle size={12} /> NOT SELECTED</span>;
-    return <span className="px-3 py-1 bg-slate-50 text-slate-600 border border-slate-200 rounded-full text-[11px] font-bold">{status}</span>;
-  };
-
   const downloadFile = (url, fallbackName) => {
     const a = document.createElement("a");
     a.href = url;
@@ -454,48 +438,49 @@ function ProgramCard({ program, onOpenInvitation, onChooseRole }) {
     a.remove();
   };
 
+  const statusConfig = isAccepted
+    ? { label: "ACCEPTED", icon: <CheckCircle size={11} />, className: "bg-emerald-50 text-emerald-600 border-emerald-200", bar: "bg-emerald-500" }
+    : isPending
+    ? { label: "IN REVIEW", icon: <Clock size={11} />, className: "bg-amber-50 text-amber-600 border-amber-200", bar: "bg-amber-400" }
+    : isRejected
+    ? { label: "NOT SELECTED", icon: <AlertCircle size={11} />, className: "bg-rose-50 text-rose-600 border-rose-200", bar: "bg-rose-500" }
+    : { label: status, icon: null, className: "bg-slate-50 text-slate-600 border-slate-200", bar: "bg-slate-300" };
+
   return (
-  <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col relative transition-all w-full">
-    <div className={`absolute top-0 bottom-0 left-0 w-1.5 ${isAccepted ? "bg-emerald-500" : isPending ? "bg-amber-400" : isRejected ? "bg-rose-500" : "bg-slate-300"}`} />
+  <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden w-full transition-all hover:shadow-md">
+    {/* Top accent bar */}
+    <div className={`h-1 w-full ${statusConfig.bar}`} />
 
-    {/* ROW 1: Info kiri + Actions kanan */}
-    <div className="px-4 pt-4 pb-3 ml-1.5 flex flex-col md:flex-row items-start justify-between gap-3">
-      {/* Kiri: nama, badge, company, team */}
-      <div className="flex-1 min-w-0">
-        <div className="flex flex-wrap items-center gap-3 mb-2">
-          <h3 className="text-lg font-bold text-slate-800">{name}</h3>
-          {getStatusBadge()}
+    <div className="p-5">
+      {/* ── Row 1: Header ── */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
+        {/* Kiri */}
+        <div className="flex-1 min-w-0">
+          <div className="flex flex-wrap items-center gap-2 mb-1">
+            <h3 className="text-lg font-bold text-slate-800">{name}</h3>
+            <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${statusConfig.className}`}>
+              {statusConfig.icon} {statusConfig.label}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-semibold text-indigo-600">{company}</span>
+            {batch && (
+              <>
+                <span className="text-slate-300">·</span>
+                <span className="text-xs text-slate-400">{batch}</span>
+              </>
+            )}
+          </div>
         </div>
-        <div className="flex items-center gap-2 mb-2">
-          <span className="text-xs font-bold text-indigo-600">{company}</span>
-          {batch && <><span className="text-slate-300">•</span><span className="text-xs text-slate-500">{batch}</span></>}
-        </div>
-        {description && (
-          <p className="text-xs text-slate-500 line-clamp-1 max-w-lg mb-3">Focus on {description}</p>
-        )}
-        <div className="flex items-center gap-2 flex-wrap">
-          {hasTeam ? (
-            <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border ${isLeader ? "bg-yellow-50 text-yellow-700 border-yellow-200" : "bg-green-50 text-green-700 border-green-200"}`}>
-              {isLeader ? <Crown size={11} /> : <Users size={11} />}
-              {team.name || team.team_name} · as {isLeader ? "Leader" : "Member"}
-            </div>
-          ) : isAccepted ? (
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold text-amber-500 bg-amber-50 border border-amber-200">
-              <Shield size={11} /> Not joined a team yet
-            </div>
-          ) : null}
-        </div>
-      </div>
 
-      {/* Kanan: tombol aksi */}
-      <div className="flex flex-col items-end gap-2 shrink-0">
-        <div className="flex items-center gap-2">
+        {/* Kanan: tombol */}
+        <div className="flex items-center gap-2 flex-wrap shrink-0">
           <button
             disabled={!isAccepted || !has_loa}
             onClick={() => { if (has_loa && loa_file_url) downloadFile(loa_file_url, `LoA_${company}.pdf`); }}
-            className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border-0
+            className={`px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-2 border-0 transition-all
               ${isAccepted && has_loa
-                ? "bg-indigo-600 text-white hover:bg-indigo-700 shadow-md shadow-indigo-100 cursor-pointer"
+                ? "bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm cursor-pointer"
                 : "bg-slate-100 text-slate-400 cursor-not-allowed"}`}
           >
             <Download size={13} />
@@ -504,10 +489,7 @@ function ProgramCard({ program, onOpenInvitation, onChooseRole }) {
           {isAccepted && isLeader && (
             <button
               onClick={() => onOpenInvitation(program)}
-              className="px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-2 cursor-pointer border transition-colors"
-              style={{ background: "#fff", borderColor: "#e2e8f0", color: "#4f46e5" }}
-              onMouseEnter={e => e.currentTarget.style.background = "#eff6ff"}
-              onMouseLeave={e => e.currentTarget.style.background = "#fff"}
+              className="px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-2 cursor-pointer border border-slate-200 bg-white text-indigo-600 hover:bg-indigo-50 transition-colors"
             >
               <Link2 size={13} /> Manage Team
             </button>
@@ -515,68 +497,86 @@ function ProgramCard({ program, onOpenInvitation, onChooseRole }) {
           {isAccepted && !hasTeam && (
             <button
               onClick={() => onChooseRole(program)}
-              className="px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-2 cursor-pointer border transition-colors"
-              style={{ background: "#fff", borderColor: "#e2e8f0", color: "#4f46e5" }}
-              onMouseEnter={e => e.currentTarget.style.background = "#eff6ff"}
-              onMouseLeave={e => e.currentTarget.style.background = "#fff"}
+              className="px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-2 cursor-pointer border border-slate-200 bg-white text-indigo-600 hover:bg-indigo-50 transition-colors"
             >
               <Link2 size={13} /> Join / Create Team
             </button>
           )}
         </div>
       </div>
-    </div>
 
-    {/* ROW 2: Invitation Links — full width, hanya leader */}
-    {isLeader && (
-      <div className="mx-6 ml-7 mb-5 p-4 bg-slate-50 border border-slate-200 rounded-xl">
-        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3">Invitation Links</p>
-        {invLinks.length > 0 ? (
-          <div className="flex flex-col gap-2">
-            {invLinks.map((inv, i) => {
-              const link = `${window.location.origin}/join-team/${inv.token}`;
-              return (
-                <div key={i} className="flex items-center gap-3 bg-white border border-indigo-100 rounded-xl px-4 py-3">
-                  <div className="w-7 h-7 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center flex-shrink-0">
-                    <Link2 size={12} className="text-indigo-400" />
-                  </div>
-                  <div className="flex flex-col flex-1 min-w-0">
-                    <span className="text-[12px] font-bold text-indigo-700">{inv.team_name || "Team"}</span>
-                    <span className="text-[11px] text-slate-400 truncate">{link}</span>
-                  </div>
-                  <button
-                    onClick={() => copyInvLink(link, inv.token)}
-                    className="flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-lg border-0 cursor-pointer transition-all flex-shrink-0"
-                    style={{ background: copiedLink === inv.token ? "#10b981" : "#4f46e5", color: "#fff" }}
-                  >
-                    {copiedLink === inv.token ? <><Check size={11} /> Copied</> : <><Copy size={11} /> Copy</>}
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="flex items-center gap-2 px-4 py-3 bg-amber-50 border border-amber-100 rounded-xl">
-            <Link2 size={12} className="text-amber-400 flex-shrink-0" />
-            <span className="text-[11px] text-amber-600 font-semibold">
-              No invitation link yet — click <strong>Manage Team</strong> to create one
-            </span>
-          </div>
+      {/* ── Row 2: Meta info strip ── */}
+      {(description || hasTeam || isAccepted || isPending) && (
+      <div className="flex items-center gap-3 flex-wrap py-2.5 px-4 bg-slate-50 rounded-xl mb-4">
+        {description && (
+          <span className="text-xs text-slate-500 italic flex-1 min-w-0 truncate">{description}</span>
         )}
+        {hasTeam ? (
+          <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border shrink-0 ${isLeader ? "bg-yellow-50 text-yellow-700 border-yellow-200" : "bg-green-50 text-green-700 border-green-200"}`}>
+            {isLeader ? <Crown size={11} /> : <Users size={11} />}
+            {team.name || team.team_name} · {isLeader ? "Leader" : "Member"}
+          </div>
+        ) : isAccepted ? (
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold text-slate-500 bg-slate-100 border border-slate-200 shrink-0">
+            <Shield size={11} /> Not joined a team yet
+          </div>
+        ) : isPending ? (
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold text-blue-600 bg-blue-50 border border-blue-200 shrink-0">
+            <Clock size={11} /> Under review by HR
+          </div>
+        ) : null}
       </div>
-    )}
+        )}
 
-    {/* ROW 3: Expandable competencies */}
-    {expanded && isAccepted && (
-      <div className="ml-1.5 px-6 pb-6 pt-4 border-t border-slate-100 bg-slate-50/50">
-        <h4 className="text-[11px] font-bold text-slate-500 mb-3 uppercase tracking-widest flex items-center gap-1.5">
-          <Target size={14} className="text-indigo-400" /> Target Competencies & Modules
-        </h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          {competencies.map((comp, i) => <CompetencyItem key={i} {...comp} />)}
+      {/* ── Row 3: Invitation links (leader only) ── */}
+      {isLeader && (
+        <div className="mb-4 p-3 bg-slate-50 border border-slate-200 rounded-xl">
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Invitation Links</p>
+          {invLinks.length > 0 ? (
+            <div className="flex flex-col gap-2">
+              {invLinks.map((inv, i) => {
+                const link = `${window.location.origin}/join-team/${inv.token}`;
+                return (
+                  <div key={i} className="flex items-center gap-3 bg-white border border-indigo-100 rounded-lg px-3 py-2">
+                    <Link2 size={12} className="text-indigo-400 flex-shrink-0" />
+                    <div className="flex flex-col flex-1 min-w-0">
+                      <span className="text-[11px] font-bold text-indigo-700">{inv.team_name || "Team"}</span>
+                      <span className="text-[10px] text-slate-400 truncate">{link}</span>
+                    </div>
+                    <button
+                      onClick={() => copyInvLink(link, inv.token)}
+                      className="flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-lg border-0 cursor-pointer transition-all flex-shrink-0 text-white"
+                      style={{ background: copiedLink === inv.token ? "#10b981" : "#4f46e5" }}
+                    >
+                      {copiedLink === inv.token ? <><Check size={10} /> Copied</> : <><Copy size={10} /> Copy</>}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-100 rounded-lg">
+              <Link2 size={11} className="text-amber-400 flex-shrink-0" />
+              <span className="text-[11px] text-amber-600 font-semibold">
+                No link yet — click <strong>Manage Team</strong> to create one
+              </span>
+            </div>
+          )}
         </div>
-      </div>
-    )}
+      )}
+
+      {/* ── Row 4: Competencies ── */}
+      {isAccepted && competencies?.length > 0 && (
+        <div className="border-t border-slate-100 pt-4">
+          <h4 className="text-[10px] font-bold text-slate-400 mb-3 uppercase tracking-widest flex items-center gap-1.5">
+            <Target size={12} className="text-indigo-400" /> Target Competencies & Modules
+          </h4>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+            {competencies.map((comp, i) => <CompetencyItem key={i} {...comp} />)}
+          </div>
+        </div>
+      )}
+    </div>
   </div>
 );
 }
@@ -674,68 +674,80 @@ useEffect(() => { fetchData(); }, [fetchData]);
       />
 
       <div className="md:ml-56 pt-14 md:pt-0 flex-1 flex flex-col min-w-0 overflow-x-hidden">
-        <main className="p-6 space-y-5">
-          {loading ? (
-            <LoadingSpinner message="Loading programs..." />
-          ) : error ? (
-            <div className="bg-red-50 text-red-700 p-4 rounded-xl border border-red-200">Error: {error}</div>
-          ) : (
-            <>
-              <div className="text-center mb-8">
-                <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">My Programs</h1>
-                <p className="text-slate-500 mt-2 max-w-lg mx-auto leading-relaxed">
-                  Internship programs you are currently participating in and have applied for.
-                </p>
-              </div>
+        <main className="p-6 flex flex-col min-h-[calc(100vh-56px)] md:min-h-screen">
+          <div className="space-y-5 flex flex-col flex-1">
 
-              {/* Search */}
-              <div className="flex items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider hidden md:block">Filter</span>
-                <div className="relative w-full md:w-80 group">
+            {loading ? (
+              <LoadingSpinner message="Loading programs..." />
+            ) : error ? (
+              <div className="bg-red-50 text-red-700 p-4 rounded-xl border border-red-200">Error: {error}</div>
+            ) : programs.length === 0 ? (
+              <div className="flex-1 flex items-center justify-center">
+                <div className="flex flex-col items-center text-center gap-4 max-w-lg">
+                  <div>
+                    <h3 className="text-xl font-bold text-slate-800 mb-2">No programs yet</h3>
+                    <p className="text-sm text-slate-500 leading-relaxed">
+                      Apply for an internship program to get started. Once accepted, you'll unlock tasks, competencies, and certificates.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 mt-2 flex-wrap justify-center">
+                    {[
+                      { step: "1", label: "Browse Programs" },
+                      { step: "2", label: "Apply & Wait" },
+                      { step: "3", label: "Get Accepted" },
+                    ].map((s, i) => (
+                      <div key={i} className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-slate-200 shadow-sm">
+                          <span className="w-4 h-4 rounded-full bg-indigo-500 flex items-center justify-center text-[9px] font-bold text-white">{s.step}</span>
+                          <span className="text-[11px] font-medium text-slate-600">{s.label}</span>
+                        </div>
+                        {i < 2 && <span className="text-slate-300 text-xs">→</span>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="mb-4">
+                  <h1 className="text-2xl font-bold text-slate-900 leading-none mb-2">My Programs</h1>
+                  <p className="text-slate-500 text-sm leading-none">Track your internship programs and applications.</p>
+                </div>
+
+                <div className="relative w-full group">
                   <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
                   <input
-                    className="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all"
+                    className="w-full pl-11 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all shadow-sm"
                     placeholder="Search programs or companies..."
                     value={search}
                     onChange={e => setSearch(e.target.value)}
                   />
                 </div>
-              </div>
 
-              {filtered.length > 0 ? (
-                <>
-                  <div className="flex items-center justify-center mb-2">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">
-                      PROGRAMS ({filtered.length})
-                    </span>
-                  </div>
-                  <div className="flex flex-col gap-5 w-full">
-                    {filtered.map((p, i) => (
-                      <ProgramCard
-                        key={p.id_submission || p.id_position || i}
-                        program={p}
-                        onOpenInvitation={setInvitationTarget}
-                        onChooseRole={handleChooseRole}
-                      />
-                    ))}
-                  </div>
-                </>
-              ) : (
-                <div className="text-center py-20 bg-white rounded-3xl border border-slate-100 shadow-sm">
-                  <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-300">
-                    <BookOpen size={40} />
-                  </div>
-                  <p className="text-slate-400 font-medium">
-                    No programs found. Apply for a program to get started!
-                  </p>
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">
+                    PROGRAMS ({filtered.length})
+                  </span>
                 </div>
-              )}
 
-              <footer className="text-center text-xs text-slate-400 pt-10 pb-4">
-                © 2026 EarlyPath · All rights reserved
-              </footer>
-            </>
-          )}
+                <div className="flex flex-col gap-5 w-full">
+                  {filtered.map((p, i) => (
+                    <ProgramCard
+                      key={p.id_submission || p.id_position || i}
+                      program={p}
+                      onOpenInvitation={setInvitationTarget}
+                      onChooseRole={handleChooseRole}
+                    />
+                  ))}
+                </div>
+
+                <footer className="text-center text-xs text-slate-400 pt-10 pb-4">
+                  © 2026 EarlyPath · All rights reserved
+                </footer>
+              </>
+            )}
+
+          </div>
         </main>
       </div>
 
@@ -749,7 +761,7 @@ useEffect(() => { fetchData(); }, [fetchData]);
       )}
 
       {joinModal && (
-        <JoinTeamModal onClose={() => setJoinModal(false)}  onJoined={fetchData} />
+        <JoinTeamModal onClose={() => setJoinModal(false)} onJoined={fetchData} />
       )}
 
       {invitationTarget && (
@@ -777,4 +789,4 @@ useEffect(() => { fetchData(); }, [fetchData]);
       )}
     </div>
   );
-  }
+}

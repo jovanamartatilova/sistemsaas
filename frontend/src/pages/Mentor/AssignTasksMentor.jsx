@@ -524,6 +524,40 @@ export default function AssignTasksMentor() {
                                       </div>
                                     </div>
                                   </div>
+                                  ) : project.type === "Team" ? (
+                                  <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: "16px", padding: "20px" }}>
+                                    <p style={{ fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", marginBottom: "12px" }}>Team Submission (from Leader)</p>
+                                    {project.work_attachments?.length > 0 ? (
+                                      <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                                        <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                                          {project.work_attachments.map((att, i) => (
+                                            <a key={i} href={att.value} target="_blank" rel="noopener noreferrer"
+                                              style={{ padding: "4px 10px", background: "#f8fafc", borderRadius: "6px", fontSize: "12px", color: "#4f46e5", textDecoration: "none", border: "1px solid #e2e8f0" }}>
+                                              🔗 {att.label}
+                                            </a>
+                                          ))}
+                                        </div>
+                                        <textarea
+                                          style={{ ...s.textarea, minHeight: "80px", padding: "10px", fontSize: "12px", borderRadius: "8px" }}
+                                          placeholder="Give feedback or revision instructions..."
+                                          value={noteMap[project.id_task] || project.feedback_notes || ""}
+                                          onChange={e => setNoteMap({ ...noteMap, [project.id_task]: e.target.value })}
+                                        />
+                                        <div style={{ display: "flex", gap: "8px" }}>
+                                          <button onClick={() => handleUpdateTask(project.id_task, { feedback_notes: noteMap[project.id_task], status: "in_progress" })}
+                                            style={{ ...s.btnCancel, padding: "6px 12px", flex: 1, fontSize: "12px" }}>Revision</button>
+                                          {project.status !== 'done' && (
+                                            <button onClick={() => handleUpdateTask(project.id_task, { status: "done" })}
+                                              style={{ ...s.btnSubmit, padding: "6px 12px", flex: 1, fontSize: "12px", background: "#059669" }}>Approve</button>
+                                          )}
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <div style={{ padding: "12px", background: "#f8fafc", borderRadius: "8px", border: "1px dashed #cbd5e1", textAlign: "center", color: "#94a3b8", fontSize: "12px" }}>
+                                        No submission yet from leader
+                                      </div>
+                                    )}
+                                  </div>
                                 ) : project.subtasks.map((st, idx) => (
                                   <div key={st.id} style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: "16px", overflow: "hidden", boxShadow: "0 1px 3px rgba(0,0,0,0.02)" }}>
                                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "20px" }}>
@@ -709,9 +743,37 @@ export default function AssignTasksMentor() {
             </div>
             <div style={{ ...s.mbody, gap: "12px" }}>
               {(() => {
-                const submitted = (logbookModal.subtasks || []).filter(st => st.work_attachments?.length > 0);
-                if (!submitted.length) return <p style={{ color: "#94a3b8", fontSize: "13px" }}>No submitted tasks yet.</p>;
-                return submitted.map((st, idx) => (
+            const isTeam = logbookModal.type === "Team";
+
+            if (isTeam) {
+              if (!logbookModal.work_attachments?.length) {
+                return <p style={{ color: "#94a3b8", fontSize: "13px" }}>No submitted tasks yet.</p>;
+              }
+              return (
+                <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "16px", display: "flex", flexDirection: "column", gap: "8px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span style={{ fontWeight: 700, fontSize: "14px", color: "#0f172a" }}>{logbookModal.title}</span>
+                    <span style={s.statusBadge(logbookModal.status)}>{logbookModal.status}</span>
+                  </div>
+                  <p style={{ fontSize: "12px", color: "#64748b", margin: 0 }}>{logbookModal.description}</p>
+                  <p style={{ fontSize: "12px", color: "#64748b" }}>
+                    Submitted: <b>{logbookModal.submitted_at ? new Date(logbookModal.submitted_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "-"}</b>
+                  </p>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                    {logbookModal.work_attachments.map((att, i) => (
+                      <a key={i} href={att.value} target="_blank" rel="noopener noreferrer"
+                        style={{ padding: "4px 10px", background: "#fff", border: "1px solid #e2e8f0", borderRadius: "6px", fontSize: "12px", color: "#4f46e5", textDecoration: "none" }}>
+                        🔗 {att.label}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              );
+            }
+
+            const submitted = (logbookModal.subtasks || []).filter(st => st.work_attachments?.length > 0);
+            if (!submitted.length) return <p style={{ color: "#94a3b8", fontSize: "13px" }}>No submitted tasks yet.</p>;
+            return submitted.map((st, idx) => (
                   <div key={st.id} style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "16px", display: "flex", flexDirection: "column", gap: "8px" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <span style={{ fontWeight: 700, fontSize: "14px", color: "#0f172a" }}>{idx + 1}. {st.title}</span>

@@ -174,10 +174,10 @@ function ProfileContent({ userData, setUserData }) {
 
   return (
     <div className="flex-1 w-full">
-      {/* Page header */}
-      <div className="text-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Profile Settings</h1>
-        <p className="text-sm text-gray-400 mt-0.5">Update Your Profile</p>
+    {/* Page header */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-slate-900 leading-none mb-2">Profile Settings</h1>
+        <p className="text-slate-500 text-sm leading-none">Manage your personal information and account details.</p>
       </div>
 
       {/* Message Alert */}
@@ -507,18 +507,46 @@ export default function ProfileSettings() {
     );
   }
 
-  if (error && !userData) {
+if (error && !userData) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-600 mb-4">Error: {error}</p>
-          <button
-            onClick={() => navigate("/login")}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-lg"
-          >
-            Back to Login
-          </button>
-        </div>
+      <div className="min-h-screen bg-gray-50 flex">
+        <SidebarCandidate
+          userName={null}
+          userPhoto={null}
+          company={JSON.parse(localStorage.getItem("company"))}
+          onLogout={handleLogout}
+        />
+        <main className="md:ml-56 pt-14 md:pt-0 flex-1 flex items-center justify-center p-6">
+          <div className="flex flex-col items-center text-center gap-4 max-w-lg">
+            <div>
+              <h3 className="text-xl font-bold text-slate-800 mb-2">Profile unavailable</h3>
+              <p className="text-sm text-slate-500 leading-relaxed">
+                We couldn't load your profile. Please try again or contact support if the issue persists.
+              </p>
+            </div>
+            <div className="flex items-center gap-2 mt-2 flex-wrap justify-center">
+              {[
+                { step: "1", label: "Check connection" },
+                { step: "2", label: "Refresh page" },
+                { step: "3", label: "Contact support" },
+              ].map((s, i) => (
+                <div key={i} className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-slate-200 shadow-sm">
+                    <span className="w-4 h-4 rounded-full bg-indigo-500 flex items-center justify-center text-[9px] font-bold text-white">{s.step}</span>
+                    <span className="text-[11px] font-medium text-slate-600">{s.label}</span>
+                  </div>
+                  {i < 2 && <span className="text-slate-300 text-xs">→</span>}
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={() => window.location.reload()}
+              className="mt-2 px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl transition-colors"
+            >
+              Try Again
+            </button>
+          </div>
+        </main>
       </div>
     );
   }

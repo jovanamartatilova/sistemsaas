@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
-import { Plus, Users, ChevronDown, ChevronUp, Send, MessageSquare, CheckCircle, Clock, Info } from "lucide-react";
+import { Plus, Users, ChevronDown, ChevronUp, Clock, MessageSquare, Send } from "lucide-react";
 import { useAuthStore } from "../../stores/authStore";
 import DashboardLayout from "../../components/DashboardLayout";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}`;
 
@@ -113,12 +115,7 @@ function DelegatedWorkRow({ st, teamMembers, onReview, onUpdate, onDelete }) {
   const [formData, setFormData] = useState({ title: "", description: "", memberUserId: "", deadline: "" });
 
   const handleStartEdit = () => {
-    setFormData({
-      title: st.title,
-      description: st.description || "",
-      memberUserId: st.id_assignee,
-      deadline: st.deadline || ""
-    });
+    setFormData({ title: st.title, description: st.description || "", memberUserId: st.id_assignee, deadline: st.deadline || "" });
     setIsEditing(true);
   };
 
@@ -128,136 +125,113 @@ function DelegatedWorkRow({ st, teamMembers, onReview, onUpdate, onDelete }) {
     setIsEditing(false);
   };
 
-  return (
-    <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 space-y-2 text-left">
-      {!isEditing ? (
-        <>
-          <div className="flex justify-between items-start">
-            <div className="flex items-start gap-2">
-              <CheckCircle size={14} className={`mt-0.5 ${st.status === 'done' ? 'text-emerald-500' : 'text-slate-300'}`} />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-xs font-bold text-slate-900">{st.assignee}</span>
-                        <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">{st.title}</span>
-                </div>
-                {st.description && (
-                  <div className="mt-1.5 flex items-start gap-1.5 bg-white/50 p-2 rounded border border-slate-100">
-                    <Info size={12} className="text-slate-400 mt-0.5" />
-                    <p className="text-[11px] text-slate-600 leading-relaxed font-medium">{st.description}</p>
-                  </div>
-                )}
-                {st.deadline && (
-                  <div className="mt-1.5 flex items-center gap-1.5 text-[10px] font-bold text-indigo-500 bg-indigo-50/50 w-fit px-2 py-0.5 rounded border border-indigo-100">
-                    <Clock size={11} />
-                    Due: {new Date(st.deadline).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <button onClick={handleStartEdit} className="text-[10px] text-indigo-600 hover:bg-indigo-50 px-1.5 py-0.5 rounded font-bold">Edit</button>
-              <button onClick={() => onDelete(st.id)} className="text-[10px] text-rose-600 hover:bg-rose-50 px-1.5 py-0.5 rounded font-bold">Delete</button>
-              <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${st.status === 'done' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
-                {st.status.replace('_', ' ').toUpperCase()}
-              </span>
-            </div>
+  if (isEditing) return (
+    <div className="border border-indigo-200 rounded-xl p-4 bg-indigo-50/30 space-y-4">
+      <p className="text-[11px] font-bold text-indigo-600 uppercase tracking-widest">Edit — {st.assignee}</p>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="col-span-2">
+          <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Task Title</label>
+          <input value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })}
+            className="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500/20 bg-white" />
+        </div>
+        <div className="col-span-2">
+          <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Instructions</label>
+          <textarea value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })}
+            className="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500/20 bg-white min-h-[70px]" />
+        </div>
+        <div className="flex flex-col md:flex-row gap-3 col-span-2">
+          <div className="flex-[2]">
+            <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Assign To</label>
+            <select value={formData.memberUserId} onChange={e => setFormData({ ...formData, memberUserId: e.target.value })}
+              className="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500/20 bg-white">
+              {teamMembers.map(m => <option key={m.id} value={m.userId}>{m.name}</option>)}
+            </select>
           </div>
-
-          {st.work && st.work.length > 0 && (
-            <div className="flex flex-wrap gap-2 pt-1 border-t border-slate-100 mt-2">
-              {st.work.map((w, i) => (
-                <a key={i} href={w.value} target="_blank" rel="noopener noreferrer" className="text-[10px] text-indigo-600 hover:underline flex items-center gap-1 bg-white px-2 py-1 rounded border border-slate-200 shadow-sm">
-                  {w.label}
-                </a>
-              ))}
-            </div>
-          )}
-
-          {st.feedback && (
-            <div className="bg-amber-50 border border-amber-100 p-2 rounded text-[10px] text-amber-700 italic">
-              <strong>Revision Note:</strong> {st.feedback}
-            </div>
-          )}
-
-          <div className="flex gap-2 pt-2">
-            {!showNote ? (
-              <button onClick={() => setShowNote(true)} className="text-[10px] font-semibold text-indigo-600 flex items-center gap-1">
-                <MessageSquare size={12} /> Send Feedback
-              </button>
-            ) : (
-              <div className="flex-1 space-y-2">
-                <textarea
-                  value={note}
-                  onChange={e => setNote(e.target.value)}
-                  placeholder="Review teammate's work..."
-                  className="w-full text-xs p-2 border border-slate-300 rounded outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
-                  rows="2"
-                />
-                <div className="flex gap-2 justify-end">
-                  <button onClick={() => setShowNote(false)} className="text-[10px] text-slate-400">Cancel</button>
-                  <button
-                    onClick={() => { onReview(st.id, note); setShowNote(false); setNote(""); }}
-                    className="text-[10px] font-semibold bg-indigo-600 text-white px-3 py-1 rounded flex items-center gap-1 hover:bg-indigo-700 transition-colors"
-                  >
-                    <Send size={10} /> Send Note
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </>
-      ) : (
-        <div className="border border-indigo-100 rounded-lg p-4 bg-white space-y-4">
-          <p className="text-[11px] font-bold text-indigo-600 uppercase tracking-widest">Edit Subtask for {st.assignee}</p>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="col-span-2">
-              <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Task Title</label>
-              <input
-                value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })}
-                className="w-full text-xs px-3 py-2 border border-slate-300 rounded bg-white text-slate-700 outline-none focus:ring-1 focus:ring-indigo-500"
-              />
-            </div>
-            <div className="col-span-2">
-              <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Instructions / Specifics</label>
-              <textarea
-                value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })}
-                className="w-full text-xs px-3 py-2 border border-slate-300 rounded bg-white text-slate-700 outline-none focus:ring-1 focus:ring-indigo-500 min-h-[80px]"
-              />
-            </div>
-            <div className="flex flex-col md:flex-row gap-4 col-span-2">
-              <div className="flex-[2] min-w-0">
-                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Assign To</label>
-                <select
-                  value={formData.memberUserId} onChange={e => setFormData({ ...formData, memberUserId: e.target.value })}
-                  className="w-full text-xs px-3 py-2 border border-slate-300 rounded bg-white text-slate-700 outline-none focus:ring-1 focus:ring-indigo-500 min-h-[40px]"
-                >
-                  {teamMembers.map(m => (
-                    <option key={m.id} value={m.userId}>{m.name}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex-1 min-w-0">
-                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Deadline</label>
-                <CalendarPicker
-                  value={formData.deadline}
-                  onChange={val => setFormData({ ...formData, deadline: val })}
-                />
-              </div>
-            </div>
-          </div>
-          <div className="flex gap-2 justify-end pt-2">
-            <button onClick={() => setIsEditing(false)} className="text-xs text-slate-400 px-3">Cancel</button>
-            <button onClick={handleSaveEdit} className="text-xs font-bold bg-indigo-600 text-white px-5 py-2 rounded-lg hover:bg-indigo-700">Update Task</button>
+          <div className="flex-1">
+            <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Deadline</label>
+            <CalendarPicker value={formData.deadline} onChange={val => setFormData({ ...formData, deadline: val })} />
           </div>
         </div>
-      )}
+      </div>
+      <div className="flex gap-2 justify-end">
+        <button onClick={() => setIsEditing(false)} className="text-xs text-slate-400 px-3">Cancel</button>
+        <button onClick={handleSaveEdit} className="text-xs font-bold bg-indigo-600 text-white px-4 py-2 rounded-lg">Update</button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+      {/* Assignee header bar */}
+      <div className="flex items-center justify-between px-4 py-2.5 bg-slate-50 border-b border-slate-100">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center text-[10px] font-bold text-indigo-600">
+            {st.assignee?.charAt(0)}
+          </div>
+          <span className="text-xs font-bold text-slate-700">{st.assignee}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${st.status === 'done' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+            {st.status.replace('_', ' ').toUpperCase()}
+          </span>
+          <button onClick={handleStartEdit} className="text-[10px] font-bold text-slate-400 hover:text-indigo-600 px-2 py-1 rounded hover:bg-indigo-50 transition-colors">Edit</button>
+          <button onClick={() => onDelete(st.id)} className="text-[10px] font-bold text-slate-400 hover:text-rose-600 px-2 py-1 rounded hover:bg-rose-50 transition-colors">Delete</button>
+        </div>
+      </div>
+
+      {/* Task content */}
+      <div className="px-4 py-3 space-y-2">
+        <p className="text-xs font-bold text-slate-800">{st.title}</p>
+        {st.description && <p className="text-[11px] text-slate-500 leading-relaxed">{st.description}</p>}
+        {st.deadline && (
+          <div className="flex items-center gap-1.5 text-[10px] font-bold text-indigo-500 w-fit bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100">
+            <Clock size={10} /> Due {new Date(st.deadline).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+          </div>
+        )}
+        {st.work?.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 pt-1">
+            {st.work.map((w, i) => (
+              <a key={i} href={w.value} target="_blank" rel="noopener noreferrer"
+                className="text-[10px] text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100 hover:underline">
+                {w.label}
+              </a>
+            ))}
+          </div>
+        )}
+        {st.feedback && (
+          <div className="bg-amber-50 border border-amber-100 px-3 py-2 rounded-lg text-[10px] text-amber-700">
+            <span className="font-bold">Revision:</span> {st.feedback}
+          </div>
+        )}
+      </div>
+
+      {/* Feedback footer */}
+      <div className="px-4 pb-3">
+        {!showNote ? (
+          <button onClick={() => setShowNote(true)} className="text-[10px] font-semibold text-slate-400 hover:text-indigo-600 flex items-center gap-1 transition-colors">
+            <MessageSquare size={11} /> Send Feedback
+          </button>
+        ) : (
+          <div className="space-y-2">
+            <textarea value={note} onChange={e => setNote(e.target.value)} placeholder="Write feedback for this member..."
+              className="w-full text-xs p-2.5 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500/20 bg-slate-50" rows="2" />
+            <div className="flex gap-2 justify-end">
+              <button onClick={() => setShowNote(false)} className="text-[10px] text-slate-400">Cancel</button>
+              <button onClick={() => { onReview(st.id, note); setShowNote(false); setNote(""); }}
+                className="text-[10px] font-bold bg-indigo-600 text-white px-3 py-1.5 rounded-lg flex items-center gap-1">
+                <Send size={10} /> Send
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
 
 function TaskShareCard({ task, teamMembers, onAssign, onUpdate, onDelete, onReview }) {
   const [expanded, setExpanded] = useState(true);
-  const [assigningToTarget, setAssigningToTarget] = useState(null); // ID of target being delegated
+  const [assigningToTarget, setAssigningToTarget] = useState(null);
   const [formData, setFormData] = useState({ title: "", description: "", memberUserId: "", deadline: "" });
 
   const handleAssign = (targetId) => {
@@ -267,142 +241,121 @@ function TaskShareCard({ task, teamMembers, onAssign, onUpdate, onDelete, onRevi
     setFormData({ title: "", description: "", memberUserId: "", deadline: "" });
   };
 
+  console.log("user:", user);
+
   return (
-    <div className="bg-white border border-slate-200 rounded-xl overflow-hidden text-left w-full shadow-sm">
-      {/* Project Header */}
-      <div 
-        className="px-6 py-4 cursor-pointer flex justify-between items-center bg-slate-50/50 hover:bg-slate-50 transition-colors" 
-        onClick={() => setExpanded(!expanded)}
-      >
-        <div className="flex items-center gap-4">
-        <div className="w-9 h-9 bg-indigo-600 text-white rounded-xl flex items-center justify-center shadow-indigo-100 shadow-lg">
-            <Users size={16} />
+    <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+
+      {/* ── Level 1: PROJECT header ── */}
+      <div className="flex items-center justify-between px-6 py-4 cursor-pointer hover:bg-slate-50 transition-colors"
+        onClick={() => setExpanded(!expanded)}>
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-100 flex-shrink-0">
+            <Users size={16} className="text-white" />
           </div>
           <div>
+            <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-0.5">Project</p>
             <h3 className="text-sm font-bold text-slate-900">{task.title}</h3>
-            <p className="text-xs text-slate-400">Project Overview & Team Delegation</p>
           </div>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <span className={`text-[10px] font-bold px-3 py-1 rounded-full border ${task.status === 'done' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'}`}>
             {task.status.replace('_', ' ').toUpperCase()}
           </span>
-          {expanded ? <ChevronUp size={18} className="text-slate-400" /> : <ChevronDown size={18} className="text-slate-400" />}
+          {expanded ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
         </div>
       </div>
 
       {expanded && (
-        <div className="px-6 pb-6 pt-4 space-y-6">
-          {/* Project Description */}
+        <div className="border-t border-slate-100">
           {task.description && (
-            <div className="bg-white border border-slate-100 rounded-lg p-3">
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Project Description</p>
-            <p className="text-xs text-slate-600 leading-relaxed">{task.description}</p>
+            <div className="px-6 py-3 bg-slate-50/50 border-b border-slate-100">
+              <p className="text-[11px] text-slate-500 leading-relaxed">{task.description}</p>
             </div>
           )}
 
-          {/* Targets Section */}
-          <div className="space-y-6">
-            <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
-              <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Mentor-Defined Targets</h4>
-              <div className="h-px flex-1 bg-slate-50" />
-            </div>
+          {/* ── Level 2: TARGETS ── */}
+          <div className="divide-y divide-slate-100">
+            {task.subtasks && task.subtasks.length > 0 ? task.subtasks.map(target => (
+              <div key={target.id} className="px-6 py-5 space-y-4">
 
-            {task.subtasks && task.subtasks.length > 0 ? (
-              <div className="space-y-8">
-                {task.subtasks.map(target => (
-                  <div key={target.id} className="space-y-4">
-                    {/* Target Header */}
-                    <div className="flex items-start justify-between bg-slate-50 p-4 rounded-xl border border-slate-100">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-indigo-500" />
-                          <h5 className="text-xs font-bold text-slate-800">{target.title}</h5>
-                  </div>
-                  <p className="text-[11px] text-slate-500 italic pl-4">{target.description}</p>
-                      </div>
-                      <button 
-                        onClick={() => setAssigningToTarget(assigningToTarget === target.id ? null : target.id)}
-                        className="text-[11px] font-bold text-indigo-600 hover:bg-white px-3 py-1.5 rounded-lg border border-indigo-100 transition-all flex items-center gap-2 shadow-sm"
-                      >
-                        <Plus size={14} /> Delegate Parts
-                      </button>
-                    </div>
-
-                    {/* Assign Form for this Target */}
-                    {assigningToTarget === target.id && (
-                      <div className="ml-4 bg-white border-2 border-indigo-100 rounded-xl p-5 space-y-4 shadow-xl animate-in fade-in slide-in-from-top-2">
-                        <div className="flex justify-between items-center">
-                          <p className="text-xs font-bold text-indigo-600">Assign Member for: {target.title}</p>
-                          <button onClick={() => setAssigningToTarget(null)} className="text-slate-400 hover:text-rose-500"><Plus size={16} className="rotate-45" /></button>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="col-span-2">
-                            <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Part Title / Task Name</label>
-                            <input
-                              value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })}
-                              placeholder="e.g., Database Schema Design"
-                              className="w-full text-xs px-3 py-2.5 border border-slate-200 rounded-lg bg-slate-50 focus:bg-white outline-none focus:ring-2 focus:ring-indigo-500/20"
-                            />
-                          </div>
-                          <div className="col-span-2">
-                            <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Instructions</label>
-                            <textarea
-                              value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })}
-                              placeholder="Specific details for this member..."
-                              className="w-full text-xs px-3 py-2.5 border border-slate-200 rounded-lg bg-slate-50 focus:bg-white outline-none focus:ring-2 focus:ring-indigo-500/20 min-h-[70px]"
-                            />
-                          </div>
-                          <div className="flex flex-col md:flex-row gap-4 col-span-2">
-                            <div className="flex-[2]">
-                              <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Assign To Member</label>
-                              <select
-                                value={formData.memberUserId} onChange={e => setFormData({ ...formData, memberUserId: e.target.value })}
-                                className="w-full text-xs px-3 py-2.5 border border-slate-200 rounded-lg bg-slate-50 focus:bg-white outline-none focus:ring-2 focus:ring-indigo-500/20"
-                              >
-                                <option value="">Select Member</option>
-                                {teamMembers.map(m => (
-                                  <option key={m.id} value={m.userId}>{m.name}</option>
-                                ))}
-                              </select>
-                            </div>
-                            <div className="flex-1">
-                              <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Due Date</label>
-                              <CalendarPicker value={formData.deadline} onChange={val => setFormData({ ...formData, deadline: val })} />
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex gap-2 justify-end pt-2">
-                          <button onClick={() => setAssigningToTarget(null)} className="text-xs text-slate-400 px-4">Cancel</button>
-                          <button onClick={() => handleAssign(target.id)} className="text-xs font-bold bg-indigo-600 text-white px-6 py-2.5 rounded-xl shadow-lg shadow-indigo-100">Assign Member</button>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Member Delegations for this Target */}
-                    <div className="ml-6 space-y-3 pl-4 border-l-2 border-slate-100">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Teammate Delegations</p>
-                      {target.delegations && target.delegations.length > 0 ? (
-                        <div className="space-y-3">
-                          {target.delegations.map(st => (
-                            <DelegatedWorkRow
-                              key={st.id} st={st}
-                              teamMembers={teamMembers}
-                              onReview={onReview}
-                              onUpdate={onUpdate}
-                              onDelete={onDelete}
-                            />
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-[11px] text-slate-300 italic">No members assigned to this target yet.</p>
-                      )}
+                {/* Target header */}
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-3 flex-1 min-w-0">
+                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 mt-2 flex-shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Target</p>
+                      <p className="text-xs font-bold text-slate-800">{target.title}</p>
+                      {target.description && <p className="text-[11px] text-slate-400 mt-0.5 leading-relaxed">{target.description}</p>}
                     </div>
                   </div>
-                ))}
+                  <button
+                    onClick={() => setAssigningToTarget(assigningToTarget === target.id ? null : target.id)}
+                    className="flex-shrink-0 text-[11px] font-bold text-indigo-600 hover:bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100 transition-all flex items-center gap-1.5"
+                  >
+                    <Plus size={12} /> Delegate
+                  </button>
+                </div>
+
+                {/* Delegate form */}
+                {assigningToTarget === target.id && (
+                  <div className="ml-4 bg-indigo-50/40 border border-indigo-100 rounded-xl p-4 space-y-4">
+                    <div className="flex justify-between items-center">
+                      <p className="text-[11px] font-bold text-indigo-600">New delegation — {target.title}</p>
+                      <button onClick={() => setAssigningToTarget(null)} className="text-slate-400 hover:text-rose-500"><Plus size={14} className="rotate-45" /></button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="col-span-2">
+                        <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Task Name</label>
+                        <input value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })}
+                          placeholder="e.g., Database Schema Design"
+                          className="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg bg-white outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                      </div>
+                      <div className="col-span-2">
+                        <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Instructions</label>
+                        <textarea value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })}
+                          placeholder="Specific details for this member..."
+                          className="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg bg-white outline-none focus:ring-2 focus:ring-indigo-500/20 min-h-[60px]" />
+                      </div>
+                      <div className="flex flex-col md:flex-row gap-3 col-span-2">
+                        <div className="flex-[2]">
+                          <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Assign To</label>
+                          <select value={formData.memberUserId} onChange={e => setFormData({ ...formData, memberUserId: e.target.value })}
+                            className="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg bg-white outline-none focus:ring-2 focus:ring-indigo-500/20">
+                            <option value="">Select Member</option>
+                            {teamMembers.map(m => <option key={m.id} value={m.userId}>{m.name}</option>)}
+                          </select>
+                        </div>
+                        <div className="flex-1">
+                          <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Due Date</label>
+                          <CalendarPicker value={formData.deadline} onChange={val => setFormData({ ...formData, deadline: val })} />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 justify-end">
+                      <button onClick={() => setAssigningToTarget(null)} className="text-xs text-slate-400 px-3">Cancel</button>
+                      <button onClick={() => handleAssign(target.id)} className="text-xs font-bold bg-indigo-600 text-white px-5 py-2 rounded-xl">Assign Member</button>
+                    </div>
+                  </div>
+                )}
+
+                {/* ── Level 3: DELEGATIONS ── */}
+                {target.delegations && target.delegations.length > 0 ? (
+                  <div className="ml-4 space-y-2">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Delegations</p>
+                    {target.delegations.map(st => (
+                      <DelegatedWorkRow key={st.id} st={st} teamMembers={teamMembers}
+                        onReview={onReview} onUpdate={onUpdate} onDelete={onDelete} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="ml-4">
+                    <p className="text-[11px] text-slate-300 italic">No delegations yet for this target.</p>
+                  </div>
+                )}
               </div>
-            ) : (
-              <p className="text-[11px] text-slate-400 italic">No targets defined by mentor yet.</p>
+            )) : (
+              <div className="px-6 py-6 text-center text-[11px] text-slate-400 italic">No targets defined by mentor yet.</div>
             )}
           </div>
         </div>
@@ -417,8 +370,26 @@ export default function LeaderTeamManagement() {
   const [teamMembers, setTeamMembers] = useState([]);
   const [tasksToShare, setTasksToShare] = useState([]);
   const [error, setError] = useState(null);
+  const [delegatingTarget, setDelegatingTarget] = useState(null); // { id, title, task }
+  const [editingTask, setEditingTask] = useState(null);
+  const [submittingDelegation, setSubmittingDelegation] = useState(null);
+  const [delegationAttachments, setDelegationAttachments] = useState([{ type: "link", label: "", value: "" }]);
+  const [delegateForm, setDelegateForm] = useState({ title: "", description: "", memberUserId: "", deadline: "" });
+  const [editForm, setEditForm] = useState({ title: "", description: "", memberUserId: "", deadline: "" });
+  const [logbookDropdown, setLogbookDropdown] = useState(false);
 
   useEffect(() => { fetchLeaderData(); }, []);
+
+  useEffect(() => {
+    if (editingTask) {
+      setEditForm({
+        title: editingTask.title || "",
+        description: editingTask.description || "",
+        memberUserId: editingTask.id_assignee || "",
+        deadline: editingTask.deadline || "",
+      });
+    }
+  }, [editingTask]);
 
   const fetchLeaderData = async () => {
     try {
@@ -489,49 +460,762 @@ export default function LeaderTeamManagement() {
     } catch (err) { alert(err.message); }
   };
 
+  const handleSubmitDelegation = async () => {
+  const valid = delegationAttachments.filter(a => a.label.trim() && a.value.trim());
+  if (!valid.length) return alert("Please add at least one link or file.");
+  try {
+    const token = localStorage.getItem("token") || localStorage.getItem("auth_token");
+  const res = await fetch(`${API_BASE_URL}/intern/tasks/${submittingDelegation.id}/work`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ attachments: valid }),
+  });
+  if (!res.ok) throw new Error("Submit failed");
+
+  await fetch(`${API_BASE_URL}/leader/tasks/subtask/${submittingDelegation.id}`, {
+  method: "PUT",
+  headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+  body: JSON.stringify({ status: "done" }),
+  });
+  setSubmittingDelegation(null);
+  setDelegationAttachments([{ type: "link", label: "", value: "" }]);
+  setTimeout(() => fetchLeaderData(), 500);
+    } catch (err) { alert(err.message); }
+};
+
+  const flattenTasksForLogbook = () => {
+    const result = [];
+    tasksToShare.forEach(task => {
+      if (!task.subtasks) return;
+      task.subtasks.forEach(target => {
+        if (!target.delegations) return;
+        target.delegations.forEach(delegation => {
+          result.push({
+            title: delegation.title,
+            description: delegation.description || '',
+            deadline: delegation.deadline ? new Date(delegation.deadline).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : '-',
+            submitted_at: delegation.submitted_at ? new Date(delegation.submitted_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : '-',
+            status: delegation.status,
+            work: delegation.work || []
+          });
+        });
+      });
+    });
+    return result;
+  };
+
+  const getCompetenciesFromTasks = () => {
+    const seen = new Set();
+    const result = [];
+    tasksToShare.forEach(task => {
+      // Competencies dari primary task
+      if (task.competencies && Array.isArray(task.competencies)) {
+        task.competencies.forEach(comp => {
+          const compName = typeof comp === 'string' ? comp : comp.name || comp;
+          if (!seen.has(compName)) {
+            seen.add(compName);
+            result.push({
+              name: compName,
+              description: typeof comp === 'object' ? (comp.description || "-") : "-",
+              learning_hours: typeof comp === 'object' ? comp.learning_hours : null
+            });
+          }
+        });
+      }
+      
+      // Competencies dari subtasks dan delegations
+      if (task.subtasks && Array.isArray(task.subtasks)) {
+        task.subtasks.forEach(subtask => {
+          if (subtask.competencies && Array.isArray(subtask.competencies)) {
+            subtask.competencies.forEach(comp => {
+              const compName = typeof comp === 'string' ? comp : comp.name || comp;
+              if (!seen.has(compName)) {
+                seen.add(compName);
+                result.push({
+                  name: compName,
+                  description: typeof comp === 'object' ? (comp.description || "-") : "-",
+                  learning_hours: typeof comp === 'object' ? comp.learning_hours : null
+                });
+              }
+            });
+          }
+          
+          // Competencies dari delegations
+          if (subtask.delegations && Array.isArray(subtask.delegations)) {
+            subtask.delegations.forEach(delegation => {
+              if (delegation.competencies && Array.isArray(delegation.competencies)) {
+                delegation.competencies.forEach(comp => {
+                  const compName = typeof comp === 'string' ? comp : comp.name || comp;
+                  if (!seen.has(compName)) {
+                    seen.add(compName);
+                    result.push({
+                      name: compName,
+                      description: typeof comp === 'object' ? (comp.description || "-") : "-",
+                      learning_hours: typeof comp === 'object' ? comp.learning_hours : null
+                    });
+                  }
+                });
+              }
+            });
+          }
+        });
+      }
+    });
+    console.log("Team competencies:", result);
+    return result;
+  };
+
+  const exportPDF = () => {
+    const rows = flattenTasksForLogbook();
+    const allCompetencies = getCompetenciesFromTasks();
+    const isApproved = tasksToShare.some(t => t.logbook_approved);
+    if (!rows.length) return alert("No submitted tasks to export.");
+    if (!isApproved) return alert("Your logbook hasn't been approved by your mentor yet.");
+
+    const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // MASTER LAYOUT CONTAINER - Single source of truth for all sections
+    // ═══════════════════════════════════════════════════════════════════════
+    const mainContainer = {
+      x: 12,              // left margin
+      width: pageW - 24,  // full content width (pageW - left - right margin)
+    };
+    mainContainer.right = mainContainer.x + mainContainer.width;
+
+    // Header bar
+    doc.setFillColor(30, 41, 59);
+    doc.rect(0, 0, pageW, 38, "F");
+    doc.setFillColor(79, 70, 229);
+    doc.rect(0, 34, pageW, 4, "F");
+
+    // Title
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text("INTERNSHIP LOGBOOK", pageW / 2, 16, { align: "center" });
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(148, 163, 184);
+    const companyName = company?.name ? company.name.toUpperCase() : "COMPANY";
+    doc.text(companyName, pageW / 2, 25, { align: "center" });
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // IDENTITY CARD SECTION - Master reference for all child elements
+    // ═══════════════════════════════════════════════════════════════════════
+    const identityCard = {
+      x: mainContainer.x,
+      y: 44,
+      width: mainContainer.width,
+      height: 50,
+      innerX: mainContainer.x + 4,     // inner content x (4mm padding)
+      innerWidth: mainContainer.width - 8, // inner content width (4mm left + right padding)
+    };
+    identityCard.right = identityCard.x + identityCard.width;
+    identityCard.innerRight = identityCard.innerX + identityCard.innerWidth;
+
+    // Draw identity card box
+    doc.setFillColor(248, 250, 252);
+    doc.setDrawColor(226, 232, 240);
+    doc.rect(identityCard.x, identityCard.y, identityCard.width, identityCard.height, "FD");
+
+    // 2 equal columns within identity card
+    const colW = identityCard.innerWidth / 2;
+    const col1x = identityCard.innerX;
+    const col2x = identityCard.innerX + colW;
+    
+    // Get institution and major from user's candidate record
+    const getLeaderInfo = () => {
+      return {
+        institution: user?.institution || "-",
+        major: user?.major || "-",
+        education_level: user?.education_level || "-",
+        position: user?.position || "-",
+        mentor: user?.mentor_name || "-"
+      };
+    };
+    
+    const leaderInfo = getLeaderInfo();
+    
+    // Left column (3 fields)
+    const leftFields = [
+      { label: "NAME", value: user?.name || "-" },
+      { label: "INSTITUTION", value: leaderInfo.institution },
+      { label: "EDUCATION", value: `${leaderInfo.education_level}${leaderInfo.major ? ` (${leaderInfo.major})` : ""}` }
+    ];
+    
+    // Right column (3 fields)
+    const rightFields = [
+      { label: "POSITION", value: leaderInfo.position },
+      { label: "MENTOR", value: leaderInfo.mentor },
+      { label: "PRINTED ON", value: new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) }
+    ];
+
+    // Draw left column
+    const rowH = 14;
+    leftFields.forEach((f, i) => {
+      const y = identityCard.y + 4 + i * rowH;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10);
+      doc.setTextColor(107, 114, 128);
+      doc.text(f.label, col1x, y);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(12);
+      doc.setTextColor(15, 23, 42);
+      const displayVal = String(f.value).substring(0, 40);
+      doc.text(displayVal, col1x, y + 4);
+    });
+    
+    // Draw right column
+    rightFields.forEach((f, i) => {
+      const y = identityCard.y + 4 + i * rowH;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10);
+      doc.setTextColor(107, 114, 128);
+      doc.text(f.label, col2x, y);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(12);
+      doc.setTextColor(15, 23, 42);
+      const displayVal = String(f.value).substring(0, 40);
+      doc.text(displayVal, col2x, y + 4);
+    });
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // ALL SECTIONS BELOW - Inherit identity card boundaries EXACTLY
+    // ═══════════════════════════════════════════════════════════════════════
+
+    // Activity Log title and separator - PROPERLY CENTERED
+    const tableWidth = 175; // A4 width minus margins for proper centering
+    const tableStartX = (pageW - tableWidth) / 2;
+    const centerX = pageW / 2;
+    
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.setTextColor(30, 41, 59);
+    doc.text("ACTIVITY LOG", centerX, identityCard.y + identityCard.height + 9, { align: "center" });
+    doc.setDrawColor(79, 70, 229);
+    doc.setLineWidth(0.5);
+    doc.line(tableStartX, identityCard.y + identityCard.height + 11, tableStartX + tableWidth, identityCard.y + identityCard.height + 11);
+
+    // Activity Log table - PROPERLY CENTERED
+    autoTable(doc, {
+      startX: tableStartX,
+      startY: identityCard.y + identityCard.height + 14,
+      head: [["No", "Activity", "Description", "Deadline", "Submitted"]],
+      body: rows.map((r, i) => [
+        String(i + 1),
+        String(r.title || "-"),
+        String(r.description || "-"),
+        r.deadline || "-",
+        r.submitted_at || "-"
+      ]),
+      tableWidth: tableWidth,
+      styles: {
+        fontSize: 10,
+        cellPadding: 1.2,
+        overflow: "linebreak",
+        textColor: [30, 41, 59],
+        lineColor: [226, 232, 240],
+        lineWidth: 0.1
+      },
+      headStyles: {
+        fillColor: [30, 41, 59],
+        textColor: [255, 255, 255],
+        fontStyle: "bold",
+        fontSize: 10,
+        halign: "center",
+        valign: "middle",
+        cellPadding: 1.2,
+        minCellHeight: 7
+      },
+      bodyStyles: { minCellHeight: 7, valign: "top", cellPadding: 1.2 },
+      alternateRowStyles: { fillColor: [248, 250, 252] },
+      tableLineColor: [226, 232, 240],
+      tableLineWidth: 0.1,
+      columnStyles: {
+        0: { cellWidth: (tableWidth * 0.054), halign: "center" },
+        1: { cellWidth: (tableWidth * 0.108), halign: "left" },
+        2: { cellWidth: (tableWidth * 0.568), halign: "left" },
+        3: { cellWidth: (tableWidth * 0.135), halign: "center" },
+        4: { cellWidth: (tableWidth * 0.135), halign: "center" },
+      },
+      margin: { left: 0, right: 0, top: 0, bottom: 0 },
+      pageBreak: "auto",
+    });
+
+    // Competencies section (if any) - PROPERLY CENTERED
+    if (allCompetencies.length > 0) {
+      const finalY = (doc.lastAutoTable?.finalY ?? (identityCard.y + identityCard.height + 80)) + 12;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.setTextColor(30, 41, 59);
+      doc.text("COMPETENCIES COVERED", centerX, finalY, { align: "center" });
+      doc.setDrawColor(79, 70, 229);
+      doc.setLineWidth(0.5);
+      doc.line(tableStartX, finalY + 2, tableStartX + tableWidth, finalY + 2);
+
+      autoTable(doc, {
+        startX: tableStartX,
+        startY: finalY + 6,
+        head: [["Competency", "Description", "Learning Hours"]],
+        body: allCompetencies.map(c => [
+          String(c.name || "-"),
+          String(c.description || "-"),
+          c.learning_hours ? `${c.learning_hours}h` : "-"
+        ]),
+        tableWidth: tableWidth,
+        styles: {
+          fontSize: 10,
+          cellPadding: 1.2,
+          overflow: "linebreak",
+          textColor: [30, 41, 59],
+          lineColor: [226, 232, 240],
+          lineWidth: 0.1
+        },
+        headStyles: {
+          fillColor: [79, 70, 229],
+          textColor: [255, 255, 255],
+          fontStyle: "bold",
+          fontSize: 10,
+          halign: "center",
+          valign: "middle",
+          cellPadding: 1.2,
+          minCellHeight: 7
+        },
+        bodyStyles: { minCellHeight: 7, valign: "top", cellPadding: 1.2 },
+        alternateRowStyles: { fillColor: [248, 250, 252] },
+        tableLineColor: [226, 232, 240],
+        tableLineWidth: 0.1,
+        columnStyles: {
+          0: { cellWidth: (tableWidth * 0.230), halign: "left" },
+          1: { cellWidth: (tableWidth * 0.570), halign: "left" },
+          2: { cellWidth: (tableWidth * 0.200), halign: "center" },
+        },
+        margin: { left: 0, right: 0, top: 0, bottom: 0 },
+        pageBreak: "auto",
+      });
+    }
+
+    // Footer per page
+    const totalPages = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
+      doc.setPage(i);
+      doc.setFillColor(30, 41, 59);
+      doc.rect(0, pageH - 10, pageW, 10, "F");
+      doc.setTextColor(148, 163, 184);
+      doc.setFontSize(7);
+      doc.text(`Page ${i} of ${totalPages}`, pageW / 2, pageH - 3.5, { align: "center" });
+      doc.text(company?.name || "Internship Program", mainContainer.x, pageH - 3.5);
+      doc.text(new Date().getFullYear().toString(), pageW - mainContainer.x, pageH - 3.5, { align: "right" });
+    }
+
+    doc.save(`Team-Logbook-${new Date().toISOString().split('T')[0]}.pdf`);
+  };
+
+  const exportCSV = () => {
+    const rows = flattenTasksForLogbook();
+    const isApproved = tasksToShare.some(t => t.logbook_approved);
+    if (!rows.length) return alert("No submitted tasks to export.");
+    if (!isApproved) return alert("Your logbook hasn't been approved by your mentor yet.");
+
+    const headers = ["Task", "Description", "Deadline", "Submitted"];
+    const csvContent = [
+      headers.join(","),
+      ...rows.map(r => [
+        `"${r.title.replace(/"/g, '""')}"`,
+        `"${r.description.replace(/"/g, '""')}"`,
+        `"${r.deadline}"`,
+        `"${r.submitted_at}"`
+      ].join(","))
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Team-Logbook-${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   if (loading) return <DashboardLayout company={company}><LoadingSpinner /></DashboardLayout>;
 
   return (
     <DashboardLayout userName={user?.name} userPhoto={user?.photo} company={company}>
       <div className="space-y-6 text-left w-full">
-        <div className="text-left w-full">
-          <h1 className="text-xl font-bold text-slate-900 text-left">Team Management</h1>
-          <p className="text-xs text-slate-500 mt-1 text-left">Share mentor tasks and review member submissions</p>
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900 leading-none mb-2">Team Management</h1>
+            <p className="text-slate-500 text-sm leading-none">Share mentor tasks and review member submissions.</p>
+          </div>
+          <div className="relative">
+            <button
+              onClick={() => setLogbookDropdown(v => !v)}
+              className="flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-lg border bg-indigo-50 text-indigo-600 border-indigo-200 hover:bg-indigo-100 cursor-pointer"
+            >
+              Download Logbook ▾
+            </button>
+            {logbookDropdown && (
+              <div style={{ position: "absolute", right: 0, top: "calc(100% + 6px)", background: "#fff", border: "1px solid #e2e8f0", borderRadius: "10px", boxShadow: "0 8px 24px rgba(0,0,0,0.1)", zIndex: 50, overflow: "hidden", minWidth: "160px" }}>
+                <button
+                  onClick={() => { setLogbookDropdown(false); exportPDF(); }}
+                  disabled={!tasksToShare.some(t => t.logbook_approved)}
+                  style={{ display: "block", width: "100%", padding: "10px 16px", fontSize: "13px", fontWeight: 600, textAlign: "left", background: "none", border: "none", cursor: tasksToShare.some(t => t.logbook_approved) ? "pointer" : "not-allowed", color: tasksToShare.some(t => t.logbook_approved) ? "#1e293b" : "#94a3b8" }}
+                  onMouseEnter={e => { if (tasksToShare.some(t => t.logbook_approved)) e.currentTarget.style.background = "#f8fafc"; }}
+                  onMouseLeave={e => e.currentTarget.style.background = "none"}
+                >
+                  {tasksToShare.some(t => t.logbook_approved) ? "📄 Download PDF" : "🔒 PDF"}
+                </button>
+
+              </div>
+            )}
+          </div>
         </div>
 
         {error && <div className="bg-rose-50 border border-rose-200 p-4 rounded-xl text-rose-700 text-sm">{error}</div>}
 
         <div className="space-y-4 w-full">
-          <div className="flex flex-col gap-1">
-            <h2 className="text-xs font-bold text-slate-800 uppercase tracking-widest">Tasks to Share with Members</h2>
-            <p className="text-xs text-slate-400">Review tasks from your mentor and delegate parts to your team.</p>
-          </div>
 
           {tasksToShare.length > 0 ? (
-            <div className="space-y-3 w-full">
+            <div className="space-y-6">
               {tasksToShare.map(task => (
-                <TaskShareCard
-                  key={task.id_task}
-                  task={task}
-                  teamMembers={[
-                    { id: 'leader', userId: user?.id_user, name: user?.name + " (You)" },
-                    ...teamMembers
-                  ]}
-                  onAssign={handleAssignTask}
-                  onUpdate={handleUpdateSubTask}
-                  onDelete={handleDeleteSubTask}
-                  onReview={handleReviewTask}
-                />
+                <div key={task.id_task} className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                  {/* Project header */}
+                  <div className="px-5 py-3.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+                    <div>
+                      <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-0.5">Project</p>
+                      <p className="text-sm font-bold text-slate-800">{task.title}</p>
+                    </div>
+                  </div>
+                  {/* Single unified table per project */}
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="bg-slate-50 border-y border-slate-100">
+                          <th className="px-4 py-2.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest w-36">Target</th>
+                          <th className="px-4 py-2.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Assignee</th>
+                          <th className="px-4 py-2.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Task</th>
+                          <th className="px-4 py-2.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest hidden sm:table-cell">Deadline</th>
+                          <th className="px-4 py-2.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Status</th>
+                          <th className="px-4 py-2.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {task.subtasks?.flatMap(target => {
+                          const rows = target.delegations?.length > 0 ? target.delegations : [null];
+                          return rows.map((st, i) => (
+                            <tr key={st ? st.id : `empty-${target.id}`} className="border-b border-slate-100 hover:bg-slate-50 transition-colors align-top">
+                              {/* Target cell — rowSpan, hanya di baris pertama */}
+                              {i === 0 && (
+                                <td rowSpan={rows.length} className="px-4 py-3 border-r border-slate-100 align-top">
+                                  <p className="text-xs font-bold text-slate-700 leading-snug">{target.title}</p>
+                                  {target.description && <p className="text-[10px] text-slate-400 mt-0.5 leading-snug">{target.description}</p>}
+                                  <button
+                                    onClick={() => setDelegatingTarget(target)}
+                                    className="mt-2 inline-flex items-center gap-1 text-[10px] font-bold text-indigo-600 hover:bg-indigo-50 px-2 py-1 rounded border border-indigo-100 transition-all"
+                                  >
+                                    <Plus size={10} /> Delegate
+                                  </button>
+                                </td>
+                              )}
+                              {st ? (
+                                <>
+                                  <td className="px-4 py-3">
+                                    <div className="flex items-center gap-2">
+                                      <div className="w-6 h-6 rounded-full bg-indigo-100 flex items-center justify-center text-[10px] font-bold text-indigo-600 flex-shrink-0">
+                                        {st.assignee?.charAt(0)}
+                                      </div>
+                                      <span className="text-xs font-medium text-slate-700">{st.assignee}</span>
+                                    </div>
+                                  </td>
+                                  <td className="px-4 py-3 max-w-[180px]">
+                                    <p className="text-xs font-semibold text-slate-800">{st.title}</p>
+                                    {st.description && <p className="text-[11px] text-slate-400 mt-0.5 leading-snug">{st.description}</p>}
+                                    {st.work?.length > 0 && (
+                                      <div className="flex flex-wrap gap-1 mt-1.5">
+                                        {st.work.map((w, wi) => (
+                                          <a key={wi} href={w.value} target="_blank" rel="noopener noreferrer"
+                                            className="inline-flex items-center gap-1 text-[10px] text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100 hover:underline">
+                                            🔗 {w.label}
+                                          </a>
+                                        ))}
+                                      </div>
+                                    )}
+                                    {st.feedback && (
+                                      <div className="mt-1.5 bg-amber-50 border border-amber-100 px-2 py-1 rounded text-[10px] text-amber-700">
+                                        <span className="font-bold">Revisi:</span> {st.feedback}
+                                      </div>
+                                    )}
+                                  </td>
+                                  <td className="px-4 py-3 hidden sm:table-cell text-[11px] text-slate-500 whitespace-nowrap">
+                                    {st.deadline ? new Date(st.deadline).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "—"}
+                                  </td>
+                                  <td className="px-4 py-3">
+                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                                      st.work?.length > 0 || st.status === "done" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
+                                    }`}>
+                                      {st.work?.length > 0 || st.status === "done" ? "Done" : "Pending"}
+                                    </span>
+                                  </td>
+                                  <td className="px-4 py-3">
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                      {(() => {
+                                        const isMyTask = st.assignee?.toLowerCase() === user?.name?.toLowerCase();
+                                        const needsResubmit = !!(st.feedback || task.feedback_notes);
+                                        if (isMyTask && (needsResubmit || !st.work?.length)) {
+                                          return (
+                                            <button
+                                              onClick={() => setSubmittingDelegation(st)}
+                                              className={`text-[10px] font-bold px-2 py-1 rounded ${needsResubmit ? "text-rose-600 bg-rose-50 hover:bg-rose-100" : "text-emerald-600 bg-emerald-50 hover:bg-emerald-100"}`}>
+                                              {needsResubmit ? "Resubmit" : "Submit"}
+                                            </button>
+                                          );
+                                        }
+                                      })()}
+                                      <button onClick={() => setEditingTask(st)}
+                                        className="text-[10px] font-bold text-indigo-600 px-2 py-1 rounded hover:bg-indigo-50">
+                                        Edit
+                                      </button>
+                                      <button onClick={() => handleDeleteSubTask(st.id)}
+                                        className="text-[10px] font-bold text-rose-500 px-2 py-1 rounded hover:bg-rose-50">
+                                        Delete
+                                      </button>
+                                    </div>
+                                  </td>
+                                </>
+                              ) : (
+                                <td colSpan={5} className="px-4 py-3 text-[11px] text-slate-300 italic">
+                                  No delegations yet.
+                                </td>
+                              )}
+                            </tr>
+                          ));
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                  
+                </div>
               ))}
             </div>
           ) : (
             <div className="bg-white border border-slate-200 rounded-xl p-10 text-center w-full">
-              <Plus size={40} className="mx-auto text-slate-200 mb-3" />
-              <p className="text-slate-700 font-semibold text-sm">No tasks assigned from mentor yet</p>
+              <p className="text-slate-500 text-sm">No tasks assigned from mentor yet.</p>
             </div>
           )}
         </div>
       </div>
+      {/* Delegate Modal */}
+      {delegatingTarget && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(10,22,40,0.5)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px" }}>
+          <div style={{ background: "#fff", borderRadius: 16, padding: 28, width: "100%", maxWidth: 480, boxShadow: "0 20px 60px rgba(0,0,0,0.18)" }}>
+            <p className="text-xs font-bold text-indigo-600 uppercase tracking-widest mb-1">Delegate Task</p>
+            <p className="text-sm font-bold text-slate-800 mb-4">Target: {delegatingTarget.title}</p>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Task Name</label>
+                <input value={delegateForm.title} onChange={e => setDelegateForm({ ...delegateForm, title: e.target.value })}
+                  placeholder="e.g., Database Schema Design"
+                  className="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500/20" />
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Instructions</label>
+                <textarea value={delegateForm.description} onChange={e => setDelegateForm({ ...delegateForm, description: e.target.value })}
+                  placeholder="Specific details for this member..."
+                  className="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500/20 min-h-[70px]" />
+              </div>
+              <div className="flex gap-3">
+                <div className="flex-[2]">
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Assign To</label>
+                  <select value={delegateForm.memberUserId} onChange={e => setDelegateForm({ ...delegateForm, memberUserId: e.target.value })}
+                    className="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500/20">
+                    <option value="">Select Member</option>
+                    {[{ id: 'leader', userId: user?.id_user, name: user?.name + " (You)" }, ...teamMembers].map(m => (
+                      <option key={m.id} value={m.userId}>{m.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex-1">
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Due Date</label>
+                  <CalendarPicker value={delegateForm.deadline} onChange={val => setDelegateForm({ ...delegateForm, deadline: val })} />
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-2 justify-end mt-5">
+              <button onClick={() => { setDelegatingTarget(null); setDelegateForm({ title: "", description: "", memberUserId: "", deadline: "" }); }}
+                className="text-xs text-slate-400 px-4 py-2">Cancel</button>
+              <button onClick={() => {
+                if (!delegateForm.title || !delegateForm.memberUserId) return alert("Title and Assignee are required");
+                handleAssignTask({ ...delegateForm, parent_id: delegatingTarget.id });
+                setDelegatingTarget(null);
+                setDelegateForm({ title: "", description: "", memberUserId: "", deadline: "" });
+              }} className="text-xs font-bold bg-indigo-600 text-white px-5 py-2 rounded-xl">Assign Member</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {editingTask && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(10,22,40,0.5)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px" }}>
+          <div style={{ background: "#fff", borderRadius: 16, padding: 28, width: "100%", maxWidth: 480, boxShadow: "0 20px 60px rgba(0,0,0,0.18)" }}>
+            <p className="text-xs font-bold text-indigo-600 uppercase tracking-widest mb-1">Edit Delegation</p>
+            <p className="text-sm font-bold text-slate-800 mb-4">{editingTask.assignee}</p>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Task Name</label>
+                <input value={editForm.title} onChange={e => setEditForm({ ...editForm, title: e.target.value })}
+                  className="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500/20" />
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Instructions</label>
+                <textarea value={editForm.description} onChange={e => setEditForm({ ...editForm, description: e.target.value })}
+                  className="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500/20 min-h-[70px]" />
+              </div>
+              <div className="flex gap-3">
+                <div className="flex-[2]">
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Assign To</label>
+                  <select value={editForm.memberUserId} onChange={e => setEditForm({ ...editForm, memberUserId: e.target.value })}
+                    className="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500/20">
+                    {[{ id: 'leader', userId: user?.id_user, name: user?.name + " (You)" }, ...teamMembers].map(m => (
+                      <option key={m.id} value={m.userId}>{m.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex-1">
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Due Date</label>
+                  <CalendarPicker value={editForm.deadline} onChange={val => setEditForm({ ...editForm, deadline: val })} />
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-2 justify-end mt-5">
+              <button onClick={() => setEditingTask(null)} className="text-xs text-slate-400 px-4 py-2">Cancel</button>
+              <button onClick={() => {
+                if (!editForm.title || !editForm.memberUserId) return alert("Title and Assignee are required");
+                handleUpdateSubTask(editingTask.id, editForm);
+                setEditingTask(null);
+              }} className="text-xs font-bold bg-indigo-600 text-white px-5 py-2 rounded-xl">Update Task</button>
+            </div>
+          </div>
+        </div>
+      )}
+{submittingDelegation && (
+  <div style={{ position: "fixed", inset: 0, background: "rgba(10,22,40,0.5)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px" }}>
+    <div style={{ background: "#fff", borderRadius: 20, width: "100%", maxWidth: 520, boxShadow: "0 20px 60px rgba(0,0,0,0.18)", overflow: "hidden" }}>
+      {/* Header */}
+      <div className="px-6 py-5 border-b border-slate-100">
+        <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-1">Submit My Work</p>
+        <p className="text-base font-bold text-slate-900">{submittingDelegation.title}</p>
+        {submittingDelegation.description && (
+          <p className="text-xs text-slate-400 mt-1">{submittingDelegation.description}</p>
+        )}
+        {submittingDelegation.feedback && (
+        <div className="mx-6 mt-3 bg-rose-50 border border-rose-200 rounded-lg p-3 flex gap-2 items-start">
+          <span className="text-rose-500 mt-0.5 flex-shrink-0 text-xs">⚠</span>
+          <div>
+            <p className="text-[10px] font-bold text-rose-600 uppercase tracking-widest">Revision Note</p>
+            <p className="text-xs text-rose-800 italic mt-0.5">"{submittingDelegation.feedback}"</p>
+          </div>
+        </div>
+              )}
+        {submittingDelegation.deadline && (
+          <p className="text-[10px] text-indigo-500 font-bold mt-2">
+            Due {new Date(submittingDelegation.deadline).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+          </p>
+        )}
+      </div>
+
+      {/* Body */}
+      <div className="px-6 py-5 space-y-3">
+        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Attachments</p>
+        {delegationAttachments.map((att, i) => (
+          <div key={i} className="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-2">
+            <div className="flex items-center justify-between">
+              <select value={att.type} onChange={e => {
+                const next = [...delegationAttachments];
+                next[i] = { ...next[i], type: e.target.value, value: "" };
+                setDelegationAttachments(next);
+              }} className="text-xs font-semibold border border-slate-200 bg-white rounded-lg px-2 py-1.5 outline-none text-slate-600">
+                <option value="link">🔗 Link</option>
+                <option value="file">📁 File</option>
+              </select>
+              <button onClick={() => setDelegationAttachments(prev => prev.filter((_, idx) => idx !== i))}
+                className="text-[10px] text-rose-400 hover:text-rose-600 font-bold px-2 py-1 rounded hover:bg-rose-50 transition-colors">
+                Remove
+              </button>
+            </div>
+            <input
+              value={att.label}
+              onChange={e => {
+                const next = [...delegationAttachments];
+                next[i].label = e.target.value;
+                setDelegationAttachments(next);
+              }}
+              placeholder="Label (e.g. Final Report)"
+              className="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500/20 bg-white"
+            />
+            {att.type === "link" ? (
+              <input
+                value={att.value}
+                onChange={e => {
+                  const next = [...delegationAttachments];
+                  next[i].value = e.target.value;
+                  setDelegationAttachments(next);
+                }}
+                placeholder="https://..."
+                className="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500/20 bg-white"
+              />
+            ) : (
+              <label className="flex items-center justify-center w-full border-2 border-dashed border-slate-200 rounded-lg py-3 cursor-pointer hover:border-indigo-300 hover:bg-indigo-50/30 transition-all">
+                <span className="text-xs text-slate-400 font-medium">
+                  {att.value ? "✓ File uploaded" : "Click to upload file"}
+                </span>
+                <input type="file" className="hidden" onChange={async e => {
+                  const file = e.target.files[0];
+                  if (!file) return;
+                  const fd = new FormData();
+                  fd.append("file", file);
+                  const token = localStorage.getItem("token") || localStorage.getItem("auth_token");
+                  const res = await fetch(`${API_BASE_URL}/intern/tasks/${submittingDelegation.id}/upload-file`, {
+                    method: "POST", headers: { Authorization: `Bearer ${token}` }, body: fd
+                  });
+                  const data = await res.json();
+                  const next = [...delegationAttachments];
+                  next[i].value = data.url;
+                  if (!next[i].label) next[i].label = file.name;
+                  setDelegationAttachments(next);
+                }} />
+              </label>
+            )}
+          </div>
+        ))}
+        <button
+          onClick={() => setDelegationAttachments([...delegationAttachments, { type: "link", label: "", value: "" }])}
+          className="text-[11px] font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1">
+          + Add another attachment
+        </button>
+      </div>
+
+      {/* Footer */}
+      <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
+        <button
+          onClick={() => { setSubmittingDelegation(null); setDelegationAttachments([{ type: "link", label: "", value: "" }]); }}
+          className="text-xs font-semibold text-slate-500 px-4 py-2 rounded-lg hover:bg-slate-200 transition-colors">
+          Cancel
+        </button>
+        <button
+          onClick={handleSubmitDelegation}
+          className="text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-lg transition-colors shadow-sm">
+          Submit Work
+        </button>
+      </div>
+    </div>
+  </div>
+)}
     </DashboardLayout>
   );
 }
