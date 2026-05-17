@@ -208,6 +208,7 @@ class CandidateController extends Controller
                     'university' => $universityName,
                     'major' => $majorName,
                     'team' => $user->team?->name,
+                    'id_team' => $user->id_team,
                     'scoped_role' => $user->getScopedRoleAttribute(),
                     'is_leader' => \App\Models\TeamMember::where('id_user', $user->id_user)
                         ->where('role', 'leader')

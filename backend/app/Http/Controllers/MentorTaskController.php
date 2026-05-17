@@ -447,9 +447,49 @@ class MentorTaskController extends Controller
     }
     public function approveLogbook($id)
     {
-        $task = Task::findOrFail($id);
-        $task->logbook_approved = true;
-        $task->save();
-        return response()->json(['message' => 'Logbook approved', 'data' => $task]);
+        try {
+            \Log::info("[LOGBOOK APPROVE] Starting approval for task ID: $id");
+
+            $task = Task::findOrFail($id);
+            \Log::info("[LOGBOOK APPROVE] Found primary task", [
+                'id_task' => $task->id_task,
+                'title' => $task->title,
+                'id_intern' => $task->id_intern,
+                'id_team' => $task->id_team,
+                'parent_id_task' => $task->parent_id_task,
+                'was_approved' => $task->logbook_approved,
+            ]);
+
+            // Approve the task itself
+            $task->logbook_approved = true;
+            $task->save();
+            \Log::info("[LOGBOOK APPROVE] ✓ Primary task approved: {$task->id_task}");
+
+            // Always cascade: approve all direct subtasks (children with parent_id_task = this id)
+            $subtasks = Task::where('parent_id_task', $id)->get();
+            \Log::info("[LOGBOOK APPROVE] Cascading to " . $subtasks->count() . " direct subtasks");
+
+            foreach ($subtasks as $idx => $subtask) {
+                $subtask->logbook_approved = true;
+                $subtask->save();
+                \Log::info("[LOGBOOK APPROVE] ✓ Subtask " . ($idx+1) . " approved: {$subtask->id_task} (intern: {$subtask->id_intern})");
+
+                // Also approve delegations (children of subtasks)
+                $delegations = Task::where('parent_id_task', $subtask->id_task)->get();
+                \Log::info("[LOGBOOK APPROVE] Subtask {$subtask->id_task} has " . $delegations->count() . " delegations");
+
+                foreach ($delegations as $del_idx => $delegation) {
+                    $delegation->logbook_approved = true;
+                    $delegation->save();
+                    \Log::info("[LOGBOOK APPROVE] ✓ Delegation " . ($del_idx+1) . " approved: {$delegation->id_task} (intern: {$delegation->id_intern})");
+                }
+            }
+
+            \Log::info("[LOGBOOK APPROVE] ✅ Approval cascade complete for task: $id");
+            return response()->json(['message' => 'Logbook approved', 'data' => $task]);
+        } catch (\Exception $e) {
+            \Log::error("[LOGBOOK APPROVE] ❌ Error: " . $e->getMessage());
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
 }

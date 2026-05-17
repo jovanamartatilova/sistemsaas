@@ -25,12 +25,12 @@ function CertificateCard({ id_certificate, certificate_number, file_path, final_
         </div>
 
         {/* Row 2: icon + text + score + download — all horizontal */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+        <div className="flex items-center gap-4">
           <div className="w-8 h-8 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center flex-shrink-0">
             <Award size={15} className="text-emerald-500" />
           </div>
 
-          <div className="flex-1 min-w-0 text-left overflow-hidden">
+          <div className="flex-1 min-w-0 text-left">
             <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-0.5 truncate">
               {program || 'Internship Program'}
             </p>
@@ -47,7 +47,7 @@ function CertificateCard({ id_certificate, certificate_number, file_path, final_
             href={file_path}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors w-full sm:w-auto justify-center"
+            className="flex-shrink-0 flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors whitespace-nowrap"
           >
             <Download size={12} />
             Download PDF
@@ -59,48 +59,28 @@ function CertificateCard({ id_certificate, certificate_number, file_path, final_
   );
 }
 
-// --- Certificate Card (Locked) ---
 function LockedCertificateCard({ batch, company, progress }) {
   return (
-    <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden opacity-60">
-      <div className="h-1.5 bg-slate-200" />
-      <div className="p-5">
-
-        {/* Header */}
-        <div className="flex items-start justify-between pb-4">
-          <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center flex-shrink-0">
-            <Lock size={18} className="text-slate-400" />
-          </div>
-          <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-slate-100 text-slate-500 border border-slate-200 flex items-center gap-1">
-            <Clock size={10} /> On Going
-          </span>
+    <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
+      <div className="h-1 bg-slate-200" />
+      <div className="flex items-center gap-4 px-5 py-4">
+        <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center flex-shrink-0">
+          <Lock size={14} className="text-slate-400" />
         </div>
-
-        {/* Info */}
-        <div className="border-t border-slate-100 py-4">
-          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1">
-            Internship Certificate
-          </p>
-          <p className="text-sm font-bold text-slate-600 leading-snug">{company}</p>
-          <p className="text-xs text-slate-400 mt-1">{batch}</p>
+        <div className="flex-1 min-w-0">
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Internship Certificate</p>
+          <p className="text-sm font-bold text-slate-600 truncate">{company || "—"}</p>
+          {batch && <p className="text-[11px] text-slate-400 mt-0.5">{batch}</p>}
         </div>
-
-        {/* Progress - Removed per requirements */}
-        <div className="border-t border-slate-100 py-4">
-          <p className="text-xs text-slate-400 text-center">Not yet available</p>
-        </div>
-
-        {/* Locked button */}
-        <div className="border-t border-slate-100 pt-4">
-          <button
-            disabled
-            className="w-full flex items-center justify-center gap-1.5 bg-slate-100 text-slate-400 text-xs font-semibold px-3 py-2 rounded-lg cursor-not-allowed"
-          >
-            <Lock size={11} />
-            Locked
-          </button>
-        </div>
-
+        <span className="flex-shrink-0 flex items-center gap-1 text-[11px] font-bold px-3 py-1.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200">
+          <Clock size={10} /> On Going
+        </span>
+        <button
+          disabled
+          className="flex-shrink-0 flex items-center gap-1.5 bg-slate-100 text-slate-400 text-xs font-bold px-4 py-2 rounded-xl cursor-not-allowed border border-slate-200"
+        >
+          <Lock size={11} /> Locked
+        </button>
       </div>
     </div>
   );
@@ -237,7 +217,8 @@ export default function CertificatesPage() {
         onLogout={handleLogout} 
       />
 
-      <main className="md:ml-56 pt-14 md:pt-0 flex-1 px-4 py-4 md:px-6 md:py-6 space-y-5 min-w-0 overflow-x-hidden">
+      <main className="flex-1 px-4 pt-16 pb-5 md:ml-56 md:px-6 md:py-6 min-w-0 flex flex-col">
+        <div className="space-y-5 flex flex-col flex-1">
         {loading && (
           <LoadingSpinner message="Loading certificates..." />
         )}
@@ -246,88 +227,119 @@ export default function CertificatesPage() {
             Error: {error}
           </div>
         )}
-        {!loading && (
+       {!loading && (
           <>
-            {/* Page Header */}
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Certificates</h1>
-              <p className="text-sm text-slate-400 mt-0.5">Internship certificates that have been issued for you</p>
-            </div>
-
-            {/* Filter Tabs + Search — 1 baris, toolbar style */}
-            <div className="flex items-center justify-between bg-white border border-slate-200 rounded-2xl px-4 py-3 shadow-sm">
-              <div className="flex items-center gap-2">
-                {["All", "Issued", "Locked"].map((f) => (
-                  <button
-                    key={f}
-                    onClick={() => setFilter(f)}
-                    className={`text-sm px-4 py-2 rounded-lg font-medium transition-colors
-                  ${filter === f
-                        ? "bg-indigo-600 text-white"
-                        : "bg-white border border-slate-200 text-slate-500 hover:text-slate-800 hover:border-slate-300"
-                      }`}
-                  >
-                    {f}
-                    {f === "Issued" && (
-                      <span className="ml-1.5 bg-emerald-100 text-emerald-600 text-xs px-1.5 py-0.5 rounded-full font-semibold">
-                        {issued.length}
-                      </span>
-                    )}
-                    {f === "Locked" && (
-                      <span className="ml-1.5 bg-slate-100 text-slate-500 text-xs px-1.5 py-0.5 rounded-full font-semibold">
-                        {locked.length}
-                      </span>
-                    )}
-                  </button>
-                ))}
-              </div>
-              <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 w-80">
-                <Search size={14} className="text-slate-400 flex-shrink-0" />
-                <input
-                  className="bg-transparent text-sm text-slate-600 placeholder-slate-400 outline-none w-full"
-                  placeholder="Search certificate number or ID..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-              </div>
-            </div>
-
-            {/* Issued Certificates */}
-            {searchedIssued.length > 0 && (
-              <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm space-y-4">
-                <p className="text-xs font-semibold text-gray-400 tracking-widest">ISSUED ({searchedIssued.length})</p>
-                <div className="flex flex-col gap-3">
-                  {searchedIssued.map((cert) => (
-                    <CertificateCard key={cert.id_certificate} {...cert} />
-                  ))}
+            {issued.length === 0 && locked.length === 0 ? (
+              <div className="flex-1 flex items-center justify-center py-20">
+                <div className="flex flex-col items-center text-center gap-4 max-w-lg">
+                  <div>
+                    <h3 className="text-xl font-bold text-slate-800 mb-2">No certificates yet</h3>
+                    <p className="text-sm text-slate-500 leading-relaxed">
+                      Complete an internship program to earn your certificate. Keep going!
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 mt-2 flex-wrap justify-center">
+                    {[
+                      { step: "1", label: "Join a Program" },
+                      { step: "2", label: "Complete Tasks" },
+                      { step: "3", label: "Get Certified" },
+                    ].map((s, i) => (
+                      <div key={i} className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-slate-200 shadow-sm">
+                          <span className="w-4 h-4 rounded-full bg-indigo-500 flex items-center justify-center text-[9px] font-bold text-white">{s.step}</span>
+                          <span className="text-[11px] font-medium text-slate-600">{s.label}</span>
+                        </div>
+                        {i < 2 && <span className="text-slate-300 text-xs">→</span>}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
-            )}
-
-            {/* Locked Certificates */}
-            {filteredLocked.length > 0 && (
-              <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm space-y-4">
-                <p className="text-xs font-semibold text-gray-400 tracking-widest">INTERNSHIP IN PROGRESS — NOT YET ISSUED ({filteredLocked.length})</p>
-                <div className="flex flex-col gap-3">
-                  {filteredLocked.map((cert, i) => (
-                    <LockedCertificateCard key={i} {...cert} />
-                  ))}
+            ) : (
+              <>
+                {/* Page Header */}
+                <div className="mb-4">
+                  <h1 className="text-2xl font-bold text-slate-900 leading-none mb-2">Certificates</h1>
+                  <p className="text-slate-500 text-sm leading-none">Internship certificates earned from your programs.</p>
                 </div>
-              </div>
-            )}
 
-            {/* Empty State */}
-            {searchedIssued.length === 0 && filteredLocked.length === 0 && (
-              <div className="text-center py-16 text-slate-400 text-sm">
-                No certificates found.
-              </div>
-            )}
+                {/* Filter Tabs + Search */}
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    {["All", "Issued", "Locked"].map((f) => (
+                      <button
+                        key={f}
+                        onClick={() => setFilter(f)}
+                        className={`text-xs px-3 py-1.5 rounded-xl font-bold transition-colors border
+                          ${filter === f
+                            ? "bg-indigo-600 text-white border-indigo-600"
+                            : "bg-white border-slate-200 text-slate-500 hover:border-slate-300 hover:text-slate-700"
+                          }`}
+                      >
+                        {f}
+                        {f === "Issued" && issued.length > 0 && (
+                          <span className="ml-1.5 bg-emerald-100 text-emerald-600 text-[10px] px-1.5 py-0.5 rounded-full font-bold">
+                            {issued.length}
+                          </span>
+                        )}
+                        {f === "Locked" && locked.length > 0 && (
+                          <span className="ml-1.5 bg-slate-100 text-slate-500 text-[10px] px-1.5 py-0.5 rounded-full font-bold">
+                            {locked.length}
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="relative group w-full sm:w-72">
+                    <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
+                    <input
+                      className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all shadow-sm"
+                      placeholder="Search certificate..."
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                    />
+                  </div>
+                </div>
 
-            <p className="text-center text-xs text-slate-400 py-2">
-              © 2026 EarlyPath · All rights reserved
-            </p>
+                {/* Issued Certificates */}
+                {searchedIssued.length > 0 && (
+                  <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm space-y-4">
+                    <p className="text-xs font-semibold text-gray-400 tracking-widest">ISSUED ({searchedIssued.length})</p>
+                    <div className="flex flex-col gap-3">
+                      {searchedIssued.map((cert) => (
+                        <CertificateCard key={cert.id_certificate} {...cert} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Locked Certificates */}
+                {filteredLocked.length > 0 && (
+                  <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm space-y-4">
+                    <p className="text-xs font-semibold text-gray-400 tracking-widest">INTERNSHIP IN PROGRESS — NOT YET ISSUED ({filteredLocked.length})</p>
+                    <div className="flex flex-col gap-3">
+                      {filteredLocked.map((cert, i) => (
+                        <LockedCertificateCard key={i} {...cert} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Empty search result */}
+                {searchedIssued.length === 0 && filteredLocked.length === 0 && (
+                  <div className="text-center py-10 text-slate-400 text-sm">
+                    No certificates match your search.
+                  </div>
+                )}
+
+                <p className="text-center text-xs text-slate-400 py-2">
+                  © 2026 EarlyPath · All rights reserved
+                </p>
+              </>
+            )}
           </>
         )}
+        </div>
       </main>
 
       {/* Logout Modal */}

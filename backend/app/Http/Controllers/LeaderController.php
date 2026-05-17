@@ -134,59 +134,117 @@ class LeaderController extends Controller
             }
 
             // Get leader's tasks (primary tasks assigned to this leader/team)
-            $tasks = Task::where('id_team', $teamId)
+            $tasksModels = Task::where('id_team', $teamId)
                 ->whereNull('parent_id_task')
                 ->where('status', '!=', 'draft')
                 ->with(['mentor', 'subTasks.intern', 'subTasks.subTasks.intern'])
-                ->get()
-                ->map(function ($task) {
-                    $competencyNames = [];
-                    if (!empty($task->competency_ids)) {
-                        $competencyNames = \App\Models\Competency::whereIn('id_competency', $task->competency_ids)
-                            ->pluck('name')->toArray();
-                    }
-                    return [
-                        'id' => $task->id_task,
-                        'id_task' => $task->id_task,
-                        'title' => $task->title,
-                        'description' => $task->description,
-                        'status' => $task->status,
-                        'assignedBy' => $task->mentor?->name ?? 'Mentor',
-                        'deadline' => $task->deadline_at,
-                        'competencies' => $competencyNames,
-                        'work_attachments' => $task->work_attachments ?? [],
-                        'submitted_at' => $task->submitted_at,
-                        'feedback_notes' => $task->feedback_notes,
-                        'subtasks' => $task->subTasks->map(fn($st) => [
-                            'id' => $st->id_task,
-                            'id_task' => $st->id_task,
-                            'title' => $st->title,
-                            'description' => $st->description,
-                            'assignee' => $st->intern?->name ?? 'Unknown',
-                            'id_assignee' => $st->id_intern,
-                            'deadline' => $st->deadline_at,
-                            'status' => $st->status,
-                            'work' => $st->work_attachments,
-                            'submitted_at' => $st->submitted_at,
-                            'feedback' => $st->feedback_notes,
-                            'delegations' => $st->subTasks->map(fn($d) => [
-                                'id' => $d->id_task,
-                                'id_task' => $d->id_task,
-                                'title' => $d->title,
-                                'description' => $d->description,
-                                'assignee' => $d->intern?->name ?? 'Unknown',
-                                'id_assignee' => $d->id_intern,
-                                'deadline' => $d->deadline_at,
-                                'status' => $d->status,
-                                'work' => $d->work_attachments,
-                                'submitted_at' => $d->submitted_at,
-                                'feedback' => $d->feedback_notes,
-                            ]),
-                        ]),
-                    ];
-                });
+                ->get();
 
-            return response()->json(['message' => 'Tasks retrieved successfully', 'data' => $tasks], 200);
+            $tasks = $tasksModels->map(function ($task) {
+                $competencyNames = [];
+                if (!empty($task->competency_ids)) {
+                    $competencyNames = \App\Models\Competency::whereIn('id_competency', $task->competency_ids)
+                        ->pluck('name')->toArray();
+                }
+                return [
+                    'id' => $task->id_task,
+                    'id_task' => $task->id_task,
+                    'title' => $task->title,
+                    'description' => $task->description,
+                    'status' => $task->status,
+                    'assignedBy' => $task->mentor?->name ?? 'Mentor',
+                    'deadline' => $task->deadline_at,
+                    'competencies' => $competencyNames,
+                    'work_attachments' => $task->work_attachments ?? [],
+                    'submitted_at' => $task->submitted_at,
+                    'feedback_notes' => $task->feedback_notes,
+                    'logbook_approved' => $task->logbook_approved ?? false,
+                    'subtasks' => $task->subTasks->map(fn($st) => [
+                        'id' => $st->id_task,
+                        'id_task' => $st->id_task,
+                        'title' => $st->title,
+                        'description' => $st->description,
+                        'assignee' => $st->intern?->name ?? 'Unknown',
+                        'id_assignee' => $st->id_intern,
+                        'deadline' => $st->deadline_at,
+                        'status' => $st->status,
+                        'work' => $st->work_attachments,
+                        'submitted_at' => $st->submitted_at,
+                        'feedback' => $st->feedback_notes,
+                        'logbook_approved' => (bool)$st->logbook_approved,
+                        'competencies' => !empty($st->competency_ids) ? \App\Models\Competency::whereIn('id_competency', $st->competency_ids)->get(['id_competency', 'name', 'description', 'learning_hours'])->toArray() : [],
+                        'delegations' => $st->subTasks->map(fn($d) => [
+                            'id' => $d->id_task,
+                            'id_task' => $d->id_task,
+                            'title' => $d->title,
+                            'description' => $d->description,
+                            'assignee' => $d->intern?->name ?? 'Unknown',
+                            'id_assignee' => $d->id_intern,
+                            'deadline' => $d->deadline_at,
+                            'status' => $d->status,
+                            'work' => $d->work_attachments,
+                            'submitted_at' => $d->submitted_at,
+                            'feedback' => $d->feedback_notes,
+                            'logbook_approved' => (bool)$d->logbook_approved,
+                            'competencies' => !empty($d->competency_ids) ? \App\Models\Competency::whereIn('id_competency', $d->competency_ids)->get(['id_competency', 'name', 'description', 'learning_hours'])->toArray() : [],
+                        ]),
+                    ]),
+                ];
+            });
+
+            // Get leader's own info (like member does) for PDF generation
+            $leaderCandidate = \App\Models\Candidate::where('id_user', $user->id_user)->first();
+            $leaderSubmission = \App\Models\Submission::where('id_user', $user->id_user)
+                ->where('status', 'accepted')
+                ->with(['position', 'vacancy.company'])
+                ->first();
+
+            $allCompetencyIds = collect();
+            foreach ($tasks as $taskData) {
+                if (!empty($taskData['competencies'])) {
+                    $allCompetencyIds = $allCompetencyIds->merge($taskData['competencies']);
+                }
+            }
+
+            // Get competencies
+            if ($allCompetencyIds->isEmpty() && $leaderSubmission?->id_position) {
+                $competencies = \App\Models\Competency::whereHas('positions', function($q) use ($leaderSubmission) {
+                    $q->where('positions.id_position', $leaderSubmission->id_position);
+                })->get(['id_competency', 'name', 'description', 'learning_hours']);
+            } else {
+                $competencies = \App\Models\Competency::whereIn('id_competency',
+                    array_unique(array_merge(...array_map(fn($c) => is_array($c) ? [$c['id_competency'] ?? null] : [], $allCompetencyIds->toArray())))
+                )->get(['id_competency', 'name', 'description', 'learning_hours']);
+            }
+
+            // Get mentor from LEADER'S OWN assigned tasks (not first task in list)
+            $leadersMentorName = 'Mentor';
+            if ($leaderSubmission && $leaderSubmission->id_position) {
+                // Find a Task where the leader is assigned as intern and get their mentor
+                $leaderTask = Task::where('id_intern', $user->id_user)
+                    ->where('id_team', $teamId)
+                    ->with('mentor')
+                    ->first();
+                if ($leaderTask && $leaderTask->mentor) {
+                    $leadersMentorName = $leaderTask->mentor->name;
+                }
+            }
+
+            $internInfo = [
+                'institution'     => $leaderCandidate?->institution,
+                'education_level' => $leaderCandidate?->education_level,
+                'major'           => $leaderCandidate?->major,
+                'position'        => $leaderSubmission?->position?->name,
+                'company'         => $leaderSubmission?->vacancy?->company?->name ?? $leaderSubmission?->vacancy?->title,
+                'mentor_name'     => $leadersMentorName,
+            ];
+
+            return response()->json([
+                'message' => 'Tasks retrieved successfully',
+                'data' => $tasks,
+                'intern_info' => $internInfo,
+                'competencies' => $competencies,
+            ], 200);
         } catch (\Exception $e) {
             return response()->json(['message' => 'Failed to retrieve tasks', 'error' => $e->getMessage()], 500);
         }

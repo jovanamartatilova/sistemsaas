@@ -153,7 +153,7 @@ function FileCard({ label, name, required, hint, value, error, onChange }) {
 /* ─── Step Indicator ─────────────────────────────────────────── */
 function StepIndicator({ current, steps }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 0, marginBottom: 36 }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 0, marginBottom: 36, overflowX: "auto", paddingBottom: 4 }}>
       {steps.map((s, i) => (
         <div key={i} style={{ display: "flex", alignItems: "center", flex: i < steps.length - 1 ? 1 : "none" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
@@ -232,7 +232,11 @@ export default function SubmissionForm() {
   const [vacancy, setVacancy] = useState(null);
   const [positions, setPositions] = useState([]);   // all positions in this vacancy
   const [loading, setLoading] = useState(true);
-  const [step, setStep] = useState(0); // 0 = personal, 1 = documents, 2 = info
+  const [step, setStep] = useState(0);
+
+  useEffect(() => {
+    setErrorMsg("");
+  }, [step]);
 
   const [form, setForm] = useState({
     name: "",
@@ -377,7 +381,10 @@ export default function SubmissionForm() {
   };
 
   const goNext = () => {
-    if (validateStep(step)) setStep((p) => p + 1);
+    if (validateStep(step)) {
+      setErrorMsg("");
+      setStep((p) => p + 1);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -386,7 +393,6 @@ export default function SubmissionForm() {
     setSuccessMsg("");
 
     if (!token) { setErrorMsg("You must be logged in to apply."); return; }
-    if (!validateStep(2)) return;
     if (!form.motivation_message) { setErrorMsg("Please fill in your motivation."); return; }
 
     setSubmitting(true);
@@ -482,7 +488,7 @@ export default function SubmissionForm() {
       {/* ── Navbar ── */}
       <header style={{
         position: "sticky", top: 0, zIndex: 100, height: 58,
-        padding: "0 48px", display: "flex", alignItems: "center", justifyContent: "space-between",
+        padding: "0 20px", display: "flex", alignItems: "center", justifyContent: "space-between",
         background: "rgba(8,12,26,0.9)", backdropFilter: "blur(20px)",
         borderBottom: "1px solid rgba(255,255,255,0.05)",
       }}>
@@ -502,7 +508,7 @@ export default function SubmissionForm() {
         )}
       </header>
 
-      <main style={{ width: "100%", margin: "0 auto", padding: "36px 24px 100px", animation: "fadeUp 0.4s ease" }}>
+      <main style={{ width: "100%", maxWidth: 720, margin: "0 auto", padding: "36px 16px 100px", animation: "fadeUp 0.4s ease" }}>
 
         {/* Back */}
         <button
@@ -546,13 +552,13 @@ export default function SubmissionForm() {
         )}
 
         {/* ─────────────────────────────────────────── FORM CARD */}
-        <div style={{ background: "#fff", borderRadius: 18, border: "1px solid #e5e7eb", boxShadow: "0 4px 24px rgba(0,0,0,0.06)", padding: "36px 40px", animation: "fadeUp 0.3s ease" }}>
+        <div style={{ background: "#fff", borderRadius: 18, border: "1px solid #e5e7eb", boxShadow: "0 4px 24px rgba(0,0,0,0.06)", padding: "28px 24px", animation: "fadeUp 0.3s ease" }}>
           <form onSubmit={handleSubmit}>
 
             {/* ══════ STEP 0: Personal Info ══════ */}
             {step === 0 && (
               <Section num="1" title="Applicant Information">
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 16 }}>
                   <Field label="Full Name" required hint="Editable — changes will be saved to your profile.">
                     <input
                       name="name" value={form.name} onChange={handleChange}
@@ -564,7 +570,7 @@ export default function SubmissionForm() {
                   </Field>
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginTop: 16 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 16, marginTop: 16 }}>
                   <Field label="University" required hint={form.university_name ? "Auto-filled from your profile." : ""}>
                     <input
                       name="university_name" value={form.university_name} onChange={handleChange}
@@ -654,7 +660,7 @@ export default function SubmissionForm() {
                   {/* Summary card */}
                   <div style={{ background: "#f0f7ff", border: "1px solid #bfdbfe", borderRadius: 12, padding: "16px 18px" }}>
                     <p style={{ margin: "0 0 10px", fontSize: 12.5, fontWeight: 700, color: "#1e40af" }}>Application Summary</p>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px 24px" }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "6px 24px" }}>
                       {[
                         ["Name", form.name],
                         ["University", form.university_name],
