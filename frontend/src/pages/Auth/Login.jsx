@@ -61,14 +61,6 @@ export default function Login() {
     setErrorMsg("");
     setSuccessMsg("");
 
-    // Validate password
-    const { valid: isPasswordValid, errors: passwordErrors } = validatePassword(form.password);
-    if (!isPasswordValid) {
-      setErrorMsg(passwordErrors[0] || "Invalid password");
-      setLoading(false);
-      return;
-    }
-
     try {
       // ENDPOINT BARU (tanpa /auth)
       const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/login`, {
