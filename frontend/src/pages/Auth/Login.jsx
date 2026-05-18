@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore";
 import PasswordInput from "../../components/PasswordInput";
-import { validatePassword } from "../../utils/passwordValidator";
 
 export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -60,14 +59,6 @@ export default function Login() {
     setLoading(true);
     setErrorMsg("");
     setSuccessMsg("");
-
-    // Validate password
-    const { valid: isPasswordValid, errors: passwordErrors } = validatePassword(form.password);
-    if (!isPasswordValid) {
-      setErrorMsg(passwordErrors[0] || "Invalid password");
-      setLoading(false);
-      return;
-    }
 
     try {
       // ENDPOINT BARU (tanpa /auth)
