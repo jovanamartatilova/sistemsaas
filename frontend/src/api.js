@@ -1,10 +1,9 @@
 const TOKEN_KEY = 'auth_token';
 const getBaseUrl = () => {
   if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
-  // Fallback to current host on port 8000 if VITE_API_URL is not set
-  const { protocol, hostname } = window.location;
-  const port = hostname === 'localhost' || hostname === '127.0.0.1' ? '8000' : '8000';
-  return `${protocol}//${hostname}:${port}/api`;
+  // Fallback: use relative path /api (will use the same server hosting the frontend)
+  // This works whether the frontend and backend are on the same server or behind a reverse proxy
+  return '/api';
 };
 
 const BASE_URL = getBaseUrl();
@@ -51,6 +50,7 @@ const bodyData = options.data instanceof FormData ? options.data : options.body;
 
 const fetchOptions = {
   ...options,
+  method: options.method || 'GET',
   headers: {
     ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
