@@ -230,12 +230,17 @@ class LeaderController extends Controller
                 }
             }
 
+            $companyName = $leaderSubmission?->vacancy?->company?->name
+                ?? $leaderSubmission?->vacancy?->title
+                ?? \App\Models\Company::where('id_company', $leaderSubmission?->position?->id_company)->value('name')
+                ?? null;
+
             $internInfo = [
                 'institution'     => $leaderCandidate?->institution,
                 'education_level' => $leaderCandidate?->education_level,
                 'major'           => $leaderCandidate?->major,
                 'position'        => $leaderSubmission?->position?->name,
-                'company'         => $leaderSubmission?->vacancy?->company?->name ?? $leaderSubmission?->vacancy?->title,
+                'company'         => $companyName,
                 'mentor_name'     => $leadersMentorName,
             ];
 

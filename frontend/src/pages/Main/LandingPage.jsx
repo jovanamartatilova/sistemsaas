@@ -518,7 +518,7 @@ const theme = {
     const normalizedRole = String(resolvedRole || "").trim().toLowerCase();
 
     if (user) {
-      if ((normalizedRole === "candidate" || normalizedRole === "apprentice") && company?.id_company) return `/c/${company.id_company}/dashboard`;
+      if (normalizedRole === "candidate" || normalizedRole === "apprentice") return company?.id_company ? `/c/${company.id_company}/dashboard` : "/candidate/dashboard";
       if (normalizedRole === "hr") return "/hr/dashboard";
       if (normalizedRole === "mentor") return "/mentor/dashboard";
       if (normalizedRole === "super_admin" || normalizedRole === "superadmin") return "/superadmin/dashboard";

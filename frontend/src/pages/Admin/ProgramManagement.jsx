@@ -585,7 +585,7 @@ function Modal({ open, editingJob, onClose, onSubmit, catalog }) {
                         <div className="px-5 sm:px-7 py-5 sm:py-6 overflow-y-auto space-y-5" style={{ maxHeight: "62vh" }}>
 
                             {/* Basic Info */}
-                            <SectionTitle>Info Dasar</SectionTitle>
+                            <SectionTitle>Basic Info</SectionTitle>
                             <FGroup label="Upload Poster (Optional)">
                                 <div className="flex items-center gap-3">
                                     <button onClick={() => fileInpRef.current.click()}

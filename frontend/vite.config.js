@@ -21,7 +21,7 @@ export default defineConfig({
     minify: 'terser',
     terserOptions: {
       compress: {
-        drop_console: true, // Remove console logs
+        drop_console: false, // Remove console logs
       },
     },
     rollupOptions: {

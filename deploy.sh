@@ -112,7 +112,8 @@ php artisan cache:clear
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
-php artisan event:cache  # If using event caching
+php artisan event:cache
+php artisan optimize:clear  # If using event caching
 log_success "Caches cleared and rebuilt"
 
 # 10. Fix permissions

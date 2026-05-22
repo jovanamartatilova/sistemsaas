@@ -42,7 +42,7 @@ export default function Login() {
   };
 
   useEffect(() => {
-    if (isAuthenticated && !authLoading) {
+    if (false && isAuthenticated && !authLoading ) {
       const storedUser = JSON.parse(localStorage.getItem("user") || "null");
       const storedRole = storedUser?.role || localStorage.getItem("user_type") || user?.role;
       redirectByRole(storedRole);
@@ -105,11 +105,7 @@ export default function Login() {
       });
 
       setSuccessMsg("✓ Login successful!");
-
-      setTimeout(() => {
-        redirectByRole(resolvedRole, redirectPath);
-      }, 800);
-      
+      console.log("REDIRECT:", resolvedRole, redirectPath); setTimeout(() => { console.log("NAVIGATING NOW"); redirectByRole(resolvedRole, redirectPath); }, 500);
     } catch (err) {
       setErrorMsg(err.message);
     } finally {

@@ -106,13 +106,10 @@ export default function App() {
     // berarti ini fresh load setelah browser ditutup ATAU
     // ini pertama kali session manager dipasang
     // Hanya logout kalau memang pernah ada session sebelumnya
-    const hadSession = sessionStorage.getItem('had_session');
+    const hadSession = sessionStorage.getItem('had_session'); console.log("APP SESSION CHECK:", {isAuthenticated, hadSession, isSessionValid: isSessionValid()});
     
-    if (!isSessionValid() && hadSession === 'true') {
-        // Browser sempat ditutup, ada session sebelumnya → logout
-        logoutSilent();
-        return;
-    }
+    // Reset session jika tidak valid (tab refresh/reopen)
+    // Tidak logout, biarkan token tetap ada
 
     // Start session baru
     sessionStorage.setItem('had_session', 'true');
