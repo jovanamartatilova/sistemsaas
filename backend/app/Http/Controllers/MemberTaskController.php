@@ -75,12 +75,17 @@ class MemberTaskController extends Controller
                 }
             }
 
+            $companyName = $submission?->vacancy?->company?->name
+                ?? $submission?->vacancy?->title
+                ?? \App\Models\Company::where('id_company', $submission?->position?->id_company)->value('name')
+                ?? null;
+
             $internInfo = [
                 'institution'     => $candidate?->institution,
                 'education_level' => $candidate?->education_level,
                 'major'           => $candidate?->major,
                 'position'        => $submission?->position?->name,
-                'company'         => $submission?->vacancy?->company?->name ?? $submission?->vacancy?->title,
+                'company'         => $companyName,
                 'mentor_name'     => $leadersMentorName,
             ];
 

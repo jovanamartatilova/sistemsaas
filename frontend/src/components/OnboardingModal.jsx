@@ -149,17 +149,8 @@ export default function OnboardingModal({ isOpen, onClose }) {
         localStorage.setItem("user", JSON.stringify(response.user));
       }
 
-      const handleCompanySubmit = async (e) => {
-        useAuthStore.setState(state => ({
-          ...state,
-          company: response.company || null,
-          user: response.user || state.user,
-        }));
-        localStorage.setItem("company", JSON.stringify(response.company));
-        localStorage.setItem("user_type", "admin");
-        
-        navigate("/dashboard", { replace: true });
-      };
+      handleClose();
+      setTimeout(() => navigate("/candidate/dashboard", { replace: true }), 100);
 
     } catch (err) {
       console.error('Candidate submit error:', err);
@@ -195,7 +186,7 @@ export default function OnboardingModal({ isOpen, onClose }) {
       });
 
       const inviteRole = validationRes.redirect_role || 'candidate';
-      setStep(inviteRole === 'candidate' ? 'candidate_form' : 'company_form');
+      navigate(`/activate?code=${invitationCode}`); onClose();
 
     } catch (err) {
       console.error('Invitation validation error:', err);

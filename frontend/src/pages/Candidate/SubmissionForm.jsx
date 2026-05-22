@@ -143,7 +143,7 @@ function FileCard({ label, name, required, hint, value, error, onChange }) {
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
           {value ? "Replace" : "Choose File"}
         </label>
-        {value && <span style={{ fontSize: 12, color: "#16a34a", fontWeight: 600 }}>✓ {value.name}</span>}
+        {value && <span style={{ fontSize: 12, color: "#16a34a", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "180px", display: "inline-block" }}>✓ {value.name}</span>}
       </div>
       {error && <p style={{ margin: "6px 0 0", fontSize: 12, color: "#ef4444", fontWeight: 600 }}>⚠ {error}</p>}
     </div>

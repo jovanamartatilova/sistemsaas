@@ -22,12 +22,22 @@ class HRCandidateController extends Controller
             $q->where('id_company', $companyId)
         )->with(['user', 'position', 'vacancy', 'interviews']);
 
-        // Filter by status
+        // Filter by status — frontend sends 0-based index, DB stores 1-based
         if ($request->filled('status')) {
-            if ($request->status === 'stage_0') {
-                $query->whereIn('status', ['pending', 'stage_0']);
+            $statusParam = $request->status;
+            if ($statusParam === 'accepted' || $statusParam === 'rejected') {
+                $query->where('status', $statusParam);
+            } elseif (preg_match('/^stage_(\d+)$/', $statusParam, $m)) {
+                $frontendIdx = (int) $m[1];
+                if ($frontendIdx === 0) {
+                    // Stage 0: belum diproses sama sekali
+                    $query->whereIn('status', ['pending', 'stage_0', 'stage_1']);
+                } else {
+                    $dbStatus = 'stage_' . ($frontendIdx + 1);
+                    $query->where('status', $dbStatus);
+                }
             } else {
-                $query->where('status', $request->status);
+                $query->where('status', $statusParam);
             }
         }
 
@@ -261,7 +271,14 @@ class HRCandidateController extends Controller
             return response()->json(['success' => false, 'message' => 'Candidate not found'], 404);
         }
 
-       $submission->update(['status' => $request->stage]);
+        // Frontend sends 0-based index, DB uses 1-based
+        $stageParam = $request->stage;
+        if (preg_match('/^stage_(\d+)$/', $stageParam, $m)) {
+            $dbStage = 'stage_' . ((int)$m[1] + 1);
+        } else {
+            $dbStage = $stageParam;
+        }
+        $submission->update(['status' => $dbStage]);
 
         // Mark previous interview as passed when advancing stage
         Interview::where('id_submission', $submission->id_submission)
@@ -702,11 +719,30 @@ class HRCandidateController extends Controller
             }
         }
 
-        // Auto-advance status to stage_2 if currently at stage_1 or pending
+        // Auto-advance: cari index interview di selection_flow posisi ini
         $oldStatus = $submission->status;
-        if (in_array($submission->status, ['pending', 'stage_0', 'stage_1'])) {
-            $submission->update(['status' => 'stage_2']);
-            \Log::info("✅ Status auto-advanced: {$oldStatus} → stage_2");
+        $flow = $submission->position?->selection_flow;
+        if (is_string($flow)) $flow = json_decode($flow, true);
+        $interviewDbStatus = null;
+        if (is_array($flow)) {
+            foreach ($flow as $idx => $stage) {
+                if (($stage['type'] ?? '') === 'interview') {
+                    $interviewDbStatus = 'stage_' . ($idx + 1);
+                    break;
+                }
+            }
+        }
+        // Fallback ke stage_2 kalau tidak ketemu
+        if (!$interviewDbStatus) $interviewDbStatus = 'stage_2';
+        // Advance status kalau belum sampai stage interview
+        $currentNum = 0;
+        if (preg_match('/^stage_(\d+)$/', $submission->status, $m)) {
+            $currentNum = (int)$m[1];
+        }
+        $targetNum = (int) str_replace('stage_', '', $interviewDbStatus);
+        if ($currentNum < $targetNum) {
+            $submission->update(['status' => $interviewDbStatus]);
+            \Log::info("✅ Status auto-advanced: {$oldStatus} → {$interviewDbStatus}");
         }
 
         \Log::info("Refreshing submission with interviews...");

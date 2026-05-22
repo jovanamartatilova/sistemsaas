@@ -476,222 +476,229 @@ const exportPDF = () => {
   if (!rows.length) return alert("No submitted tasks to export.");
   
   if (!isLogbookReady()) {
-    console.warn("[LOGBOOK PDF EXPORT] ❌ Download blocked: Logbook not approved");
-    return alert("Your logbook hasn't been approved by your mentor yet.");
+    return alert("Your logbook has not been approved by your mentor yet.");
   }
-  console.log("[LOGBOOK PDF EXPORT] ✅ Approval check passed, generating PDF...");
 
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
   
-  // ═══════════════════════════════════════════════════════════════════════
-  // MASTER LAYOUT CONTAINER - Single source of truth for all sections
-  // ═══════════════════════════════════════════════════════════════════════
-  const mainContainer = {
-    x: 12,              // left margin
-    width: pageW - 24,  // full content width (pageW - left - right margin)
-  };
-  mainContainer.right = mainContainer.x + mainContainer.width;
+  // ── Layout constants ────────────────────────────────────────────────────
+  const ML = 14;                      // margin left
+  const MR = 14;                      // margin right
+  const TW = pageW - ML - MR;        // total content width
+  const CX = pageW / 2;              // center X
 
-  // Header bar
+  // ── Header ───────────────────────────────────────────────────────────────
   doc.setFillColor(30, 41, 59);
-  doc.rect(0, 0, pageW, 38, "F");
+  doc.rect(0, 0, pageW, 32, "F");
   doc.setFillColor(79, 70, 229);
-  doc.rect(0, 34, pageW, 4, "F");
+  doc.rect(0, 29, pageW, 3, "F");
 
-  // Title
   doc.setTextColor(255, 255, 255);
-  doc.setFontSize(16);
+  doc.setFontSize(15);
   doc.setFont("helvetica", "bold");
-  doc.text("INTERNSHIP LOGBOOK", pageW / 2, 16, { align: "center" });
-  doc.setFontSize(9);
+  doc.text("INTERNSHIP LOGBOOK", CX, 13, { align: "center" });
+  doc.setFontSize(8);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(148, 163, 184);
   const companyName = internInfo?.company ? internInfo.company.toUpperCase() : "COMPANY";
-  doc.text(companyName, pageW / 2, 25, { align: "center" });
+  doc.text(companyName, CX, 21, { align: "center" });
 
-  const identityCard = {
-    x: mainContainer.x,
-    y: 50,
-    width: mainContainer.width,
-    height: 50,
-    innerX: mainContainer.x + 4,   
-    innerWidth: mainContainer.width - 8, // inner content width (4mm left + right padding)
-  };
-  identityCard.right = identityCard.x + identityCard.width;
-  identityCard.innerRight = identityCard.innerX + identityCard.innerWidth;
+  // ── Identity card ────────────────────────────────────────────────────────
+  const CARD_Y  = 38;
+  const CARD_H  = 52;
+  const PAD     = 5;
+  const COL_W   = TW / 2;
 
-  // Draw identity card box
   doc.setFillColor(248, 250, 252);
   doc.setDrawColor(226, 232, 240);
-  doc.rect(identityCard.x, identityCard.y, identityCard.width, identityCard.height, "FD");
+  doc.setLineWidth(0.3);
+  doc.rect(ML, CARD_Y, TW, CARD_H, "FD");
 
-  // 2 equal columns within identity card
-  const colW = identityCard.innerWidth / 2;
-  const col1x = identityCard.innerX;
-  const col2x = identityCard.innerX + colW;
-  
-  // Left column (3 fields)
+  // Divider line between columns
+  doc.setDrawColor(226, 232, 240);
+  doc.line(ML + COL_W, CARD_Y + 4, ML + COL_W, CARD_Y + CARD_H - 4);
+
+  const truncate = (str, max) => {
+    const s = String(str || "-");
+    return s.length > max ? s.substring(0, max - 1) + "…" : s;
+  };
+
   const leftFields = [
-    { label: "NAME", value: user?.name || "-" },
-    { label: "INSTITUTION", value: internInfo?.institution || "-" },
-    { label: "EDUCATION", value: `${internInfo?.education_level || "-"}${internInfo?.major ? ` (${internInfo.major})` : ""}` }
+    { label: "NAME",        value: truncate(user?.name, 35) },
+    { label: "INSTITUTION", value: truncate(internInfo?.institution, 35) },
+    { label: "EDUCATION",   value: truncate(`${internInfo?.education_level || "-"}${internInfo?.major ? ` (${internInfo.major})` : ""}`, 35) },
   ];
-  
-  // Right column (3 fields)
   const rightFields = [
-    { label: "POSITION", value: internInfo?.position || "-" },
-    { label: "MENTOR", value: internInfo?.mentor_name || "-" },
-    { label: "PRINTED ON", value: new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) }
+    { label: "POSITION",   value: truncate(internInfo?.position, 35) },
+    { label: "MENTOR",     value: truncate(internInfo?.mentor_name, 35) },
+    { label: "PRINTED ON", value: new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) },
   ];
 
-  // Draw left column
-  const rowH = 14;
-  leftFields.forEach((f, i) => {
-    const y = identityCard.y + 4 + i * rowH;
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(10);
-    doc.setTextColor(107, 114, 128);
-    doc.text(f.label, col1x, y);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(12);
-    doc.setTextColor(15, 23, 42);
-    const displayVal = String(f.value).substring(0, 40);
-    doc.text(displayVal, col1x, y + 4);
-  });
-  
-  // Draw right column
-  rightFields.forEach((f, i) => {
-    const y = identityCard.y + 4 + i * rowH;
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(10);
-    doc.setTextColor(107, 114, 128);
-    doc.text(f.label, col2x, y);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(12);
-    doc.setTextColor(15, 23, 42);
-    const displayVal = String(f.value).substring(0, 40);
-    doc.text(displayVal, col2x, y + 4);
+  const ROW_H = 15;
+  [[leftFields, ML + PAD], [rightFields, ML + COL_W + PAD]].forEach(([fields, baseX]) => {
+    fields.forEach((f, i) => {
+      const fy = CARD_Y + PAD + i * ROW_H;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(7);
+      doc.setTextColor(107, 114, 128);
+      doc.text(f.label, baseX, fy);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.setTextColor(15, 23, 42);
+      doc.text(f.value, baseX, fy + 5);
+    });
   });
 
-  const tableWidth = identityCard.width;
-  const tableStartX = identityCard.x;
-  const centerX = pageW / 2;
-  
+  // ── Activity Log heading ─────────────────────────────────────────────────
+  const TABLE_Y = CARD_Y + CARD_H + 8;
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(11);
+  doc.setFontSize(10);
   doc.setTextColor(30, 41, 59);
-  doc.text("ACTIVITY LOG", centerX, identityCard.y + identityCard.height + 9, { align: "center" });
+  doc.text("ACTIVITY LOG", CX, TABLE_Y - 2, { align: "center" });
   doc.setDrawColor(79, 70, 229);
-  doc.setLineWidth(0.5);
-  doc.line(tableStartX, identityCard.y + identityCard.height + 11, tableStartX + tableWidth, identityCard.y + identityCard.height + 11);
+  doc.setLineWidth(0.4);
+  doc.line(ML, TABLE_Y, ML + TW, TABLE_Y);
 
   autoTable(doc, {
-    startY: identityCard.y + identityCard.height + 14,
+    startY: TABLE_Y + 3,
     head: [["No", "Activity", "Description", "Deadline", "Submitted"]],
     body: rows.map((r, i) => [
       String(i + 1),
-      String(r.title || "-"),
+      String(r.title || "-").replace(/\s*\(([^)]+)\)\s*/g, "\n($1)"),
       String(r.description || "-"),
       r.deadline || "-",
-      r.submitted_at || "-"
+      r.submitted_at || "-",
     ]),
-    tableWidth: tableWidth,
+    tableWidth: TW,
     styles: {
-      fontSize: 10,
-      cellPadding: 1.2,
+      fontSize: 7.5,
+      cellPadding: { top: 2, right: 2.5, bottom: 2, left: 2.5 },
       overflow: "linebreak",
       textColor: [30, 41, 59],
       lineColor: [226, 232, 240],
-      lineWidth: 0.1
+      lineWidth: 0.1,
+      font: "helvetica",
     },
     headStyles: {
       fillColor: [30, 41, 59],
       textColor: [255, 255, 255],
       fontStyle: "bold",
-      fontSize: 10,
+      fontSize: 7.5,
       halign: "center",
       valign: "middle",
-      cellPadding: 1.2,
-      minCellHeight: 7
+      minCellHeight: 7,
     },
-    bodyStyles: { minCellHeight: 7, valign: "top", cellPadding: 1.2 },
+    bodyStyles: { minCellHeight: 7, valign: "top" },
     alternateRowStyles: { fillColor: [248, 250, 252] },
-    tableLineColor: [226, 232, 240],
-    tableLineWidth: 0.1,
+    rowPageBreak: "avoid",
     columnStyles: {
-      0: { cellWidth: (tableWidth * 0.054), halign: "center" },
-      1: { cellWidth: (tableWidth * 0.108), halign: "left" },
-      2: { cellWidth: (tableWidth * 0.568), halign: "left" },
-      3: { cellWidth: (tableWidth * 0.135), halign: "center" },
-      4: { cellWidth: (tableWidth * 0.135), halign: "center" },
+      0: { cellWidth: TW * 0.05,  halign: "center" },
+      1: { cellWidth: TW * 0.20,  halign: "left" },
+      2: { cellWidth: TW * 0.48,  halign: "left" },
+      3: { cellWidth: TW * 0.135, halign: "center" },
+      4: { cellWidth: TW * 0.135, halign: "center" },
     },
-        margin: { left: tableStartX, right: tableStartX, top: 0, bottom: 0 },
+    margin: { left: ML, right: MR, top: 36, bottom: 14 },
     pageBreak: "auto",
+    didDrawPage: (data) => {
+      if (data.pageNumber > 1) {
+        doc.setFillColor(30, 41, 59);
+        doc.rect(0, 0, pageW, 32, "F");
+        doc.setFillColor(79, 70, 229);
+        doc.rect(0, 29, pageW, 3, "F");
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(15);
+        doc.setFont("helvetica", "bold");
+        doc.text("INTERNSHIP LOGBOOK", CX, 13, { align: "center" });
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(148, 163, 184);
+        doc.text(companyName, CX, 21, { align: "center" });
+      }
+    },
   });
 
-  // Competencies section (if any) - PROPERLY CENTERED
+  // ── Competencies section ────────────────────────────────────────────────
   if (allCompetencies.length > 0) {
-    const finalY = (doc.lastAutoTable?.finalY ?? (identityCard.y + identityCard.height + 80)) + 12;
+    const compY = (doc.lastAutoTable?.finalY ?? (TABLE_Y + 60)) + 10;
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
+    doc.setFontSize(10);
     doc.setTextColor(30, 41, 59);
-    doc.text("COMPETENCIES COVERED", centerX, finalY, { align: "center" });
+    doc.text("COMPETENCIES COVERED", CX, compY, { align: "center" });
     doc.setDrawColor(79, 70, 229);
-    doc.setLineWidth(0.5);
-      doc.line(tableStartX, finalY + 2, tableStartX + tableWidth, finalY + 2);autoTable(doc, {
-      startY: finalY + 6,
+    doc.setLineWidth(0.4);
+    doc.line(ML, compY + 2, ML + TW, compY + 2);
+
+    autoTable(doc, {
+      startY: compY + 5,
       head: [["Competency", "Description", "Learning Hours"]],
       body: allCompetencies.map(c => [
         String(c.name || "-"),
         String(c.description || "-"),
-        c.learning_hours ? `${c.learning_hours}h` : "-"
+        c.learning_hours ? `${c.learning_hours}h` : "-",
       ]),
-      tableWidth: tableWidth,
+      tableWidth: TW,
       styles: {
-        fontSize: 10,
-        cellPadding: 1.2,
+        fontSize: 7.5,
+        cellPadding: { top: 2, right: 2.5, bottom: 2, left: 2.5 },
         overflow: "linebreak",
         textColor: [30, 41, 59],
         lineColor: [226, 232, 240],
-        lineWidth: 0.1
+        lineWidth: 0.1,
+        font: "helvetica",
       },
       headStyles: {
         fillColor: [79, 70, 229],
         textColor: [255, 255, 255],
         fontStyle: "bold",
-        fontSize: 10,
+        fontSize: 7.5,
         halign: "center",
         valign: "middle",
-        cellPadding: 1.2,
-        minCellHeight: 7
+        minCellHeight: 7,
       },
-      bodyStyles: { minCellHeight: 7, valign: "top", cellPadding: 1.2 },
+      bodyStyles: { minCellHeight: 7, valign: "top" },
       alternateRowStyles: { fillColor: [248, 250, 252] },
-      tableLineColor: [226, 232, 240],
-      tableLineWidth: 0.1,
+      rowPageBreak: "avoid",
       columnStyles: {
-        0: { cellWidth: (tableWidth * 0.230), halign: "left" },
-        1: { cellWidth: (tableWidth * 0.570), halign: "left" },
-        2: { cellWidth: (tableWidth * 0.200), halign: "center" },
+        0: { cellWidth: TW * 0.23, halign: "left" },
+        1: { cellWidth: TW * 0.57, halign: "left" },
+        2: { cellWidth: TW * 0.20, halign: "center" },
       },
-      margin: { left: tableStartX, right: tableStartX, top: 0, bottom: 0 },
+      margin: { left: ML, right: MR, top: 36, bottom: 14 },
       pageBreak: "auto",
+      showHead: "everyPage",
+      didDrawPage: (data) => {
+        // Header on every page
+        doc.setFillColor(30, 41, 59);
+        doc.rect(0, 0, pageW, 32, "F");
+        doc.setFillColor(79, 70, 229);
+        doc.rect(0, 29, pageW, 3, "F");
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(15);
+        doc.setFont("helvetica", "bold");
+        doc.text("INTERNSHIP LOGBOOK", CX, 13, { align: "center" });
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(148, 163, 184);
+        doc.text(companyName, CX, 21, { align: "center" });
+      },
     });
   }
 
-  // Footer per page
+  // ── Footer per page ─────────────────────────────────────────────────────
   const totalPages = doc.internal.getNumberOfPages();
-  for (let i = 1; i <= totalPages; i++) {
-    doc.setPage(i);
+  for (let p = 1; p <= totalPages; p++) {
+    doc.setPage(p);
     doc.setFillColor(30, 41, 59);
     doc.rect(0, pageH - 10, pageW, 10, "F");
     doc.setTextColor(148, 163, 184);
     doc.setFontSize(7);
-    doc.text(`Page ${i} of ${totalPages}`, pageW / 2, pageH - 3.5, { align: "center" });
-    doc.text(internInfo?.company || "Internship Program", mainContainer.x, pageH - 3.5);
-    doc.text(new Date().getFullYear().toString(), pageW - mainContainer.x, pageH - 3.5, { align: "right" });
+    doc.setFont("helvetica", "normal");
+    doc.text(`Internship Program`, ML, pageH - 3.5);
+    doc.text(`Page ${p} of ${totalPages}`, CX, pageH - 3.5, { align: "center" });
+    doc.text(new Date().getFullYear().toString(), pageW - MR, pageH - 3.5, { align: "right" });
   }
 
   doc.save(`logbook_${user?.name || "intern"}_${new Date().toISOString().split("T")[0]}.pdf`);
