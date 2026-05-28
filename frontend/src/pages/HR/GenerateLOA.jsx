@@ -268,7 +268,7 @@ export default function GenerateLoAHR() {
 
   const handleGenerate = async (id) => {
     if (!hasSignature) {
-      pushToast("Silakan atur tanda tangan Anda terlebih dahulu", "error");
+      pushToast("Please set up your signature first", "error");
       return;
     }
     try {
@@ -300,7 +300,7 @@ export default function GenerateLoAHR() {
 
   const handleBulkGenerate = async () => {
     if (!hasSignature) {
-      pushToast("Silakan atur tanda tangan Anda terlebih dahulu", "error");
+      pushToast("Please set up your signature first", "error");
       return;
     }
     try {
@@ -317,7 +317,7 @@ export default function GenerateLoAHR() {
 
   const handleBulkRegenerate = async () => {
     if (!hasSignature) {
-      pushToast("Silakan atur tanda tangan Anda terlebih dahulu", "error");
+      pushToast("Please set up your signature first", "error");
       return;
     }
     try {

@@ -285,11 +285,18 @@ console.log("task data:", task);
                           />
                         ) : (
                           <label className="flex items-center justify-center w-full border-2 border-dashed border-slate-200 rounded-lg py-3 cursor-pointer hover:border-indigo-300 hover:bg-indigo-50/30 transition-all">
-                            <span className="text-xs text-slate-500 font-medium">
-                              {att.value ? "✓ File uploaded" : "Click to upload file"}
-                            </span>
-                            <input type="file" className="hidden" onChange={e => e.target.files[0] && handleFileUpload(i, e.target.files[0])} />
-                          </label>
+  {uploading[i] ? (
+    <span className="text-xs text-indigo-500 font-medium flex items-center gap-2">
+      <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
+      Uploading...
+    </span>
+  ) : (
+    <span className="text-xs text-slate-500 font-medium">
+      {att.value ? "✓ File uploaded" : "Click to upload file"}
+    </span>
+  )}
+  <input type="file" className="hidden" disabled={uploading[i]} onChange={e => e.target.files[0] && handleFileUpload(i, e.target.files[0])} />
+</label>
                         )}
                       </div>
                     ))}
@@ -319,6 +326,7 @@ export default function MemberDashboard() {
   const [internInfo, setInternInfo] = useState({});
   const [competencies, setCompetencies] = useState([]);
   const [logbookDropdown, setLogbookDropdown] = useState(false);
+  const [assessment, setAssessment] = useState(null);
 
   useEffect(() => {
     fetchMemberTasks();
@@ -356,27 +364,27 @@ const fetchMemberTasks = async () => {
       const token = localStorage.getItem("token") || localStorage.getItem("auth_token");
       const scopedRole = getScopedRole(user);
       const endpoint = scopedRole === "leader" ? `/leader/tasks` : `/member/tasks`;
-      console.log(`[LOGBOOK DEBUG] Fetching from ${endpoint} with role: ${scopedRole}`);
       const res = await fetch(`${API_BASE_URL}${endpoint}`, { 
         headers: { Authorization: `Bearer ${token}` } 
       });
       if (!res.ok) throw new Error("Fetch failed");
       const data = await res.json();
-      console.log(`[LOGBOOK DEBUG] Response data:`, data);
       const tasksData = data.data || [];
-      const hasApproved = tasksData.some(t => t.logbook_approved);
-      console.log(`[LOGBOOK DEBUG] Tasks count: ${tasksData.length}, Has approved: ${hasApproved}`);
-      console.log(`[LOGBOOK DEBUG] Task approval breakdown:`, tasksData.map(t => ({ 
-        id: t.id_task, 
-        title: t.title, 
-        logbook_approved: t.logbook_approved,
-        parent_logbook_approved: t.parent_task?.logbook_approved
-      })));
       setTasks(tasksData);
       setInternInfo(data.intern_info || {});
       setCompetencies(data.competencies || []);
+
+      // Fetch assessment/nilai dari mentor
+      try {
+        const dashRes = await fetch(`${API_BASE_URL}/member/dashboard`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (dashRes.ok) {
+          const dashData = await dashRes.json();
+          setAssessment(dashData.data?.assessment || null);
+        }
+      } catch (_) {}
     } catch (err) { 
-      console.error(`[LOGBOOK DEBUG] Error:`, err);
       setError(err.message); 
     }
     finally { setLoading(false); }
@@ -620,6 +628,44 @@ const exportPDF = () => {
     },
   });
 
+  // ── Assessment Scores section ──────────────────────────────────────────
+  if (assessment?.scores?.length > 0) {
+    const assessY = (doc.lastAutoTable?.finalY ?? (TABLE_Y + 60)) + 10;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.setTextColor(30, 41, 59);
+    doc.text("MENTOR ASSESSMENT", CX, assessY, { align: "center" });
+    doc.setDrawColor(79, 70, 229);
+    doc.setLineWidth(0.4);
+    doc.line(ML, assessY + 2, ML + TW, assessY + 2);
+
+    const avgScore = assessment.average_score ?? "-";
+    autoTable(doc, {
+      startY: assessY + 5,
+      head: [["Competency", "Score", "Status", "Achievement"]],
+      body: assessment.scores.map(s => [
+        String(s.competency_name || "-"),
+        s.score != null ? String(s.score) : "-",
+        s.status === "passed" ? "Passed" : s.status === "failed" ? "Failed" : "Pending",
+        String(s.achievement_description || "-"),
+      ]),
+      foot: [[{ content: `Average Score: ${avgScore}`, colSpan: 4, styles: { halign: "right", fontStyle: "bold", textColor: [79, 70, 229] } }]],
+      tableWidth: TW,
+      styles: { fontSize: 7.5, cellPadding: { top: 2, right: 2.5, bottom: 2, left: 2.5 }, overflow: "linebreak", textColor: [30, 41, 59], lineColor: [226, 232, 240], lineWidth: 0.1, font: "helvetica" },
+      headStyles: { fillColor: [30, 41, 59], textColor: [255, 255, 255], fontStyle: "bold", fontSize: 7.5, halign: "center", valign: "middle", minCellHeight: 7 },
+      footStyles: { fillColor: [248, 250, 252], fontSize: 8 },
+      bodyStyles: { minCellHeight: 7, valign: "top" },
+      alternateRowStyles: { fillColor: [248, 250, 252] },
+      columnStyles: {
+        0: { cellWidth: TW * 0.30 },
+        1: { cellWidth: TW * 0.10, halign: "center" },
+        2: { cellWidth: TW * 0.15, halign: "center" },
+        3: { cellWidth: TW * 0.45 },
+      },
+      margin: { left: ML, right: MR, top: 36, bottom: 14 },
+    });
+  }
+
   // ── Competencies section ────────────────────────────────────────────────
   if (allCompetencies.length > 0) {
     const compY = (doc.lastAutoTable?.finalY ?? (TABLE_Y + 60)) + 10;
@@ -738,6 +784,7 @@ const exportCSV = () => {
     <DashboardLayout userName={user?.name} userPhoto={userPhoto || user?.photo} company={company}>
       <div className="space-y-6 w-full text-left">
         {error && <div className="p-4 bg-rose-50 text-rose-600 rounded-xl border border-rose-200">{error}</div>}
+
         {(() => {
           const rootProjects = tasks.filter(t => !t.parent_task);
           const nonRoot = tasks.filter(t => t.parent_task);
@@ -756,12 +803,54 @@ const exportCSV = () => {
           const finalDisplayList = buildHierarchy([...rootProjects, ...orphans]);
 
           console.log("isLeader:", getScopedRole(user), user);
-          const renderTaskRow = (item) => {
+          const SubtaskRow = ({ item }) => {
             const norm = item.status?.toLowerCase().replace(" ", "_") || "pending";
             const cfg = STATUS_CONFIG[norm] || STATUS_CONFIG.pending;
             const isSubmitted = !!item.submitted_at;
+            const [showForm, setShowForm] = useState(false);
+            const [rowAtts, setRowAtts] = useState([{ type: "link", label: "", value: "" }]);
+            const [rowSubmitting, setRowSubmitting] = useState(false);
+            const [rowUploading, setRowUploading] = useState({});
+
+            const handleRowFileUpload = async (i, file) => {
+              if (file.size > 2 * 1024 * 1024) return alert("File too large (max 2MB)");
+              setRowUploading(p => ({ ...p, [i]: true }));
+              try {
+                const token = localStorage.getItem("token") || localStorage.getItem("auth_token");
+                const fd = new FormData();
+                fd.append("file", file);
+                fd.append("label", rowAtts[i].label || file.name);
+                const res = await fetch(`${API_BASE_URL}/intern/tasks/${item.id_task}/upload-file`, {
+                  method: "POST", headers: { Authorization: `Bearer ${token}` }, body: fd,
+                });
+                if (!res.ok) throw new Error("Upload failed");
+                const data = await res.json();
+                setRowAtts(p => p.map((a, idx) => idx === i ? { ...a, value: data.url || data.file_url || data.path || "" } : a));
+              } catch (e) { alert(e.message); }
+              finally { setRowUploading(p => ({ ...p, [i]: false })); }
+            };
+
+            const handleRowSubmit = async () => {
+              const valid = rowAtts.filter(a => a.value);
+              if (!valid.length) return alert("Please add at least one attachment.");
+              setRowSubmitting(true);
+              try {
+                const token = localStorage.getItem("token") || localStorage.getItem("auth_token");
+                const res = await fetch(`${API_BASE_URL}/intern/tasks/${item.id_task}/work`, {
+                  method: "POST",
+                  headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+                  body: JSON.stringify({ attachments: valid }),
+                });
+                if (!res.ok) throw new Error("Submit failed");
+                setShowForm(false);
+                fetchMemberTasks();
+              } catch (e) { alert(e.message); }
+              finally { setRowSubmitting(false); }
+            };
+
             return (
-              <tr key={item.id_task} className="border-b border-slate-100 hover:bg-slate-50 transition-colors align-top">
+              <>
+              <tr className="border-b border-slate-100 hover:bg-slate-50 transition-colors align-top">
                 <td className="px-5 py-3">
                   <div className="flex items-center gap-2">
                     <StatusIcon status={norm} />
@@ -790,12 +879,205 @@ const exportCSV = () => {
                   {item.deadline ? new Date(item.deadline).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "—"}
                 </td>
                 <td className="px-5 py-3 whitespace-nowrap">
-                  <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${cfg.cls} border whitespace-nowrap`}>
-                    {cfg.label}
-                    {isSubmitted && " ✓"}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${cfg.cls} border whitespace-nowrap`}>
+                      {cfg.label}{isSubmitted && " ✓"}
+                    </span>
+                    {!isSubmitted && (
+                      <button onClick={() => setShowForm(p => !p)}
+                        className="text-[10px] font-bold text-indigo-600 hover:bg-indigo-50 px-2 py-1 rounded border border-indigo-100">
+                        {showForm ? "Cancel" : "Submit"}
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
+              {showForm && (
+                <tr className="bg-indigo-50/30">
+                  <td colSpan={3} className="px-5 py-3">
+                    <div className="space-y-2">
+                      {rowAtts.map((att, i) => (
+                        <div key={i} className="bg-white border border-slate-200 rounded-lg p-3 space-y-2">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <select value={att.type} onChange={e => setRowAtts(p => p.map((a, idx) => idx === i ? { ...a, type: e.target.value } : a))}
+                              className="text-xs text-slate-700 bg-slate-100 border border-slate-200 rounded-md px-2 py-1.5 outline-none">
+                              <option value="link">🔗 Link</option>
+                              <option value="file">📁 File</option>
+                            </select>
+                            <input value={att.label} onChange={e => setRowAtts(p => p.map((a, idx) => idx === i ? { ...a, label: e.target.value } : a))}
+                              placeholder="Label" className="flex-1 min-w-0 text-xs text-slate-800 bg-white border border-slate-200 rounded-md px-3 py-1.5 outline-none" />
+                          </div>
+                          {att.type === "link" ? (
+                            <input value={att.value} onChange={e => setRowAtts(p => p.map((a, idx) => idx === i ? { ...a, value: e.target.value } : a))}
+                              placeholder="https://..." className="w-full text-xs text-slate-800 bg-white border border-slate-200 rounded-md px-3 py-1.5 outline-none" />
+                          ) : (
+                            <label className="flex items-center justify-center w-full border-2 border-dashed border-slate-200 rounded-lg py-3 cursor-pointer hover:border-indigo-300">
+                              {rowUploading[i] ? (
+                                <span className="text-xs text-indigo-500 font-medium flex items-center gap-2">
+                                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
+                                  Uploading...
+                                </span>
+                              ) : (
+                                <span className="text-xs text-slate-500 font-medium">{att.value ? "✓ File uploaded" : "Click to upload file"}</span>
+                              )}
+                              <input type="file" className="hidden" disabled={rowUploading[i]} onChange={e => e.target.files[0] && handleRowFileUpload(i, e.target.files[0])} />
+                            </label>
+                          )}
+                        </div>
+                      ))}
+                      <div className="flex justify-between items-center pt-1">
+                        <button onClick={() => setRowAtts(p => [...p, { type: "link", label: "", value: "" }])}
+                          className="text-[10px] font-bold text-indigo-600">+ Add line</button>
+                        <button onClick={handleRowSubmit} disabled={rowSubmitting}
+                          className="text-xs font-bold bg-indigo-600 text-white px-5 py-2 rounded-lg shadow-md disabled:bg-slate-400">
+                          {rowSubmitting ? "Sending..." : "Send Submission"}
+                        </button>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              )}
+              </>
+            );
+          };
+
+          const renderTaskRow = (item) => <SubtaskRow item={item} />;
+
+          const renderTaskRow_OLD = (item) => {
+            const norm = item.status?.toLowerCase().replace(" ", "_") || "pending";
+            const cfg = STATUS_CONFIG[norm] || STATUS_CONFIG.pending;
+            const isSubmitted = !!item.submitted_at;
+            const [showForm, setShowForm] = useState(false);
+            const [rowAtts, setRowAtts] = useState([{ type: "link", label: "", value: "" }]);
+            const [rowSubmitting, setRowSubmitting] = useState(false);
+            const [rowUploading, setRowUploading] = useState({});
+
+            const handleRowFileUpload = async (i, file) => {
+              if (file.size > 2 * 1024 * 1024) return alert("File too large (max 2MB)");
+              setRowUploading(p => ({ ...p, [i]: true }));
+              try {
+                const token = localStorage.getItem("token") || localStorage.getItem("auth_token");
+                const fd = new FormData();
+                fd.append("file", file);
+                fd.append("label", rowAtts[i].label || file.name);
+                const res = await fetch(`${API_BASE_URL}/intern/tasks/${item.id_task}/upload-file`, {
+                  method: "POST", headers: { Authorization: `Bearer ${token}` }, body: fd,
+                });
+                if (!res.ok) throw new Error("Upload failed");
+                const data = await res.json();
+                setRowAtts(p => p.map((a, idx) => idx === i ? { ...a, value: data.url || data.file_url || data.path || "" } : a));
+              } catch (e) { alert(e.message); }
+              finally { setRowUploading(p => ({ ...p, [i]: false })); }
+            };
+
+            const handleRowSubmit = async () => {
+              const valid = rowAtts.filter(a => a.value);
+              if (!valid.length) return alert("Please add at least one attachment.");
+              setRowSubmitting(true);
+              try {
+                const token = localStorage.getItem("token") || localStorage.getItem("auth_token");
+                const res = await fetch(`${API_BASE_URL}/intern/tasks/${item.id_task}/work`, {
+                  method: "POST",
+                  headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+                  body: JSON.stringify({ attachments: valid }),
+                });
+                if (!res.ok) throw new Error("Submit failed");
+                setShowForm(false);
+                fetchMemberTasks();
+              } catch (e) { alert(e.message); }
+              finally { setRowSubmitting(false); }
+            };
+
+            return (
+              <>
+              <tr className="border-b border-slate-100 hover:bg-slate-50 transition-colors align-top">
+                <td className="px-5 py-3">
+                  <div className="flex items-center gap-2">
+                    <StatusIcon status={norm} />
+                    <div>
+                      <p className="text-xs font-semibold text-slate-800">{item.title}</p>
+                      {item.description && <p className="text-[11px] text-slate-400 mt-0.5 leading-snug">{item.description}</p>}
+                      {item.work_attachments?.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-1.5">
+                          {item.work_attachments.map((att, i) => (
+                            <a key={i} href={att.value} target="_blank" rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-[10px] text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100 hover:underline">
+                              <Link2 size={10} /> {att.label}
+                            </a>
+                          ))}
+                        </div>
+                      )}
+                      {(item.feedback_notes || item.feedback) && (
+                        <div className="mt-1.5 bg-rose-50 border border-rose-100 px-2 py-1 rounded text-[10px] text-rose-700">
+                          <span className="font-bold">Revisi:</span> {item.feedback_notes || item.feedback}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </td>
+                <td className="px-5 py-3 hidden sm:table-cell text-[11px] text-slate-500 whitespace-nowrap">
+                  {item.deadline ? new Date(item.deadline).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "—"}
+                </td>
+                <td className="px-5 py-3 whitespace-nowrap">
+                  <div className="flex items-center gap-2">
+                    <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${cfg.cls} border whitespace-nowrap`}>
+                      {cfg.label}{isSubmitted && " ✓"}
+                    </span>
+                    {!isSubmitted && (
+                      <button onClick={() => setShowForm(p => !p)}
+                        className="text-[10px] font-bold text-indigo-600 hover:bg-indigo-50 px-2 py-1 rounded border border-indigo-100">
+                        {showForm ? "Cancel" : "Submit"}
+                      </button>
+                    )}
+                  </div>
+                </td>
+              </tr>
+              {showForm && (
+                <tr className="bg-indigo-50/30">
+                  <td colSpan={3} className="px-5 py-3">
+                    <div className="space-y-2">
+                      {rowAtts.map((att, i) => (
+                        <div key={i} className="bg-white border border-slate-200 rounded-lg p-3 space-y-2">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <select value={att.type} onChange={e => setRowAtts(p => p.map((a, idx) => idx === i ? { ...a, type: e.target.value } : a))}
+                              className="text-xs text-slate-700 bg-slate-100 border border-slate-200 rounded-md px-2 py-1.5 outline-none">
+                              <option value="link">🔗 Link</option>
+                              <option value="file">📁 File</option>
+                            </select>
+                            <input value={att.label} onChange={e => setRowAtts(p => p.map((a, idx) => idx === i ? { ...a, label: e.target.value } : a))}
+                              placeholder="Label" className="flex-1 min-w-0 text-xs text-slate-800 bg-white border border-slate-200 rounded-md px-3 py-1.5 outline-none" />
+                          </div>
+                          {att.type === "link" ? (
+                            <input value={att.value} onChange={e => setRowAtts(p => p.map((a, idx) => idx === i ? { ...a, value: e.target.value } : a))}
+                              placeholder="https://..." className="w-full text-xs text-slate-800 bg-white border border-slate-200 rounded-md px-3 py-1.5 outline-none" />
+                          ) : (
+                            <label className="flex items-center justify-center w-full border-2 border-dashed border-slate-200 rounded-lg py-3 cursor-pointer hover:border-indigo-300">
+                              {rowUploading[i] ? (
+                                <span className="text-xs text-indigo-500 font-medium flex items-center gap-2">
+                                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
+                                  Uploading...
+                                </span>
+                              ) : (
+                                <span className="text-xs text-slate-500 font-medium">{att.value ? "✓ File uploaded" : "Click to upload file"}</span>
+                              )}
+                              <input type="file" className="hidden" disabled={rowUploading[i]} onChange={e => e.target.files[0] && handleRowFileUpload(i, e.target.files[0])} />
+                            </label>
+                          )}
+                        </div>
+                      ))}
+                      <div className="flex justify-between items-center pt-1">
+                        <button onClick={() => setRowAtts(p => [...p, { type: "link", label: "", value: "" }])}
+                          className="text-[10px] font-bold text-indigo-600">+ Add line</button>
+                        <button onClick={handleRowSubmit} disabled={rowSubmitting}
+                          className="text-xs font-bold bg-indigo-600 text-white px-5 py-2 rounded-lg shadow-md disabled:bg-slate-400">
+                          {rowSubmitting ? "Sending..." : "Send Submission"}
+                        </button>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              )}
+              </>
             );
           };
 

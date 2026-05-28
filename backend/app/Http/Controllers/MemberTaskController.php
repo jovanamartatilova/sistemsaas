@@ -205,16 +205,56 @@ class MemberTaskController extends Controller
             $user = $request->user();
 
             $tasksQuery = Task::where('id_intern', $user->id_user);
-
             $tasks = $tasksQuery->where('status', '!=', 'draft')->get();
+
+            // Ambil submission & assessment candidate
+            $submission = \App\Models\Submission::where('id_user', $user->id_user)
+                ->where('status', 'accepted')
+                ->first();
+
+            $assessmentData = null;
+            if ($submission) {
+                $assessment = \App\Models\Assessment::where('id_submission', $submission->id_submission)
+                    ->first();
+
+                if ($assessment && $assessment->scores_data) {
+                    $scores = $assessment->scores_data;
+                    $scoredItems = array_filter($scores, fn($s) => isset($s['score']) && $s['score'] !== null && $s['score'] !== '');
+                    $avg = count($scoredItems) > 0
+                        ? round(array_sum(array_column(array_values($scoredItems), 'score')) / count($scoredItems), 1)
+                        : null;
+
+                    // Ambil nama competency
+                    $compIds = array_column($scores, 'id_competency');
+                    $competencies = \App\Models\Competency::whereIn('id_competency', $compIds)
+                        ->get(['id_competency', 'name'])
+                        ->keyBy('id_competency');
+
+                    $assessmentData = [
+                        'average_score'    => $avg,
+                        'total_competencies' => count($scores),
+                        'scored_competencies' => count($scoredItems),
+                        'narrative'        => $assessment->narrative,
+                        'evaluation_status' => $assessment->evaluation_status,
+                        'scores'           => array_map(fn($s) => [
+                            'id_competency'          => $s['id_competency'],
+                            'competency_name'        => $competencies[$s['id_competency']]->name ?? $s['id_competency'],
+                            'score'                  => $s['score'] ?? null,
+                            'status'                 => $s['status'] ?? 'pending',
+                            'achievement_description' => $s['achievement_description'] ?? null,
+                        ], array_values($scores)),
+                    ];
+                }
+            }
 
             return response()->json([
                 'message' => 'Dashboard data retrieved successfully',
                 'data' => [
-                    'tasksCount' => $tasks->count(),
-                    'tasksCompleted' => $tasks->where('status', 'done')->count(),
+                    'tasksCount'      => $tasks->count(),
+                    'tasksCompleted'  => $tasks->where('status', 'done')->count(),
                     'tasksInProgress' => $tasks->where('status', 'in_progress')->count(),
-                    'tasksPending' => $tasks->where('status', 'pending')->count(),
+                    'tasksPending'    => $tasks->where('status', 'pending')->count(),
+                    'assessment'      => $assessmentData,
                 ]
             ], 200);
 

@@ -249,7 +249,7 @@ const applyCerts = (data) => {
   // ─── ACTIONS ─────────────────────────────────────────────────────────────
   const handleBulkGenerate = async () => {
     if (!hasSignature) {
-      pushToast("Silakan atur tanda tangan Anda terlebih dahulu", "error");
+      pushToast("Please set up your signature first", "error");
       return;
     }
     const eligibleIds = filteredCerts
@@ -281,7 +281,7 @@ const applyCerts = (data) => {
 
   const handleBulkRegenerate = async () => {
     if (!hasSignature) {
-      pushToast("Silakan atur tanda tangan Anda terlebih dahulu", "error");
+      pushToast("Please set up your signature first", "error");
       return;
     }
     const eligibleIds = filteredCerts
@@ -341,7 +341,7 @@ const applyCerts = (data) => {
 
   const handleGenerateCertificate = async (idSubmission) => {
     if (!hasSignature) {
-      pushToast("Silakan atur tanda tangan Anda terlebih dahulu", "error");
+      pushToast("Please set up your signature first", "error");
       return;
     }
     try {
