@@ -1,5 +1,6 @@
 <?php
 
+
 namespace App\Http\Controllers;
 
 use App\Models\User;
@@ -139,7 +140,6 @@ class LeaderController extends Controller
                 ->where('status', '!=', 'draft')
                 ->with(['mentor', 'subTasks.intern', 'subTasks.subTasks.intern'])
                 ->get();
-
             $tasks = $tasksModels->map(function ($task) {
                 $competencyNames = [];
                 if (!empty($task->competency_ids)) {

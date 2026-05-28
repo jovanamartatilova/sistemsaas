@@ -508,7 +508,7 @@ export default function SubmissionForm() {
         )}
       </header>
 
-      <main style={{ width: "100%", maxWidth: 720, margin: "0 auto", padding: "36px 16px 100px", animation: "fadeUp 0.4s ease" }}>
+      <main style={{ width: "100%", maxWidth: 1400, margin: "0 auto", padding: "36px 48px 100px", animation: "fadeUp 0.4s ease" }}>
 
         {/* Back */}
         <button
@@ -552,7 +552,7 @@ export default function SubmissionForm() {
         )}
 
         {/* ─────────────────────────────────────────── FORM CARD */}
-        <div style={{ background: "#fff", borderRadius: 18, border: "1px solid #e5e7eb", boxShadow: "0 4px 24px rgba(0,0,0,0.06)", padding: "28px 24px", animation: "fadeUp 0.3s ease" }}>
+        <div style={{ background: "#fff", borderRadius: 18, border: "1px solid #e5e7eb", boxShadow: "0 4px 24px rgba(0,0,0,0.06)", padding: "36px 40px", animation: "fadeUp 0.3s ease" }}>
           <form onSubmit={handleSubmit}>
 
             {/* ══════ STEP 0: Personal Info ══════ */}

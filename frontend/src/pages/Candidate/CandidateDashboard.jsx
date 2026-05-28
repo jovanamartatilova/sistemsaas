@@ -174,7 +174,8 @@ function EarlyPathDashboard() {
 
       setError(null);
       // Fetch member tasks after dashboard loads
-      fetchMemberTasks();
+      const isLeader = data.data?.profile?.is_leader;
+	fetchMemberTasks(isLeader);
     } catch (err) {
       setError(err.message);
       console.error("Error fetching dashboard:", err);
@@ -183,11 +184,12 @@ function EarlyPathDashboard() {
     }
   };
 
-  const fetchMemberTasks = async () => {
+  const fetchMemberTasks = async (isLeader = false) => {
     try {
       setTasksLoading(true);
       const token = localStorage.getItem("token") || localStorage.getItem("auth_token");
-      const response = await fetch(`${API_BASE_URL}/member/tasks`, {
+      const endpoint = isLeader ? `${API_BASE_URL}/leader/tasks` : `${API_BASE_URL}/member/tasks`;
+	const response = await fetch(endpoint, {
         headers: {
           "Authorization": `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -196,7 +198,13 @@ function EarlyPathDashboard() {
 
       if (response.ok) {
         const data = await response.json();
-        setMemberTasks(data.data || []);
+        if (isLeader && Array.isArray(data.data)) {
+          const userId = localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user")).id_user : null;
+	  const leaderTasks = data.data.flatMap(t => (t.subtasks || []).flatMap(st => st.delegations || [])).filter(d => d.id_assignee === userId);
+          setMemberTasks(leaderTasks);
+        } else {
+          setMemberTasks(data.data || []);
+        }
         if (data.data?.scoped_role || data.data?.is_leader !== undefined) {
           useAuthStore.getState().setUser({ 
             scoped_role: data.data.scoped_role,
