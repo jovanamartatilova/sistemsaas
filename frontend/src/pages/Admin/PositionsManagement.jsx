@@ -687,7 +687,7 @@ export default function PositionsManagement() {
     const [catalog, setCatalog]               = useState([]);
     const [loading, setLoading]               = useState(true);
     const [catalogLoading, setCatalogLoading] = useState(false);
-    const [isCatalogVisible, setIsCatalogVisible] = useState(false);
+    const [isCatalogVisible, setIsCatalogVisible] = useState(true);
     const [filter, setFilter]                 = useState("all");
     const [search, setSearch]                 = useState("");
     const [sidebarOpen, setSidebarOpen]       = useState(false);
