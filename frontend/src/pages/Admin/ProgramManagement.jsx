@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore";
+import { useHRToast, HRToastStack } from "../../components/HRToast";
 import axios from "axios";
 
 // ── Date helpers ───────────────────────────────────────────────────────────────
@@ -218,20 +219,7 @@ function PillGroup({ options, value, onChange }) {
     );
 }
 
-// ── Toast ──────────────────────────────────────────────────────────────────────
-function Toast({ msg, type, visible }) {
-    return (
-        <div className="fixed bottom-6 right-4 z-[500] rounded-xl text-sm font-medium pointer-events-none transition-all duration-300 px-5 py-3"
-            style={{
-                background:  type === "success" ? "#064e3b" : "#4c0519",
-                color:       "#fff",
-                boxShadow:   "0 8px 32px rgba(0,0,0,.16)",
-                transform:   visible ? "translateY(0)" : "translateY(80px)",
-                opacity:     visible ? 1 : 0,
-                maxWidth:    "calc(100vw - 2rem)",
-            }}>{msg}</div>
-    );
-}
+
 
 // ── Section Title (modal helper) ───────────────────────────────────────────────
 function SectionTitle({ children }) {
@@ -509,7 +497,7 @@ function Modal({ open, editingJob, onClose, onSubmit, catalog }) {
     }, [open, editingJob]);
 
     const handleGenerateAIDesc = async () => {
-        if (!form.title) { alert("Please fill in the Program Name first."); return; }
+        if (!form.title) { showToast("Please fill in the Program Name first.", "error"); return; }
         setIsGeneratingAI(true);
         try {
             const res = await axios.post(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/ai/generate`, {
@@ -518,7 +506,7 @@ function Modal({ open, editingJob, onClose, onSubmit, catalog }) {
             }, { headers: { Authorization: `Bearer ${token}` } });
             setForm(f => ({ ...f, desc: res.data.response.trim() }));
         } catch (e) {
-            alert(e.response?.data?.error || e.message || "Failed to connect to AI.");
+            showToast(e.response?.data?.error || e.message || "Failed to connect to AI.", "error");
         } finally { setIsGeneratingAI(false); }
     };
 
@@ -529,13 +517,13 @@ function Modal({ open, editingJob, onClose, onSubmit, catalog }) {
 
     const handleSubmit = (status) => {
         const filled = posisi.filter(p => p.name.trim());
-        if (!form.title)             return alert("Program Name is required.");
-        if (filled.length === 0)     return alert("At least one position must be filled.");
+        if (!form.title)             return showToast("Program Name is required.", "error");
+        if (filled.length === 0)     return showToast("At least one position must be filled.", "error");
         if (status === "published") {
             if (!form.desc || !form.kota || !form.provinsi || !form.batch || !startDate || !endDate || !deadline || !tipe || !payment)
-                return alert("Please fill in all required fields before publishing.");
+                return showToast("Please fill in all required fields before publishing.", "error");
             if (filled.some(p => !p.quota || p.quota <= 0))
-                return alert("All positions must have a quota.");
+                return showToast("All positions must have a quota.", "error");
         }
         onSubmit({ ...form, batch: +form.batch, startDate, endDate, deadline, tipe, payment, posisi: filled, status });
     };
@@ -820,7 +808,8 @@ export default function ProgramManagement() {
     const [activeNav, setActiveNav]   = useState("Program Management");
     const [catalog, setCatalog]       = useState([]);
     const [sidebarOpen, setSidebarOpen] = useState(false);
-    const [toast, setToast]           = useState({ msg: "", type: "success", visible: false });
+    const [deleteConfirm, setDeleteConfirm] = useState({ open: false, jobId: null });
+    const { toasts, pushToast, removeToast } = useHRToast();
 
     const comp = (() => { try { return JSON.parse(localStorage.getItem("company")); } catch { return null; } })();
     const companyName = comp?.name || "Admin";
@@ -875,8 +864,7 @@ export default function ProgramManagement() {
     };
 
     const showToast = (msg, type = "success") => {
-        setToast({ msg, type, visible: true });
-        setTimeout(() => setToast(t => ({ ...t, visible: false })), 3200);
+        pushToast(msg, type, 3200);
     };
 
     const filtered = jobs.filter(j => {
@@ -935,7 +923,11 @@ export default function ProgramManagement() {
     };
 
     const handleDelete = async (id) => {
-        if (!confirm("Are you sure you want to delete this program?")) return;
+        setDeleteConfirm({ open: true, jobId: id });
+    };
+
+    const confirmDelete = async (id) => {
+        setDeleteConfirm({ open: false, jobId: null });
         try {
             await axios.delete(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/vacancies/${id}`, { headers: { Authorization: `Bearer ${token}` } });
             showToast("Program deleted successfully.");
@@ -1164,7 +1156,29 @@ export default function ProgramManagement() {
                 </div>
             )}
 
-            <Toast msg={toast.msg} type={toast.type} visible={toast.visible}/>
+            <HRToastStack toasts={toasts} onDismiss={removeToast}/>
+
+            {/* Delete Confirmation Modal */}
+            {deleteConfirm.open && (
+                <div className="fixed inset-0 z-[300] flex items-center justify-center p-4" style={{ background: "rgba(15,23,42,0.5)" }}>
+                    <div className="bg-white rounded-2xl p-6 max-w-sm w-full text-left" style={{ boxShadow: "0 20px 60px rgba(0,0,0,.18)" }}>
+                        <h3 className="text-base font-extrabold m-0" style={{ color: "#0f172a" }}>Delete Program?</h3>
+                        <p className="text-sm leading-relaxed my-4" style={{ color: "#64748b" }}>Are you sure you want to delete this program? This action cannot be undone.</p>
+                        <div className="flex gap-2.5 justify-end">
+                            <button
+                                onClick={() => setDeleteConfirm({ open: false, jobId: null })}
+                                className="px-4 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold cursor-pointer"
+                                style={{ color: "#64748b", fontFamily: "inherit" }}
+                            >Cancel</button>
+                            <button
+                                onClick={() => confirmDelete(deleteConfirm.jobId)}
+                                className="px-4 py-2 rounded-xl border-none text-xs font-bold text-white cursor-pointer"
+                                style={{ background: "#ef4444", fontFamily: "inherit" }}
+                            >Delete</button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
