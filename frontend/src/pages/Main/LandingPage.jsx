@@ -409,10 +409,14 @@ export default function LandingPage() {
   const saved = localStorage.getItem("theme");
   return saved ? saved === "dark" : true;
 });
+  const [heroVisible, setHeroVisible] = useState(false);
+  const [typedText, setTypedText] = useState("");
+  const [parallaxY, setParallaxY] = useState(0);
+  const fullText = "Run Internship Programs";
 const [showDropdown, setShowDropdown] = useState(false);
 
 const theme = {
-  bg: isDark ? "linear-gradient(180deg, #06101e 0%, #081828 100%)" : "linear-gradient(180deg, #f0f4f8 0%, #e8edf5 100%)",
+  bg: isDark ? "linear-gradient(180deg, #06101e 0%, #081828 100%)" : "linear-gradient(180deg, #f8faff 0%, #eef2ff 50%, #f0f4ff 100%)",
   navBg: (scrolled) => isDark
     ? (scrolled ? "rgba(6,16,30,0.92)" : "rgba(6,16,30,0.55)")
     : (scrolled ? "rgba(240,244,248,0.95)" : "rgba(240,244,248,0.75)"),
@@ -581,6 +585,44 @@ const theme = {
     return () => clearInterval(iv);
   }, []);
 
+  // Scroll reveal
+  useEffect(() => {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add("visible"); } });
+    }, { threshold: 0.15 });
+    document.querySelectorAll(".reveal").forEach(el => observer.observe(el));
+    return () => observer.disconnect();
+  }, []);
+
+  // Hero fade in
+  useEffect(() => {
+    const t = setTimeout(() => setHeroVisible(true), 100);
+    return () => clearTimeout(t);
+  }, []);
+
+  // Typing effect
+  useEffect(() => {
+    if (!heroVisible) return;
+    setTypedText("");
+    let i = 0;
+    const t = setTimeout(() => {
+      const iv = setInterval(() => {
+        i++;
+        setTypedText(fullText.slice(0, i));
+        if (i >= fullText.length) clearInterval(iv);
+      }, 60);
+      return () => clearInterval(iv);
+    }, 600);
+    return () => clearTimeout(t);
+  }, [heroVisible]);
+
+  // Parallax on scroll
+  useEffect(() => {
+    const onScroll = () => setParallaxY(window.scrollY * 0.3);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   useEffect(() => {
     fetch(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/vacancies/public`)
       .then(async (res) => {
@@ -680,16 +722,21 @@ const theme = {
 
       {/* Mobile Menu */}
       {mobileOpen && (
-        <div style={{ position: "fixed", top: "64px", left: 0, right: 0, zIndex: 99, background: "rgba(6,16,30,0.97)", backdropFilter: "blur(16px)", borderBottom: "1px solid rgba(255,255,255,0.08)", padding: "20px 24px", display: "flex", flexDirection: "column", gap: "16px" }}>
+        <div style={{ position: "fixed", top: "64px", left: 0, right: 0, zIndex: 99, background: isDark ? "rgba(6,16,30,0.97)" : "rgba(240,244,255,0.98)", backdropFilter: "blur(16px)", borderBottom: isDark ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(0,0,0,0.08)", padding: "20px 24px", display: "flex", flexDirection: "column", gap: "16px" }}>
           {["Features", "How It Works", "Open Programs"].map((item) => (
             <a key={item} href={item === "Open Programs" ? "#open-positions" : `#${item.toLowerCase().replace(/\s+/g, "-")}`} onClick={() => setMobileOpen(false)}
-              style={{ color: "rgba(255,255,255,0.75)", textDecoration: "none", fontSize: "15px", fontWeight: "500" }}
+              style={{ color: isDark ? "rgba(255,255,255,0.75)" : "rgba(20,30,50,0.85)", textDecoration: "none", fontSize: "15px", fontWeight: "500" }}
             >{item}</a>
           ))}
           <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "8px" }}>
-            {!isAuthenticated ? (
+            <button
+              onClick={() => { const next = !isDark; setIsDark(next); localStorage.setItem("theme", next ? "dark" : "light"); }}
+              style={{ display: "flex", alignItems: "center", gap: "10px", background: "transparent", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", padding: "10px 16px", borderRadius: "8px", fontSize: "14px", cursor: "pointer" }}
+            style={{ display: "flex", alignItems: "center", gap: "10px", background: "transparent", border: isDark ? "1px solid rgba(255,255,255,0.2)" : "1px solid rgba(0,0,0,0.15)", color: isDark ? "#fff" : "#1a2332", padding: "10px 16px", borderRadius: "8px", fontSize: "14px", cursor: "pointer" }}
+            >{isDark ? <IconSun /> : <IconMoon />} {isDark ? "Light Mode" : "Dark Mode"}</button>
+          {!isAuthenticated ? (
               <>
-                <button onClick={() => navigate("/login")} style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", padding: "10px", borderRadius: "8px", fontSize: "14px", cursor: "pointer" }}>Sign In</button>
+                <button onClick={() => navigate("/login")} style={{ background: "transparent", border: isDark ? "1px solid rgba(255,255,255,0.2)" : "1px solid rgba(0,0,0,0.15)", color: isDark ? "#fff" : "#1a2332", padding: "10px", borderRadius: "8px", fontSize: "14px", cursor: "pointer" }}>Sign In</button>
                 <button onClick={() => navigate("/register")} style={{ background: "linear-gradient(135deg, #2d7dd2, #4a9eff)", border: "none", color: "#fff", padding: "10px", borderRadius: "8px", fontSize: "14px", fontWeight: "600", cursor: "pointer" }}>Get Started</button>
               </>
             ) : (
@@ -703,31 +750,31 @@ const theme = {
       )}
 
       {/* ── HERO SECTION ──────────────────────────────────────────────── */}
-      <section style={{ position: "relative", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "100px 24px 80px", overflow: "hidden" }}>
-        <div style={{ position: "absolute", inset: 0, backgroundImage: "url('/assets/images/bg.png')", backgroundSize: "cover", backgroundPosition: "center top", backgroundRepeat: "no-repeat", opacity: 0.25 }} />
-        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(6,16,30,0.75) 0%, rgba(6,16,30,0.65) 40%, rgba(6,16,30,0.92) 100%)" }} />
-        <div style={{ position: "absolute", top: "20%", left: "10%", width: "480px", height: "480px", borderRadius: "50%", background: "rgba(74,158,255,0.06)", filter: "blur(80px)", pointerEvents: "none" }} />
-        <div style={{ position: "absolute", top: "30%", right: "8%", width: "360px", height: "360px", borderRadius: "50%", background: "rgba(167,139,250,0.06)", filter: "blur(80px)", pointerEvents: "none" }} />
+      <section style={{ position: "relative", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "100px 24px 80px", overflow: "hidden" }}>
+        <div style={{ position: "absolute", inset: 0, backgroundImage: "url('/assets/images/bg.png')", backgroundSize: "cover", backgroundPosition: `center ${-parallaxY}px`, backgroundRepeat: "no-repeat", opacity: 0.15, transition: "background-position 0.1s linear" }} />
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(6,16,30,0.85) 0%, rgba(6,16,30,0.75) 40%, rgba(6,16,30,0.95) 100%)" }} />
+        <div className="float-orb" style={{ position: "absolute", top: "20%", left: "5%", width: "400px", height: "400px", borderRadius: "50%", background: "rgba(74,158,255,0.07)", filter: "blur(80px)", pointerEvents: "none" }} />
+        <div className="float-orb-slow" style={{ position: "absolute", bottom: "20%", right: "5%", width: "300px", height: "300px", borderRadius: "50%", background: "rgba(167,139,250,0.07)", filter: "blur(80px)", pointerEvents: "none" }} />
 
-        <div style={{ position: "relative", zIndex: 2, maxWidth: "780px", width: "100%" }}>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "rgba(74,158,255,0.1)", border: "1px solid rgba(74,158,255,0.25)", borderRadius: "100px", padding: "6px 16px", fontSize: "13px", color: "#4a9eff", fontWeight: "600", marginBottom: "28px", letterSpacing: "0.5px" }}>
-            <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#4a9eff", display: "inline-block", boxShadow: "0 0 8px #4a9eff" }} />
-            AI-Powered Internship Management Platform
-          </div>
+        <div style={{ position: "relative", zIndex: 2, maxWidth: "1100px", width: "100%", display: "flex", alignItems: "center", gap: "64px", flexWrap: "wrap" }}>
+          
+          {/* LEFT: Text content */}
+          <div style={{ flex: "1 1 480px", textAlign: "left" }}>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "rgba(74,158,255,0.1)", border: "1px solid rgba(74,158,255,0.25)", borderRadius: "100px", padding: "6px 16px", fontSize: "13px", color: "#4a9eff", fontWeight: "600", marginBottom: "28px", letterSpacing: "0.5px", opacity: heroVisible ? 1 : 0, transform: heroVisible ? "translateY(0)" : "translateY(24px)", transition: "opacity 0.7s ease, transform 0.7s ease" }}>
+              <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#4a9eff", display: "inline-block", boxShadow: "0 0 8px #4a9eff" }} />
+              Internship Management Platform
+            </div>
 
-          <h1 style={{ fontSize: "clamp(38px, 6vw, 72px)", fontWeight: "800", lineHeight: "1.1", letterSpacing: "-2px", color: "#fff", margin: "0 0 24px" }}>
-            Build Better,{" "}
-            <span style={{ background: "linear-gradient(135deg, #4a9eff 0%, #a78bfa 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-              Internship Program
-            </span>
-          </h1>
+            <h1 style={{ fontSize: "clamp(36px, 5vw, 64px)", fontWeight: "800", lineHeight: "1.1", letterSpacing: "-2px", color: "#fff", margin: "0 0 24px", opacity: heroVisible ? 1 : 0, transform: heroVisible ? "translateY(0)" : "translateY(24px)", transition: "opacity 0.7s ease 0.2s, transform 0.7s ease 0.2s" }}>
+              The Smarter Way to Run Internship Programs
+            </h1>
 
-          <p style={{ fontSize: "17px", lineHeight: "1.75", color: "rgba(255,255,255,0.6)", maxWidth: "540px", margin: "0 auto 36px" }}>
-            EarlyPath streamlines your entire internship lifecycle — from posting programs to certifying talent — powered by intelligent automation and real insights.
-          </p>
+            <p style={{ fontSize: "17px", lineHeight: "1.75", color: "rgba(255,255,255,0.6)", maxWidth: "480px", margin: "0 0 36px", opacity: heroVisible ? 1 : 0, transform: heroVisible ? "translateY(0)" : "translateY(24px)", transition: "opacity 0.7s ease 0.4s, transform 0.7s ease 0.4s" }}>
+              Everything your team needs to post programs, select candidates, track progress, and certify interns. And everything students need to find and apply for the right opportunity.
+            </p>
 
           {/* ── SEARCH BAR ── */}
-          <div style={{ maxWidth: "640px", margin: "0 auto 44px", position: "relative" }}>
+          <div style={{ maxWidth: "520px", marginBottom: "36px", position: "relative", opacity: heroVisible ? 1 : 0, transform: heroVisible ? "translateY(0)" : "translateY(24px)", transition: "opacity 0.7s ease 0.55s, transform 0.7s ease 0.55s" }}>
             <form onSubmit={handleSearch}>
               <div
                 style={{ display: "flex", alignItems: "center", background: theme.inputBg, border: `1px solid ${theme.inputBorder}`,borderRadius: "14px", overflow: "hidden", backdropFilter: "blur(12px)", boxShadow: "0 8px 32px rgba(0,0,0,0.25)", transition: "border-color 0.25s" }}
@@ -768,18 +815,8 @@ const theme = {
           </div>
           {/* ── END SEARCH BAR ── */}
 
-          {/* Stat badges */}
-          <div style={{ display: "flex", justifyContent: "center", gap: "32px", flexWrap: "wrap", marginBottom: "44px" }}>
-            {[{ value: "10K+", label: "Companies" }, { value: "250K+", label: "Candidates" }, { value: "1.2M", label: "Applications" }, { value: "98%", label: "Satisfaction" }].map((stat) => (
-              <div key={stat.label} style={{ textAlign: "center" }}>
-                <div style={{ fontSize: "26px", fontWeight: "800", color: "#fff", letterSpacing: "-0.5px" }}>{stat.value}</div>
-                <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", marginTop: "2px", fontWeight: "500" }}>{stat.label}</div>
-              </div>
-            ))}
-          </div>
-
           {!isAuthenticated && (
-            <div style={{ display: "flex", justifyContent: "center", gap: "14px", flexWrap: "wrap" }}>
+            <div style={{ display: "flex", gap: "14px", flexWrap: "wrap", opacity: heroVisible ? 1 : 0, transform: heroVisible ? "translateY(0)" : "translateY(24px)", transition: "opacity 0.7s ease 0.85s, transform 0.7s ease 0.85s" }}>
               <button onClick={() => navigate("/register")}
                 style={{ background: "linear-gradient(135deg, #2d7dd2 0%, #4a9eff 100%)", border: "none", color: "#fff", padding: "14px 36px", borderRadius: "10px", fontSize: "15px", fontWeight: "700", cursor: "pointer", boxShadow: "0 8px 32px rgba(74,158,255,0.4)", transition: "all 0.25s", display: "flex", alignItems: "center", gap: "8px" }}
                 onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 12px 40px rgba(74,158,255,0.55)"; }}
@@ -792,13 +829,45 @@ const theme = {
               >Sign In</button>
             </div>
           )}
+          </div>
+          {/* END LEFT */}
+
+          {/* RIGHT: Stat badges vertikal */}
+          <div style={{ flex: "0 0 auto", display: "flex", flexDirection: "column", gap: "16px", opacity: heroVisible ? 1 : 0, transition: "opacity 0.9s ease 0.6s" }} className="hidden-mobile hero-right">
+            {[
+              { value: "Multi-Tenant", label: "Built for Scale", color: "#4a9eff", delay: "0s" },
+              { value: "AI-Powered", label: "Smart Screening", color: "#a78bfa", delay: "0.15s" },
+              { value: "Auto Cert", label: "One Click", color: "#34d399", delay: "0.3s" },
+              { value: "Role-Based", label: "Full Control", color: "#fbbf24", delay: "0.45s" },
+            ].map((stat, i) => (
+              <div key={i} style={{
+                background: isDark ? "rgba(13,26,40,0.85)" : "rgba(255,255,255,0.85)",
+                backdropFilter: "blur(16px)",
+                border: `1px solid ${stat.color}30`,
+                borderRadius: "16px",
+                padding: "16px 24px",
+                minWidth: "220px",
+                animation: `slideInRight 0.6s ease ${stat.delay} both`,
+                boxShadow: `0 4px 24px ${stat.color}15`,
+                transition: "transform 0.25s, box-shadow 0.25s",
+              }}
+              onMouseEnter={e => { e.currentTarget.style.transform = "translateX(-4px)"; e.currentTarget.style.boxShadow = `0 8px 32px ${stat.color}30`; }}
+              onMouseLeave={e => { e.currentTarget.style.transform = "translateX(0)"; e.currentTarget.style.boxShadow = `0 4px 24px ${stat.color}15`; }}
+              >
+                <div style={{ fontSize: "15px", fontWeight: "700", color: stat.color, marginBottom: "4px" }}>{stat.value}</div>
+                <div style={{ fontSize: "12px", color: isDark ? "rgba(255,255,255,0.45)" : "rgba(30,40,60,0.5)", fontWeight: "500" }}>{stat.label}</div>
+              </div>
+            ))}
+          </div>
+          {/* END RIGHT */}
+
         </div>
       </section>
 
       {/* ── FEATURES SECTION ───────────────────────────────────────────── */}
-      <section id="features" style={{ padding: "100px 24px", background: "rgba(255,255,255,0.01)" }}>
+      <section id="features" style={{ padding: "100px 24px", background: isDark ? "rgba(255,255,255,0.01)" : "rgba(255,255,255,0.6)" }}>
         <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
-          <div style={{ textAlign: "center", marginBottom: "64px" }}>
+          <div style={{ textAlign: "center", marginBottom: "64px" }} className="reveal">
             <p style={{ fontSize: "13px", fontWeight: "600", color: "#4a9eff", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "12px" }}>Platform Features</p>
             <h2 style={{ fontSize: "clamp(28px, 4vw, 42px)", fontWeight: "800", color: isDark ? "#fff" : "#1a2332", letterSpacing: "-1px", margin: "0 0 16px" }}>
               Everything you need,{" "}<span style={{ color: isDark ? "rgba(255,255,255,0.45)" : "rgba(30,40,60,0.4)"}}>nothing you don't</span>
@@ -808,6 +877,7 @@ const theme = {
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "20px" }}>
             {features.map((f, i) => (
               <div key={i}
+                className={`reveal reveal-delay-${Math.min(i+1,5)} feature-card`}
                 style={{ background: theme.cardBg, border: `1px solid ${theme.cardBorder}`, borderRadius: "16px", padding: "28px", transition: "all 0.3s", cursor: "default" }}
                 onMouseEnter={(e) => { e.currentTarget.style.background = theme.cardHoverBg; e.currentTarget.style.borderColor = `${f.color}30`; e.currentTarget.style.transform = "translateY(-4px)"; }}
                 onMouseLeave={(e) => { e.currentTarget.style.background = theme.cardBg; e.currentTarget.style.borderColor = theme.cardBorder; e.currentTarget.style.transform = "translateY(0)"; }}
@@ -826,7 +896,7 @@ const theme = {
       <section id="how-it-works" style={{ padding: "100px 24px" }}>
         <div style={{ maxWidth: "1100px", margin: "0 auto", display: "flex", gap: "80px", alignItems: "center", flexWrap: "wrap" }}>
           <div style={{ flex: "1 1 360px" }}>
-            <p style={{ fontSize: "13px", fontWeight: "600", color: "#4a9eff", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "12px" }}>How It Works</p>
+            <p style={{ fontSize: "13px", fontWeight: "600", color: "#4a9eff", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "12px" }} className="reveal">How It Works</p>
             <h2 style={{ fontSize: "clamp(26px, 4vw, 40px)", fontWeight: "800", color: isDark ? "#fff" : "#1a2332", letterSpacing: "-1px", margin: "0 0 40px", lineHeight: "1.2" }}>
               From sign-up to{" "}<span style={{ color: "#4a9eff" }}>certified Intern</span>
             </h2>
@@ -885,7 +955,7 @@ const theme = {
       </section>
 
       {/* ── AI SECTION ──────────────────────────────────────────────────── */}
-      <section style={{ padding: "100px 24px", background: "rgba(0,0,0,0.15)" }}>
+      <section style={{ padding: "100px 24px", background: isDark ? "rgba(0,0,0,0.15)" : "linear-gradient(135deg, #eef2ff 0%, #e8f0fe 100%)" }}>
         <div style={{ maxWidth: "1100px", margin: "0 auto", display: "flex", gap: "80px", alignItems: "center", flexWrap: "wrap-reverse" }}>
           <div style={{ flex: "1 1 340px", maxWidth: "460px" }}>
             <div style={{ background: isDark ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.9)", border: `1px solid ${isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.1)"}`, borderRadius: "20px", padding: "28px", boxShadow: isDark ? "none" : "0 4px 24px rgba(0,0,0,0.08)" }}>
@@ -942,7 +1012,7 @@ const theme = {
       {/* ── OPEN POSITIONS SECTION ─────────────────────────────────────── */}
       <section id="open-positions" style={{ padding: "100px 24px" }}>
         <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
-          <div style={{ textAlign: "center", marginBottom: "56px" }}>
+          <div style={{ textAlign: "center", marginBottom: "56px" }} className="reveal">
             <p style={{ fontSize: "13px", fontWeight: "600", color: "#a78bfa", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "12px" }}>
               Live Opportunities
             </p>
@@ -1046,7 +1116,7 @@ const theme = {
           <div style={{ maxWidth: "820px", margin: "0 auto", textAlign: "center", background: "linear-gradient(135deg, rgba(74,158,255,0.06) 0%, rgba(167,139,250,0.06) 100%)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "28px", padding: "72px 48px", position: "relative", overflow: "hidden" }}>
             <div style={{ position: "absolute", top: "-80px", right: "-80px", width: "300px", height: "300px", borderRadius: "50%", background: "rgba(74,158,255,0.06)", filter: "blur(60px)", pointerEvents: "none" }} />
             <div style={{ position: "absolute", bottom: "-60px", left: "-60px", width: "240px", height: "240px", borderRadius: "50%", background: "rgba(167,139,250,0.06)", filter: "blur(60px)", pointerEvents: "none" }} />
-            <p style={{ fontSize: "13px", fontWeight: "600", color: "#4a9eff", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "16px" }}>Get Started Today</p>
+            <p style={{ fontSize: "13px", fontWeight: "600", color: "#4a9eff", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "16px" }} className="reveal">Get Started Today</p>
             <h2 style={{ fontSize: "clamp(30px, 5vw, 52px)", fontWeight: "800", color:  isDark ? "#fff" : "#1a2332", letterSpacing: "-1.5px", lineHeight: "1.1", margin: "0 0 18px" }}>
               Ready to transform your{" "}
               <span style={{ background: "linear-gradient(135deg, #4a9eff, #a78bfa)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>internship program?</span>
@@ -1061,9 +1131,9 @@ const theme = {
                 onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 8px 32px rgba(74,158,255,0.4)"; }}
               >Start Now <IconArrow /></button>
               <button onClick={() => navigate("/login")}
-                style={{ background: "rgba(30,40,60,0.6)", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(30,40,60,0.6)", padding: "14px 32px", borderRadius: "10px", fontSize: "15px", fontWeight: "600", cursor: "pointer", transition: "all 0.25s" }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; }}
+                style={{ background: isDark ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.8)", border: isDark ? "1px solid rgba(255,255,255,0.15)" : "1px solid rgba(30,40,60,0.2)", color: isDark ? "#fff" : "#1a2332", padding: "14px 32px", borderRadius: "10px", fontSize: "15px", fontWeight: "600", cursor: "pointer", transition: "all 0.25s" }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,1)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.8)"; }}
               >Sign In</button>
             </div>
           </div>
@@ -1075,7 +1145,7 @@ const theme = {
         <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
           <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr 2fr", gap: "48px", marginBottom: "64px" }} className="footer-grid">
             {/* Kolom 1: Logo + Desc */}
-            <div className="fadein" style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", textAlign: "left" }}>
+            <div className="fadein footer-col" style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", textAlign: "left" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "14px", marginBottom: "20px" }}>
                 <img src="/assets/images/logo.png" alt="EarlyPath" style={{ height: "48px", objectFit: "contain" }} />
                 <span style={{ fontSize: "18px", fontWeight: "800", color: isDark ? "#fff" : "#1a2332", letterSpacing: "-0.5px" }}>EarlyPath</span>
@@ -1086,7 +1156,7 @@ const theme = {
             </div>
 
             {/* Kolom 2: Lokasi + Social + Quick Links */}
-            <div className="fadein" style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+            <div className="fadein footer-col" style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
               {/* Lokasi */}
               <div style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "13px", color: isDark ? "rgba(255,255,255,0.6)" : "rgba(30,40,60,0.7)" }}>
                 <span style={{ color: "#4a9eff" }}><IconLocation /></span>Surabaya, Indonesia
@@ -1129,7 +1199,7 @@ const theme = {
                   <IconCheck color="#4a9eff" />Thank you! Your message has been sent.
                 </div>
               ) : (
-                <form onSubmit={handleEmailSubmit} style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+                <form onSubmit={handleEmailSubmit} className="footer-form" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
                  <input placeholder="Your Name" value={emailForm.name} onChange={e => setEmailForm(f => ({ ...f, name: e.target.value }))} className="footer-input" required style={{ padding: "14px 18px", borderRadius: "12px", border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.12)"}`, background: isDark ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.8)", color: isDark ? "#fff" : "#1a2332", fontSize: "13px", fontFamily: "inherit", outline: "none", transition: "0.2s" }} />
                   <input type="email" placeholder="Your Email" value={emailForm.email} onChange={e => setEmailForm(f => ({ ...f, email: e.target.value }))} className="footer-input" required style={{ padding: "14px 18px", borderRadius: "12px", border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.12)"}`, background: isDark ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.8)", color: isDark ? "#fff" : "#1a2332", fontSize: "13px", fontFamily: "inherit", outline: "none", transition: "0.2s" }} />
                   <textarea placeholder="How can we help you?" value={emailForm.message} onChange={e => setEmailForm(f => ({ ...f, message: e.target.value }))} className="footer-input" required rows={4}
@@ -1173,12 +1243,36 @@ const theme = {
         isDark={isDark}
       />
       <style>{`
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(32px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes floatOrb { 0%, 100% { transform: translateY(0px) scale(1); } 50% { transform: translateY(-20px) scale(1.05); } }
+        @keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 20px rgba(74,158,255,0.3); } 50% { box-shadow: 0 0 40px rgba(74,158,255,0.6); } }
+        .reveal { opacity: 0; transform: translateY(32px); transition: opacity 0.7s ease, transform 0.7s ease; }
+        @keyframes slideInRight { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
+        @media (max-width: 768px) {
+          .hero-right { display: none !important; }
+        }
+        .reveal.visible { opacity: 1; transform: translateY(0); }
+        .reveal-delay-1 { transition-delay: 0.1s; }
+        .reveal-delay-2 { transition-delay: 0.2s; }
+        .reveal-delay-3 { transition-delay: 0.3s; }
+        .reveal-delay-4 { transition-delay: 0.4s; }
+        .reveal-delay-5 { transition-delay: 0.5s; }
+        .float-orb { animation: floatOrb 6s ease-in-out infinite; }
+        .float-orb-slow { animation: floatOrb 9s ease-in-out infinite reverse; }
+        .feature-card:hover { transform: translateY(-6px) !important; }
+        .feature-card { transition: all 0.3s ease !important; }
         .hidden-mobile { display: flex !important; }
         .show-mobile { display: none !important; }
         @media (max-width: 768px) {
           .hidden-mobile { display: none !important; }
           .show-mobile { display: flex !important; }
         }
+	@media (max-width: 768px) {
+  .footer-grid { grid-template-columns: 1fr !important; gap: 32px !important; }
+	.footer-form { grid-template-columns: 1fr !important; }
+  .footer-col { align-items: center !important; text-align: center !important; }
+}		
         .footer-input::placeholder { color: ${isDark ? "rgba(255,255,255,0.3)" : "rgba(30,40,60,0.35)"} !important; }
         .feature-title { color: ${isDark ? "#fff" : "#1a2332"} !important; }
         .feature-desc { color: ${isDark ? "rgba(255,255,255,0.5)" : "rgba(30,40,60,0.6)"} !important; }
