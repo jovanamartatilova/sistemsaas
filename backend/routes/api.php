@@ -52,12 +52,30 @@ use App\Http\Controllers\Admin\TeamSyncController;
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/login-company', [AuthController::class, 'loginCompany']);
+Route::get('/test', function() {
+    return response()->json(['message' => 'Test route works', 'timestamp' => now()]);
+});
+
+Route::get('/test-error', function() {
+    throw new Exception("This is a test error");
+});
+
+Route::post('/test-post', function(\Illuminate\Http\Request $request) {
+    return response()->json(['received' => $request->all()]);
+});
+
 Route::get('/vacancies/public', [VacancyController::class, 'publicIndex']);
 Route::get('/c/{id_company}', [CompanyPublicController::class, 'show']);
 Route::get('/c/{id_company}/vacancies', [CompanyPublicController::class, 'vacancies']);
 Route::get('/invitation-codes/validate/{code}', [AuthController::class, 'validateInvitationCode']);
 Route::get('/auth/check-email/{email}', [AuthController::class, 'checkEmailExists']);
 Route::post('/auth/activate', [AuthController::class, 'activateAccount']);
+Route::post('/auth/forgot-password', [AuthController::class, 'forgotPassword']);
+Route::post('/auth/reset-password', [AuthController::class, 'resetPassword']);
+Route::post('/auth/forgot-password-candidate', [AuthController::class, 'forgotPasswordCandidate']);
+Route::post('/auth/reset-password-candidate', [AuthController::class, 'resetPasswordCandidate']);
+Route::post('/auth/forgot-password-staff', [AuthController::class, 'forgotPasswordStaff']);
+Route::post('/auth/reset-password-staff', [AuthController::class, 'resetPasswordStaff']);
 Route::post('/contact', [ContactMessageController::class, 'store']);
 Route::options('/{any}', fn () => response()->noContent())->where('any', '.*');
 
