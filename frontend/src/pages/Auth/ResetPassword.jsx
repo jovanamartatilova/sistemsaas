@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore";
+import { validatePassword } from "../../utils/passwordValidator";
 
 export default function ResetPassword() {
   const [form, setForm] = useState({ password: "", password_confirmation: "" });
@@ -39,6 +40,26 @@ export default function ResetPassword() {
   const goToLogin = (e) => {
     e.preventDefault();
     navigate("/login");
+  };
+
+  /**
+   * Get the correct dashboard path based on user role
+   * Maps roles to their respective dashboard routes
+   */
+  const getDashboardPathByRole = (role) => {
+    if (!role) return "/onboarding";
+    
+    const roleMap = {
+      candidate: "/candidate/dashboard",
+      hr: "/hr/dashboard",
+      mentor: "/mentor/dashboard",
+      admin: "/dashboard",
+      staff: "/dashboard",
+      super_admin: "/superadmin/dashboard",
+      superadmin: "/superadmin/dashboard",
+    };
+
+    return roleMap[role.toLowerCase()] || "/onboarding";
   };
 
   const inputBase = {
@@ -80,14 +101,16 @@ export default function ResetPassword() {
     setErrorMsg("");
     setSuccessMsg("");
 
-    if (form.password !== form.password_confirmation) {
-      setErrorMsg("Passwords do not match");
-      return;
-    }
-    if (form.password.length < 6) {
-      setErrorMsg("Password must be at least 6 characters");
-      return;
-    }
+    const { valid: isPasswordValid, errors: passwordErrors } = validatePassword(form.password);
+if (!isPasswordValid) {
+  setErrorMsg(passwordErrors[0] || "Invalid password");
+  return;
+}
+
+if (form.password !== form.password_confirmation) {
+  setErrorMsg("Passwords do not match");
+  return;
+}
 
     setLoading(true);
 
@@ -114,19 +137,34 @@ export default function ResetPassword() {
 
       // Simpan token untuk auto-login
       localStorage.setItem("auth_token", data.token);
-      localStorage.setItem("company", JSON.stringify(data.company));
+      
+      // Simpan user data jika tersedia
+      if (data.user) {
+        localStorage.setItem("user", JSON.stringify(data.user));
+      }
+      
+      // Simpan company data jika tersedia
+      if (data.company) {
+        localStorage.setItem("company", JSON.stringify(data.company));
+      }
+      
+      // Update auth store dengan semua data
       useAuthStore.setState({ 
         isAuthenticated: true, 
-        token: data.token, 
-        company: data.company 
+        token: data.token,
+        user: data.user || null,
+        company: data.company || null
       });
 
       setSuccessMsg("Password successfully changed! Redirecting to dashboard...");
       setDone(true);
       
-      // Redirect ke dashboard
+      // Tentukan redirect path berdasarkan role
+      const redirectPath = getDashboardPathByRole(data.user?.role);
+      
+      // Redirect ke dashboard yang sesuai dengan role
       setTimeout(() => {
-        window.location.href = "/dashboard";
+        window.location.href = redirectPath;
       }, 1500);
       
     } catch (err) {

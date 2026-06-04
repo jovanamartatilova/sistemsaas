@@ -8,6 +8,8 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -706,6 +708,383 @@ class AuthController extends Controller
         $user = $request->user();
         $roles = \App\Models\Role::where('id_company', $user->id_company)->get();
         return response()->json($roles);
+    }
+
+    /**
+     * 14. FORGOT PASSWORD - Send reset email
+     * POST /api/auth/forgot-password
+     * 
+     * Request:
+     * {
+     *   "email": "user@example.com"
+     * }
+     */
+    public function forgotPassword(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'email' => 'required|email|max:100',
+            ]);
+
+            $email = strtolower(trim($validated['email']));
+
+            // Use PasswordResetService to handle the reset
+            $service = new \App\Services\PasswordResetService();
+            $result = $service->sendResetEmail($email, '/reset-password');
+
+            // Always return 200 for security (don't reveal if email exists)
+            return response()->json([
+                'message' => $result['message']
+            ], 200);
+
+        } catch (ValidationException $e) {
+            return response()->json(['message' => 'Validation failed', 'errors' => $e->errors()], 422);
+        } catch (\Exception $e) {
+            Log::error('Forgot password error: ' . $e->getMessage());
+            return response()->json(['message' => 'Failed to process forgot password request', 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * 15. RESET PASSWORD - Reset user password with token
+     * POST /api/auth/reset-password
+     * 
+     * Request:
+     * {
+     *   "token": "reset_token_from_email",
+     *   "email": "user@example.com",
+     *   "password": "new_password",
+     *   "password_confirmation": "new_password"
+     * }
+     */
+    public function resetPassword(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'token' => 'required|string',
+                'email' => 'required|email|max:100',
+                'password' => 'required|string|min:8|confirmed',
+            ]);
+
+            $email = strtolower(trim($validated['email']));
+
+            // Check if reset token exists and is valid (created within last hour)
+            $passwordReset = DB::table('password_resets')
+                ->where('email', $email)
+                ->where('token', $validated['token'])
+                ->where('created_at', '>', now()->subHour())
+                ->first();
+
+            if (!$passwordReset) {
+                return response()->json([
+                    'message' => 'Invalid or expired password reset link.'
+                ], 422);
+            }
+
+            // Find user and update password
+            $user = User::where('email', $email)->first();
+
+            if (!$user) {
+                return response()->json([
+                    'message' => 'User not found.'
+                ], 404);
+            }
+
+            // Update password
+            $user->update([
+                'password' => Hash::make($validated['password']),
+            ]);
+
+            // Delete used token
+            DB::table('password_resets')
+                ->where('email', $email)
+                ->where('token', $validated['token'])
+                ->delete();
+
+            // Create new login token
+            $user->tokens()->delete(); // Invalidate all existing tokens
+            $token = $user->createToken('auth_token')->plainTextToken;
+
+            return response()->json([
+                'message' => 'Password reset successfully.',
+                'token' => $token,
+                'user' => [
+                    'id_user' => $user->id_user,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'role' => $user->role,
+                ],
+            ], 200);
+
+        } catch (ValidationException $e) {
+            return response()->json(['message' => 'Validation failed', 'errors' => $e->errors()], 422);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Failed to reset password', 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * 16. FORGOT PASSWORD CANDIDATE
+     * POST /api/auth/forgot-password-candidate
+     * 
+     * For candidates to reset their password (company-specific)
+     * Request:
+     * {
+     *   "email": "candidate@example.com",
+     *   "idCompany": "CMP..."
+     * }
+     */
+    public function forgotPasswordCandidate(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'email' => 'required|email|max:100',
+                'idCompany' => 'required|string',
+            ]);
+
+            $email = strtolower(trim($validated['email']));
+            $idCompany = $validated['idCompany'];
+
+            // Verify company exists
+            $company = Company::where('id_company', $idCompany)->first();
+            if (!$company) {
+                return response()->json(['message' => 'Company not found'], 404);
+            }
+
+            // Use PasswordResetService to handle the reset
+            $service = new \App\Services\PasswordResetService();
+            $result = $service->sendResetEmail($email, '/c/' . $idCompany . '/reset-password');
+
+            // Always return 200 for security (don't reveal if email exists)
+            return response()->json([
+                'message' => $result['message']
+            ], 200);
+
+        } catch (ValidationException $e) {
+            return response()->json(['message' => 'Validation failed', 'errors' => $e->errors()], 422);
+        } catch (\Exception $e) {
+            Log::error('Forgot password candidate error: ' . $e->getMessage());
+            return response()->json(['message' => 'Failed to process forgot password request', 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * 17. RESET PASSWORD CANDIDATE
+     * POST /api/auth/reset-password-candidate
+     * 
+     * For candidates to reset their password with company context
+     * Request:
+     * {
+     *   "token": "reset_token",
+     *   "email": "candidate@example.com",
+     *   "idCompany": "CMP...",
+     *   "password": "new_password",
+     *   "password_confirmation": "new_password"
+     * }
+     */
+    public function resetPasswordCandidate(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'token' => 'required|string',
+                'email' => 'required|email|max:100',
+                'idCompany' => 'required|string',
+                'password' => 'required|string|min:8|confirmed',
+            ]);
+
+            $email = strtolower(trim($validated['email']));
+            $idCompany = $validated['idCompany'];
+
+            // Verify company exists
+            $company = Company::where('id_company', $idCompany)->first();
+            if (!$company) {
+                return response()->json(['message' => 'Company not found'], 404);
+            }
+
+            // Check if reset token exists and is valid
+            $passwordReset = DB::table('password_resets')
+                ->where('email', $email)
+                ->where('token', $validated['token'])
+                ->where('created_at', '>', now()->subHour())
+                ->first();
+
+            if (!$passwordReset) {
+                return response()->json([
+                    'message' => 'Invalid or expired password reset link.'
+                ], 422);
+            }
+
+            // Find user and update password
+            $user = User::where('email', $email)->first();
+
+            if (!$user) {
+                return response()->json(['message' => 'User not found.'], 404);
+            }
+
+            // Update password
+            $user->update([
+                'password' => Hash::make($validated['password']),
+            ]);
+
+            // Delete used token
+            DB::table('password_resets')
+                ->where('email', $email)
+                ->where('token', $validated['token'])
+                ->delete();
+
+            // Create new login token
+            $user->tokens()->delete();
+            $token = $user->createToken('auth_token')->plainTextToken;
+
+            return response()->json([
+                'message' => 'Password reset successfully.',
+                'token' => $token,
+                'user' => [
+                    'id_user' => $user->id_user,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'role' => $user->role,
+                ],
+                'company' => $company,
+            ], 200);
+
+        } catch (ValidationException $e) {
+            return response()->json(['message' => 'Validation failed', 'errors' => $e->errors()], 422);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Failed to reset password', 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * 18. FORGOT PASSWORD STAFF
+     * POST /api/auth/forgot-password-staff
+     * 
+     * For staff/employees to reset their password (company-specific)
+     * Request:
+     * {
+     *   "email": "staff@example.com",
+     *   "idCompany": "CMP..."
+     * }
+     */
+    public function forgotPasswordStaff(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'email' => 'required|email|max:100',
+                'idCompany' => 'required|string',
+            ]);
+
+            $email = strtolower(trim($validated['email']));
+            $idCompany = $validated['idCompany'];
+
+            // Verify company exists
+            $company = Company::where('id_company', $idCompany)->first();
+            if (!$company) {
+                return response()->json(['message' => 'Company not found'], 404);
+            }
+
+            // Use PasswordResetService to handle the reset
+            $service = new \App\Services\PasswordResetService();
+            $result = $service->sendResetEmail($email, '/auth/reset-password');
+
+            // Always return 200 for security (don't reveal if email exists)
+            return response()->json([
+                'message' => $result['message']
+            ], 200);
+
+        } catch (ValidationException $e) {
+            return response()->json(['message' => 'Validation failed', 'errors' => $e->errors()], 422);
+        } catch (\Exception $e) {
+            Log::error('Forgot password staff error: ' . $e->getMessage());
+            return response()->json(['message' => 'Failed to process forgot password request', 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * 19. RESET PASSWORD STAFF
+     * POST /api/auth/reset-password-staff
+     * 
+     * For staff/employees to reset their password with company context
+     * Request:
+     * {
+     *   "token": "reset_token",
+     *   "email": "staff@example.com",
+     *   "idCompany": "CMP...",
+     *   "password": "new_password",
+     *   "password_confirmation": "new_password"
+     * }
+     */
+    public function resetPasswordStaff(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'token' => 'required|string',
+                'email' => 'required|email|max:100',
+                'idCompany' => 'required|string',
+                'password' => 'required|string|min:8|confirmed',
+            ]);
+
+            $email = strtolower(trim($validated['email']));
+            $idCompany = $validated['idCompany'];
+
+            // Verify company exists
+            $company = Company::where('id_company', $idCompany)->first();
+            if (!$company) {
+                return response()->json(['message' => 'Company not found'], 404);
+            }
+
+            // Check if reset token exists and is valid
+            $passwordReset = DB::table('password_resets')
+                ->where('email', $email)
+                ->where('token', $validated['token'])
+                ->where('created_at', '>', now()->subHour())
+                ->first();
+
+            if (!$passwordReset) {
+                return response()->json([
+                    'message' => 'Invalid or expired password reset link.'
+                ], 422);
+            }
+
+            // Find user and update password
+            $user = User::where('email', $email)->first();
+
+            if (!$user) {
+                return response()->json(['message' => 'User not found.'], 404);
+            }
+
+            // Update password
+            $user->update([
+                'password' => Hash::make($validated['password']),
+            ]);
+
+            // Delete used token
+            DB::table('password_resets')
+                ->where('email', $email)
+                ->where('token', $validated['token'])
+                ->delete();
+
+            // Create new login token
+            $user->tokens()->delete();
+            $token = $user->createToken('auth_token')->plainTextToken;
+
+            return response()->json([
+                'message' => 'Password reset successfully.',
+                'token' => $token,
+                'user' => [
+                    'id_user' => $user->id_user,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'role' => $user->role,
+                ],
+                'company' => $company,
+            ], 200);
+
+        } catch (ValidationException $e) {
+            return response()->json(['message' => 'Validation failed', 'errors' => $e->errors()], 422);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Failed to reset password', 'error' => $e->getMessage()], 500);
+        }
     }
 
     /**
