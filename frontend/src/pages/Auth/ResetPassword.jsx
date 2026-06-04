@@ -352,7 +352,7 @@ if (form.password !== form.password_confirmation) {
                 <div>
                   <p className="font-semibold text-base mb-1">Password successfully changed!</p>
                   <p style={{ color: "rgba(129,199,132,0.75)", fontSize: "13px" }}>
-                    You will be redirected to the login page...
+                    You will be redirected to the dashboard page...
                   </p>
                 </div>
               </div>
@@ -395,7 +395,7 @@ if (form.password !== form.password_confirmation) {
                     name="password"
                     value={form.password}
                     onChange={handleChange}
-                    placeholder="Minimum 6 characters"
+                    placeholder="Minimum 8 characters"
                     required
                     className="w-full px-4 py-3 pr-12 rounded-xl text-white placeholder-gray-500 outline-none transition-all duration-200"
                     style={inputBase}

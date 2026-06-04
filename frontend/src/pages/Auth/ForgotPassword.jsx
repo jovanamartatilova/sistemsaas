@@ -49,10 +49,10 @@ export default function ForgotPassword() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "Gagal mengirim email reset password");
+        throw new Error(data.message || "Failed to send password reset email. Please try again.");
       }
 
-      setSuccessMsg("Link reset password telah dikirim ke email Anda.");
+      setSuccessMsg("Password reset link has been sent to your email.");
       setSent(true);
     } catch (err) {
       setErrorMsg(err.message);
@@ -144,7 +144,6 @@ export default function ForgotPassword() {
         </div>
       </div>
 
-      {/* ── Right Panel: Form ── */}
       {/* ── Right Panel: Form ── */}
       <div
         className="flex-1 flex flex-col items-center justify-center px-6 py-12 relative overflow-hidden"
@@ -263,7 +262,7 @@ export default function ForgotPassword() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="email@perusahaan.com"
+                  placeholder="email@company.com"
                   required
                   className="w-full px-4 py-3 rounded-xl placeholder-gray-500 outline-none transition-all duration-200"
                   style={inputBase}

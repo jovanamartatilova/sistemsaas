@@ -114,7 +114,6 @@ const IconSend = () => (
     <polygon points="22 2 15 22 11 13 2 9 22 2" />
   </svg>
 );
-// ── Tambahan icon yang dibutuhkan search bar ──────────────────────────────────
 const IconSearch = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
@@ -155,6 +154,25 @@ const IconSun = () => (
 const IconMoon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+  </svg>
+);
+const IconInstagram = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="2" width="20" height="20" rx="5" />
+    <circle cx="12" cy="12" r="4" />
+    <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
+  </svg>
+);
+const IconLinkedIn = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
+    <rect x="2" y="9" width="4" height="12" />
+    <circle cx="4" cy="4" r="2" />
+  </svg>
+);
+const IconTwitterX = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L1.254 2.25H8.08l4.253 5.622 5.911-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
   </svg>
 );
 
@@ -955,7 +973,9 @@ const theme = {
               <div style={{ gridColumn: "1 / -1", textAlign: "center", padding: "40px", color: isDark ? "rgba(255,255,255,0.4)" : "rgba(30,40,60,0.45)"}}>Loading vacancies...</div>
             ) : displayedVacancies.length === 0 ? (
               <div style={{ gridColumn: "1 / -1", textAlign: "center", padding: "60px 20px" }}>
-                <div style={{ fontSize: "48px", marginBottom: "16px", opacity: 0.4 }}>🔍</div>
+                <div style={{ marginBottom: "16px", opacity: 0.4, display: "flex", justifyContent: "center" }}>
+                  <IconSearch />
+                </div>
                 <p style={{ fontSize: "16px", fontWeight: "600", color: isDark ? "rgba(255,255,255,0.5)" : "rgba(30,40,60,0.6)", marginBottom: "8px" }}>
                   {searchResults !== null ? "No job vacancies found" : "There are currently no published job vacancies."}
                 </p>
@@ -1061,23 +1081,56 @@ const theme = {
       {/* ── FOOTER ──────────────────────────────────────────────────────── */}
       <footer style={{ background: theme.footerBg, borderTop: `1px solid ${theme.footerBorder}`, padding: "80px 24px 40px" }}>
         <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1.5fr 2fr", gap: "64px", marginBottom: "64px" }} className="footer-grid">
-            <div className="fadein" style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "14px", marginBottom: "24px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr 2fr", gap: "48px", marginBottom: "64px" }} className="footer-grid">
+            {/* Kolom 1: Logo + Desc */}
+            <div className="fadein" style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", textAlign: "left" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "14px", marginBottom: "20px" }}>
                 <img src="/assets/images/logo.png" alt="EarlyPath" style={{ height: "48px", objectFit: "contain" }} />
                 <span style={{ fontSize: "18px", fontWeight: "800", color: isDark ? "#fff" : "#1a2332", letterSpacing: "-0.5px" }}>EarlyPath</span>
               </div>
-              <p style={{ fontSize: "14px", color: isDark ? "rgba(255,255,255,0.45)" : "rgba(30,40,60,0.65)", lineHeight: "1.8", margin: "0 0 32px", maxWidth: "320px" }}>
+              <p style={{ fontSize: "14px", color: isDark ? "rgba(255,255,255,0.45)" : "rgba(30,40,60,0.65)", lineHeight: "1.8", margin: 0, maxWidth: "260px" }}>
                 Empowering talent and organizations to connect, collaborate, and grow together through AI-driven internship management.
               </p>
-              <div style={{ display: "flex", flexDirection: "column", gap: "16px", alignItems: "center" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "13px", color: isDark ? "rgba(255,255,255,0.6)" : "rgba(30,40,60,0.7)" }}>
+            </div>
+
+            {/* Kolom 2: Lokasi + Social + Quick Links */}
+            <div className="fadein" style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+              {/* Lokasi */}
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "13px", color: isDark ? "rgba(255,255,255,0.6)" : "rgba(30,40,60,0.7)" }}>
                 <span style={{ color: "#4a9eff" }}><IconLocation /></span>Surabaya, Indonesia
               </div>
+
+              {/* Social Media */}
+              <div style={{ display: "flex", gap: "10px" }}>
+                {[
+                  { icon: <IconInstagram />, href: "#", label: "Instagram" },
+                  { icon: <IconLinkedIn />, href: "#", label: "LinkedIn" },
+                  { icon: <IconTwitterX />, href: "#", label: "Twitter/X" },
+                ].map((s) => (
+                  <a key={s.label} href={s.href} title={s.label} target="_blank" rel="noopener noreferrer"
+                    style={{ width: "38px", height: "38px", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", background: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)", border: isDark ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(0,0,0,0.08)", color: isDark ? "rgba(255,255,255,0.5)" : "rgba(30,40,60,0.5)", transition: "all 0.2s", textDecoration: "none" }}
+                    onMouseEnter={e => { e.currentTarget.style.background = "rgba(74,158,255,0.1)"; e.currentTarget.style.borderColor = "rgba(74,158,255,0.3)"; e.currentTarget.style.color = "#4a9eff"; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)"; e.currentTarget.style.borderColor = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"; e.currentTarget.style.color = isDark ? "rgba(255,255,255,0.5)" : "rgba(30,40,60,0.5)"; }}
+                  >{s.icon}</a>
+                ))}
+              </div>
+
+              {/* Quick Links */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                <p style={{ fontSize: "11px", fontWeight: "700", letterSpacing: "0.1em", color: "#4a9eff", textTransform: "uppercase", margin: "0 0 4px" }}>Quick Links</p>
+                {["Features", "How It Works", "Open Programs", "Contact"].map((link) => (
+                  <a key={link}
+                    href={link === "Open Programs" ? "#open-positions" : link === "Contact" ? "#contact" : `#${link.toLowerCase().replace(/\s+/g, "-")}`}
+                    style={{ fontSize: "13px", color: isDark ? "rgba(255,255,255,0.45)" : "rgba(30,40,60,0.55)", textDecoration: "none", transition: "color 0.2s" }}
+                    onMouseEnter={e => e.currentTarget.style.color = "#4a9eff"}
+                    onMouseLeave={e => e.currentTarget.style.color = isDark ? "rgba(255,255,255,0.45)" : "rgba(30,40,60,0.55)"}
+                  >{link}</a>
+                ))}
               </div>
             </div>
 
-            <div className="fadein">
+              {/* Kolom 3: Form Contact */}
+              <div className="fadein">
               <p style={{ fontSize: "11px", fontWeight: "700", letterSpacing: "0.1em", color: "#4a9eff", textTransform: "uppercase", margin: "0 0 24px" }}>Send us a Message</p>
               {emailSent ? (
                 <div style={{ padding: "24px", background: "rgba(74,158,255,0.08)", border: "1px solid rgba(74,158,255,0.2)", borderRadius: "16px", fontSize: "14px", color: "#4a9eff", fontWeight: "600", textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px" }}>
