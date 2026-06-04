@@ -404,6 +404,7 @@ export default function LandingPage() {
   const [emailSent, setEmailSent] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
+  const sliderRef = useRef(null);
   const [isDark, setIsDark] = useState(() => {
   const saved = localStorage.getItem("theme");
   return saved ? saved === "dark" : true;
@@ -650,7 +651,7 @@ const theme = {
                 onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.1)"}
                 onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.05)"}
               ><IconUser /></button>
-{showDropdown && (
+              {showDropdown && (
                 <div style={{ position: "absolute", top: "calc(100% + 12px)", right: 0, width: "220px", background: isDark ? "#0d1a28" : "#ffffff", border: isDark ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(0,0,0,0.1)", borderRadius: "16px", padding: "8px", boxShadow: isDark ? "0 20px 40px rgba(0,0,0,0.4)" : "0 20px 40px rgba(0,0,0,0.12)", zIndex: 1000 }}>
                   <div style={{ padding: "12px 16px 10px", borderBottom: isDark ? "1px solid rgba(255,255,255,0.05)" : "1px solid rgba(0,0,0,0.07)", marginBottom: "6px" }}>
                     <div style={{ fontSize: "13px", fontWeight: "700", color: isDark ? "#fff" : "#0f172a", marginBottom: "2px" }}>{authUser?.name || authUser?.full_name}</div>
@@ -968,85 +969,76 @@ const theme = {
             )}
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "24px", justifyContent: "center" }}>
-            {loading ? (
-              <div style={{ gridColumn: "1 / -1", textAlign: "center", padding: "40px", color: isDark ? "rgba(255,255,255,0.4)" : "rgba(30,40,60,0.45)"}}>Loading vacancies...</div>
-            ) : displayedVacancies.length === 0 ? (
-              <div style={{ gridColumn: "1 / -1", textAlign: "center", padding: "60px 20px" }}>
-                <div style={{ marginBottom: "16px", opacity: 0.4, display: "flex", justifyContent: "center" }}>
-                  <IconSearch />
+          {/* Slider Container */}
+          <div style={{ position: "relative" }}>
+            {/* Cards */}
+            <div
+              ref={sliderRef}
+              style={{ display: "flex", gap: "24px", overflowX: "auto", paddingBottom: "20px", scrollSnapType: "x mandatory", msOverflowStyle: "none", scrollbarWidth: "none" }}
+            >
+              <style>{`.vacancy-slider::-webkit-scrollbar { display: none; }`}</style>
+              {loading ? (
+                <div style={{ minWidth: "320px", textAlign: "center", padding: "40px", color: isDark ? "rgba(255,255,255,0.4)" : "rgba(30,40,60,0.45)" }}>Loading vacancies...</div>
+              ) : displayedVacancies.length === 0 ? (
+                <div style={{ minWidth: "100%", textAlign: "center", padding: "60px 20px" }}>
+                  <div style={{ marginBottom: "16px", opacity: 0.4, display: "flex", justifyContent: "center" }}><IconSearch /></div>
+                  <p style={{ fontSize: "16px", fontWeight: "600", color: isDark ? "rgba(255,255,255,0.5)" : "rgba(30,40,60,0.6)", marginBottom: "8px" }}>
+                    {searchResults !== null ? "No job vacancies found" : "There are currently no published job vacancies."}
+                  </p>
                 </div>
-                <p style={{ fontSize: "16px", fontWeight: "600", color: isDark ? "rgba(255,255,255,0.5)" : "rgba(30,40,60,0.6)", marginBottom: "8px" }}>
-                  {searchResults !== null ? "No job vacancies found" : "There are currently no published job vacancies."}
-                </p>
-                {searchResults !== null && (
-                  <p style={{ fontSize: "13px", color: isDark ? "rgba(255,255,255,0.45)" : "rgba(30,40,60,0.55)" }}>Try changing the keyword or use the OR operator to broaden your search</p>
-                )}
-              </div>
-            ) : (
-              displayedVacancies.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((pos, i) => (
-                <div key={i} onClick={() => setPositionsPopupVacancy(pos)}
-                  style={{ background: theme.cardBg, border: `1px solid ${theme.cardBorder}`, borderRadius: "16px", overflow: "hidden", display: "flex", flexDirection: "column", transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)", cursor: "pointer", position: "relative" }}
-                  onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-6px)"; e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)"; e.currentTarget.style.borderColor = isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.15)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.background = theme.cardBg; e.currentTarget.style.borderColor = theme.cardBorder; }}
-                >
-              <div style={{ width: "100%", height: "220px", overflow: "hidden", background: "rgba(255,255,255,0.05)", flexShrink: 0 }}>
-                {pos.photo && (
-                  <img
-                    src={`${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.split("/api")[0] : "http://localhost:8000"}/storage/${pos.photo}`}
-                    alt={pos.title}
-                    style={{ width: "100%", height: "100%", display: "block", objectFit: "cover", objectPosition: "center top" }}
-                  />
-                )}
-              </div>
-          
-                  <div style={{ padding: "20px 24px", flex: 1, display: "flex", flexDirection: "column" }}>
-                    <p style={{ fontSize: "12px", fontWeight: "600", color: "#4a9eff", marginBottom: "4px" }}>{pos.company?.name}</p>
-                    <h3 style={{ fontSize: "19px", fontWeight: "800", color: isDark ? "#fff" : "#1a2332", margin: "0 0 14px", lineHeight: "1.3" }}>{pos.title} - Batch {pos.batch}</h3>
-                    <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: "8px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "14.5px", color: isDark ? "rgba(255,255,255,0.4)" : "rgba(30,40,60,0.45)", fontStyle: "italic" }}><IconCal /> <span>Period: {formatDate(pos.start_date || pos.deadline)} - {formatDate(pos.end_date || pos.deadline)}</span></div>
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "14.5px", color: isDark ? "rgba(255,255,255,0.5)" : "rgba(30,40,60,0.6)"}}><IconLocation /> <span>{pos.location?.split(",")[0]}</span></div>
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "14.5px", color: "#fb7185", fontWeight: "600" }}><IconDeadline /> <span style={{ fontStyle: "italic" }}>Deadline: {formatDate(pos.deadline)}</span></div>
+              ) : (
+                displayedVacancies.map((pos, i) => (
+                  <div key={i} onClick={() => setPositionsPopupVacancy(pos)}
+                    style={{ minWidth: "320px", maxWidth: "320px", background: theme.cardBg, border: `1px solid ${theme.cardBorder}`, borderRadius: "16px", overflow: "hidden", display: "flex", flexDirection: "column", transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)", cursor: "pointer", scrollSnapAlign: "start", flexShrink: 0 }}
+                    onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-6px)"; e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)"; e.currentTarget.style.borderColor = isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.15)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.background = theme.cardBg; e.currentTarget.style.borderColor = theme.cardBorder; }}
+                  >
+                    <div style={{ width: "100%", height: "220px", overflow: "hidden", background: "rgba(255,255,255,0.05)", flexShrink: 0 }}>
+                      {pos.photo && (
+                        <img
+                          src={`${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.split("/api")[0] : "http://localhost:8000"}/storage/${pos.photo}`}
+                          alt={pos.title}
+                          style={{ width: "100%", height: "100%", display: "block", objectFit: "cover", objectPosition: "center top" }}
+                        />
+                      )}
                     </div>
-                    <div style={{ display: "flex", gap: "8px", marginTop: "18px", paddingTop: "16px", borderTop: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"}`}}>
-                      <span style={{ fontSize: "10px", fontWeight: "700", textTransform: "uppercase", padding: "4px 10px", borderRadius: "6px", background: "rgba(74,158,255,0.1)", color: "#4a9eff" }}>{pos.type}</span>
-                      <span style={{ fontSize: "10px", fontWeight: "700", textTransform: "uppercase", padding: "4px 10px", borderRadius: "6px", background: "rgba(16,185,129,0.1)", color: "#10b981" }}>{pos.payment_type}</span>
-                      <span style={{ fontSize: "10px", fontWeight: "700", marginLeft: "auto", color: isDark ? "rgba(255,255,255,0.4)" : "rgba(30,40,60,0.45)" }}>{pos.total_quota || 0} Quota</span>
+                    <div style={{ padding: "20px 24px", flex: 1, display: "flex", flexDirection: "column" }}>
+                      <p style={{ fontSize: "12px", fontWeight: "600", color: "#4a9eff", marginBottom: "4px" }}>{pos.company?.name}</p>
+                      <h3 style={{ fontSize: "19px", fontWeight: "800", color: isDark ? "#fff" : "#1a2332", margin: "0 0 14px", lineHeight: "1.3" }}>{pos.title} - Batch {pos.batch}</h3>
+                      <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: "8px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "14.5px", color: isDark ? "rgba(255,255,255,0.4)" : "rgba(30,40,60,0.45)", fontStyle: "italic" }}><IconCal /> <span>Period: {formatDate(pos.start_date || pos.deadline)} - {formatDate(pos.end_date || pos.deadline)}</span></div>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "14.5px", color: isDark ? "rgba(255,255,255,0.5)" : "rgba(30,40,60,0.6)" }}><IconLocation /> <span>{pos.location?.split(",")[0]}</span></div>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "14.5px", color: "#fb7185", fontWeight: "600" }}><IconDeadline /> <span style={{ fontStyle: "italic" }}>Deadline: {formatDate(pos.deadline)}</span></div>
+                      </div>
+                      <div style={{ display: "flex", gap: "8px", marginTop: "18px", paddingTop: "16px", borderTop: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"}` }}>
+                        <span style={{ fontSize: "10px", fontWeight: "700", textTransform: "uppercase", padding: "4px 10px", borderRadius: "6px", background: "rgba(74,158,255,0.1)", color: "#4a9eff" }}>{pos.type}</span>
+                        <span style={{ fontSize: "10px", fontWeight: "700", textTransform: "uppercase", padding: "4px 10px", borderRadius: "6px", background: "rgba(16,185,129,0.1)", color: "#10b981" }}>{pos.payment_type}</span>
+                        <span style={{ fontSize: "10px", fontWeight: "700", marginLeft: "auto", color: isDark ? "rgba(255,255,255,0.4)" : "rgba(30,40,60,0.45)" }}>{pos.total_quota || 0} Quota</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))
-            )}
-          </div>
+                ))
+              )}
+            </div>
 
-          {/* Pagination — menggunakan displayedVacancies */}
-          {!loading && displayedVacancies.length > 0 && (
-            <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "10px", marginTop: "48px" }}>
-              <button onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1}
-                style={{ width: "40px", height: "40px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.03)", color: currentPage === 1 ? (isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.2)") : (isDark ? "#fff" : "#1a2332"), cursor: currentPage === 1 ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "0.2s" }}
-                onMouseEnter={e => currentPage !== 1 && (e.currentTarget.style.background = "rgba(255,255,255,0.08)")}
-                onMouseLeave={e => currentPage !== 1 && (e.currentTarget.style.background = "rgba(255,255,255,0.03)")}
+            {/* Arrow buttons di bawah */}
+            <div style={{ display: "flex", justifyContent: "center", gap: "12px", marginTop: "24px" }}>
+              <button
+                onClick={() => sliderRef.current?.scrollBy({ left: -360, behavior: "smooth" })}
+                style={{ width: "40px", height: "40px", borderRadius: "12px", border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"}`, background: isDark ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.8)", color: isDark ? "#fff" : "#1a2332", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px", transition: "0.2s" }}
+                onMouseEnter={e => e.currentTarget.style.background = "rgba(74,158,255,0.1)"}
+                onMouseLeave={e => e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.8)"}
               >←</button>
-              {Array.from({ length: Math.ceil(displayedVacancies.length / itemsPerPage) }).map((_, idx) => {
-                const pageNum = idx + 1;
-                const isActive = currentPage === pageNum;
-                return (
-                  <button key={pageNum} onClick={() => setCurrentPage(pageNum)}
-                    style={{ width: "40px", height: "40px", borderRadius: "12px", border: "none", background: isActive ? "linear-gradient(135deg, #1e40af, #3b82f6)" : "rgba(255,255,255,0.03)", color: "#fff", fontWeight: "700", cursor: "pointer", transition: "0.2s", boxShadow: isActive ? "0 4px 12px rgba(30,64,175,0.3)" : "none" }}
-                    onMouseEnter={e => !isActive && (e.currentTarget.style.background = "rgba(255,255,255,0.08)")}
-                    onMouseLeave={e => !isActive && (e.currentTarget.style.background = "rgba(255,255,255,0.03)")}
-                  >{pageNum}</button>
-                );
-              })}
-              <button onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(displayedVacancies.length / itemsPerPage)))} disabled={currentPage === Math.ceil(displayedVacancies.length / itemsPerPage)}
-                style={{ width: "40px", height: "40px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.03)", color: currentPage === Math.ceil(displayedVacancies.length / itemsPerPage) ? "rgba(255,255,255,0.2)" : "#fff", cursor: currentPage === Math.ceil(displayedVacancies.length / itemsPerPage) ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "0.2s" }}
-                onMouseEnter={e => currentPage !== Math.ceil(displayedVacancies.length / itemsPerPage) && (e.currentTarget.style.background = "rgba(255,255,255,0.08)")}
-                onMouseLeave={e => currentPage !== Math.ceil(displayedVacancies.length / itemsPerPage) && (e.currentTarget.style.background = "rgba(255,255,255,0.03)")}
+              <button
+                onClick={() => sliderRef.current?.scrollBy({ left: 360, behavior: "smooth" })}
+                style={{ width: "40px", height: "40px", borderRadius: "12px", border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"}`, background: isDark ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.8)", color: isDark ? "#fff" : "#1a2332", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px", transition: "0.2s" }}
+                onMouseEnter={e => e.currentTarget.style.background = "rgba(74,158,255,0.1)"}
+                onMouseLeave={e => e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.8)"}
               >→</button>
             </div>
-          )}
-        </div>
-      </section>
+          </div>
+          </div>
+          </section>
 
       {/* ── CTA SECTION ─────────────────────────────────────────────────── */}
       {!isAuthenticated && (
