@@ -1206,9 +1206,9 @@ const theme = {
       {/* ── FOOTER ──────────────────────────────────────────────────────── */}
       <footer style={{ background: theme.footerBg, borderTop: `1px solid ${theme.footerBorder}`, padding: "40px 24px 40px 24px" }}>
         <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
-          <div className="footer-grid" style={{ display: "grid", gridTemplateColumns: "1.2fr 0.8fr 2fr", gap: "48px", marginBottom: "64px", alignItems: "center" }}>
+          <div className="footer-grid" style={{ display: "grid", gridTemplateColumns: "1.2fr 0.8fr 2fr", gap: "48px", marginBottom: "64px", alignItems: "flex-start" }}>
             {/* Kolom 1: Logo + Desc */}
-            <div className="fadein footer-col footer-brand" style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", textAlign: "left", paddingTop: "0px" }}>
+            <div className="fadein footer-col footer-brand" style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", textAlign: "left", paddingTop: "35px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "14px", marginBottom: "20px" }}>
                 <img src="/assets/images/logo.png" alt="EarlyPath" style={{ height: "60px", objectFit: "contain" }} />
                 <span style={{ fontSize: "18px", fontWeight: "800", color: isDark ? "#fff" : "#1a2332", letterSpacing: "-0.5px" }}>EarlyPath</span>
@@ -1237,7 +1237,7 @@ const theme = {
             </div>
 
             {/* Kolom 2: Quick Links */}
-            <div className="fadein footer-col" style={{ display: "flex", flexDirection: "column", gap: "8px", paddingTop: "0px" }}>
+            <div className="fadein footer-col" style={{ display: "flex", flexDirection: "column", gap: "8px", paddingTop: "35px" }}>
               <p style={{ fontSize: "11px", fontWeight: "700", letterSpacing: "0.1em", color: "#4a9eff", textTransform: "uppercase", margin: "0 0 4px" }}>Quick Links</p>
               {["Features", "How It Works", "Open Programs", "Contact"].map((link) => (
                 <a key={link}
@@ -1250,7 +1250,7 @@ const theme = {
             </div>
 
             {/* Kolom 3: Form Contact */}
-            <div className="fadein footer-col" style={{ paddingTop: "0px" }}>
+            <div className="fadein footer-col">
               <p style={{ fontSize: "11px", fontWeight: "700", letterSpacing: "0.1em", color: "#4a9eff", textTransform: "uppercase", margin: "0 0 24px" }}>Send us a Message</p>
               {emailSent ? (
                 <div style={{ padding: "24px", background: "rgba(74,158,255,0.08)", border: "1px solid rgba(74,158,255,0.2)", borderRadius: "16px", fontSize: "14px", color: "#4a9eff", fontWeight: "600", textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px" }}>
