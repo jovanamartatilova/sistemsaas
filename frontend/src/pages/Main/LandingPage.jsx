@@ -832,36 +832,16 @@ const theme = {
           </div>
           {/* END LEFT */}
 
-          {/* RIGHT: Stat badges vertikal */}
-          <div style={{ flex: "0 0 auto", display: "flex", flexDirection: "column", gap: "16px", opacity: heroVisible ? 1 : 0, transition: "opacity 0.9s ease 0.6s" }} className="hidden-mobile hero-right">
-            {[
-              { value: "Multi-Tenant", label: "Built for Scale", color: "#4a9eff", delay: "0s" },
-              { value: "AI-Powered", label: "Smart Screening", color: "#a78bfa", delay: "0.15s" },
-              { value: "Auto Cert", label: "One Click", color: "#34d399", delay: "0.3s" },
-              { value: "Role-Based", label: "Full Control", color: "#fbbf24", delay: "0.45s" },
-            ].map((stat, i) => (
-              <div key={i} style={{
-                background: isDark ? "rgba(13,26,40,0.85)" : "rgba(255,255,255,0.85)",
-                backdropFilter: "blur(16px)",
-                border: `1px solid ${stat.color}30`,
-                borderRadius: "16px",
-                padding: "16px 24px",
-                minWidth: "220px",
-                animation: `slideInRight 0.6s ease ${stat.delay} both`,
-                boxShadow: `0 4px 24px ${stat.color}15`,
-                transition: "transform 0.25s, box-shadow 0.25s",
-              }}
-              onMouseEnter={e => { e.currentTarget.style.transform = "translateX(-4px)"; e.currentTarget.style.boxShadow = `0 8px 32px ${stat.color}30`; }}
-              onMouseLeave={e => { e.currentTarget.style.transform = "translateX(0)"; e.currentTarget.style.boxShadow = `0 4px 24px ${stat.color}15`; }}
-              >
-                <div style={{ fontSize: "15px", fontWeight: "700", color: stat.color, marginBottom: "4px" }}>{stat.value}</div>
-                <div style={{ fontSize: "12px", color: isDark ? "rgba(255,255,255,0.45)" : "rgba(30,40,60,0.5)", fontWeight: "500" }}>{stat.label}</div>
-              </div>
-            ))}
-          </div>
-          {/* END RIGHT */}
-
-        </div>
+          {/* RIGHT: Logo animasi */}
+<div className="hidden-mobile hero-right" style={{ flex: "0 0 auto", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", width: "280px", height: "280px", opacity: heroVisible ? 1 : 0, transition: "opacity 0.9s ease 0.6s" }}>
+  <div style={{ position: "absolute", width: "260px", height: "260px", borderRadius: "50%", border: "1.5px solid rgba(74,158,255,0.2)", animation: "ringPulse 2.8s ease-in-out infinite" }} />
+  <div style={{ position: "absolute", width: "215px", height: "215px", borderRadius: "50%", border: "1.5px solid rgba(167,139,250,0.18)", animation: "ringPulse 3.5s ease-in-out infinite 0.7s" }} />
+  <div style={{ position: "absolute", width: "170px", height: "170px", borderRadius: "50%", border: "1px solid rgba(52,211,153,0.14)", animation: "ringPulse 4.2s ease-in-out infinite 1.4s" }} />
+  <div style={{ position: "absolute", width: "145px", height: "145px", borderRadius: "50%", background: "radial-gradient(circle, rgba(74,158,255,0.12) 0%, transparent 70%)" }} />
+  <img src="/assets/images/logo.png" alt="EarlyPath" style={{ position: "relative", zIndex: 2, width: "115px", height: "115px", objectFit: "contain", animation: "logoBreath 4s ease-in-out infinite" }} />
+</div>
+{/* END RIGHT */}
+       </div>
       </section>
 
       {/* ── FEATURES SECTION ───────────────────────────────────────────── */}
@@ -1243,7 +1223,10 @@ const theme = {
         isDark={isDark}
       />
       <style>{`
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+@keyframes badgeFloat { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-7px); } }
+@keyframes ringPulse { 0%, 100% { opacity: 0.4; transform: scale(1); } 50% { opacity: 0.85; transform: scale(1.1); } }
+@keyframes logoBreath { 0%, 100% { transform: scale(1); filter: drop-shadow(0 0 16px rgba(74,158,255,0.3)); } 50% { transform: scale(1.07); filter: drop-shadow(0 0 32px rgba(74,158,255,0.6)); } }        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
         @keyframes fadeUp { from { opacity: 0; transform: translateY(32px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes floatOrb { 0%, 100% { transform: translateY(0px) scale(1); } 50% { transform: translateY(-20px) scale(1.05); } }
         @keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 20px rgba(74,158,255,0.3); } 50% { box-shadow: 0 0 40px rgba(74,158,255,0.6); } }
