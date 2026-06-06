@@ -77,7 +77,6 @@ return [
             'transport' => 'mailtrap',
             'api_token' => env('MAILTRAP_API_TOKEN'),
         ],
-
         'sendmail' => [
             'transport' => 'sendmail',
             'path' => env('MAIL_SENDMAIL_PATH', '/usr/sbin/sendmail -bs -i'),

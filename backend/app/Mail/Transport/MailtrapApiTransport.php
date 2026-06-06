@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Mail\Transport;
 
 use Symfony\Component\Mailer\Transport\AbstractTransport;
@@ -7,10 +6,10 @@ use Symfony\Component\Mime\Email;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Psr\Log\LoggerInterface;
 
+
 class MailtrapApiTransport extends AbstractTransport
 {
     private string $apiToken;
-
     public function __construct(
         string $apiToken,
         HttpClientInterface $client = null,
