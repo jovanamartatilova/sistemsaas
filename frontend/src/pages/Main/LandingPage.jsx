@@ -302,7 +302,7 @@ const PositionsPopup = ({ vacancy, onClose, isDark }) => {
       onClick={(e) => e.target === e.currentTarget && onClose()}
       style={{ position: "fixed", inset: 0, background: "rgba(10,22,40,0.85)", backdropFilter: "blur(8px)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}
     >
-      <div style={{ background: isDark ? "#0d1a28" : "#ffffff", borderRadius: "24px", width: "100%", maxWidth: "520px", maxHeight: "85vh", overflowY: "auto", position: "relative", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5)", border: isDark ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(0,0,0,0.1)" }}>
+      <div style={{ background: isDark ? "#0d1a28" : "#ffffff", borderRadius: "24px", width: "100%", maxHeight: "85vh", overflowY: "auto", position: "relative", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5)", border: isDark ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(0,0,0,0.1)" }}>
 
         {/* Header */}
         <div style={{ padding: "28px 28px 0" }}>
@@ -310,7 +310,7 @@ const PositionsPopup = ({ vacancy, onClose, isDark }) => {
 
           <p style={{ fontSize: "12px", fontWeight: "600", color: "#4a9eff", marginBottom: "6px" }}>{vacancy.company?.name}</p>
           <h2 style={{ fontSize: "22px", fontWeight: "800", color: isDark ? "#fff" : "#1a2332", margin: "0 0 4px" }}>{vacancy.title}</h2>
-          <p style={{ fontSize: "13px", color: isDark ? "rgba(255,255,255,0.4)" : "rgba(30,40,60,0.5)", marginBottom: "20px" }}>
+          <p style={{ fontSize: "13px", color: isDark ? "rgba(255,255,255,0.4)" : "rgba(30,40,60,0.5)", marginBottom: "20px", marginTop: "34px" }}>
             Batch {vacancy.batch} · {vacancy.location?.split(",")[0]}
             <span style={{ marginLeft: "10px", fontSize: "11px", fontWeight: "700", padding: "2px 8px", borderRadius: "6px", background: "rgba(74,158,255,0.1)", color: "#4a9eff" }}>{vacancy.total_quota || 0} Total Quota</span>
           </p>
@@ -561,9 +561,9 @@ const theme = {
   // Helper: Get button label and path for authenticated users
   const getAuthButtonConfig = () => {
     if (userHasRole()) {
-      return { label: "Dashboard", path: getDashboardPath(), icon: "layout" };
+      return { label: "Dashboard", path: getDashboardPath() };
     }
-    return { label: "Choose Your Role", path: "/onboarding", icon: "compass" };
+    return { label: "Choose Your Role", path: "/onboarding" };
   };
 
   useEffect(() => {
@@ -640,12 +640,31 @@ const theme = {
   }, []);
 
   return (
-    <div style={{ background: theme.bg, minHeight: "100vh", fontFamily: "'Poppins', sans-serif", color: theme.text, overflowX: "hidden", transition: "background 0.35s, color 0.35s" }}>
+    <div style={{ background: isDark ? "#060e1e" : "#f0f4ff", minHeight: "100vh", fontFamily: "'Poppins', sans-serif", color: theme.text, overflowX: "hidden", transition: "background 0.35s, color 0.35s" }}>
+
+      {/* ── GLOBAL BG: particles + orbs seluruh halaman ── */}
+      <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, overflow: "hidden" }}>
+        <div style={{ position: "absolute", top: "10%", left: "-5%", width: "600px", height: "600px", borderRadius: "50%", background: "rgba(74,120,255,0.12)", filter: "blur(120px)", animation: "orbMove 14s ease-in-out infinite" }} />
+        <div style={{ position: "absolute", bottom: "5%", right: "-5%", width: "550px", height: "550px", borderRadius: "50%", background: "rgba(150,80,255,0.10)", filter: "blur(120px)", animation: "orbMove2 17s ease-in-out infinite" }} />
+        <div style={{ position: "absolute", top: "40%", left: "30%", width: "400px", height: "400px", borderRadius: "50%", background: "rgba(30,200,180,0.06)", filter: "blur(100px)", animation: "orbMove 22s ease-in-out infinite reverse" }} />
+        <div style={{ position: "absolute", top: "5%", right: "20%", width: "300px", height: "300px", borderRadius: "50%", background: "rgba(255,160,50,0.05)", filter: "blur(90px)", animation: "orbMove2 19s ease-in-out infinite 2s" }} />
+        <div style={{ position: "absolute", bottom: "30%", left: "20%", width: "280px", height: "280px", borderRadius: "50%", background: "rgba(255,80,120,0.05)", filter: "blur(90px)", animation: "orbMove 25s ease-in-out infinite 1s" }} />
+        <div style={{ position: "absolute", top: "30%", left: "20%", width: "5px", height: "5px", borderRadius: "50%", background: "#4a9eff", boxShadow: "0 0 8px #4a9eff", animation: "particle1 5s ease-in-out infinite" }} />
+        <div style={{ position: "absolute", top: "60%", left: "15%", width: "3px", height: "3px", borderRadius: "50%", background: "#a78bfa", boxShadow: "0 0 6px #a78bfa", animation: "particle2 7s ease-in-out infinite 1s" }} />
+        <div style={{ position: "absolute", top: "45%", left: "55%", width: "4px", height: "4px", borderRadius: "50%", background: "#34d399", boxShadow: "0 0 8px #34d399", animation: "particle3 6s ease-in-out infinite 2s" }} />
+        <div style={{ position: "absolute", top: "25%", right: "20%", width: "3px", height: "3px", borderRadius: "50%", background: "#fbbf24", boxShadow: "0 0 6px #fbbf24", animation: "particle1 8s ease-in-out infinite 0.5s" }} />
+        <div style={{ position: "absolute", top: "70%", right: "30%", width: "4px", height: "4px", borderRadius: "50%", background: "#f87171", boxShadow: "0 0 8px #f87171", animation: "particle2 6.5s ease-in-out infinite 3s" }} />
+        <div style={{ position: "absolute", top: "15%", left: "45%", width: "3px", height: "3px", borderRadius: "50%", background: "#4a9eff", boxShadow: "0 0 6px #4a9eff", animation: "particle3 9s ease-in-out infinite 1.5s" }} />
+        <div style={{ position: "absolute", top: "80%", left: "35%", width: "4px", height: "4px", borderRadius: "50%", background: "#a78bfa", boxShadow: "0 0 8px #a78bfa", animation: "particle1 7.5s ease-in-out infinite 2.5s" }} />
+        <div style={{ position: "absolute", top: "55%", right: "15%", width: "3px", height: "3px", borderRadius: "50%", background: "#34d399", boxShadow: "0 0 6px #34d399", animation: "particle2 5.5s ease-in-out infinite 0.8s" }} />
+        <div style={{ position: "absolute", top: "35%", left: "8%", width: "5px", height: "5px", borderRadius: "50%", background: "#f87171", boxShadow: "0 0 10px #f87171", animation: "particle3 8s ease-in-out infinite 3.5s" }} />
+        <div style={{ position: "absolute", top: "20%", right: "10%", width: "3px", height: "3px", borderRadius: "50%", background: "#fbbf24", boxShadow: "0 0 6px #fbbf24", animation: "particle1 6s ease-in-out infinite 4s" }} />
+      </div>
 
       {/* ── NAVBAR ─────────────────────────────────────────────────────── */}
       <nav style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, padding: "0 32px", height: "64px", display: "flex", alignItems: "center", justifyContent: "space-between", background: theme.navBg(scrolled), backdropFilter: "blur(16px)", borderBottom: theme.navBorder(scrolled), transition: "all 0.35s ease" }}>
         <Link to="/" style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", textDecoration: "none" }}>
-          <img src="/assets/images/logo.png" alt="EarlyPath" style={{ height: "46px", objectFit: "contain" }} />
+          <img src="/assets/images/logo.png" alt="EarlyPath" style={{ height: "48px", objectFit: "contain" }} />
           <span style={{ fontSize: 18, fontWeight: 800, color: isDark ? "#fff" : "#1a2332", letterSpacing: "-0.5px" }}>EarlyPath</span>
         </Link>
 
@@ -731,9 +750,8 @@ const theme = {
           <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "8px" }}>
             <button
               onClick={() => { const next = !isDark; setIsDark(next); localStorage.setItem("theme", next ? "dark" : "light"); }}
-              style={{ display: "flex", alignItems: "center", gap: "10px", background: "transparent", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", padding: "10px 16px", borderRadius: "8px", fontSize: "14px", cursor: "pointer" }}
-            style={{ display: "flex", alignItems: "center", gap: "10px", background: "transparent", border: isDark ? "1px solid rgba(255,255,255,0.2)" : "1px solid rgba(0,0,0,0.15)", color: isDark ? "#fff" : "#1a2332", padding: "10px 16px", borderRadius: "8px", fontSize: "14px", cursor: "pointer" }}
-            >{isDark ? <IconSun /> : <IconMoon />} {isDark ? "Light Mode" : "Dark Mode"}</button>
+              style={{ display: "flex", alignItems: "center", gap: "10px", background: "transparent", border: isDark ? "1px solid rgba(255,255,255,0.2)" : "1px solid rgba(0,0,0,0.15)", color: isDark ? "#fff" : "#1a2332", padding: "10px 16px", borderRadius: "8px", fontSize: "14px", cursor: "pointer" }}
+            ><span style={{ display: "flex", alignItems: "center", gap: "8px" }}><span style={{ display: "flex", alignItems: "center", lineHeight: 1 }}>{isDark ? <IconSun /> : <IconMoon />}</span><span>{isDark ? "Light Mode" : "Dark Mode"}</span></span></button>
           {!isAuthenticated ? (
               <>
                 <button onClick={() => navigate("/login")} style={{ background: "transparent", border: isDark ? "1px solid rgba(255,255,255,0.2)" : "1px solid rgba(0,0,0,0.15)", color: isDark ? "#fff" : "#1a2332", padding: "10px", borderRadius: "8px", fontSize: "14px", cursor: "pointer" }}>Sign In</button>
@@ -750,38 +768,49 @@ const theme = {
       )}
 
       {/* ── HERO SECTION ──────────────────────────────────────────────── */}
-      <section style={{ position: "relative", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "100px 24px 80px", overflow: "hidden" }}>
-        <div style={{ position: "absolute", inset: 0, backgroundImage: "url('/assets/images/bg.png')", backgroundSize: "cover", backgroundPosition: `center ${-parallaxY}px`, backgroundRepeat: "no-repeat", opacity: 0.15, transition: "background-position 0.1s linear" }} />
-        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(6,16,30,0.85) 0%, rgba(6,16,30,0.75) 40%, rgba(6,16,30,0.95) 100%)" }} />
-        <div className="float-orb" style={{ position: "absolute", top: "20%", left: "5%", width: "400px", height: "400px", borderRadius: "50%", background: "rgba(74,158,255,0.07)", filter: "blur(80px)", pointerEvents: "none" }} />
-        <div className="float-orb-slow" style={{ position: "absolute", bottom: "20%", right: "5%", width: "300px", height: "300px", borderRadius: "50%", background: "rgba(167,139,250,0.07)", filter: "blur(80px)", pointerEvents: "none" }} />
-
-        <div style={{ position: "relative", zIndex: 2, maxWidth: "1100px", width: "100%", display: "flex", alignItems: "center", gap: "64px", flexWrap: "wrap" }}>
+      <section style={{ position: "relative", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "120px 48px 100px 48px" }}>
+          {[...Array(10)].map((_, i) => (
+            <div key={"hp"+i} style={{
+              position: "absolute",
+              width: [6,4,3,5,4,3,6,4,3,5][i]+"px",
+              height: [6,4,3,5,4,3,6,4,3,5][i]+"px",
+              borderRadius: "50%",
+              background: ["#4a9eff","#a78bfa","#34d399","#fbbf24","#f87171","#60a5fa","#4a9eff","#a78bfa","#34d399","#fbbf24"][i],
+              boxShadow: "0 0 10px "+["#4a9eff","#a78bfa","#34d399","#fbbf24","#f87171","#60a5fa","#4a9eff","#a78bfa","#34d399","#fbbf24"][i],
+              top: [15,30,50,65,80,22,42,58,72,88][i]+"%",
+              left: [8,22,68,82,45,12,88,35,60,75][i]+"%",
+              animation: "particle"+((i%3)+1)+" "+(5+i*0.8)+"s ease-in-out infinite "+(i*0.6)+"s",
+              zIndex: 1, pointerEvents: "none"
+            }} />
+          ))}
+        {/* bg gedung */}
+        <div style={{ position: "absolute", inset: 0, backgroundImage: "url('/assets/images/bg.png')", backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat", opacity: isDark ? 0.35 : 0.18, zIndex: 0 }} />
+        <div style={{ position: "absolute", inset: 0, background: isDark ? "linear-gradient(180deg, rgba(6,16,30,0.55) 0%, rgba(6,16,30,0.5) 40%, rgba(6,16,30,0.75) 100%)" : "linear-gradient(180deg, rgba(240,244,255,0.45) 0%, rgba(230,238,255,0.35) 40%, rgba(220,232,255,0.6) 100%)", zIndex: 0 }} />
+        <div style={{ position: "relative", zIndex: 2, maxWidth: "1100px", width: "100%", display: "flex", alignItems: "center", gap: "0px", flexWrap: "wrap", justifyContent: "space-between", flexDirection: "row" }}>
           
           {/* LEFT: Text content */}
-          <div style={{ flex: "1 1 480px", textAlign: "left" }}>
-            <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "rgba(74,158,255,0.1)", border: "1px solid rgba(74,158,255,0.25)", borderRadius: "100px", padding: "6px 16px", fontSize: "13px", color: "#4a9eff", fontWeight: "600", marginBottom: "28px", letterSpacing: "0.5px", opacity: heroVisible ? 1 : 0, transform: heroVisible ? "translateY(0)" : "translateY(24px)", transition: "opacity 0.7s ease, transform 0.7s ease" }}>
+          <div style={{ flex: "1 1 540px", textAlign: "left", minWidth: 0 }}>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: isDark ? "rgba(74,158,255,0.1)" : "rgba(74,158,255,0.12)", border: "1px solid rgba(74,158,255,0.35)", borderRadius: "100px", padding: "6px 16px", fontSize: "13px", color: "#4a9eff", fontWeight: "600", marginBottom: "28px", letterSpacing: "0.5px", opacity: heroVisible ? 1 : 0, transform: heroVisible ? "translateY(0)" : "translateY(24px)", transition: "opacity 0.7s ease, transform 0.7s ease", animation: heroVisible ? "badgePulse 3s ease-in-out infinite" : "none" }}>
               <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#4a9eff", display: "inline-block", boxShadow: "0 0 8px #4a9eff" }} />
               Internship Management Platform
             </div>
 
-            <h1 style={{ fontSize: "clamp(36px, 5vw, 64px)", fontWeight: "800", lineHeight: "1.1", letterSpacing: "-2px", color: "#fff", margin: "0 0 24px", opacity: heroVisible ? 1 : 0, transform: heroVisible ? "translateY(0)" : "translateY(24px)", transition: "opacity 0.7s ease 0.2s, transform 0.7s ease 0.2s" }}>
-              The Smarter Way to Run Internship Programs
+            <h1 style={{ fontSize: "clamp(42px, 5.5vw, 64px)", fontWeight: "800", lineHeight: "1.08", letterSpacing: "-2px", margin: "0 0 24px", color: isDark ? "#fff" : "#0f172a", opacity: heroVisible ? 1 : 0, transform: heroVisible ? "translateY(0)" : "translateY(24px)", transition: "opacity 0.7s ease 0.2s, transform 0.7s ease 0.2s" }}>
+              Build Better,<br />Internship Programs
             </h1>
 
-            <p style={{ fontSize: "17px", lineHeight: "1.75", color: "rgba(255,255,255,0.6)", maxWidth: "480px", margin: "0 0 36px", opacity: heroVisible ? 1 : 0, transform: heroVisible ? "translateY(0)" : "translateY(24px)", transition: "opacity 0.7s ease 0.4s, transform 0.7s ease 0.4s" }}>
+            <p style={{ fontSize: "17px", lineHeight: "1.75", color: isDark ? "rgba(255,255,255,0.6)" : "rgba(15,23,42,0.7)", maxWidth: "480px", margin: "0 0 36px", opacity: heroVisible ? 1 : 0, transform: heroVisible ? "translateY(0)" : "translateY(24px)", transition: "opacity 0.7s ease 0.4s, transform 0.7s ease 0.4s" }}>
               Everything your team needs to post programs, select candidates, track progress, and certify interns. And everything students need to find and apply for the right opportunity.
             </p>
-
           {/* ── SEARCH BAR ── */}
-          <div style={{ maxWidth: "520px", marginBottom: "36px", position: "relative", opacity: heroVisible ? 1 : 0, transform: heroVisible ? "translateY(0)" : "translateY(24px)", transition: "opacity 0.7s ease 0.55s, transform 0.7s ease 0.55s" }}>
+          <div style={{ maxWidth: "640px", marginBottom: "36px", position: "relative", opacity: heroVisible ? 1 : 0, transform: heroVisible ? "translateY(0)" : "translateY(24px)", transition: "opacity 0.7s ease 0.55s, transform 0.7s ease 0.55s" }}>
             <form onSubmit={handleSearch}>
               <div
                 style={{ display: "flex", alignItems: "center", background: theme.inputBg, border: `1px solid ${theme.inputBorder}`,borderRadius: "14px", overflow: "hidden", backdropFilter: "blur(12px)", boxShadow: "0 8px 32px rgba(0,0,0,0.25)", transition: "border-color 0.25s" }}
                 onFocusCapture={e => e.currentTarget.style.borderColor = "rgba(74,158,255,0.5)"}
                 onBlurCapture={e => e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)"}
               >
-                <div style={{ padding: "0 14px 0 18px", color: "rgba(255,255,255,0.35)", display: "flex", alignItems: "center", flexShrink: 0 }}>
+                <div style={{ padding: "0 14px 0 18px", color: isDark ? "rgba(255,255,255,0.35)" : "rgba(15,23,42,0.4)", display: "flex", alignItems: "center", flexShrink: 0 }}>
                   <IconSearch />
                 </div>
                 <input
@@ -815,37 +844,22 @@ const theme = {
           </div>
           {/* ── END SEARCH BAR ── */}
 
-          {!isAuthenticated && (
-            <div style={{ display: "flex", gap: "14px", flexWrap: "wrap", opacity: heroVisible ? 1 : 0, transform: heroVisible ? "translateY(0)" : "translateY(24px)", transition: "opacity 0.7s ease 0.85s, transform 0.7s ease 0.85s" }}>
-              <button onClick={() => navigate("/register")}
-                style={{ background: "linear-gradient(135deg, #2d7dd2 0%, #4a9eff 100%)", border: "none", color: "#fff", padding: "14px 36px", borderRadius: "10px", fontSize: "15px", fontWeight: "700", cursor: "pointer", boxShadow: "0 8px 32px rgba(74,158,255,0.4)", transition: "all 0.25s", display: "flex", alignItems: "center", gap: "8px" }}
-                onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 12px 40px rgba(74,158,255,0.55)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 8px 32px rgba(74,158,255,0.4)"; }}
-              >Start for Free <IconArrow /></button>
-              <button onClick={() => navigate("/login")}
-                style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", color: "#fff", padding: "14px 36px", borderRadius: "10px", fontSize: "15px", fontWeight: "600", cursor: "pointer", transition: "all 0.25s", backdropFilter: "blur(8px)" }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.3)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)"; }}
-              >Sign In</button>
-            </div>
-          )}
+
           </div>
           {/* END LEFT */}
-
-          {/* RIGHT: Logo animasi */}
-<div className="hidden-mobile hero-right" style={{ flex: "0 0 auto", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", width: "280px", height: "280px", opacity: heroVisible ? 1 : 0, transition: "opacity 0.9s ease 0.6s" }}>
-  <div style={{ position: "absolute", width: "260px", height: "260px", borderRadius: "50%", border: "1.5px solid rgba(74,158,255,0.2)", animation: "ringPulse 2.8s ease-in-out infinite" }} />
-  <div style={{ position: "absolute", width: "215px", height: "215px", borderRadius: "50%", border: "1.5px solid rgba(167,139,250,0.18)", animation: "ringPulse 3.5s ease-in-out infinite 0.7s" }} />
-  <div style={{ position: "absolute", width: "170px", height: "170px", borderRadius: "50%", border: "1px solid rgba(52,211,153,0.14)", animation: "ringPulse 4.2s ease-in-out infinite 1.4s" }} />
-  <div style={{ position: "absolute", width: "145px", height: "145px", borderRadius: "50%", background: "radial-gradient(circle, rgba(74,158,255,0.12) 0%, transparent 70%)" }} />
-  <img src="/assets/images/logo.png" alt="EarlyPath" style={{ position: "relative", zIndex: 2, width: "115px", height: "115px", objectFit: "contain", animation: "logoBreath 4s ease-in-out infinite" }} />
-</div>
-{/* END RIGHT */}
+          {/* RIGHT: Logo gede float */}
+          <div className="hero-right" style={{ position: "absolute", right: "-160px", top: "50%", transform: "translateY(-50%)", display: "flex", alignItems: "center", justifyContent: "flex-end", opacity: heroVisible ? 1 : 0, transition: "opacity 0.9s ease 0.6s", zIndex: 1, width: "620px" }}>
+            <img src="/assets/images/logo.png" alt="EarlyPath" style={{ width: "100%", maxWidth: "1100px", height: "auto", objectFit: "contain", animation: "gentleFloat 4s ease-in-out infinite, logoBreath 6s ease-in-out infinite", filter: isDark ? "drop-shadow(0 0 100px rgba(74,158,255,0.5))" : "drop-shadow(0 0 60px rgba(74,158,255,0.35))" }} />
+          </div>
+          {/* END RIGHT */}
        </div>
+
       </section>
 
-      {/* ── FEATURES SECTION ───────────────────────────────────────────── */}
-      <section id="features" style={{ padding: "100px 24px", background: isDark ? "rgba(255,255,255,0.01)" : "rgba(255,255,255,0.6)" }}>
+  
+
+            {/* ── FEATURES SECTION ───────────────────────────────────────────── */}
+      <section id="features" style={{ padding: "100px 24px", background: isDark ? "#0d1117" : "#f5f7ff" }}>
         <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
           <div style={{ textAlign: "center", marginBottom: "64px" }} className="reveal">
             <p style={{ fontSize: "13px", fontWeight: "600", color: "#4a9eff", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "12px" }}>Platform Features</p>
@@ -873,6 +887,11 @@ const theme = {
       </section>
 
       {/* ── PROCESS SECTION ─────────────────────────────────────────────── */}
+      <div style={{ lineHeight: 0, marginTop: "-2px" }}>
+        <svg viewBox="0 0 1440 70" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style={{ width: "100%", height: "70px", display: "block" }}>
+          <path d="M0,70 C480,0 960,0 1440,70 L1440,0 L0,0 Z" fill={isDark ? "#0d1117" : "#f5f7ff"} />
+        </svg>
+      </div>
       <section id="how-it-works" style={{ padding: "100px 24px" }}>
         <div style={{ maxWidth: "1100px", margin: "0 auto", display: "flex", gap: "80px", alignItems: "center", flexWrap: "wrap" }}>
           <div style={{ flex: "1 1 360px" }}>
@@ -935,18 +954,23 @@ const theme = {
       </section>
 
       {/* ── AI SECTION ──────────────────────────────────────────────────── */}
+      <div style={{ lineHeight: 0, marginTop: "-2px" }}>
+        <svg viewBox="0 0 1440 70" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style={{ width: "100%", height: "70px", display: "block" }}>
+          <path d="M0,0 C480,70 960,70 1440,0 L1440,70 L0,70 Z" fill={isDark ? "rgba(0,0,0,0.15)" : "#eef2ff"} />
+        </svg>
+      </div>
       <section style={{ padding: "100px 24px", background: isDark ? "rgba(0,0,0,0.15)" : "linear-gradient(135deg, #eef2ff 0%, #e8f0fe 100%)" }}>
         <div style={{ maxWidth: "1100px", margin: "0 auto", display: "flex", gap: "80px", alignItems: "center", flexWrap: "wrap-reverse" }}>
           <div style={{ flex: "1 1 340px", maxWidth: "460px" }}>
             <div style={{ background: isDark ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.9)", border: `1px solid ${isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.1)"}`, borderRadius: "20px", padding: "28px", boxShadow: isDark ? "none" : "0 4px 24px rgba(0,0,0,0.08)" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "20px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "20px", marginTop: "34px" }}>
                 <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: "rgba(74,158,255,0.15)", border: "1px solid rgba(74,158,255,0.3)", display: "flex", alignItems: "center", justifyContent: "center", color: "#4a9eff" }}><IconRobot /></div>
                 <div>
                   <div style={{ fontSize: "13px", fontWeight: "700", color: isDark ? "#fff" : "#1a2332" }}>EarlyPath AI Assistant</div>
                   <div style={{ fontSize: "11px", color: isDark ? "rgba(255,255,255,0.4)" : "rgba(30,40,60,0.45)" }}>Active · Analyzing applications</div>
                 </div>
               </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "20px" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "20px", marginTop: "34px" }}>
                 {[{ label: "Resume Analysis", value: "100%", color: "#4a9eff" }, { label: "Culture Fit Score", value: "87%", color: "#34d399" }, { label: "Skill Match", value: "92%", color: "#a78bfa" }].map((item) => (
                   <div key={item.label}>
                     <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", marginBottom: "5px" }}>
@@ -990,7 +1014,12 @@ const theme = {
       </section>
 
       {/* ── OPEN POSITIONS SECTION ─────────────────────────────────────── */}
-      <section id="open-positions" style={{ padding: "100px 24px" }}>
+      <div style={{ lineHeight: 0, marginTop: "-2px" }}>
+        <svg viewBox="0 0 1440 70" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style={{ width: "100%", height: "70px", display: "block" }}>
+          <path d="M0,70 C480,0 960,0 1440,70 L1440,0 L0,0 Z" fill={isDark ? "rgba(0,0,0,0.15)" : "#eef2ff"} />
+        </svg>
+      </div>
+      <section id="open-positions" style={{ padding: "100px 24px 40px 24px" }}>
         <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
           <div style={{ textAlign: "center", marginBottom: "56px" }} className="reveal">
             <p style={{ fontSize: "13px", fontWeight: "600", color: "#a78bfa", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "12px" }}>
@@ -1026,7 +1055,61 @@ const theme = {
               ref={sliderRef}
               style={{ display: "flex", gap: "24px", overflowX: "auto", paddingBottom: "20px", scrollSnapType: "x mandatory", msOverflowStyle: "none", scrollbarWidth: "none" }}
             >
-              <style>{`.vacancy-slider::-webkit-scrollbar { display: none; }`}</style>
+              <style>{`.vacancy-slider::-webkit-scrollbar { display: none; }
+
+/* ===== FIX HERO + FOOTER ===== */
+
+.footer-grid{
+  display:grid !important;
+  grid-template-columns:1fr 1fr 2fr !important;
+  gap:48px !important;
+  align-items:start !important;
+}
+
+@media (max-width:768px){
+  .footer-grid{
+    grid-template-columns:1fr !important;
+    gap:36px !important;
+  }
+
+  .footer-brand,
+  .footer-col{
+    text-align:center !important;
+    align-items:center !important;
+  }
+
+  .footer-col > div{
+    justify-content:center !important;
+  }
+}
+
+.hero-logo{
+  display:flex;
+  justify-content:flex-end;
+  align-items:center;
+  padding-right:60px;
+}
+
+.hero-logo img{
+  width:100%;
+  max-width:750px;
+  height:auto;
+  object-fit:contain;
+}
+
+@media (max-width:768px){
+  .hero-logo{
+    justify-content:center;
+    padding-right:0;
+    margin-top:40px;
+  }
+
+  .hero-logo img{
+    max-width:380px;
+  }
+}
+
+`}</style>
               {loading ? (
                 <div style={{ minWidth: "320px", textAlign: "center", padding: "40px", color: isDark ? "rgba(255,255,255,0.4)" : "rgba(30,40,60,0.45)" }}>Loading vacancies...</div>
               ) : displayedVacancies.length === 0 ? (
@@ -1092,8 +1175,8 @@ const theme = {
 
       {/* ── CTA SECTION ─────────────────────────────────────────────────── */}
       {!isAuthenticated && (
-        <section style={{ padding: "100px 24px" }}>
-          <div style={{ maxWidth: "820px", margin: "0 auto", textAlign: "center", background: "linear-gradient(135deg, rgba(74,158,255,0.06) 0%, rgba(167,139,250,0.06) 100%)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "28px", padding: "72px 48px", position: "relative", overflow: "hidden" }}>
+        <section style={{ padding: "20px 24px 60px 24px" }}>
+          <div style={{ maxWidth: "820px", margin: "0 auto", textAlign: "center", background: "linear-gradient(135deg, rgba(74,158,255,0.06) 0%, rgba(167,139,250,0.06) 100%)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "28px", padding: "48px 48px", position: "relative", overflow: "hidden" }}>
             <div style={{ position: "absolute", top: "-80px", right: "-80px", width: "300px", height: "300px", borderRadius: "50%", background: "rgba(74,158,255,0.06)", filter: "blur(60px)", pointerEvents: "none" }} />
             <div style={{ position: "absolute", bottom: "-60px", left: "-60px", width: "240px", height: "240px", borderRadius: "50%", background: "rgba(167,139,250,0.06)", filter: "blur(60px)", pointerEvents: "none" }} />
             <p style={{ fontSize: "13px", fontWeight: "600", color: "#4a9eff", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "16px" }} className="reveal">Get Started Today</p>
@@ -1121,27 +1204,22 @@ const theme = {
       )}
 
       {/* ── FOOTER ──────────────────────────────────────────────────────── */}
-      <footer style={{ background: theme.footerBg, borderTop: `1px solid ${theme.footerBorder}`, padding: "80px 24px 40px" }}>
+      <footer style={{ background: theme.footerBg, borderTop: `1px solid ${theme.footerBorder}`, padding: "40px 24px 40px 24px" }}>
         <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr 2fr", gap: "48px", marginBottom: "64px" }} className="footer-grid">
+          <div className="footer-grid" style={{ display: "grid", gridTemplateColumns: "1.2fr 0.8fr 2fr", gap: "48px", marginBottom: "64px", alignItems: "center" }}>
             {/* Kolom 1: Logo + Desc */}
-            <div className="fadein footer-col" style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", textAlign: "left" }}>
+            <div className="fadein footer-col footer-brand" style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", textAlign: "left", paddingTop: "0px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "14px", marginBottom: "20px" }}>
-                <img src="/assets/images/logo.png" alt="EarlyPath" style={{ height: "48px", objectFit: "contain" }} />
+                <img src="/assets/images/logo.png" alt="EarlyPath" style={{ height: "60px", objectFit: "contain" }} />
                 <span style={{ fontSize: "18px", fontWeight: "800", color: isDark ? "#fff" : "#1a2332", letterSpacing: "-0.5px" }}>EarlyPath</span>
               </div>
-              <p style={{ fontSize: "14px", color: isDark ? "rgba(255,255,255,0.45)" : "rgba(30,40,60,0.65)", lineHeight: "1.8", margin: 0, maxWidth: "260px" }}>
+              <p style={{ fontSize: "14px", color: isDark ? "rgba(255,255,255,0.45)" : "rgba(30,40,60,0.65)", lineHeight: "1.8", margin: "0 0 16px" }}>
                 Empowering talent and organizations to connect, collaborate, and grow together through AI-driven internship management.
               </p>
-            </div>
-
-            {/* Kolom 2: Lokasi + Social + Quick Links */}
-            <div className="fadein footer-col" style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
               {/* Lokasi */}
-              <div style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "13px", color: isDark ? "rgba(255,255,255,0.6)" : "rgba(30,40,60,0.7)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "13px", color: isDark ? "rgba(255,255,255,0.6)" : "rgba(30,40,60,0.65)", marginBottom: "12px" }}>
                 <span style={{ color: "#4a9eff" }}><IconLocation /></span>Surabaya, Indonesia
               </div>
-
               {/* Social Media */}
               <div style={{ display: "flex", gap: "10px" }}>
                 {[
@@ -1150,38 +1228,37 @@ const theme = {
                   { icon: <IconTwitterX />, href: "#", label: "Twitter/X" },
                 ].map((s) => (
                   <a key={s.label} href={s.href} title={s.label} target="_blank" rel="noopener noreferrer"
-                    style={{ width: "38px", height: "38px", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", background: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)", border: isDark ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(0,0,0,0.08)", color: isDark ? "rgba(255,255,255,0.5)" : "rgba(30,40,60,0.5)", transition: "all 0.2s", textDecoration: "none" }}
-                    onMouseEnter={e => { e.currentTarget.style.background = "rgba(74,158,255,0.1)"; e.currentTarget.style.borderColor = "rgba(74,158,255,0.3)"; e.currentTarget.style.color = "#4a9eff"; }}
-                    onMouseLeave={e => { e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)"; e.currentTarget.style.borderColor = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"; e.currentTarget.style.color = isDark ? "rgba(255,255,255,0.5)" : "rgba(30,40,60,0.5)"; }}
+                    style={{ width: "38px", height: "38px", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", background: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)", border: "1px solid rgba(255,255,255,0.08)", color: isDark ? "rgba(255,255,255,0.6)" : "rgba(30,40,60,0.6)", transition: "all 0.2s" }}
+                    onMouseEnter={e => { e.currentTarget.style.background = "rgba(74,158,255,0.1)"; e.currentTarget.style.borderColor = "rgba(74,158,255,0.3)"; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; }}
                   >{s.icon}</a>
-                ))}
-              </div>
-
-              {/* Quick Links */}
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                <p style={{ fontSize: "11px", fontWeight: "700", letterSpacing: "0.1em", color: "#4a9eff", textTransform: "uppercase", margin: "0 0 4px" }}>Quick Links</p>
-                {["Features", "How It Works", "Open Programs", "Contact"].map((link) => (
-                  <a key={link}
-                    href={link === "Open Programs" ? "#open-positions" : link === "Contact" ? "#contact" : `#${link.toLowerCase().replace(/\s+/g, "-")}`}
-                    style={{ fontSize: "13px", color: isDark ? "rgba(255,255,255,0.45)" : "rgba(30,40,60,0.55)", textDecoration: "none", transition: "color 0.2s" }}
-                    onMouseEnter={e => e.currentTarget.style.color = "#4a9eff"}
-                    onMouseLeave={e => e.currentTarget.style.color = isDark ? "rgba(255,255,255,0.45)" : "rgba(30,40,60,0.55)"}
-                  >{link}</a>
                 ))}
               </div>
             </div>
 
-              {/* Kolom 3: Form Contact */}
-              <div className="fadein">
+            {/* Kolom 2: Quick Links */}
+            <div className="fadein footer-col" style={{ display: "flex", flexDirection: "column", gap: "8px", paddingTop: "0px" }}>
+              <p style={{ fontSize: "11px", fontWeight: "700", letterSpacing: "0.1em", color: "#4a9eff", textTransform: "uppercase", margin: "0 0 4px" }}>Quick Links</p>
+              {["Features", "How It Works", "Open Programs", "Contact"].map((link) => (
+                <a key={link}
+                  href={link === "Open Programs" ? "#open-positions" : link === "Contact" ? "#contact" : `#${link.toLowerCase().replace(/\s+/g, "-")}`}
+                  style={{ fontSize: "13px", color: isDark ? "rgba(255,255,255,0.45)" : "rgba(30,40,60,0.55)", textDecoration: "none", transition: "color 0.2s" }}
+                  onMouseEnter={e => e.currentTarget.style.color = "#4a9eff"}
+                  onMouseLeave={e => e.currentTarget.style.color = isDark ? "rgba(255,255,255,0.45)" : "rgba(30,40,60,0.55)"}
+                >{link}</a>
+              ))}
+            </div>
+
+            {/* Kolom 3: Form Contact */}
+            <div className="fadein footer-col" style={{ paddingTop: "0px" }}>
               <p style={{ fontSize: "11px", fontWeight: "700", letterSpacing: "0.1em", color: "#4a9eff", textTransform: "uppercase", margin: "0 0 24px" }}>Send us a Message</p>
               {emailSent ? (
                 <div style={{ padding: "24px", background: "rgba(74,158,255,0.08)", border: "1px solid rgba(74,158,255,0.2)", borderRadius: "16px", fontSize: "14px", color: "#4a9eff", fontWeight: "600", textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px" }}>
                   <IconCheck color="#4a9eff" />Thank you! Your message has been sent.
                 </div>
               ) : (
-                <form onSubmit={handleEmailSubmit} className="footer-form" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
-                 <input placeholder="Your Name" value={emailForm.name} onChange={e => setEmailForm(f => ({ ...f, name: e.target.value }))} className="footer-input" required style={{ padding: "14px 18px", borderRadius: "12px", border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.12)"}`, background: isDark ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.8)", color: isDark ? "#fff" : "#1a2332", fontSize: "13px", fontFamily: "inherit", outline: "none", transition: "0.2s" }} />
-                  <input type="email" placeholder="Your Email" value={emailForm.email} onChange={e => setEmailForm(f => ({ ...f, email: e.target.value }))} className="footer-input" required style={{ padding: "14px 18px", borderRadius: "12px", border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.12)"}`, background: isDark ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.8)", color: isDark ? "#fff" : "#1a2332", fontSize: "13px", fontFamily: "inherit", outline: "none", transition: "0.2s" }} />
+                <form onSubmit={handleEmailSubmit} className="footer-form" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px", alignItems: "start" }}>
+                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px", gridColumn: "1 / -1" }}><input placeholder="Your Name" value={emailForm.name} onChange={e => setEmailForm(f => ({ ...f, name: e.target.value }))} className="footer-input" required style={{ padding: "14px 18px", borderRadius: "12px", border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.12)"}`, background: isDark ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.8)", color: isDark ? "#fff" : "#1a2332", fontSize: "13px", fontFamily: "inherit", outline: "none", transition: "0.2s" }} /><input type="email" placeholder="Your Email" value={emailForm.email} onChange={e => setEmailForm(f => ({ ...f, email: e.target.value }))} className="footer-input" required style={{ padding: "14px 18px", borderRadius: "12px", border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.12)"}`, background: isDark ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.8)", color: isDark ? "#fff" : "#1a2332", fontSize: "13px", fontFamily: "inherit", outline: "none", transition: "0.2s" }} /></div>
                   <textarea placeholder="How can we help you?" value={emailForm.message} onChange={e => setEmailForm(f => ({ ...f, message: e.target.value }))} className="footer-input" required rows={4}
                     style={{ padding: "14px 18px", borderRadius: "12px", border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.12)"}`, background: isDark ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.8)", color: isDark ? "#fff" : "#1a2332", fontSize: "13px", fontFamily: "inherit", resize: "none", gridColumn: "1 / -1", outline: "none", transition: "0.2s" }} />
                   <button type="submit"
@@ -1217,66 +1294,55 @@ const theme = {
         onClose={() => setPositionsPopupVacancy(null)}
         isDark={isDark}
       />
-      <VacancyDetailModal
-        vacancy={selectedVacancy}
-        onClose={() => setSelectedVacancy(null)}
-        isDark={isDark}
-      />
       <style>{`
-
-@keyframes badgeFloat { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-7px); } }
-@keyframes ringPulse { 0%, 100% { opacity: 0.4; transform: scale(1); } 50% { opacity: 0.85; transform: scale(1.1); } }
-@keyframes logoBreath { 0%, 100% { transform: scale(1); filter: drop-shadow(0 0 16px rgba(74,158,255,0.3)); } 50% { transform: scale(1.07); filter: drop-shadow(0 0 32px rgba(74,158,255,0.6)); } }        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+        @keyframes badgeFloat { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-7px); } }
+        @keyframes logoBreath { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.07); } }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
         @keyframes fadeUp { from { opacity: 0; transform: translateY(32px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes floatOrb { 0%, 100% { transform: translateY(0px) scale(1); } 50% { transform: translateY(-20px) scale(1.05); } }
-        @keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 20px rgba(74,158,255,0.3); } 50% { box-shadow: 0 0 40px rgba(74,158,255,0.6); } }
+        @keyframes gentleFloat { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-10px); } }
+        @keyframes badgePulse { 0%, 100% { opacity: 1; transform: translateY(0); } 50% { opacity: 0.75; transform: translateY(-2px); } }
+        @keyframes orbMove { 0% { transform: translate(0,0) scale(1); } 33% { transform: translate(30px,-20px) scale(1.08); } 66% { transform: translate(-20px,15px) scale(0.95); } 100% { transform: translate(0,0) scale(1); } }
+        @keyframes orbMove2 { 0% { transform: translate(0,0) scale(1); } 33% { transform: translate(-25px,20px) scale(1.05); } 66% { transform: translate(20px,-15px) scale(0.97); } 100% { transform: translate(0,0) scale(1); } }
+        @keyframes particle1 { 0% { transform: translate(0,0) scale(1); opacity:0; } 15%{ opacity:1; } 85%{ opacity:1; } 100% { transform: translate(60px,-180px) scale(0.3); opacity:0; } }
+        @keyframes particle2 { 0% { transform: translate(0,0) scale(1); opacity:0; } 15%{ opacity:1; } 85%{ opacity:1; } 100% { transform: translate(-40px,-150px) scale(0.2); opacity:0; } }
+        @keyframes particle3 { 0% { transform: translate(0,0) scale(1); opacity:0; } 15%{ opacity:1; } 85%{ opacity:1; } 100% { transform: translate(80px,-120px) scale(0.4); opacity:0; } }
         .reveal { opacity: 0; transform: translateY(32px); transition: opacity 0.7s ease, transform 0.7s ease; }
-        @keyframes slideInRight { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
-        @media (max-width: 768px) {
-          .hero-right { display: none !important; }
-        }
         .reveal.visible { opacity: 1; transform: translateY(0); }
         .reveal-delay-1 { transition-delay: 0.1s; }
         .reveal-delay-2 { transition-delay: 0.2s; }
         .reveal-delay-3 { transition-delay: 0.3s; }
         .reveal-delay-4 { transition-delay: 0.4s; }
         .reveal-delay-5 { transition-delay: 0.5s; }
+        .feature-card { transition: all 0.3s ease !important; }
+        .feature-card:hover { transform: translateY(-6px) !important; }
         .float-orb { animation: floatOrb 6s ease-in-out infinite; }
         .float-orb-slow { animation: floatOrb 9s ease-in-out infinite reverse; }
-        .feature-card:hover { transform: translateY(-6px) !important; }
-        .feature-card { transition: all 0.3s ease !important; }
         .hidden-mobile { display: flex !important; }
         .show-mobile { display: none !important; }
+        .footer-grid { display: grid !important; grid-template-columns: 1fr 1fr 2fr !important; gap: 48px !important; align-items: center !important; }
+        .footer-form { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .footer-input::placeholder { color: rgba(255,255,255,0.3); }
         @media (max-width: 768px) {
           .hidden-mobile { display: none !important; }
           .show-mobile { display: flex !important; }
+          .hero-right { display: none !important; }
+          .footer-grid { grid-template-columns: 1fr !important; gap: 36px !important; }
+          .footer-form { grid-template-columns: 1fr !important; }
+          .footer-form input, .footer-form textarea, .footer-form button { grid-column: 1 / -1 !important; }
+          .footer-brand { align-items: center !important; text-align: center !important; }
+          .footer-col { align-items: center !important; text-align: center !important; }
+          .footer-col > div { justify-content: center !important; }
         }
-	@media (max-width: 768px) {
-  .footer-grid { grid-template-columns: 1fr !important; gap: 32px !important; }
-	.footer-form { grid-template-columns: 1fr !important; }
-  .footer-col { align-items: center !important; text-align: center !important; }
-}		
-        .footer-input::placeholder { color: ${isDark ? "rgba(255,255,255,0.3)" : "rgba(30,40,60,0.35)"} !important; }
-        .feature-title { color: ${isDark ? "#fff" : "#1a2332"} !important; }
-        .feature-desc { color: ${isDark ? "rgba(255,255,255,0.5)" : "rgba(30,40,60,0.6)"} !important; }
-        .section-heading { color: ${isDark ? "#fff" : "#1a2332"} !important; }
-        .section-sub { color: ${isDark ? "rgba(255,255,255,0.5)" : "rgba(30,40,60,0.55)"} !important; }
-        .card-text { color: ${isDark ? "rgba(255,255,255,0.6)" : "rgba(30,40,60,0.65)"} !important; }
-        .card-title { color: ${isDark ? "#fff" : "#1a2332"} !important; }
-        .card-company { color: #4a9eff !important; }
-        .card-border-top { border-top: 1px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"} !important; }
-        .process-card-active { background: ${isDark ? "rgba(74,158,255,0.08)" : "rgba(74,158,255,0.06)"} !important; border-color: rgba(74,158,255,0.3) !important; }
-        .process-card-inactive { background: transparent !important; border-color: ${isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.07)"} !important; }
-        .step-title-active { color: ${isDark ? "#fff" : "#1a2332"} !important; }
-        .step-title-inactive { color: ${isDark ? "rgba(255,255,255,0.6)" : "rgba(30,40,60,0.5)"} !important; }
-        .step-desc { color: ${isDark ? "rgba(255,255,255,0.5)" : "rgba(30,40,60,0.55)"} !important; }
-        .stat-label { color: ${isDark ? "rgba(255,255,255,0.45)" : "rgba(30,40,60,0.5)"} !important; }
-        .stat-value { color: ${isDark ? "#fff" : "#1a2332"} !important; }
-        .hero-desc { color: ${isDark ? "rgba(255,255,255,0.6)" : "rgba(30,40,60,0.65)"} !important; }
-        .search-input { color: ${isDark ? "#fff" : "#1a2332"} !important; }
-        .search-input::placeholder { color: ${isDark ? "rgba(255,255,255,0.35)" : "rgba(30,40,60,0.4)"} !important; }
-        .footer-input { color: ${isDark ? "#fff" : "#1a2332"} !important; }
+        @media (max-width: 480px) {
+          .stats-strip-grid { grid-template-columns: 1fr 1fr !important; }
+        }
       `}</style>
+      <VacancyDetailModal
+        vacancy={selectedVacancy}
+        onClose={() => setSelectedVacancy(null)}
+        isDark={isDark}
+      />
 
       {/* Logout confirm modal */}
       {logoutModalOpen && (
