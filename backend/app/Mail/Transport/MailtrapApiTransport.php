@@ -1,46 +1,100 @@
 <?php
 namespace App\Mail\Transport;
 
-use Symfony\Component\Mailer\SentMessage;
 use Symfony\Component\Mailer\Transport\AbstractTransport;
-use Symfony\Component\Mime\MessageConverter;
+use Symfony\Component\Mime\Email;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
+use Psr\Log\LoggerInterface;
+
 
 class MailtrapApiTransport extends AbstractTransport
 {
     private string $apiToken;
-
-    public function __construct(string $apiToken)
-    {
+    public function __construct(
+        string $apiToken,
+        HttpClientInterface $client = null,
+        LoggerInterface $logger = null
+    ) {
         $this->apiToken = $apiToken;
-        parent::__construct();
+        parent::__construct($client, $logger);
     }
 
-    protected function doSend(SentMessage $message): void
+    protected function doSend(Email $message): string
     {
-        $email = MessageConverter::toEmail($message->getOriginalMessage());
-
         $payload = [
             'from' => [
-                'email' => $email->getFrom()[0]->getAddress(),
-                'name'  => $email->getFrom()[0]->getName() ?? '',
+                'address' => $message->getFrom()[0]->getAddress(),
+                'name' => $message->getFrom()[0]->getName() ?? '',
             ],
             'to' => array_map(
-                fn($a) => ['email' => $a->getAddress(), 'name' => $a->getName() ?? ''],
-                $email->getTo()
+                fn($address) => [
+                    'address' => $address->getAddress(),
+                    'name' => $address->getName() ?? '',
+                ],
+                $message->getTo()
             ),
-            'subject' => $email->getSubject(),
+            'subject' => $message->getSubject(),
         ];
 
-        if ($email->getHtmlBody()) $payload['html'] = $email->getHtmlBody();
-        if ($email->getTextBody()) $payload['text'] = $email->getTextBody();
+        if ($message->getHtmlBody()) {
+            $payload['html'] = $message->getHtmlBody();
+        }
 
-        $response = \Illuminate\Support\Facades\Http::withHeaders([
-            'Authorization' => 'Bearer ' . $this->apiToken,
-            'Content-Type'  => 'application/json',
-        ])->post('https://send.api.mailtrap.io/api/send', $payload);
+        if ($message->getTextBody()) {
+            $payload['text'] = $message->getTextBody();
+        }
 
-        if ($response->failed()) {
-            throw new \Exception("Mailtrap API error ({$response->status()}): {$response->body()}");
+        if ($message->getCc()) {
+            $payload['cc'] = array_map(
+                fn($address) => [
+                    'address' => $address->getAddress(),
+                    'name' => $address->getName() ?? '',
+                ],
+                $message->getCc()
+            );
+        }
+
+        if ($message->getBcc()) {
+            $payload['bcc'] = array_map(
+                fn($address) => [
+                    'address' => $address->getAddress(),
+                    'name' => $address->getName() ?? '',
+                ],
+                $message->getBcc()
+            );
+        }
+
+        if ($message->getReplyTo()) {
+            $payload['reply_to'] = array_map(
+                fn($address) => [
+                    'address' => $address->getAddress(),
+                    'name' => $address->getName() ?? '',
+                ],
+                $message->getReplyTo()
+            );
+        }
+
+        try {
+            $response = $this->client->request('POST', 'https://send.api.mailtrap.io/api/send', [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $this->apiToken,
+                    'Content-Type' => 'application/json',
+                ],
+                'json' => $payload,
+            ]);
+
+            $statusCode = $response->getStatusCode();
+            
+            if ($statusCode !== 200) {
+                $content = $response->getContent(false);
+                throw new \Exception(
+                    "Mailtrap API error (HTTP {$statusCode}): {$content}"
+                );
+            }
+
+            return $response->getContent();
+        } catch (\Exception $e) {
+            throw new \Exception("Failed to send email via Mailtrap API: " . $e->getMessage(), 0, $e);
         }
     }
 
