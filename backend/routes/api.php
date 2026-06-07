@@ -77,6 +77,7 @@ Route::post('/auth/reset-password-candidate', [AuthController::class, 'resetPass
 Route::post('/auth/forgot-password-staff', [AuthController::class, 'forgotPasswordStaff']);
 Route::post('/auth/reset-password-staff', [AuthController::class, 'resetPasswordStaff']);
 Route::post('/contact', [ContactMessageController::class, 'store']);
+Route::get('/certificates/{id_certificate}/verify', [App\Http\Controllers\CertificatePublicController::class, 'verify']);
 Route::options('/{any}', fn () => response()->noContent())->where('any', '.*');
 
 // Protected routes
@@ -310,7 +311,7 @@ Route::prefix('mentor')->middleware(['auth:sanctum', 'mentorRole'])->group(funct
     Route::get('/interns/{id_submission}/evaluation',               [MentorController::class, 'getEvaluation']);
     Route::post('/interns/{id_submission}/evaluation',              [MentorController::class, 'saveEvaluation']);
     Route::post('/interns/{id_submission}/generate-certificate',    [MentorController::class, 'generateCertificate']);
-    Route::get('/interns/{id_submission}/preview-certificate',      [MentorController::class, 'previewCertificate']);
+    Route::post('/interns/{id_submission}/preview-certificate',     [MentorController::class, 'previewCertificate']);
     Route::post('/interns/{id_submission}/send-certificate',        [MentorController::class, 'sendCertificate']);
 
     // Recap & certificates

@@ -112,6 +112,30 @@ class SubmissionController extends Controller
                 ? $request->file('portfolio_file')->store('submissions/portfolios', 'public')
                 : null;
 
+            // Check if user is in a team
+            $teamId = null;
+            $mentorId = null;
+            $teamMember = DB::table('team_members')
+                ->where('id_user', $user->id_user)
+                ->first();
+
+            if ($teamMember) {
+                $teamId = $teamMember->id_team;
+                // Get leader's submission to copy id_user_mentor
+                $leaderMember = DB::table('team_members')
+                    ->where('id_team', $teamId)
+                    ->where('role', 'leader')
+                    ->first();
+                if ($leaderMember) {
+                    $leaderSubmission = DB::table('submissions')
+                        ->where('id_user', $leaderMember->id_user)
+                        ->first();
+                    if ($leaderSubmission) {
+                        $mentorId = $leaderSubmission->id_user_mentor;
+                    }
+                }
+            }
+
             // 6. Create Submission
             $submissionId = 'SUB' . strtoupper(Str::random(7));
             $submission = Submission::create([
@@ -125,7 +149,9 @@ class SubmissionController extends Controller
                 'linkedin_url' => $request->linkedin_url,
                 'motivation_message' => $request->motivation_message,
                 'status' => 'pending',
-                'submitted_at' => now()
+                'submitted_at' => now(),
+                'id_team' => $teamId,
+                'id_user_mentor' => $mentorId,
             ]);
 
             DB::commit();

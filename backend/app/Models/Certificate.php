@@ -19,6 +19,18 @@ class Certificate extends Model
         'final_score',
         'issued_date',
         'is_sent',
+        'template_style',
+        'background_path',
+        'layout_settings',
+        'logo_position',
+        'signature_layout',
+        'signatory1_name',
+        'signatory1_title',
+        'signatory2_name',
+        'signatory2_title',
+        'signatory2_signature',
+        'show_qr',
+        'qr_position',
     ];
 
     public function submission()
