@@ -1,3 +1,5 @@
+import '@fontsource/montserrat/700.css';
+import '@fontsource/montserrat/800.css';
 import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { useAuthStore } from "../../stores/authStore";
@@ -256,7 +258,7 @@ const VacancyDetailModal = ({ vacancy, onClose, isDark }) => {
               ))}
             </div>
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "32px", padding: "20px", background: "rgba(255,255,255,0.03)", borderRadius: "16px", border: "1px solid rgba(255,255,255,0.05)" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "16px", marginBottom: "32px", padding: "20px", background: "rgba(255,255,255,0.03)", borderRadius: "16px", border: "1px solid rgba(255,255,255,0.05)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "14.5px", color: "rgba(255,255,255,0.7)" }}><IconLocation /> <span>{vacancy.location || "Jakarta"}</span></div>
             <div style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "14.5px", color: isDark ? "rgba(255,255,255,0.5)" : "rgba(30,40,60,0.6)", fontStyle: "italic" }}><IconCal /> <span>{formatDate(vacancy.start_date || vacancy.deadline)} - {formatDate(vacancy.end_date || vacancy.deadline)}</span></div>
             <div style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "14.5px", color: "#fb7185", fontWeight: "600" }}><IconDeadline /> <span>Pendaftaran Deadline: {formatDate(vacancy.deadline)}</span></div>
@@ -321,7 +323,7 @@ const PositionsPopup = ({ vacancy, onClose, isDark }) => {
         </div>
 
         {/* Position Cards */}
-        <div style={{ padding: "0 28px 28px", display: "flex", flexDirection: "column", gap: "12px" }}>
+        <div style={{ padding: "0 28px 28px", display: "flex", flexDirection: "column", gap: "16px" }}>
           {(vacancy.positions || []).map((p, idx) => {
             const posName = p.name || p;
             const quota = p.pivot?.quota || 0;
@@ -410,6 +412,16 @@ export default function LandingPage() {
   return saved ? saved === "dark" : true;
 });
   const [heroVisible, setHeroVisible] = useState(false);
+
+  useEffect(() => {
+    if (!document.getElementById("montserrat-font")) {
+      const link = document.createElement("link");
+      link.id = "montserrat-font";
+      link.href = "https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@1,700;1,800&display=swap";
+      link.rel = "stylesheet";
+      document.head.appendChild(link);
+    }
+  }, []);
   const [typedText, setTypedText] = useState("");
   const [parallaxY, setParallaxY] = useState(0);
   const fullText = "Run Internship Programs";
@@ -418,8 +430,8 @@ const [showDropdown, setShowDropdown] = useState(false);
 const theme = {
   bg: isDark ? "linear-gradient(180deg, #06101e 0%, #081828 100%)" : "linear-gradient(180deg, #f8faff 0%, #eef2ff 50%, #f0f4ff 100%)",
   navBg: (scrolled) => isDark
-    ? (scrolled ? "rgba(6,16,30,0.92)" : "rgba(6,16,30,0.55)")
-    : (scrolled ? "rgba(240,244,248,0.95)" : "rgba(240,244,248,0.75)"),
+    ? "rgba(6,16,30,0.55)"
+    : "rgba(255,255,255,0.45)",
   navBorder: (scrolled) => scrolled
     ? (isDark ? "1px solid rgba(255,255,255,0.07)" : "1px solid rgba(0,0,0,0.08)")
     : "1px solid transparent",
@@ -640,29 +652,33 @@ const theme = {
   }, []);
 
   return (
-    <div style={{ background: isDark ? "#060e1e" : "#f0f4ff", minHeight: "100vh", fontFamily: "'Poppins', sans-serif", color: theme.text, overflowX: "hidden", transition: "background 0.35s, color 0.35s" }}>
+    <div style={{ background: isDark ? "#060e1e" : "#ffffff", minHeight: "100vh", fontFamily: "'Poppins', sans-serif", color: theme.text, overflowX: "hidden", transition: "background 0.35s, color 0.35s" }}>
+
+      {/* ── GLOBAL BG: single focal gradient ── */}
+      <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, overflow: "hidden" }}>
+        <div style={{ position: "absolute", top: "20%", left: "50%", transform: "translateX(-50%)", width: "800px", height: "800px", borderRadius: "50%", background: isDark ? "radial-gradient(circle, rgba(74,120,255,0.07) 0%, rgba(74,120,255,0.02) 50%, transparent 70%)" : "radial-gradient(circle, rgba(74,120,255,0.04) 0%, transparent 60%)", filter: "blur(40px)", animation: "orbMove 18s ease-in-out infinite" }} />
+      </div>
 
       {/* ── GLOBAL BG: particles + orbs seluruh halaman ── */}
       <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, overflow: "hidden" }}>
-        <div style={{ position: "absolute", top: "10%", left: "-5%", width: "600px", height: "600px", borderRadius: "50%", background: "rgba(74,120,255,0.12)", filter: "blur(120px)", animation: "orbMove 14s ease-in-out infinite" }} />
-        <div style={{ position: "absolute", bottom: "5%", right: "-5%", width: "550px", height: "550px", borderRadius: "50%", background: "rgba(150,80,255,0.10)", filter: "blur(120px)", animation: "orbMove2 17s ease-in-out infinite" }} />
+        <div style={{ position: "absolute", top: "10%", left: "-5%", width: "600px", height: "600px", borderRadius: "50%", background: isDark ? "rgba(74,120,255,0.06)" : "rgba(74,120,255,0.03)", filter: "blur(120px)", animation: "orbMove 14s ease-in-out infinite" }} />
+
         <div style={{ position: "absolute", top: "40%", left: "30%", width: "400px", height: "400px", borderRadius: "50%", background: "rgba(30,200,180,0.06)", filter: "blur(100px)", animation: "orbMove 22s ease-in-out infinite reverse" }} />
         <div style={{ position: "absolute", top: "5%", right: "20%", width: "300px", height: "300px", borderRadius: "50%", background: "rgba(255,160,50,0.05)", filter: "blur(90px)", animation: "orbMove2 19s ease-in-out infinite 2s" }} />
         <div style={{ position: "absolute", bottom: "30%", left: "20%", width: "280px", height: "280px", borderRadius: "50%", background: "rgba(255,80,120,0.05)", filter: "blur(90px)", animation: "orbMove 25s ease-in-out infinite 1s" }} />
-        <div style={{ position: "absolute", top: "30%", left: "20%", width: "5px", height: "5px", borderRadius: "50%", background: "#4a9eff", boxShadow: "0 0 8px #4a9eff", animation: "particle1 5s ease-in-out infinite" }} />
-        <div style={{ position: "absolute", top: "60%", left: "15%", width: "3px", height: "3px", borderRadius: "50%", background: "#a78bfa", boxShadow: "0 0 6px #a78bfa", animation: "particle2 7s ease-in-out infinite 1s" }} />
-        <div style={{ position: "absolute", top: "45%", left: "55%", width: "4px", height: "4px", borderRadius: "50%", background: "#34d399", boxShadow: "0 0 8px #34d399", animation: "particle3 6s ease-in-out infinite 2s" }} />
-        <div style={{ position: "absolute", top: "25%", right: "20%", width: "3px", height: "3px", borderRadius: "50%", background: "#fbbf24", boxShadow: "0 0 6px #fbbf24", animation: "particle1 8s ease-in-out infinite 0.5s" }} />
-        <div style={{ position: "absolute", top: "70%", right: "30%", width: "4px", height: "4px", borderRadius: "50%", background: "#f87171", boxShadow: "0 0 8px #f87171", animation: "particle2 6.5s ease-in-out infinite 3s" }} />
-        <div style={{ position: "absolute", top: "15%", left: "45%", width: "3px", height: "3px", borderRadius: "50%", background: "#4a9eff", boxShadow: "0 0 6px #4a9eff", animation: "particle3 9s ease-in-out infinite 1.5s" }} />
-        <div style={{ position: "absolute", top: "80%", left: "35%", width: "4px", height: "4px", borderRadius: "50%", background: "#a78bfa", boxShadow: "0 0 8px #a78bfa", animation: "particle1 7.5s ease-in-out infinite 2.5s" }} />
-        <div style={{ position: "absolute", top: "55%", right: "15%", width: "3px", height: "3px", borderRadius: "50%", background: "#34d399", boxShadow: "0 0 6px #34d399", animation: "particle2 5.5s ease-in-out infinite 0.8s" }} />
-        <div style={{ position: "absolute", top: "35%", left: "8%", width: "5px", height: "5px", borderRadius: "50%", background: "#f87171", boxShadow: "0 0 10px #f87171", animation: "particle3 8s ease-in-out infinite 3.5s" }} />
-        <div style={{ position: "absolute", top: "20%", right: "10%", width: "3px", height: "3px", borderRadius: "50%", background: "#fbbf24", boxShadow: "0 0 6px #fbbf24", animation: "particle1 6s ease-in-out infinite 4s" }} />
+
+
+
+
+
+
+
+
+
       </div>
 
       {/* ── NAVBAR ─────────────────────────────────────────────────────── */}
-      <nav style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, padding: "0 32px", height: "64px", display: "flex", alignItems: "center", justifyContent: "space-between", background: theme.navBg(scrolled), backdropFilter: "blur(16px)", borderBottom: theme.navBorder(scrolled), transition: "all 0.35s ease" }}>
+      <nav style={{ position: "fixed", top: "16px", left: "50%", transform: "translateX(-50%)", width: "calc(100% - 32px)", maxWidth: "1200px", zIndex: 100, padding: "0 24px", height: "56px", display: "flex", alignItems: "center", justifyContent: "space-between", background: isDark ? "rgba(10,20,40,0.45)" : "rgba(255,255,255,0.45)", backdropFilter: "blur(20px) saturate(180%)", WebkitBackdropFilter: "blur(20px) saturate(180%)", border: isDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(0,0,0,0.08)", borderRadius: "100px", transition: "all 0.35s ease", boxShadow: isDark ? "0 8px 32px rgba(0,0,0,0.3)" : "0 8px 32px rgba(0,0,0,0.08)" }}>
         <Link to="/" style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", textDecoration: "none" }}>
           <img src="/assets/images/logo.png" alt="EarlyPath" style={{ height: "48px", objectFit: "contain" }} />
           <span style={{ fontSize: 18, fontWeight: 800, color: isDark ? "#fff" : "#1a2332", letterSpacing: "-0.5px" }}>EarlyPath</span>
@@ -715,11 +731,11 @@ const theme = {
               {showDropdown && (
                 <div style={{ position: "absolute", top: "calc(100% + 12px)", right: 0, width: "220px", background: isDark ? "#0d1a28" : "#ffffff", border: isDark ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(0,0,0,0.1)", borderRadius: "16px", padding: "8px", boxShadow: isDark ? "0 20px 40px rgba(0,0,0,0.4)" : "0 20px 40px rgba(0,0,0,0.12)", zIndex: 1000 }}>
                   <div style={{ padding: "12px 16px 10px", borderBottom: isDark ? "1px solid rgba(255,255,255,0.05)" : "1px solid rgba(0,0,0,0.07)", marginBottom: "6px" }}>
-                    <div style={{ fontSize: "13px", fontWeight: "700", color: isDark ? "#fff" : "#0f172a", marginBottom: "2px" }}>{authUser?.name || authUser?.full_name}</div>
+                    <div style={{ fontSize: "13px", fontWeight: "700", color: isDark ? "#fff" : "#0a1628", marginBottom: "2px" }}>{authUser?.name || authUser?.full_name}</div>
                     <div style={{ fontSize: "11px", color: isDark ? "rgba(255,255,255,0.5)" : "rgba(30,40,60,0.6)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{authUser?.email}</div>
                   </div>
                   <div onClick={() => { setShowDropdown(false); const btnConfig = getAuthButtonConfig(); navigate(btnConfig.path); }}
-                    style={{ display: "flex", alignItems: "center", gap: "10px", padding: "12px 16px", color: isDark ? "#fff" : "#0f172a", fontSize: "14px", fontWeight: "500", cursor: "pointer", borderRadius: "10px", transition: "0.2s" }}
+                    style={{ display: "flex", alignItems: "center", gap: "10px", padding: "12px 16px", color: isDark ? "#fff" : "#0a1628", fontSize: "14px", fontWeight: "500", cursor: "pointer", borderRadius: "10px", transition: "0.2s" }}
                     onMouseEnter={e => e.currentTarget.style.background = "rgba(74,158,255,0.1)"}
                     onMouseLeave={e => e.currentTarget.style.background = "transparent"}
                   >{userHasRole() ? <IconLayout /> : <IconUsers />} {getAuthButtonConfig().label}</div>
@@ -768,34 +784,27 @@ const theme = {
       )}
 
       {/* ── HERO SECTION ──────────────────────────────────────────────── */}
-      <section style={{ position: "relative", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "120px 48px 100px 48px" }}>
-          {[...Array(10)].map((_, i) => (
-            <div key={"hp"+i} style={{
-              position: "absolute",
-              width: [6,4,3,5,4,3,6,4,3,5][i]+"px",
-              height: [6,4,3,5,4,3,6,4,3,5][i]+"px",
-              borderRadius: "50%",
-              background: ["#4a9eff","#a78bfa","#34d399","#fbbf24","#f87171","#60a5fa","#4a9eff","#a78bfa","#34d399","#fbbf24"][i],
-              boxShadow: "0 0 10px "+["#4a9eff","#a78bfa","#34d399","#fbbf24","#f87171","#60a5fa","#4a9eff","#a78bfa","#34d399","#fbbf24"][i],
-              top: [15,30,50,65,80,22,42,58,72,88][i]+"%",
-              left: [8,22,68,82,45,12,88,35,60,75][i]+"%",
-              animation: "particle"+((i%3)+1)+" "+(5+i*0.8)+"s ease-in-out infinite "+(i*0.6)+"s",
-              zIndex: 1, pointerEvents: "none"
-            }} />
-          ))}
+      <section style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", padding: "150px 48px 120px 48px" }}>
         {/* bg gedung */}
-        <div style={{ position: "absolute", inset: 0, backgroundImage: "url('/assets/images/bg.png')", backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat", opacity: isDark ? 0.35 : 0.18, zIndex: 0 }} />
-        <div style={{ position: "absolute", inset: 0, background: isDark ? "linear-gradient(180deg, rgba(6,16,30,0.55) 0%, rgba(6,16,30,0.5) 40%, rgba(6,16,30,0.75) 100%)" : "linear-gradient(180deg, rgba(240,244,255,0.45) 0%, rgba(230,238,255,0.35) 40%, rgba(220,232,255,0.6) 100%)", zIndex: 0 }} />
+        <div style={{ position: "absolute", inset: 0, backgroundImage: "url('/assets/images/bg.png')", backgroundSize: "cover", backgroundPosition: "center top", backgroundRepeat: "no-repeat", opacity: isDark ? 0.35 : 0.45, zIndex: 0 }} />
+        <div style={{ position: "absolute", inset: 0, background: isDark ? "linear-gradient(180deg, rgba(6,14,30,0.1) 0%, rgba(6,14,30,0.3) 40%, rgba(6,14,30,0.75) 75%, #060e1e 100%)" : "linear-gradient(180deg, rgba(220,232,255,0.4) 0%, rgba(210,225,255,0.55) 40%, rgba(200,218,255,0.85) 75%, #f0f4ff 100%)", zIndex: 0 }} />
         <div style={{ position: "relative", zIndex: 2, maxWidth: "1100px", width: "100%", display: "flex", alignItems: "center", gap: "0px", flexWrap: "wrap", justifyContent: "space-between", flexDirection: "row" }}>
           
-          {/* LEFT: Text content */}
-          <div style={{ flex: "1 1 540px", textAlign: "left", minWidth: 0 }}>
-            <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: isDark ? "rgba(74,158,255,0.1)" : "rgba(74,158,255,0.12)", border: "1px solid rgba(74,158,255,0.35)", borderRadius: "100px", padding: "6px 16px", fontSize: "13px", color: "#4a9eff", fontWeight: "600", marginBottom: "28px", letterSpacing: "0.5px", opacity: heroVisible ? 1 : 0, transform: heroVisible ? "translateY(0)" : "translateY(24px)", transition: "opacity 0.7s ease, transform 0.7s ease", animation: heroVisible ? "badgePulse 3s ease-in-out infinite" : "none" }}>
-              <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#4a9eff", display: "inline-block", boxShadow: "0 0 8px #4a9eff" }} />
-              Internship Management Platform
-            </div>
 
-            <h1 style={{ fontSize: "clamp(42px, 5.5vw, 64px)", fontWeight: "800", lineHeight: "1.08", letterSpacing: "-2px", margin: "0 0 24px", color: isDark ? "#fff" : "#0f172a", opacity: heroVisible ? 1 : 0, transform: heroVisible ? "translateY(0)" : "translateY(24px)", transition: "opacity 0.7s ease 0.2s, transform 0.7s ease 0.2s" }}>
+        {/* Glow background kanan */}
+        <div style={{
+          position: "absolute", right: 0, top: 0, bottom: 0, width: "55%",
+          background: isDark
+            ? "radial-gradient(ellipse at 70% 50%, rgba(59,130,246,0.1) 0%, rgba(99,102,241,0.06) 40%, transparent 70%)"
+            : "radial-gradient(ellipse at 70% 50%, rgba(59,130,246,0.07) 0%, rgba(99,102,241,0.04) 40%, transparent 70%)",
+          pointerEvents: "none", zIndex: 0
+        }} />
+
+        {/* LEFT: Text content */}
+          <div style={{ flex: "1 1 540px", textAlign: "left", minWidth: 0 }}>
+
+
+            <h1 style={{ fontSize: "clamp(42px, 5.5vw, 64px)", fontWeight: "800", lineHeight: "1.08", letterSpacing: "-2px", margin: "0 0 24px", color: isDark ? "#fff" : "#0a1628", opacity: heroVisible ? 1 : 0, transform: heroVisible ? "translateY(0)" : "translateY(24px)", transition: "opacity 0.7s ease 0.2s, transform 0.7s ease 0.2s", fontFamily: "'Montserrat', sans-serif"}}>
               Build Better,<br />Internship Programs
             </h1>
 
@@ -842,6 +851,18 @@ const theme = {
               </div>
             </form>
           </div>
+
+          {/* CTA buttons */}
+          <div style={{ display: "flex", gap: "12px", alignItems: "center", opacity: heroVisible ? 1 : 0, transform: heroVisible ? "translateY(0)" : "translateY(24px)", transition: "opacity 0.7s ease 0.7s, transform 0.7s ease 0.7s" }}>
+            <button onClick={() => navigate("/register")} style={{ padding: "13px 28px", background: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)", backdropFilter: "blur(12px)", border: isDark ? "1px solid rgba(255,255,255,0.15)" : "1px solid rgba(0,0,0,0.12)", borderRadius: "12px", color: isDark ? "#fff" : "#1a2332", fontSize: "14px", fontWeight: "700", cursor: "pointer", transition: "all 0.2s" }}
+              onMouseEnter={e => e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.13)" : "rgba(0,0,0,0.1)"}
+              onMouseLeave={e => e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)"}
+            >Get Started Free</button>
+            <button onClick={() => navigate("/login")} style={{ padding: "13px 24px", background: "rgba(255,255,255,0.08)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.18)", borderRadius: "12px", color: isDark ? "#fff" : "#1a2332", fontSize: "14px", fontWeight: "600", cursor: "pointer", transition: "all 0.2s" }}
+              onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.14)"}
+              onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.08)"}
+            >Sign In</button>
+          </div>
           {/* ── END SEARCH BAR ── */}
 
 
@@ -849,19 +870,19 @@ const theme = {
           {/* END LEFT */}
           {/* RIGHT: Logo gede float */}
           <div className="hero-right" style={{ position: "absolute", right: "-160px", top: "50%", transform: "translateY(-50%)", display: "flex", alignItems: "center", justifyContent: "flex-end", opacity: heroVisible ? 1 : 0, transition: "opacity 0.9s ease 0.6s", zIndex: 1, width: "620px" }}>
-            <img src="/assets/images/logo.png" alt="EarlyPath" style={{ width: "100%", maxWidth: "1100px", height: "auto", objectFit: "contain", animation: "gentleFloat 4s ease-in-out infinite, logoBreath 6s ease-in-out infinite", filter: isDark ? "drop-shadow(0 0 100px rgba(74,158,255,0.5))" : "drop-shadow(0 0 60px rgba(74,158,255,0.35))" }} />
+            <img src="/assets/images/logo.png" alt="EarlyPath" style={{ width: "100%", maxWidth: "1100px", height: "auto", objectFit: "contain", filter: "none", animation: "logoRotateSlow 5s ease-in-out infinite", transformOrigin: "center center" }} />
           </div>
           {/* END RIGHT */}
        </div>
 
       </section>
 
-  
+      {/* Wave transition hero -> features */}
 
             {/* ── FEATURES SECTION ───────────────────────────────────────────── */}
-      <section id="features" style={{ padding: "100px 24px", background: isDark ? "#0d1117" : "#f5f7ff" }}>
+      <section id="features" style={{ padding: "60px 24px", background: isDark ? "#070f1f" : "#f0f4ff", borderTop: "none", marginTop: "-2px" }}>
         <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
-          <div style={{ textAlign: "center", marginBottom: "64px" }} className="reveal">
+          <div style={{ textAlign: "center", marginBottom: "40px" }} className="reveal">
             <p style={{ fontSize: "13px", fontWeight: "600", color: "#4a9eff", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "12px" }}>Platform Features</p>
             <h2 style={{ fontSize: "clamp(28px, 4vw, 42px)", fontWeight: "800", color: isDark ? "#fff" : "#1a2332", letterSpacing: "-1px", margin: "0 0 16px" }}>
               Everything you need,{" "}<span style={{ color: isDark ? "rgba(255,255,255,0.45)" : "rgba(30,40,60,0.4)"}}>nothing you don't</span>
@@ -872,11 +893,10 @@ const theme = {
             {features.map((f, i) => (
               <div key={i}
                 className={`reveal reveal-delay-${Math.min(i+1,5)} feature-card`}
-                style={{ background: theme.cardBg, border: `1px solid ${theme.cardBorder}`, borderRadius: "16px", padding: "28px", transition: "all 0.3s", cursor: "default" }}
+                style={{ background: theme.cardBg, border: `1px solid ${theme.cardBorder}`, boxShadow: isDark ? "none" : "0 2px 12px rgba(0,0,0,0.06)", borderRadius: "16px", padding: "28px", transition: "all 0.3s", cursor: "default" }}
                 onMouseEnter={(e) => { e.currentTarget.style.background = theme.cardHoverBg; e.currentTarget.style.borderColor = `${f.color}30`; e.currentTarget.style.transform = "translateY(-4px)"; }}
                 onMouseLeave={(e) => { e.currentTarget.style.background = theme.cardBg; e.currentTarget.style.borderColor = theme.cardBorder; e.currentTarget.style.transform = "translateY(0)"; }}
               >
-                <div style={{ width: "48px", height: "48px", borderRadius: "12px", background: `${f.color}18`, border: `1px solid ${f.color}30`, display: "flex", alignItems: "center", justifyContent: "center", color: f.color, marginBottom: "18px" }}>{f.icon}</div>
                 <h3 style={{ fontSize: "17px", fontWeight: "700", color: isDark ? "#fff" : "#1a2332", marginBottom: "10px" }}>
                 {f.title}</h3>
                 <p style={{ fontSize: "14px", lineHeight: "1.7", color: isDark ? "rgba(255,255,255,0.5)" : "rgba(30,40,60,0.6)" }}>{f.desc}</p>
@@ -887,13 +907,8 @@ const theme = {
       </section>
 
       {/* ── PROCESS SECTION ─────────────────────────────────────────────── */}
-      <div style={{ lineHeight: 0, marginTop: "-2px" }}>
-        <svg viewBox="0 0 1440 70" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style={{ width: "100%", height: "70px", display: "block" }}>
-          <path d="M0,70 C480,0 960,0 1440,70 L1440,0 L0,0 Z" fill={isDark ? "#0d1117" : "#f5f7ff"} />
-        </svg>
-      </div>
       <section id="how-it-works" style={{ padding: "100px 24px" }}>
-        <div style={{ maxWidth: "1100px", margin: "0 auto", display: "flex", gap: "80px", alignItems: "center", flexWrap: "wrap" }}>
+        <div style={{ maxWidth: "1100px", margin: "0 auto", display: "flex", gap: "60px", alignItems: "flex-start", flexWrap: "wrap" }}>
           <div style={{ flex: "1 1 360px" }}>
             <p style={{ fontSize: "13px", fontWeight: "600", color: "#4a9eff", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "12px" }} className="reveal">How It Works</p>
             <h2 style={{ fontSize: "clamp(26px, 4vw, 40px)", fontWeight: "800", color: isDark ? "#fff" : "#1a2332", letterSpacing: "-1px", margin: "0 0 40px", lineHeight: "1.2" }}>
@@ -916,113 +931,36 @@ const theme = {
             </div>
           </div>
 
-          <div style={{ flex: "1 1 340px", maxWidth: "460px" }}>
-            <div style={{ background: isDark ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.9)", border: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.1)"}`, borderRadius: "20px", overflow: "hidden", boxShadow: isDark ? "none" : "0 4px 24px rgba(0,0,0,0.08)" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "14px 18px", borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.07)"}`, background: isDark ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.02)" }}>
-                {["#ff5f57", "#ffbd2e", "#28c940"].map((c) => (<div key={c} style={{ width: "10px", height: "10px", borderRadius: "50%", background: c }} />))}
-                <span style={{ flex: 1, textAlign: "center", fontSize: "12px", color: isDark ? "rgba(255,255,255,0.35)" : "rgba(30,40,60,0.45)" }}>EarlyPath Dashboard</span>
-              </div>
-              <div style={{ padding: "22px" }}>
-                <div style={{ marginBottom: "16px" }}>
-                  <div style={{ fontSize: "12px", color: isDark ? "rgba(255,255,255,0.35)" : "rgba(30,40,60,0.45)", marginBottom: "6px" }}>Active Positions</div>
-                  <div style={{ display: "flex", gap: "8px" }}>
-                    {["Frontend Dev", "UI/UX", "Data Science"].map((r) => (
-                      <span key={r} style={{ fontSize: "11px", background: "rgba(74,158,255,0.15)", border: "1px solid rgba(74,158,255,0.25)", borderRadius: "6px", padding: "4px 10px", color: "#4a9eff", fontWeight: "600" }}>{r}</span>
-                    ))}
-                  </div>
-                </div>
-                {[{ name: "Alicia M.", score: 94, tag: "Top Match" }, { name: "Dean K.", score: 88, tag: "Strong" }, { name: "Sara L.", score: 81, tag: "Good" }].map((c) => (
-                  <div key={c.name} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 14px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "10px", marginBottom: "8px" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                      <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: `hsl(${c.score * 2},60%,40%)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "13px", color: "#fff", fontWeight: "700" }}>{c.name[0]}</div>
-                      <span style={{ fontSize: "13px", color: isDark ? "rgba(255,255,255,0.8)" : "#1a2332", fontWeight: "600" }}>{c.name}</span>
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                      <span style={{ fontSize: "12px", color: isDark ? "rgba(255,255,255,0.4)" : "rgba(30,40,60,0.45)" }}>{c.tag}</span>
-                      <span style={{ fontSize: "13px", fontWeight: "700", color: c.score > 90 ? "#34d399" : c.score > 85 ? "#fbbf24" : "#94a3b8" }}>{c.score}%</span>
-                    </div>
-                  </div>
-                ))}
-                <div style={{ marginTop: "16px", padding: "12px 14px", background: "rgba(74,158,255,0.1)", border: "1px solid rgba(74,158,255,0.2)", borderRadius: "10px", fontSize: "12px", color: "rgba(255,255,255,0.6)", lineHeight: "1.6" }}>
-                  <span style={{ color: "#4a9eff", fontWeight: "700" }}>AI Insight: </span>
-                  Alicia M. shows 94% compatibility with your Frontend Dev role based on her portfolio and skill assessment.
-                </div>
-              </div>
-            </div>
-          </div>
+
         </div>
       </section>
 
       {/* ── AI SECTION ──────────────────────────────────────────────────── */}
-      <div style={{ lineHeight: 0, marginTop: "-2px" }}>
-        <svg viewBox="0 0 1440 70" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style={{ width: "100%", height: "70px", display: "block" }}>
-          <path d="M0,0 C480,70 960,70 1440,0 L1440,70 L0,70 Z" fill={isDark ? "rgba(0,0,0,0.15)" : "#eef2ff"} />
-        </svg>
-      </div>
-      <section style={{ padding: "100px 24px", background: isDark ? "rgba(0,0,0,0.15)" : "linear-gradient(135deg, #eef2ff 0%, #e8f0fe 100%)" }}>
-        <div style={{ maxWidth: "1100px", margin: "0 auto", display: "flex", gap: "80px", alignItems: "center", flexWrap: "wrap-reverse" }}>
-          <div style={{ flex: "1 1 340px", maxWidth: "460px" }}>
-            <div style={{ background: isDark ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.9)", border: `1px solid ${isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.1)"}`, borderRadius: "20px", padding: "28px", boxShadow: isDark ? "none" : "0 4px 24px rgba(0,0,0,0.08)" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "20px", marginTop: "34px" }}>
-                <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: "rgba(74,158,255,0.15)", border: "1px solid rgba(74,158,255,0.3)", display: "flex", alignItems: "center", justifyContent: "center", color: "#4a9eff" }}><IconRobot /></div>
-                <div>
-                  <div style={{ fontSize: "13px", fontWeight: "700", color: isDark ? "#fff" : "#1a2332" }}>EarlyPath AI Assistant</div>
-                  <div style={{ fontSize: "11px", color: isDark ? "rgba(255,255,255,0.4)" : "rgba(30,40,60,0.45)" }}>Active · Analyzing applications</div>
-                </div>
+      <section style={{ padding: "32px 24px 60px", background: isDark ? "#070f1f" : "#f0f4ff" }}>
+        <div style={{ maxWidth: "1100px", margin: "0 auto", textAlign: "center" }}>
+          <p style={{ fontSize: "13px", fontWeight: "600", color: "#4a9eff", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "12px" }}>AI-Powered</p>
+          <h2 style={{ fontSize: "clamp(26px, 4vw, 40px)", fontWeight: "800", color: isDark ? "#fff" : "#1a2332", letterSpacing: "-1px", margin: "0 0 16px", lineHeight: "1.2" }}>
+            AI does the{" "}<span style={{ color: "#4a9eff" }}>heavy lifting</span>
+          </h2>
+          <p style={{ fontSize: "15px", lineHeight: "1.75", color: isDark ? "rgba(255,255,255,0.5)" : "rgba(30,40,60,0.6)", marginBottom: "48px", maxWidth: "560px", margin: "0 auto 48px" }}>
+            Let our intelligent engine handle the tedious screening process while you focus on making meaningful connections with top candidates.
+          </p>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "16px" }}>
+            {aiFeatures.map((f, i) => (
+              <div key={i} style={{ background: isDark ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.8)", border: `1px solid ${isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.08)"}`, borderRadius: "16px", padding: "32px", textAlign: "left" }}>
+                <p style={{ fontSize: "14px", fontWeight: "700", color: isDark ? "#fff" : "#1a2332", marginBottom: "6px" }}>{f.title}</p>
+                <p style={{ fontSize: "13px", color: isDark ? "rgba(255,255,255,0.45)" : "rgba(30,40,60,0.55)", lineHeight: "1.6", margin: 0 }}>{f.desc}</p>
               </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "20px", marginTop: "34px" }}>
-                {[{ label: "Resume Analysis", value: "100%", color: "#4a9eff" }, { label: "Culture Fit Score", value: "87%", color: "#34d399" }, { label: "Skill Match", value: "92%", color: "#a78bfa" }].map((item) => (
-                  <div key={item.label}>
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", marginBottom: "5px" }}>
-                      <span style={{ color: isDark ? "rgba(255,255,255,0.55)" : "rgba(30,40,60,0.6)" }}>{item.label}</span>
-                      <span style={{ color: item.color, fontWeight: "700" }}>{item.value}</span>
-                    </div>
-                    <div style={{ height: "4px", background: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.08)", borderRadius: "99px", overflow: "hidden" }}>
-                      <div style={{ height: "100%", width: item.value, background: item.color, borderRadius: "99px", boxShadow: `0 0 8px ${item.color}60` }} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div style={{ background: "rgba(52,211,153,0.08)", border: "1px solid rgba(52,211,153,0.2)", borderRadius: "10px", padding: "14px", fontSize: "13px", color: isDark ? "rgba(255,255,255,0.65)" : "rgba(30,40,60,0.7)", lineHeight: "1.65" }}>
-                <span style={{ color: "#34d399", fontWeight: "700" }}>✓ Recommendation: </span>
-                This candidate is highly recommended. Proceed to technical interview stage.
-              </div>
-            </div>
-          </div>
-          <div style={{ flex: "1 1 360px" }}>
-            <p style={{ fontSize: "13px", fontWeight: "600", color: "#34d399", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "12px" }}>AI-Powered</p>
-            <h2 style={{ fontSize: "clamp(26px, 4vw, 40px)", fontWeight: "800", color: isDark ? "#fff" : "#1a2332", letterSpacing: "-1px", margin: "0 0 20px", lineHeight: "1.2" }}>
-              AI does the{" "}<span style={{ color: "#34d399" }}>heavy lifting</span>
-            </h2>
-            <p style={{ fontSize: "15px", lineHeight: "1.75", color: isDark ? "rgba(255,255,255,0.5)" : "rgba(30,40,60,0.6)", marginBottom: "32px" }}>
-              Let our intelligent engine handle the tedious screening process while you focus on making meaningful connections with top candidates.
-            </p>
-            <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-              {aiFeatures.map((f, i) => (
-                <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: "14px" }}>
-                  <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: f.color, marginTop: "7px", flexShrink: 0, boxShadow: `0 0 8px ${f.color}80` }} />
-                  <div>
-                    <p style={{ fontSize: "14px", fontWeight: "700", color: isDark ? "#fff" : "#1a2332", marginBottom: "3px" }}>
-                      {f.title}</p>
-                    <p style={{ fontSize: "13px", color: isDark ? "rgba(255,255,255,0.45)" : "rgba(30,40,60,0.55)", lineHeight: "1.6", margin: 0 }}>{f.desc}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
       {/* ── OPEN POSITIONS SECTION ─────────────────────────────────────── */}
-      <div style={{ lineHeight: 0, marginTop: "-2px" }}>
-        <svg viewBox="0 0 1440 70" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" style={{ width: "100%", height: "70px", display: "block" }}>
-          <path d="M0,70 C480,0 960,0 1440,70 L1440,0 L0,0 Z" fill={isDark ? "rgba(0,0,0,0.15)" : "#eef2ff"} />
-        </svg>
-      </div>
-      <section id="open-positions" style={{ padding: "100px 24px 40px 24px" }}>
+      <section id="open-positions" style={{ padding: "60px 24px 40px 24px", background: isDark ? "#060e1e" : "#ffffff" }}>
         <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
           <div style={{ textAlign: "center", marginBottom: "56px" }} className="reveal">
-            <p style={{ fontSize: "13px", fontWeight: "600", color: "#a78bfa", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "12px" }}>
+            <p style={{ fontSize: "13px", fontWeight: "600", color: "#4a9eff", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "12px" }}>
               Live Opportunities
             </p>
             {/* Header dinamis berdasarkan search */}
@@ -1063,7 +1001,7 @@ const theme = {
   display:grid !important;
   grid-template-columns:1fr 1fr 2fr !important;
   gap:48px !important;
-  align-items:start !important;
+  align-items:flex-start !important;
 }
 
 @media (max-width:768px){
@@ -1122,7 +1060,7 @@ const theme = {
               ) : (
                 displayedVacancies.map((pos, i) => (
                   <div key={i} onClick={() => setPositionsPopupVacancy(pos)}
-                    style={{ minWidth: "320px", maxWidth: "320px", background: theme.cardBg, border: `1px solid ${theme.cardBorder}`, borderRadius: "16px", overflow: "hidden", display: "flex", flexDirection: "column", transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)", cursor: "pointer", scrollSnapAlign: "start", flexShrink: 0 }}
+                    style={{ minWidth: "320px", maxWidth: "320px", background: theme.cardBg, border: `1px solid ${theme.cardBorder}`, boxShadow: isDark ? "none" : "0 2px 12px rgba(0,0,0,0.06)", borderRadius: "16px", overflow: "hidden", display: "flex", flexDirection: "column", transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)", cursor: "pointer", scrollSnapAlign: "start", flexShrink: 0 }}
                     onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-6px)"; e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)"; e.currentTarget.style.borderColor = isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.15)"; }}
                     onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.background = theme.cardBg; e.currentTarget.style.borderColor = theme.cardBorder; }}
                   >
@@ -1206,9 +1144,9 @@ const theme = {
       {/* ── FOOTER ──────────────────────────────────────────────────────── */}
       <footer style={{ background: theme.footerBg, borderTop: `1px solid ${theme.footerBorder}`, padding: "40px 24px 40px 24px" }}>
         <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
-          <div className="footer-grid" style={{ display: "grid", gridTemplateColumns: "1.2fr 0.8fr 2fr", gap: "48px", marginBottom: "64px", alignItems: "flex-start" }}>
+          <div className="footer-grid" style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr 1.8fr", gap: "48px", marginBottom: "40px", alignItems: "flex-start" }}>
             {/* Kolom 1: Logo + Desc */}
-            <div className="fadein footer-col footer-brand" style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", textAlign: "left", paddingTop: "35px" }}>
+            <div className="fadein footer-col footer-brand" style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", textAlign: "left", paddingTop: "0", alignSelf: "flex-start" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "14px", marginBottom: "20px" }}>
                 <img src="/assets/images/logo.png" alt="EarlyPath" style={{ height: "60px", objectFit: "contain" }} />
                 <span style={{ fontSize: "18px", fontWeight: "800", color: isDark ? "#fff" : "#1a2332", letterSpacing: "-0.5px" }}>EarlyPath</span>
@@ -1237,7 +1175,7 @@ const theme = {
             </div>
 
             {/* Kolom 2: Quick Links */}
-            <div className="fadein footer-col" style={{ display: "flex", flexDirection: "column", gap: "8px", paddingTop: "35px" }}>
+            <div className="fadein footer-col" style={{ display: "flex", flexDirection: "column", gap: "8px", paddingTop: "0", alignSelf: "flex-start" }}>
               <p style={{ fontSize: "11px", fontWeight: "700", letterSpacing: "0.1em", color: "#4a9eff", textTransform: "uppercase", margin: "0 0 4px" }}>Quick Links</p>
               {["Features", "How It Works", "Open Programs", "Contact"].map((link) => (
                 <a key={link}
@@ -1295,13 +1233,13 @@ const theme = {
         isDark={isDark}
       />
       <style>{`
-        @keyframes badgeFloat { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-7px); } }
-        @keyframes logoBreath { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.07); } }
+        @keyframes badgeFloat { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-7px); } } 50% { transform: scale(1.07); } }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
         @keyframes fadeUp { from { opacity: 0; transform: translateY(32px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes floatOrb { 0%, 100% { transform: translateY(0px) scale(1); } 50% { transform: translateY(-20px) scale(1.05); } }
-        @keyframes gentleFloat { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-10px); } }
+        @keyframes floatOrb { 0%, 100% { transform: translateY(0px) scale(1); } 50% { transform: translateY(-20px) scale(1.05); } } 50% { transform: translateY(-10px); } }
         @keyframes badgePulse { 0%, 100% { opacity: 1; transform: translateY(0); } 50% { opacity: 0.75; transform: translateY(-2px); } }
+        @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+        @keyframes logoRotateSlow { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-12px); } }
         @keyframes orbMove { 0% { transform: translate(0,0) scale(1); } 33% { transform: translate(30px,-20px) scale(1.08); } 66% { transform: translate(-20px,15px) scale(0.95); } 100% { transform: translate(0,0) scale(1); } }
         @keyframes orbMove2 { 0% { transform: translate(0,0) scale(1); } 33% { transform: translate(-25px,20px) scale(1.05); } 66% { transform: translate(20px,-15px) scale(0.97); } 100% { transform: translate(0,0) scale(1); } }
         @keyframes particle1 { 0% { transform: translate(0,0) scale(1); opacity:0; } 15%{ opacity:1; } 85%{ opacity:1; } 100% { transform: translate(60px,-180px) scale(0.3); opacity:0; } }
@@ -1351,7 +1289,7 @@ const theme = {
           <div style={{ width: 64, height: 64, borderRadius: 20, background: "rgba(251,113,133,0.1)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fb7185", margin: "0 auto 20px" }}>
             <IconLogOut size={32} />
           </div>
-          <h3 style={{ fontSize: 20, fontWeight: 800, marginBottom: 8, color: isDark ? "#fff" : "#0f172a" }}>Logout?</h3>
+          <h3 style={{ fontSize: 20, fontWeight: 800, marginBottom: 8, color: isDark ? "#fff" : "#0a1628" }}>Logout?</h3>
           <p style={{ fontSize: 14, color: isDark ? "rgba(255,255,255,0.5)" : "rgba(30,40,60,0.6)", lineHeight: 1.6, marginBottom: 28 }}>You will need to sign in again to access your dashboard.</p>
           <div style={{ display: "flex", gap: 12 }}>
             <button onClick={() => setLogoutModalOpen(false)}
