@@ -117,8 +117,7 @@ class HRMentorAssignmentController extends Controller
                 ->toArray();
 
             if (!empty($teamMemberIds)) {
-                Submission::where('id_user_mentor', null)
-                    ->whereIn('id_user', $teamMemberIds)
+                Submission::whereIn('id_user', $teamMemberIds)
                     ->where('id_team', $submission->id_team)
                     ->update(['id_user_mentor' => $request->id_mentor]);
             }
@@ -171,6 +170,19 @@ class HRMentorAssignmentController extends Controller
                 if ($load < 6) {
                     $submission->update(['id_user_mentor' => $mentor->id_user]);
                     $assigned++;
+
+                    // Sync team members if this submission is part of a team
+                    if ($submission->id_team) {
+                        $teamMemberIds = \App\Models\TeamMember::where('id_team', $submission->id_team)
+                            ->pluck('id_user')
+                            ->toArray();
+
+                        if (!empty($teamMemberIds)) {
+                            Submission::whereIn('id_user', $teamMemberIds)
+                                ->where('id_team', $submission->id_team)
+                                ->update(['id_user_mentor' => $mentor->id_user]);
+                        }
+                    }
                     break;
                 }
             }

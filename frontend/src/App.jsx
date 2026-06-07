@@ -38,6 +38,7 @@ import ResetPasswordStaff   from './pages/Admin/ResetPasswordStaff';
 import LandingPage  from './pages/Main/LandingPage';
 import ProfilePage  from './pages/Main/ProfilePage';
 import PreviewOnboarding from "./pages/Main/PreviewOnBoarding";
+import CertificateVerification from './pages/Main/CertificateVerification';
 
 
 // Super Admin
@@ -148,6 +149,7 @@ export default function App() {
                 {/* Team Invitation - Public */}
                 <Route path="/join-team/:token" element={<JoinTeamPage />} />
                 <Route path="/join/:token" element={<JoinTeamPage />} />
+                <Route path="/verify-certificate/:id_certificate" element={<CertificateVerification />} />
 
                 {/* Candidate — Private */}
                 <Route path="/candidate/dashboard"                   element={<Private><CandidateDashboard /></Private>} />
