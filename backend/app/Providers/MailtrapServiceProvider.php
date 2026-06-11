@@ -1,14 +1,15 @@
 <?php
-
 namespace App\Providers;
 
 use App\Mail\Transport\MailtrapApiTransport;
+use Illuminate\Mail\MailManager;
 use Illuminate\Support\ServiceProvider;
+use Symfony\Component\Mailer\Transport;
 
-class AppServiceProvider extends ServiceProvider
+class MailtrapServiceProvider extends ServiceProvider
 {
     /**
-     * Register any application services.
+     * Register services.
      */
     public function register(): void
     {
@@ -16,11 +17,10 @@ class AppServiceProvider extends ServiceProvider
     }
 
     /**
-     * Bootstrap any application services.
+     * Bootstrap services.
      */
     public function boot(): void
     {
-        // Register Mailtrap Email Sending API transport
         $this->app['mail.manager']->extend('mailtrap', function () {
             $apiToken = config('mail.mailers.mailtrap.api_token');
             
@@ -30,7 +30,7 @@ class AppServiceProvider extends ServiceProvider
 
             return new MailtrapApiTransport(
                 $apiToken,
-                null,
+                $this->app['http_client'],
                 $this->app['log']
             );
         });
