@@ -116,10 +116,7 @@ class MentorTaskController extends Controller
 
         // Fetch projects or independent tasks (parent_id_task is null)
         $tasks = Task::where('id_mentor', $mentorId)
-            ->where(function ($q) {
-                $q->where('task_type', 'project')
-                    ->orWhereNull('parent_id_task');
-            })
+            ->whereNull('parent_id_task')
             ->with(['intern', 'team', 'subTasks.intern'])
             ->orderBy('created_at', 'desc')
             ->get()->map(function ($task) {
@@ -307,7 +304,6 @@ class MentorTaskController extends Controller
             if ($request->has('start_date')) {
                 $task->created_at = Carbon::parse($request->input('start_date'));
             }
-            $task->task_type = 'project';
             $task->fill($request->only(['title', 'description', 'status', 'deadline_at', 'feedback_notes', 'frequency']));
             $task->save();
 

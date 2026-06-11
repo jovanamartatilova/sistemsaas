@@ -27,9 +27,23 @@ function TaskCard({ task, onStatusChange, onWorkSubmitted, onReviewSibling, curr
   const [expanded, setExpanded] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
   const [showSubmitForm, setShowSubmitForm] = useState(!!(task.feedback_notes || task.parent_feedback_notes || task.feedback));
-  const [attachments, setAttachments] = useState([{ type: "link", label: "", value: "" }]);
+  const [attachments, setAttachments] = useState(
+    task.work_attachments && task.work_attachments.length > 0
+      ? task.work_attachments
+      : [{ type: "link", label: "", value: "" }]
+  );
   const [uploading, setUploading] = useState({});
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (showSubmitForm) {
+      setAttachments(
+        task.work_attachments && task.work_attachments.length > 0
+          ? task.work_attachments
+          : [{ type: "link", label: "", value: "" }]
+      );
+    }
+  }, [showSubmitForm, task.work_attachments]);
 
   const norm = task.status?.toLowerCase().replace(" ", "_") || "pending";
   const cfg = STATUS_CONFIG[norm] || STATUS_CONFIG.pending;
@@ -159,7 +173,7 @@ console.log("task data:", task);
       {expanded && (
         <div className="border-t border-slate-100">
           {/* Feedback/revision banner */}
-          {(task.feedback_notes || task.parent_feedback_notes || task.feedback) && (
+          {(norm !== 'done' && (task.feedback_notes || task.parent_feedback_notes || task.feedback)) && (
             <div className="mx-5 mt-4 bg-rose-50 border border-rose-200 rounded-lg p-3 flex gap-3 items-start">
               <AlertCircle size={16} className="text-rose-500 mt-0.5 flex-shrink-0" />
               <div>
@@ -808,9 +822,23 @@ const exportCSV = () => {
             const cfg = STATUS_CONFIG[norm] || STATUS_CONFIG.pending;
             const isSubmitted = !!item.submitted_at;
             const [showForm, setShowForm] = useState(false);
-            const [rowAtts, setRowAtts] = useState([{ type: "link", label: "", value: "" }]);
+            const [rowAtts, setRowAtts] = useState(
+              item.work_attachments && item.work_attachments.length > 0
+                ? item.work_attachments
+                : [{ type: "link", label: "", value: "" }]
+            );
             const [rowSubmitting, setRowSubmitting] = useState(false);
             const [rowUploading, setRowUploading] = useState({});
+
+            useEffect(() => {
+              if (showForm) {
+                setRowAtts(
+                  item.work_attachments && item.work_attachments.length > 0
+                    ? item.work_attachments
+                    : [{ type: "link", label: "", value: "" }]
+                );
+              }
+            }, [showForm, item.work_attachments]);
 
             const handleRowFileUpload = async (i, file) => {
               if (file.size > 2 * 1024 * 1024) return alert("File too large (max 2MB)");
@@ -848,6 +876,8 @@ const exportCSV = () => {
               finally { setRowSubmitting(false); }
             };
 
+            const needsResubmit = !!(item.feedback_notes || item.feedback);
+
             return (
               <>
               <tr className="border-b border-slate-100 hover:bg-slate-50 transition-colors align-top">
@@ -867,7 +897,7 @@ const exportCSV = () => {
                           ))}
                         </div>
                       )}
-                      {(item.feedback_notes || item.feedback) && (
+                      {(norm !== 'done' && needsResubmit) && (
                         <div className="mt-1.5 bg-rose-50 border border-rose-100 px-2 py-1 rounded text-[10px] text-rose-700">
                           <span className="font-bold">Revisi:</span> {item.feedback_notes || item.feedback}
                         </div>
@@ -883,10 +913,10 @@ const exportCSV = () => {
                     <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${cfg.cls} border whitespace-nowrap`}>
                       {cfg.label}{isSubmitted && " ✓"}
                     </span>
-                    {!isSubmitted && (
+                    {(!isSubmitted || (norm !== 'done' && needsResubmit)) && (
                       <button onClick={() => setShowForm(p => !p)}
                         className="text-[10px] font-bold text-indigo-600 hover:bg-indigo-50 px-2 py-1 rounded border border-indigo-100">
-                        {showForm ? "Cancel" : "Submit"}
+                        {showForm ? "Cancel" : needsResubmit ? "Resubmit" : "Submit"}
                       </button>
                     )}
                   </div>
