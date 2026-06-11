@@ -30,9 +30,10 @@ class HRCandidateController extends Controller
             } elseif (preg_match('/^stage_(\d+)$/', $statusParam, $m)) {
                 $frontendIdx = (int) $m[1];
                 if ($frontendIdx === 0) {
-                    // Stage 0: belum diproses sama sekali
-                    $query->whereIn('status', ['pending', 'stage_0', 'stage_1']);
+                    // Stage 0: hanya pending / stage_1 (belum pernah diadvance)
+                    $query->whereIn('status', ['pending', 'stage_1']);
                 } else {
+                    // Frontend kirim 0-based index, DB simpan 1-based
                     $dbStatus = 'stage_' . ($frontendIdx + 1);
                     $query->where('status', $dbStatus);
                 }
