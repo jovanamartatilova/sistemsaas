@@ -847,15 +847,27 @@ class MentorController extends Controller
             }
 
             // Handle custom background file upload
-            $background_path = $certExists ? $certExists->background_path : null;
+            $background_path = null;
             if ($request->hasFile('background_file')) {
                 $background_path = $request->file('background_file')->store('certificates/backgrounds', 'public');
             } elseif ($request->filled('background_path')) {
-                $background_path = $request->input('background_path');
+                $bgData = $request->input('background_path');
+                if (str_starts_with($bgData, 'data:image')) {
+                    $type = explode(';', $bgData)[0];
+                    $type = explode('/', $type)[1];
+                    $dataDec = explode(',', $bgData)[1];
+                    $decoded = base64_decode($dataDec);
+
+                    $bgFileName = 'certificates/backgrounds/bg_' . Str::random(10) . '.' . $type;
+                    Storage::disk('public')->put($bgFileName, $decoded);
+                    $background_path = $bgFileName;
+                } else {
+                    $background_path = preg_replace('/.*\/storage\//', '', $bgData);
+                }
             }
 
             // Handle signatory 2 signature upload/canvas
-            $signatory2_signature_path = $certExists ? $certExists->signatory2_signature : null;
+            $signatory2_signature_path = null;
             if ($request->filled('signatory2_signature')) {
                 $sigData = $request->input('signatory2_signature');
                 if (str_starts_with($sigData, 'data:image')) {
@@ -868,7 +880,7 @@ class MentorController extends Controller
                     Storage::disk('public')->put($sigFileName, $decoded);
                     $signatory2_signature_path = $sigFileName;
                 } else {
-                    $signatory2_signature_path = $sigData;
+                    $signatory2_signature_path = preg_replace('/.*\/storage\//', '', $sigData);
                 }
             }
         }
@@ -925,7 +937,7 @@ class MentorController extends Controller
         if ($show_qr) {
             try {
                 $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=' . urlencode($verifyUrl);
-                $response = \Illuminate\Support\Facades\Http::timeout(3)->get($qrUrl);
+                $response = \Illuminate\Support\Facades\Http::withOptions(['verify' => false])->timeout(3)->get($qrUrl);
                 if ($response->successful()) {
                     $qr_base64 = 'data:image/png;base64,' . base64_encode($response->body());
                 } else {
@@ -976,6 +988,16 @@ class MentorController extends Controller
         ];
 
         $filePath = 'certificates/' . $idCert . '.pdf';
+        
+        // Globally bypass SSL validation for file_get_contents inside DomPDF font downloads
+        stream_context_set_default([
+            'ssl' => [
+                'verify_peer' => false,
+                'verify_peer_name' => false,
+                'allow_self_signed' => true,
+            ]
+        ]);
+
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('certificate.template', $data)
             ->setPaper('a4', 'landscape')
             ->setOption('isRemoteEnabled', true)
@@ -1188,7 +1210,7 @@ class MentorController extends Controller
                 if ($request->hasFile('background_file')) {
                     $background_path = $request->file('background_file')->store('certificates/backgrounds', 'public');
                 } elseif ($request->filled('background_path')) {
-                    $background_path = $request->input('background_path');
+                    $background_path = preg_replace('/.*\/storage\//', '', $request->input('background_path'));
                 }
 
                 // Handle signatory 2 signature upload/canvas
@@ -1205,7 +1227,7 @@ class MentorController extends Controller
                         Storage::disk('public')->put($sigFileName, $decoded);
                         $signatory2_signature_path = $sigFileName;
                     } else {
-                        $signatory2_signature_path = $sigData;
+                        $signatory2_signature_path = preg_replace('/.*\/storage\//', '', $sigData);
                     }
                 }
             }
@@ -1262,7 +1284,7 @@ class MentorController extends Controller
             if ($show_qr) {
                 try {
                     $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=' . urlencode($verifyUrl);
-                    $response = \Illuminate\Support\Facades\Http::timeout(3)->get($qrUrl);
+                    $response = \Illuminate\Support\Facades\Http::withOptions(['verify' => false])->timeout(3)->get($qrUrl);
                     if ($response->successful()) {
                         $qr_base64 = 'data:image/png;base64,' . base64_encode($response->body());
                     } else {
@@ -1311,6 +1333,15 @@ class MentorController extends Controller
                 'qr_base64' => $qr_base64,
                 'layout_settings' => $layout_settings,
             ];
+
+            // Globally bypass SSL validation for file_get_contents inside DomPDF font downloads
+            stream_context_set_default([
+                'ssl' => [
+                    'verify_peer' => false,
+                    'verify_peer_name' => false,
+                    'allow_self_signed' => true,
+                ]
+            ]);
 
             $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('certificate.template', $data)
                 ->setPaper('a4', 'landscape')

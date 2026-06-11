@@ -182,6 +182,7 @@ export default function CertificateMentor() {
     font_family_title: '',
     font_family_name: '',
     font_family_body: '',
+    font_family_table: '',
     font_color_title: '',        // SERTIFIKAT heading
     font_color_cert_id: '',      // certificate number under title
     font_color_name: '',         // candidate name
@@ -203,6 +204,9 @@ export default function CertificateMentor() {
   const [templateName, setTemplateName] = useState("");
   const [generateModal, setGenerateModal] = useState(false);
   const [selectedTemplateId, setSelectedTemplateId] = useState("tpl_classic");
+  const [showBulkModal, setShowBulkModal] = useState(false);
+  const [bulkModalType, setBulkModalType] = useState("generate");
+  const [selectedBulkTemplateId, setSelectedBulkTemplateId] = useState("tpl_classic");
 
   const canvasRef = useRef(null);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -664,7 +668,7 @@ export default function CertificateMentor() {
   }, [search]);
 
   // ─── ACTIONS ─────────────────────────────────────────────────────────────
-  const handleBulkGenerate = async () => {
+  const handleBulkGenerate = () => {
     if (!hasSignature) {
       pushToast("Please set up your signature first", "error");
       return;
@@ -678,25 +682,12 @@ export default function CertificateMentor() {
       return;
     }
 
-    if (!window.confirm(`Are you sure you want to generate certificates for ${eligibleIds.length} interns?`)) {
-      return;
-    }
-
-    try {
-      setBulkGenerating(true);
-      await mentorApi.bulkGenerateCertificates(eligibleIds);
-      broadcastDataRefresh('certificate');
-      await fetchCerts(search);
-      pushToast(`Bulk generation successful for ${eligibleIds.length} interns.`, 'success');
-    } catch (error) {
-      console.error('Bulk generation error:', error);
-      pushToast('Failed to process bulk generation', 'error');
-    } finally {
-      setBulkGenerating(false);
-    }
+    setBulkModalType("generate");
+    setSelectedBulkTemplateId("tpl_classic");
+    setShowBulkModal(true);
   };
 
-  const handleBulkRegenerate = async () => {
+  const handleBulkRegenerate = () => {
     if (!hasSignature) {
       pushToast("Please set up your signature first", "error");
       return;
@@ -710,19 +701,83 @@ export default function CertificateMentor() {
       return;
     }
 
-    if (!window.confirm(`Are you sure you want to regenerate certificates for ${eligibleIds.length} interns?`)) {
+    setBulkModalType("regenerate");
+    setSelectedBulkTemplateId("tpl_classic");
+    setShowBulkModal(true);
+  };
+
+  const executeBulkAction = async () => {
+    const tpl = templates.find(t => t.id === selectedBulkTemplateId);
+    if (!tpl) {
+      pushToast("Selected template not found", "error");
       return;
     }
 
+    if (!hasSignature) {
+      pushToast("Please set up your signature first", "error");
+      return;
+    }
+
+    const eligibleIds = filteredCerts
+      .filter(cert => bulkModalType === "generate" ? cert.status === "Done" : cert.status === "Generated")
+      .map(cert => cert.id_submission);
+
+    if (eligibleIds.length === 0) {
+      pushToast(`No eligible interns to ${bulkModalType} certificates for.`, "info");
+      return;
+    }
+
+    let parsedSettings = {};
+    if (tpl.layout_settings) {
+      if (typeof tpl.layout_settings === 'string') {
+        try {
+          parsedSettings = JSON.parse(tpl.layout_settings);
+        } catch {
+          parsedSettings = {};
+        }
+      } else {
+        parsedSettings = tpl.layout_settings;
+      }
+    }
+
+    const payload = {
+      template_style: tpl.template_style,
+      logo_position: tpl.logo_position || 'center',
+      signature_layout: tpl.signature_layout,
+      signatory1_name: tpl.signatory1_name || '',
+      signatory1_title: tpl.signatory1_title || '',
+      signatory2_name: tpl.signatory2_name || '',
+      signatory2_title: tpl.signatory2_title || '',
+      show_qr: tpl.show_qr ? "true" : "false",
+      qr_position: tpl.qr_position || 'bottom-left',
+      layout_settings: parsedSettings,
+    };
+
+    if (tpl.background_url) {
+      if (tpl.background_url.startsWith('data:image')) {
+        payload.background_path = tpl.background_url;
+      } else {
+        payload.background_path = tpl.background_url.replace(/.*\/storage\//, '');
+      }
+    }
+    if (tpl.signatory2_signature) {
+      if (tpl.signatory2_signature.startsWith('data:image')) {
+        payload.signatory2_signature = tpl.signatory2_signature;
+      } else {
+        payload.signatory2_signature = tpl.signatory2_signature.replace(/.*\/storage\//, '');
+      }
+    }
+
     try {
+      setShowBulkModal(false);
       setBulkGenerating(true);
-      await mentorApi.bulkGenerateCertificates(eligibleIds);
+      await mentorApi.bulkGenerateCertificates(eligibleIds, payload);
       broadcastDataRefresh('certificate');
       await fetchCerts(search);
-      pushToast(`Bulk generation successful for ${eligibleIds.length} interns.`, 'success');
+      pushToast(`Bulk ${bulkModalType} successful for ${eligibleIds.length} interns.`, 'success');
     } catch (error) {
-      console.error('Bulk generation error:', error);
-      pushToast('Failed to process bulk generation', 'error');
+      console.error(`Bulk ${bulkModalType} error:`, error);
+      pushToast(`Failed to process bulk ${bulkModalType}`, 'error');
     } finally {
       setBulkGenerating(false);
     }
@@ -888,7 +943,7 @@ export default function CertificateMentor() {
       signature_y: 0, signature_x: 0, show_signatures: true,
       qr_y: 0, qr_x: 0, show_qr: true,
       font_size_title: 30, font_size_name: 34, font_size_body: 11,
-      font_family_title: '', font_family_name: '', font_family_body: '',
+      font_family_title: '', font_family_name: '', font_family_body: '', font_family_table: '',
       font_color_title: '', font_color_cert_id: '', font_color_name: '',
       font_color_labels: '', font_color_role: '',
       font_color_body: '', font_color_signatures: '',
@@ -949,6 +1004,7 @@ export default function CertificateMentor() {
       font_family_title: parsedSettings.font_family_title || '',
       font_family_name: parsedSettings.font_family_name || '',
       font_family_body: parsedSettings.font_family_body || '',
+      font_family_table: parsedSettings.font_family_table || '',
       font_color_title: parsedSettings.font_color_title || '',
       font_color_cert_id: parsedSettings.font_color_cert_id || '',
       font_color_name: parsedSettings.font_color_name || '',
@@ -1228,7 +1284,8 @@ export default function CertificateMentor() {
 
   const handleDirectPreview = async (cert) => {
     if (cert.file_url) {
-      window.open(cert.file_url, '_blank');
+      const cacheBuster = cert.file_url + (cert.file_url.includes('?') ? '&' : '?') + 't=' + Date.now();
+      window.open(cacheBuster, '_blank');
       return;
     }
     try {
@@ -1841,15 +1898,28 @@ export default function CertificateMentor() {
                         </div>
                       </div>
 
-                      <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
-                        <label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600" }}>Body / Description Font</label>
-                        <select
-                          value={layoutSettings.font_family_body || ""}
-                          onChange={(e) => setLayoutSettings(prev => ({ ...prev, font_family_body: e.target.value }))}
-                          style={{ padding: "5px 8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "11.5px", background: "#fff", outline: "none", color: "#0f172a" }}
-                        >
-                          {FONT_OPTIONS.map(opt => <option key={opt.value} value={opt.value} style={{ fontFamily: opt.value ? `"${opt.value}"` : 'inherit', fontSize: '13px' }}>{opt.label}</option>)}
-                        </select>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+                          <label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600" }}>Body / Description Font</label>
+                          <select
+                            value={layoutSettings.font_family_body || ""}
+                            onChange={(e) => setLayoutSettings(prev => ({ ...prev, font_family_body: e.target.value }))}
+                            style={{ padding: "5px 8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "11.5px", background: "#fff", outline: "none", color: "#0f172a" }}
+                          >
+                            {FONT_OPTIONS.map(opt => <option key={opt.value} value={opt.value} style={{ fontFamily: opt.value ? `"${opt.value}"` : 'inherit', fontSize: '13px' }}>{opt.label}</option>)}
+                          </select>
+                        </div>
+
+                        <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+                          <label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600" }}>Table / Page 2 Font</label>
+                          <select
+                            value={layoutSettings.font_family_table || ""}
+                            onChange={(e) => setLayoutSettings(prev => ({ ...prev, font_family_table: e.target.value }))}
+                            style={{ padding: "5px 8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "11.5px", background: "#fff", outline: "none", color: "#0f172a" }}
+                          >
+                            {FONT_OPTIONS.map(opt => <option key={opt.value} value={opt.value} style={{ fontFamily: opt.value ? `"${opt.value}"` : 'inherit', fontSize: '13px' }}>{opt.label}</option>)}
+                          </select>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -2355,6 +2425,7 @@ export default function CertificateMentor() {
                         font_family_title: parsedSettings.font_family_title || '',
                         font_family_name: parsedSettings.font_family_name || '',
                         font_family_body: parsedSettings.font_family_body || '',
+                        font_family_table: parsedSettings.font_family_table || '',
                         font_color_title: parsedSettings.font_color_title || '',
                         font_color_cert_id: parsedSettings.font_color_cert_id || '',
                         font_color_name: parsedSettings.font_color_name || '',
@@ -2406,6 +2477,93 @@ export default function CertificateMentor() {
             </div>
           </div>
         )}
+
+        {/* Bulk Generate/Regenerate Certificates Modal */}
+        {showBulkModal && (() => {
+          const eligibleIds = filteredCerts
+            .filter(cert => bulkModalType === "generate" ? cert.status === "Done" : cert.status === "Generated")
+            .map(cert => cert.id_submission);
+
+          return (
+            <div style={{ position: "fixed", inset: 0, zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(15, 23, 42, 0.45)", backdropFilter: "blur(6px)" }}>
+              <div style={{ background: "#fff", borderRadius: "14px", width: "90vw", maxWidth: "480px", boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)", overflow: "hidden" }}>
+                
+                <div style={{ padding: "18px 24px", borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <div>
+                    <span style={{ fontSize: "14.5px", fontWeight: "750", color: "#0f172a" }}>
+                      {bulkModalType === "generate" ? "Bulk Generate Certificates" : "Bulk Regenerate Certificates"}
+                    </span>
+                    <div style={{ fontSize: "12px", color: "#64748b", marginTop: "2px" }}>
+                      Target: <b>{eligibleIds.length} eligible interns</b>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowBulkModal(false)}
+                    style={{ background: "#f1f5f9", border: "none", borderRadius: "50%", width: "24px", height: "24px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#64748b" }}
+                  >
+                    <X size={13} />
+                  </button>
+                </div>
+
+                <div style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: "14px" }}>
+                  <div>
+                    <label style={{ fontSize: "11.5px", fontWeight: "700", color: "#334155", display: "block", marginBottom: "6px" }}>Select Certificate Template Preset</label>
+                    <select
+                      value={selectedBulkTemplateId}
+                      onChange={(e) => setSelectedBulkTemplateId(e.target.value)}
+                      style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "12.5px", outline: "none", background: "#fff", cursor: "pointer", color: "#0f172a", fontWeight: "600" }}
+                    >
+                      {templates.map(t => (
+                        <option key={t.id} value={t.id}>{t.name} ({t.template_style})</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {(() => {
+                    const tpl = templates.find(t => t.id === selectedBulkTemplateId);
+                    if (!tpl) return null;
+                    return (
+                      <div style={{ padding: "12px 14px", background: "#f8fafc", borderRadius: "10px", border: "1px solid #e2e8f0", fontSize: "11.5px", display: "flex", flexDirection: "column", gap: "5px", color: "#475569" }}>
+                        <div style={{ fontWeight: "750", color: "#334155", marginBottom: "2px" }}>Template Summary:</div>
+                        <div>• Theme Style: <span style={{ textTransform: "capitalize", fontWeight: "600", color: "#0f172a" }}>{tpl.template_style}</span></div>
+                        <div>• Layout Mode: <span style={{ fontWeight: "600", color: "#0f172a" }}>{tpl.signature_layout === 'double' ? "Double Signatures" : "Single Signature"}</span></div>
+                        <div>• Primary Signatory: <span style={{ fontWeight: "600", color: "#0f172a" }}>{tpl.signatory1_name || "-"} ({tpl.signatory1_title || "-"})</span></div>
+                        {tpl.signature_layout === 'double' && (
+                          <div>• Secondary Signatory: <span style={{ fontWeight: "600", color: "#0f172a" }}>{tpl.signatory2_name || "-"} ({tpl.signatory2_title || "-"})</span></div>
+                        )}
+                        <div>• Background Design: <span style={{ fontWeight: "600", color: "#0f172a" }}>{tpl.background_url ? "Custom Background Image" : "Default Border Template"}</span></div>
+                      </div>
+                    );
+                  })()}
+                </div>
+
+                <div style={{ padding: "12px 24px", borderTop: "1px solid #f1f5f9", display: "flex", justifyContent: "flex-end", gap: "8px", background: "#f8fafc" }}>
+                  <button
+                    onClick={() => setShowBulkModal(false)}
+                    style={{
+                      padding: "6px 12px", background: "#fff", border: "1px solid #cbd5e1", borderRadius: "8px",
+                      fontSize: "11.5px", fontWeight: "600", color: "#475569", cursor: "pointer", fontFamily: "inherit"
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={executeBulkAction}
+                    disabled={bulkGenerating}
+                    style={{
+                      padding: "6px 14px", background: "linear-gradient(135deg, #10b981, #059669)", border: "none", borderRadius: "8px",
+                      fontSize: "11.5px", fontWeight: "600", color: "#fff", cursor: bulkGenerating ? "not-allowed" : "pointer",
+                      fontFamily: "inherit"
+                    }}
+                  >
+                    {bulkGenerating ? "Processing..." : bulkModalType === "generate" ? "Generate All" : "Regenerate All"}
+                  </button>
+                </div>
+
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Candidate Specific Customizer Offsets Tweaker Modal */}
         {customizerModal && (
@@ -2882,15 +3040,28 @@ export default function CertificateMentor() {
                           </div>
                         </div>
 
-                        <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
-                          <label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600" }}>Body / Description Font</label>
-                          <select
-                            value={layoutSettings.font_family_body || ""}
-                            onChange={(e) => setLayoutSettings(prev => ({ ...prev, font_family_body: e.target.value }))}
-                            style={{ padding: "5px 8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "11.5px", background: "#fff", outline: "none", color: "#0f172a" }}
-                          >
-                            {FONT_OPTIONS.map(opt => <option key={opt.value} value={opt.value} style={{ fontFamily: opt.value ? `"${opt.value}"` : 'inherit', fontSize: '13px' }}>{opt.label}</option>)}
-                          </select>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                          <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+                            <label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600" }}>Body / Description Font</label>
+                            <select
+                              value={layoutSettings.font_family_body || ""}
+                              onChange={(e) => setLayoutSettings(prev => ({ ...prev, font_family_body: e.target.value }))}
+                              style={{ padding: "5px 8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "11.5px", background: "#fff", outline: "none", color: "#0f172a" }}
+                            >
+                              {FONT_OPTIONS.map(opt => <option key={opt.value} value={opt.value} style={{ fontFamily: opt.value ? `"${opt.value}"` : 'inherit', fontSize: '13px' }}>{opt.label}</option>)}
+                            </select>
+                          </div>
+
+                          <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+                            <label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600" }}>Table / Page 2 Font</label>
+                            <select
+                              value={layoutSettings.font_family_table || ""}
+                              onChange={(e) => setLayoutSettings(prev => ({ ...prev, font_family_table: e.target.value }))}
+                              style={{ padding: "5px 8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "11.5px", background: "#fff", outline: "none", color: "#0f172a" }}
+                            >
+                              {FONT_OPTIONS.map(opt => <option key={opt.value} value={opt.value} style={{ fontFamily: opt.value ? `"${opt.value}"` : 'inherit', fontSize: '13px' }}>{opt.label}</option>)}
+                            </select>
+                          </div>
                         </div>
                       </div>
 

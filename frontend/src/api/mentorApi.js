@@ -73,7 +73,7 @@ export const mentorApi = {
     const headers = data instanceof FormData ? { 'Content-Type': 'multipart/form-data' } : {};
     return api.post(`/mentor/interns/${idSubmission}/generate-certificate`, data, { headers });
   },
-  bulkGenerateCertificates: (submissionIds) => api.post('/mentor/certificates/bulk-generate', { submission_ids: submissionIds }),
+  bulkGenerateCertificates: (submissionIds, data = {}) => api.post('/mentor/certificates/bulk-generate', { submission_ids: submissionIds, ...data }),
   bulkSendCertificates: (submissionIds) => api.post('/mentor/certificates/bulk-send', { submission_ids: submissionIds }),
   sendCertificate: (idSubmission) => api.post(`/mentor/interns/${idSubmission}/send-certificate`),
   previewCertificate: async (idSubmission, data) => {

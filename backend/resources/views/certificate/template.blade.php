@@ -42,11 +42,24 @@
     $font_family_title = isset($layout_settings['font_family_title']) && $layout_settings['font_family_title'] ? $layout_settings['font_family_title'] : null;
     $font_family_name = isset($layout_settings['font_family_name']) && $layout_settings['font_family_name'] ? $layout_settings['font_family_name'] : null;
     $font_family_body = isset($layout_settings['font_family_body']) && $layout_settings['font_family_body'] ? $layout_settings['font_family_body'] : null;
+    $font_family_table = isset($layout_settings['font_family_table']) && $layout_settings['font_family_table'] ? $layout_settings['font_family_table'] : null;
+
+    $font_mapping = [
+        'Times New Roman' => 'Times-Roman',
+        'Arial' => 'Helvetica',
+        'Courier New' => 'Courier',
+    ];
+
+    $mapped_font_title = isset($font_mapping[$font_family_title]) ? $font_mapping[$font_family_title] : $font_family_title;
+    $mapped_font_name = isset($font_mapping[$font_family_name]) ? $font_mapping[$font_family_name] : $font_family_name;
+    $mapped_font_body = isset($font_mapping[$font_family_body]) ? $font_mapping[$font_family_body] : $font_family_body;
+    $mapped_font_table = isset($font_mapping[$font_family_table]) ? $font_mapping[$font_family_table] : $font_family_table;
 
     $used_fonts = [];
     if (!empty($font_family_title)) { $used_fonts[] = $font_family_title; }
     if (!empty($font_family_name)) { $used_fonts[] = $font_family_name; }
     if (!empty($font_family_body)) { $used_fonts[] = $font_family_body; }
+    if (!empty($font_family_table)) { $used_fonts[] = $font_family_table; }
     $used_fonts = array_unique($used_fonts);
 
     $font_configs_v1 = [
@@ -116,6 +129,18 @@
     $font_family_title = isset($layout_settings['font_family_title']) && $layout_settings['font_family_title'] ? $layout_settings['font_family_title'] : null;
     $font_family_name = isset($layout_settings['font_family_name']) && $layout_settings['font_family_name'] ? $layout_settings['font_family_name'] : null;
     $font_family_body = isset($layout_settings['font_family_body']) && $layout_settings['font_family_body'] ? $layout_settings['font_family_body'] : null;
+    $font_family_table = isset($layout_settings['font_family_table']) && $layout_settings['font_family_table'] ? $layout_settings['font_family_table'] : null;
+
+    $font_mapping = [
+        'Times New Roman' => 'Times-Roman',
+        'Arial' => 'Helvetica',
+        'Courier New' => 'Courier',
+    ];
+
+    $mapped_font_title = isset($font_mapping[$font_family_title]) ? $font_mapping[$font_family_title] : $font_family_title;
+    $mapped_font_name = isset($font_mapping[$font_family_name]) ? $font_mapping[$font_family_name] : $font_family_name;
+    $mapped_font_body = isset($font_mapping[$font_family_body]) ? $font_mapping[$font_family_body] : $font_family_body;
+    $mapped_font_table = isset($font_mapping[$font_family_table]) ? $font_mapping[$font_family_table] : $font_family_table;
 
     // Signature image inversion: if sig_invert_1/2 is true, invert the base64 image using PHP GD
     $sig_invert_1 = !empty($layout_settings['sig_invert_1']);
@@ -154,21 +179,68 @@
     if ($compCount <= 4) {
         $fontSize = '9.5pt';
         $descFontSize = '8.5pt';
-        $cellPadding = '6pt 10pt';
-        $sigMargin = '25pt';
-        $evalMargin = '15pt';
-    } elseif ($compCount <= 7) {
-        $fontSize = '8.5pt';
-        $descFontSize = '7.5pt';
-        $cellPadding = '4pt 7pt';
-        $sigMargin = '15pt';
-        $evalMargin = '10pt';
+        $cellPadding = '5pt 8pt';
+        $sigMargin = '20pt';
+        $evalMargin = '12pt';
+        $maxChars = 220;
+        $sigImgHeight = '55px';
+        $sigSpacerHeight = '60px';
+    } elseif ($compCount <= 6) {
+        $fontSize = '8pt';
+        $descFontSize = '7pt';
+        $cellPadding = '3pt 5pt';
+        $sigMargin = '10pt';
+        $evalMargin = '8pt';
+        $maxChars = 120;
+        $sigImgHeight = '45px';
+        $sigSpacerHeight = '50px';
+    } elseif ($compCount <= 8) {
+        $fontSize = '7pt';
+        $descFontSize = '6pt';
+        $cellPadding = '2pt 4pt';
+        $sigMargin = '5pt';
+        $evalMargin = '4pt';
+        $maxChars = 95;
+        $sigImgHeight = '35px';
+        $sigSpacerHeight = '40px';
     } else {
-        $fontSize = '7.5pt';
-        $descFontSize = '6.5pt';
-        $cellPadding = '2pt 5pt';
-        $sigMargin = '8pt';
-        $evalMargin = '5pt';
+        $fontSize = '6.5pt';
+        $descFontSize = '5.5pt';
+        $cellPadding = '1.5pt 3pt';
+        $sigMargin = '3pt';
+        $evalMargin = '2pt';
+        $maxChars = 75;
+        $sigImgHeight = '30px';
+        $sigSpacerHeight = '35px';
+    }
+
+    if (!function_exists('summarizeText')) {
+        function summarizeText($text, $maxChars = 140) {
+            if (!$text) return '';
+            $text = trim($text);
+            if (strlen($text) <= $maxChars) {
+                return $text;
+            }
+            // Split by sentence boundary
+            $sentences = preg_split('/(?<=[.!?])\s+/', $text, -1, PREG_SPLIT_NO_EMPTY);
+            $summary = '';
+            foreach ($sentences as $sentence) {
+                if (strlen($summary . ' ' . $sentence) <= $maxChars) {
+                    $summary = trim($summary . ' ' . $sentence);
+                } else {
+                    break;
+                }
+            }
+            if (empty($summary)) {
+                $summary = substr($text, 0, $maxChars);
+                $lastSpace = strrpos($summary, ' ');
+                if ($lastSpace !== false) {
+                    $summary = substr($summary, 0, $lastSpace);
+                }
+                $summary = trim($summary) . '.';
+            }
+            return $summary;
+        }
     }
 @endphp
 <style type="text/css">
@@ -401,19 +473,25 @@
         page-break-inside: avoid;
     }
 
-    @if($font_family_title)
+    @if($mapped_font_title)
     .cert-title {
-        font-family: "{{ $font_family_title }}", sans-serif !important;
+        font-family: "{{ $mapped_font_title }}", {{ $mapped_font_title }}, "Courier New", Courier, monospace, sans-serif !important;
     }
     @endif
-    @if($font_family_name)
+    @if($mapped_font_name)
     .candidate-name {
-        font-family: "{{ $font_family_name }}", serif !important;
+        font-family: "{{ $mapped_font_name }}", {{ $mapped_font_name }}, "Times New Roman", Times-Roman, Times, Georgia, serif !important;
+        font-style: normal !important;
     }
     @endif
-    @if($font_family_body)
+    @if($mapped_font_body)
     .description, .given-to, .as-role, .signature-date, .signature-title, .signature-name {
-        font-family: "{{ $font_family_body }}", sans-serif !important;
+        font-family: "{{ $mapped_font_body }}", {{ $mapped_font_body }}, "Arial", Helvetica, sans-serif !important;
+    }
+    @endif
+    @if($mapped_font_table)
+    .table-title, .competency-table th, .competency-table td {
+        font-family: "{{ $mapped_font_table }}", {{ $mapped_font_table }}, "Arial", Helvetica, sans-serif !important;
     }
     @endif
 </style>
@@ -574,26 +652,21 @@
             <tbody>
                 @foreach($competencies as $index => $comp)
                     @php
-                        // Dynamic length truncation for high competency count
-                        $definition = $comp['description'];
-                        $achievement = $comp['achievement_description'];
-                        if ($compCount > 7) {
-                            $definition = strlen($definition) > 120 ? substr($definition, 0, 117) . '...' : $definition;
-                            $achievement = strlen($achievement) > 120 ? substr($achievement, 0, 117) . '...' : $achievement;
-                        }
+                        $definition = summarizeText($comp['description'] ?? '', $maxChars);
+                        $achievement = summarizeText($comp['achievement_description'] ?? '', $maxChars);
                     @endphp
                     <tr>
-                        <td class="text-center">{{ $index + 1 }}</td>
-                        <td class="text-left" style="font-weight: bold;">{{ $comp['name'] }}</td>
-                        <td class="text-left" style="font-size: {{ $descFontSize }};">{{ $definition }}</td>
-                        <td class="text-left" style="font-size: {{ $descFontSize }};">{{ $achievement }}</td>
-                        <td class="text-center">{{ $comp['hours'] }}</td>
-                        <td class="text-center" style="font-weight: bold; color: #8b5cf6;">{{ $comp['score'] }}</td>
+                        <td class="text-center" style="font-size: {{ $fontSize }};">{{ $index + 1 }}</td>
+                        <td class="text-left" style="font-weight: bold; font-size: {{ $fontSize }};">{{ $comp['name'] }}</td>
+                        <td class="text-left" style="font-size: {{ $descFontSize }}; line-height: 1.25;">{{ $definition }}</td>
+                        <td class="text-left" style="font-size: {{ $descFontSize }}; line-height: 1.25;">{{ $achievement }}</td>
+                        <td class="text-center" style="font-size: {{ $fontSize }};">{{ $comp['hours'] }}</td>
+                        <td class="text-center" style="font-weight: bold; color: #8b5cf6; font-size: {{ $fontSize }};">{{ $comp['score'] }}</td>
                     </tr>
                 @endforeach
                 @if(count($competencies) === 0)
                     <tr>
-                        <td colspan="6" class="text-center">Belum ada data kompetensi yang dinilai</td>
+                        <td colspan="6" class="text-center" style="font-size: {{ $fontSize }};">Belum ada data kompetensi yang dinilai</td>
                     </tr>
                 @endif
             </tbody>
@@ -610,10 +683,10 @@
                                 <div class="signature-title" style="color: {{ $font_color_signatures ?? '#334155' }};">{{ $signatory2_title }}</div>
                                 @if(isset($signature2_base64) && $signature2_base64)
                                     <div style="margin-bottom: 5px;">
-                                        <img src="{{ $signature2_base64 }}" style="max-height: 55px; max-width: 120px; display: inline-block;" alt="Signature 2">
+                                        <img src="{{ $signature2_base64 }}" style="max-height: {{ $sigImgHeight }}; max-width: 120px; display: inline-block;" alt="Signature 2">
                                     </div>
                                 @else
-                                    <div style="height: 60px;"></div>
+                                    <div style="height: {{ $sigSpacerHeight }};"></div>
                                 @endif
                                 <div class="signature-name" style="border-top: 1px solid {{ $font_color_signatures ?? '#000' }}; padding-top: 3px; display: inline-block; min-width: 150px; font-weight: bold; color: {{ $font_color_signatures ?? '#334155' }};">{{ $signatory2_name }}</div>
                             </td>
@@ -622,10 +695,10 @@
                                 <div class="signature-title" style="color: {{ $font_color_signatures ?? '#334155' }};">{{ $signatory1_title }}</div>
                                 @if(isset($signature_base64) && $signature_base64)
                                     <div style="margin-bottom: 5px;">
-                                        <img src="{{ $signature_base64 }}" style="max-height: 55px; max-width: 120px; display: inline-block;" alt="Signature 1">
+                                        <img src="{{ $signature_base64 }}" style="max-height: {{ $sigImgHeight }}; max-width: 120px; display: inline-block;" alt="Signature 1">
                                     </div>
                                 @else
-                                    <div style="height: 60px;"></div>
+                                    <div style="height: {{ $sigSpacerHeight }};"></div>
                                 @endif
                                 <div class="signature-name" style="border-top: 1px solid {{ $font_color_signatures ?? '#000' }}; padding-top: 3px; display: inline-block; min-width: 150px; font-weight: bold; color: {{ $font_color_signatures ?? '#334155' }};">{{ $signatory1_name }}</div>
                             </td>
@@ -639,10 +712,10 @@
                         <div class="signature-title" style="color: {{ $font_color_signatures ?? '#334155' }};">{{ $signatory1_title }}</div>
                         @if(isset($signature_base64) && $signature_base64)
                             <div style="margin-bottom: 5px;">
-                                <img src="{{ $signature_base64 }}" style="max-height: 55px; max-width: 130px; display: inline-block;" alt="Signature">
+                                <img src="{{ $signature_base64 }}" style="max-height: {{ $sigImgHeight }}; max-width: 130px; display: inline-block;" alt="Signature">
                             </div>
                         @else
-                            <div style="height: 60px;"></div>
+                            <div style="height: {{ $sigSpacerHeight }};"></div>
                         @endif
                         <div class="signature-name" style="border-top: 1px solid {{ $font_color_signatures ?? '#000' }}; padding-top: 3px; display: inline-block; min-width: 160px; font-weight: bold; color: {{ $font_color_signatures ?? '#334155' }};">{{ $signatory1_name }}</div>
                     </div>
