@@ -188,10 +188,12 @@ export default function CertificateMentor() {
     font_color_name: '',         // candidate name
     font_color_labels: '',       // 'diberikan kepada:' / 'Sebagai:' labels
     font_color_role: '',         // role/position badge text
+    badge_bg_color: '',          // position badge background color
     font_color_body: '',         // body paragraph
     font_color_signatures: '',   // signature block text
     sig_invert_1: false,         // invert signature 1 image colors
     sig_invert_2: false,         // invert signature 2 image colors
+    logo_remove_bg: false,       // remove white background from logo
     custom_images: [],
   });
   const [customBgFile, setCustomBgFile] = useState(null);
@@ -364,11 +366,11 @@ export default function CertificateMentor() {
               alignItems: "center",
               justifyContent: "center",
               left: logoPosition === "left" ? "24px" : logoPosition === "right" ? "calc(100% - 150px)" : "calc(50% - 60px)",
-              top: "10%"
+              top: customBgUrl ? "13%" : "10%"
             }}
           >
             {logoSrc ? (
-              <img src={logoSrc} alt="logo" style={{ maxHeight: "30px", maxWidth: "110px", pointerEvents: "none" }} />
+              <img src={logoSrc} alt="logo" style={{ maxHeight: "30px", maxWidth: "110px", pointerEvents: "none", mixBlendMode: "multiply" }} />
             ) : (
               <div style={{ fontWeight: 800, fontSize: "11px", color: "#2563eb", pointerEvents: "none", textTransform: "uppercase" }}>{companyName}</div>
             )}
@@ -382,7 +384,7 @@ export default function CertificateMentor() {
               position: "absolute",
               width: "70%",
               left: "15%",
-              top: "22%",
+              top: customBgUrl ? "18%" : "22%",
               zIndex: 10,
               borderRadius: "4px",
               padding: "4px",
@@ -414,7 +416,7 @@ export default function CertificateMentor() {
               position: "absolute",
               width: "80%",
               left: "10%",
-              top: "38%",
+              top: customBgUrl ? "34%" : "38%",
               zIndex: 10,
               borderRadius: "4px",
               padding: "4px",
@@ -442,12 +444,12 @@ export default function CertificateMentor() {
 
             {layoutSettings.show_body !== false && (
               <p style={{
-                fontSize: `${(layoutSettings.font_size_body || 11) * 0.35}px`,
+                fontSize: `${(layoutSettings.font_size_body || (customBgUrl ? 5 : 11)) * 0.35}px`,
                 color: layoutSettings.font_color_body || "#475569",
-                lineHeight: "1.3",
-                margin: "3px 0",
+                lineHeight: customBgUrl ? "1.7" : "1.3",
+                margin: customBgUrl ? "5px 0" : "3px 0",
                 textAlign: "center",
-                padding: "0 20px",
+                padding: customBgUrl ? "0 55px" : "0 20px",
                 whiteSpace: "normal",
                 wordWrap: "break-word",
                 width: "100%",
@@ -459,7 +461,7 @@ export default function CertificateMentor() {
             )}
             <span style={{ fontSize: "6.5px", color: layoutSettings.font_color_labels || "#475569", marginTop: "2px" }}>Sebagai:</span>
             <span style={{
-              backgroundColor: templateStyle === "classic" ? "#2563eb" : templateStyle === "modern" ? "#6366f1" : "#854d0e",
+              backgroundColor: layoutSettings.badge_bg_color || (templateStyle === "classic" ? "#2563eb" : templateStyle === "modern" ? "#6366f1" : "#854d0e"),
               color: layoutSettings.font_color_role || "#fff",
               padding: "2px 8px",
               borderRadius: templateStyle === "elegant" ? "30px" : "4px",
@@ -538,10 +540,10 @@ export default function CertificateMentor() {
               zIndex: 10,
               borderRadius: "4px",
               padding: "1px",
-              top: "73%",
+              top: customBgUrl ? "73%" : "73%",
               left: qrPosition === "bottom-left"
-                ? "6%"
-                : "calc(94% - 24px)",
+                ? (customBgUrl ? "11%" : "6%")
+                : (customBgUrl ? "calc(89% - 24px)" : "calc(94% - 24px)"),
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -942,8 +944,10 @@ export default function CertificateMentor() {
       font_family_title: '', font_family_name: '', font_family_body: '', font_family_table: '',
       font_color_title: '', font_color_cert_id: '', font_color_name: '',
       font_color_labels: '', font_color_role: '',
+      badge_bg_color: '',
       font_color_body: '', font_color_signatures: '',
       sig_invert_1: false, sig_invert_2: false,
+      logo_remove_bg: false,
       custom_images: []
     });
     setCustomBgUrl(null);
@@ -1006,10 +1010,12 @@ export default function CertificateMentor() {
       font_color_name: parsedSettings.font_color_name || '',
       font_color_labels: parsedSettings.font_color_labels || '',
       font_color_role: parsedSettings.font_color_role || '',
+      badge_bg_color: parsedSettings.badge_bg_color || '',
       font_color_body: parsedSettings.font_color_body || '',
       font_color_signatures: parsedSettings.font_color_signatures || '',
       sig_invert_1: parsedSettings.sig_invert_1 || false,
       sig_invert_2: parsedSettings.sig_invert_2 || false,
+      logo_remove_bg: parsedSettings.logo_remove_bg !== undefined ? parsedSettings.logo_remove_bg : (tpl.background_url ? true : false),
       custom_images: parsedSettings.custom_images || [],
     });
 
@@ -1512,6 +1518,7 @@ export default function CertificateMentor() {
                               setCustomBgFile(file);
                               compressImageBase64(file, (compressedBase64) => {
                                 setCustomBgUrl(compressedBase64);
+                                setLayoutSettings(prev => ({ ...prev, logo_remove_bg: true }));
                               });
                             }
                           }} style={{ display: "none" }} />
@@ -1667,16 +1674,31 @@ export default function CertificateMentor() {
                     </label>
 
                     {/* Logo Visibility */}
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #e2e8f0", paddingBottom: "8px" }}>
-                      <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", fontSize: "12px", fontWeight: "600", color: "#334155" }}>
-                        <input
-                          type="checkbox"
-                          checked={layoutSettings.show_logo !== false}
-                          onChange={(e) => setLayoutSettings(prev => ({ ...prev, show_logo: e.target.checked }))}
-                          style={{ accentColor: "#8b5cf6", width: "15px", height: "15px" }}
-                        />
-                        Show Logo
-                      </label>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "6px", borderBottom: "1px solid #e2e8f0", paddingBottom: "8px" }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                        <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", fontSize: "12px", fontWeight: "600", color: "#334155" }}>
+                          <input
+                            type="checkbox"
+                            checked={layoutSettings.show_logo !== false}
+                            onChange={(e) => setLayoutSettings(prev => ({ ...prev, show_logo: e.target.checked }))}
+                            style={{ accentColor: "#8b5cf6", width: "15px", height: "15px" }}
+                          />
+                          Show Logo
+                        </label>
+                      </div>
+                      {layoutSettings.show_logo !== false && (
+                        <div style={{ paddingLeft: "23px" }}>
+                          <label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", fontSize: "11px", color: "#64748b" }}>
+                            <input
+                              type="checkbox"
+                              checked={!!layoutSettings.logo_remove_bg}
+                              onChange={(e) => setLayoutSettings(prev => ({ ...prev, logo_remove_bg: e.target.checked }))}
+                              style={{ accentColor: "#8b5cf6" }}
+                            />
+                            Remove Logo Background (Transparency)
+                          </label>
+                        </div>
+                      )}
                     </div>
 
                     {/* Title Elements & Colors */}
@@ -1772,6 +1794,18 @@ export default function CertificateMentor() {
                               />
                               {layoutSettings.font_color_role && (
                                 <button onClick={() => setLayoutSettings(prev => ({ ...prev, font_color_role: "" }))} style={{ border: "none", background: "transparent", color: "#ef4444", fontSize: "11px", cursor: "pointer", marginLeft: "2px" }}>✕ Reset</button>
+                              )}
+                            </label>
+                            <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "11.5px", color: "#475569" }}>
+                              🎨 Badge Background Color:
+                              <input
+                                type="color"
+                                value={layoutSettings.badge_bg_color || "#2563eb"}
+                                onChange={(e) => setLayoutSettings(prev => ({ ...prev, badge_bg_color: e.target.value }))}
+                                style={{ width: "24px", height: "20px", padding: 0, border: "1px solid #cbd5e1", borderRadius: "4px", cursor: "pointer" }}
+                              />
+                              {layoutSettings.badge_bg_color && (
+                                <button onClick={() => setLayoutSettings(prev => ({ ...prev, badge_bg_color: "" }))} style={{ border: "none", background: "transparent", color: "#ef4444", fontSize: "11px", cursor: "pointer", marginLeft: "2px" }}>✕ Reset</button>
                               )}
                             </label>
                           </div>
@@ -2439,10 +2473,12 @@ export default function CertificateMentor() {
                         font_color_name: parsedSettings.font_color_name || '',
                         font_color_labels: parsedSettings.font_color_labels || '',
                         font_color_role: parsedSettings.font_color_role || '',
+                        badge_bg_color: parsedSettings.badge_bg_color || '',
                         font_color_body: parsedSettings.font_color_body || '',
                         font_color_signatures: parsedSettings.font_color_signatures || '',
                         sig_invert_1: parsedSettings.sig_invert_1 || false,
                         sig_invert_2: parsedSettings.sig_invert_2 || false,
+                        logo_remove_bg: parsedSettings.logo_remove_bg !== undefined ? parsedSettings.logo_remove_bg : (tpl.background_url ? true : false),
                         custom_images: parsedSettings.custom_images || [],
                       });
                       setCustomBgUrl(tpl.background_url || null);
@@ -2665,6 +2701,7 @@ export default function CertificateMentor() {
                               setCustomBgFile(file);
                               compressImageBase64(file, (compressedBase64) => {
                                 setCustomBgUrl(compressedBase64);
+                                setLayoutSettings(prev => ({ ...prev, logo_remove_bg: true }));
                               });
                             }
                           }} style={{ display: "none" }} />
@@ -2809,16 +2846,31 @@ export default function CertificateMentor() {
                     <div style={{ display: "flex", flexDirection: "column", gap: "12px", border: "1px solid #cbd5e1", borderRadius: "10px", padding: "16px", background: "#f8fafc" }}>
 
                       {/* Logo Visibility */}
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #e2e8f0", paddingBottom: "8px" }}>
-                        <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", fontSize: "12px", fontWeight: "600", color: "#334155" }}>
-                          <input
-                            type="checkbox"
-                            checked={layoutSettings.show_logo !== false}
-                            onChange={(e) => setLayoutSettings(prev => ({ ...prev, show_logo: e.target.checked }))}
-                            style={{ accentColor: "#8b5cf6", width: "15px", height: "15px" }}
-                          />
-                          Show Logo
-                        </label>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "6px", borderBottom: "1px solid #e2e8f0", paddingBottom: "8px" }}>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                          <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", fontSize: "12px", fontWeight: "600", color: "#334155" }}>
+                            <input
+                              type="checkbox"
+                              checked={layoutSettings.show_logo !== false}
+                              onChange={(e) => setLayoutSettings(prev => ({ ...prev, show_logo: e.target.checked }))}
+                              style={{ accentColor: "#8b5cf6", width: "15px", height: "15px" }}
+                            />
+                            Show Logo
+                          </label>
+                        </div>
+                        {layoutSettings.show_logo !== false && (
+                          <div style={{ paddingLeft: "23px" }}>
+                            <label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", fontSize: "11px", color: "#64748b" }}>
+                              <input
+                                type="checkbox"
+                                checked={!!layoutSettings.logo_remove_bg}
+                                onChange={(e) => setLayoutSettings(prev => ({ ...prev, logo_remove_bg: e.target.checked }))}
+                                style={{ accentColor: "#8b5cf6" }}
+                              />
+                              Remove Logo Background (Transparency)
+                            </label>
+                          </div>
+                        )}
                       </div>
 
                       {/* Title Elements & Colors */}
@@ -2914,6 +2966,18 @@ export default function CertificateMentor() {
                                 />
                                 {layoutSettings.font_color_role && (
                                   <button onClick={() => setLayoutSettings(prev => ({ ...prev, font_color_role: "" }))} style={{ border: "none", background: "transparent", color: "#ef4444", fontSize: "11px", cursor: "pointer", marginLeft: "2px" }}>✕ Reset</button>
+                                )}
+                              </label>
+                              <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "11.5px", color: "#475569" }}>
+                                🎨 Badge Background Color:
+                                <input
+                                  type="color"
+                                  value={layoutSettings.badge_bg_color || "#2563eb"}
+                                  onChange={(e) => setLayoutSettings(prev => ({ ...prev, badge_bg_color: e.target.value }))}
+                                  style={{ width: "24px", height: "20px", padding: 0, border: "1px solid #cbd5e1", borderRadius: "4px", cursor: "pointer" }}
+                                />
+                                {layoutSettings.badge_bg_color && (
+                                  <button onClick={() => setLayoutSettings(prev => ({ ...prev, badge_bg_color: "" }))} style={{ border: "none", background: "transparent", color: "#ef4444", fontSize: "11px", cursor: "pointer", marginLeft: "2px" }}>✕ Reset</button>
                                 )}
                               </label>
                             </div>
@@ -3178,4 +3242,4 @@ export default function CertificateMentor() {
       </main>
     </div>
   );
-}
+}

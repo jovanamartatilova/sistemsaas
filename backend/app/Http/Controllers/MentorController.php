@@ -998,7 +998,17 @@ class MentorController extends Controller
             ]
         ]);
 
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('certificate.template', $data)
+        $logo_remove_bg = isset($layout_settings['logo_remove_bg'])
+            ? filter_var($layout_settings['logo_remove_bg'], FILTER_VALIDATE_BOOLEAN)
+            : ($background_base64 ? true : false);
+        if ($logo_remove_bg && $logo_base64) {
+            $logo_base64 = $this->removeLogoBackground($logo_base64);
+            $data['logo_base64'] = $logo_base64;
+        }
+
+        $viewName = $background_base64 ? 'certificate.custom_template' : 'certificate.template';
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView($viewName, $data)
             ->setPaper('a4', 'landscape')
             ->setOption('isRemoteEnabled', true)
             ->setOption('isHtml5ParserEnabled', true);
@@ -1343,7 +1353,17 @@ class MentorController extends Controller
                 ]
             ]);
 
-            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('certificate.template', $data)
+            $logo_remove_bg = isset($layout_settings['logo_remove_bg'])
+                ? filter_var($layout_settings['logo_remove_bg'], FILTER_VALIDATE_BOOLEAN)
+                : ($background_base64 ? true : false);
+            if ($logo_remove_bg && $logo_base64) {
+                $logo_base64 = $this->removeLogoBackground($logo_base64);
+                $data['logo_base64'] = $logo_base64;
+            }
+
+            $viewName = $background_base64 ? 'certificate.custom_template' : 'certificate.template';
+
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView($viewName, $data)
                 ->setPaper('a4', 'landscape')
                 ->setOption('isRemoteEnabled', true)
                 ->setOption('isHtml5ParserEnabled', true);
@@ -1691,5 +1711,70 @@ class MentorController extends Controller
         return response()->json([
             'message' => 'Template deleted successfully'
         ]);
+    }
+
+    /**
+     * Remove white background from company logo using GD library
+     */
+    private function removeLogoBackground($logo_base64)
+    {
+        if (!$logo_base64) {
+            return null;
+        }
+        if (!function_exists('imagecreatefromstring') || !function_exists('imagepng')) {
+            return $logo_base64;
+        }
+
+        try {
+            $imgData = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $logo_base64));
+            $src = @imagecreatefromstring($imgData);
+            if ($src) {
+                $width = imagesx($src);
+                $height = imagesy($src);
+
+                // Convert palette-based images to truecolor to fully preserve transparent alpha
+                if (!imageistruecolor($src)) {
+                    $tc = imagecreatetruecolor($width, $height);
+                    imagealphablending($tc, false);
+                    imagesavealpha($tc, true);
+                    $transparentColor = imagecolorallocatealpha($tc, 0, 0, 0, 127);
+                    imagefill($tc, 0, 0, $transparentColor);
+                    imagecopy($tc, $src, 0, 0, 0, 0, $width, $height);
+                    imagedestroy($src);
+                    $src = $tc;
+                } else {
+                    imagealphablending($src, false);
+                    imagesavealpha($src, true);
+                }
+
+                $transparentColor = imagecolorallocatealpha($src, 0, 0, 0, 127);
+
+                // Replace near-white pixels (R, G, B > 230) with alpha transparency
+                for ($x = 0; $x < $width; $x++) {
+                    for ($y = 0; $y < $height; $y++) {
+                        $color = imagecolorat($src, $x, $y);
+                        $r = ($color >> 16) & 0xFF;
+                        $g = ($color >> 8) & 0xFF;
+                        $b = $color & 0xFF;
+                        $a = ($color >> 24) & 0x7F; // GD alpha is 7 bits (0-127)
+
+                        // If color is near white and not already transparent, make it transparent
+                        if ($r > 230 && $g > 230 && $b > 230 && $a < 100) {
+                            imagesetpixel($src, $x, $y, $transparentColor);
+                        }
+                    }
+                }
+                
+                ob_start();
+                imagepng($src);
+                $output = 'data:image/png;base64,' . base64_encode(ob_get_clean());
+                imagedestroy($src);
+                return $output;
+            }
+        } catch (\Throwable $e) {
+            \Log::error('GD transparent bg processing failed: ' . $e->getMessage());
+        }
+
+        return $logo_base64;
     }
 }
