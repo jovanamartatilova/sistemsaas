@@ -1424,4 +1424,272 @@ class MentorController extends Controller
                 ->update(['id_user_mentor' => $mentorId]);
         }
     }
+
+    /**
+     * List all custom templates for the mentor's company
+     */
+    public function listTemplates(Request $request)
+    {
+        $company = $request->user()->company;
+        if (!$company) {
+            return response()->json([], 404);
+        }
+
+        $templates = $company->certificate_templates ?? [];
+
+        // Convert stored relative storage paths to full URLs for the frontend
+        $formatted = array_map(function ($tpl) {
+            if (!empty($tpl['background_url']) && !str_starts_with($tpl['background_url'], 'http') && !str_starts_with($tpl['background_url'], 'data:')) {
+                $tpl['background_url'] = asset('storage/' . $tpl['background_url']);
+            }
+            if (!empty($tpl['signatory2_signature']) && !str_starts_with($tpl['signatory2_signature'], 'http') && !str_starts_with($tpl['signatory2_signature'], 'data:')) {
+                $tpl['signatory2_signature'] = asset('storage/' . $tpl['signatory2_signature']);
+            }
+            return $tpl;
+        }, $templates);
+
+        return response()->json($formatted);
+    }
+
+    /**
+     * Store a new custom template
+     */
+    public function storeTemplate(Request $request)
+    {
+        $company = $request->user()->company;
+        if (!$company) {
+            return response()->json(['message' => 'Company not found'], 404);
+        }
+
+        $request->validate([
+            'name' => 'required|string',
+            'template_style' => 'string',
+            'logo_position' => 'string',
+            'signature_layout' => 'string',
+            'signatory1_name' => 'nullable|string',
+            'signatory1_title' => 'nullable|string',
+            'signatory2_name' => 'nullable|string',
+            'signatory2_title' => 'nullable|string',
+            'show_qr' => 'string', // Form data sends boolean as string
+            'qr_position' => 'string',
+            'layout_settings' => 'nullable|string',
+        ]);
+
+        $templates = $company->certificate_templates ?? [];
+
+        // Prepare new template object
+        $id = 'tpl_' . time() . '_' . rand(100, 999);
+        $newTemplate = [
+            'id' => $id,
+            'name' => $request->name,
+            'template_style' => $request->input('template_style', 'classic'),
+            'logo_position' => $request->input('logo_position', 'center'),
+            'signature_layout' => $request->input('signature_layout', 'single'),
+            'signatory1_name' => $request->input('signatory1_name'),
+            'signatory1_title' => $request->input('signatory1_title'),
+            'signatory2_name' => $request->input('signatory2_name'),
+            'signatory2_title' => $request->input('signatory2_title'),
+            'show_qr' => filter_var($request->input('show_qr', true), FILTER_VALIDATE_BOOLEAN),
+            'qr_position' => $request->input('qr_position', 'bottom-left'),
+            'layout_settings' => json_decode($request->input('layout_settings', '{}'), true),
+            'is_default' => false,
+            'background_url' => null,
+            'signatory2_signature' => null,
+        ];
+
+        // Handle background file upload
+        if ($request->hasFile('background_file')) {
+            $path = $request->file('background_file')->store('templates/backgrounds', 'public');
+            $newTemplate['background_url'] = $path;
+        } elseif ($request->filled('background_path')) {
+            $newTemplate['background_url'] = preg_replace('/.*\/storage\//', '', $request->background_path);
+        }
+
+        // Handle signatory 2 signature upload/drawn signature
+        if ($request->filled('signatory2_signature')) {
+            $sigData = $request->input('signatory2_signature');
+            if (str_starts_with($sigData, 'data:image')) {
+                $type = explode(';', $sigData)[0];
+                $type = explode('/', $type)[1];
+                $dataDec = explode(',', $sigData)[1];
+                $decoded = base64_decode($dataDec);
+
+                $sigFileName = 'templates/signatures/sig2_' . Str::random(10) . '.' . $type;
+                Storage::disk('public')->put($sigFileName, $decoded);
+                $newTemplate['signatory2_signature'] = $sigFileName;
+            } else {
+                $newTemplate['signatory2_signature'] = preg_replace('/.*\/storage\//', '', $sigData);
+            }
+        }
+
+        $templates[] = $newTemplate;
+        $company->certificate_templates = $templates;
+        $company->save();
+
+        // Format paths to URLs for response
+        if (!empty($newTemplate['background_url'])) {
+            $newTemplate['background_url'] = asset('storage/' . $newTemplate['background_url']);
+        }
+        if (!empty($newTemplate['signatory2_signature'])) {
+            $newTemplate['signatory2_signature'] = asset('storage/' . $newTemplate['signatory2_signature']);
+        }
+
+        return response()->json([
+            'message' => 'Template created successfully',
+            'template' => $newTemplate
+        ]);
+    }
+
+    /**
+     * Update an existing custom template
+     */
+    public function updateTemplate(Request $request, $id)
+    {
+        $company = $request->user()->company;
+        if (!$company) {
+            return response()->json(['message' => 'Company not found'], 404);
+        }
+
+        $request->validate([
+            'name' => 'required|string',
+            'template_style' => 'string',
+            'logo_position' => 'string',
+            'signature_layout' => 'string',
+            'signatory1_name' => 'nullable|string',
+            'signatory1_title' => 'nullable|string',
+            'signatory2_name' => 'nullable|string',
+            'signatory2_title' => 'nullable|string',
+            'show_qr' => 'string',
+            'qr_position' => 'string',
+            'layout_settings' => 'nullable|string',
+        ]);
+
+        $templates = $company->certificate_templates ?? [];
+        $foundIndex = -1;
+
+        foreach ($templates as $index => $tpl) {
+            if ($tpl['id'] === $id) {
+                $foundIndex = $index;
+                break;
+            }
+        }
+
+        if ($foundIndex === -1) {
+            return response()->json(['message' => 'Template not found'], 404);
+        }
+
+        $existingTpl = $templates[$foundIndex];
+
+        // Update fields
+        $existingTpl['name'] = $request->name;
+        $existingTpl['template_style'] = $request->input('template_style', $existingTpl['template_style'] ?? 'classic');
+        $existingTpl['logo_position'] = $request->input('logo_position', $existingTpl['logo_position'] ?? 'center');
+        $existingTpl['signature_layout'] = $request->input('signature_layout', $existingTpl['signature_layout'] ?? 'single');
+        $existingTpl['signatory1_name'] = $request->input('signatory1_name');
+        $existingTpl['signatory1_title'] = $request->input('signatory1_title');
+        $existingTpl['signatory2_name'] = $request->input('signatory2_name');
+        $existingTpl['signatory2_title'] = $request->input('signatory2_title');
+        $existingTpl['show_qr'] = filter_var($request->input('show_qr', $existingTpl['show_qr'] ?? true), FILTER_VALIDATE_BOOLEAN);
+        $existingTpl['qr_position'] = $request->input('qr_position', $existingTpl['qr_position'] ?? 'bottom-left');
+        $existingTpl['layout_settings'] = json_decode($request->input('layout_settings', '{}'), true);
+
+        // Handle custom background file upload
+        if ($request->hasFile('background_file')) {
+            // Delete old background file if exists
+            if (!empty($existingTpl['background_url']) && !str_starts_with($existingTpl['background_url'], 'data:')) {
+                $cleanPath = preg_replace('/.*\/storage\//', '', $existingTpl['background_url']);
+                Storage::disk('public')->delete($cleanPath);
+            }
+            $path = $request->file('background_file')->store('templates/backgrounds', 'public');
+            $existingTpl['background_url'] = $path;
+        } elseif ($request->filled('background_path')) {
+            $existingTpl['background_url'] = preg_replace('/.*\/storage\//', '', $request->background_path);
+        }
+
+        // Handle signatory 2 signature upload/drawn signature
+        if ($request->filled('signatory2_signature')) {
+            $sigData = $request->input('signatory2_signature');
+            if (str_starts_with($sigData, 'data:image')) {
+                // Delete old signature file if exists
+                if (!empty($existingTpl['signatory2_signature']) && !str_starts_with($existingTpl['signatory2_signature'], 'data:')) {
+                    $cleanPath = preg_replace('/.*\/storage\//', '', $existingTpl['signatory2_signature']);
+                    Storage::disk('public')->delete($cleanPath);
+                }
+                $type = explode(';', $sigData)[0];
+                $type = explode('/', $type)[1];
+                $dataDec = explode(',', $sigData)[1];
+                $decoded = base64_decode($dataDec);
+
+                $sigFileName = 'templates/signatures/sig2_' . Str::random(10) . '.' . $type;
+                Storage::disk('public')->put($sigFileName, $decoded);
+                $existingTpl['signatory2_signature'] = $sigFileName;
+            } else {
+                $existingTpl['signatory2_signature'] = preg_replace('/.*\/storage\//', '', $sigData);
+            }
+        }
+
+        $templates[$foundIndex] = $existingTpl;
+        $company->certificate_templates = $templates;
+        $company->save();
+
+        // Format paths to URLs for response
+        if (!empty($existingTpl['background_url'])) {
+            $existingTpl['background_url'] = asset('storage/' . $existingTpl['background_url']);
+        }
+        if (!empty($existingTpl['signatory2_signature'])) {
+            $existingTpl['signatory2_signature'] = asset('storage/' . $existingTpl['signatory2_signature']);
+        }
+
+        return response()->json([
+            'message' => 'Template updated successfully',
+            'template' => $existingTpl
+        ]);
+    }
+
+    /**
+     * Delete a custom template
+     */
+    public function destroyTemplate(Request $request, $id)
+    {
+        $company = $request->user()->company;
+        if (!$company) {
+            return response()->json(['message' => 'Company not found'], 404);
+        }
+
+        $templates = $company->certificate_templates ?? [];
+        $foundIndex = -1;
+
+        foreach ($templates as $index => $tpl) {
+            if ($tpl['id'] === $id) {
+                $foundIndex = $index;
+                break;
+            }
+        }
+
+        if ($foundIndex === -1) {
+            return response()->json(['message' => 'Template not found'], 404);
+        }
+
+        $tpl = $templates[$foundIndex];
+
+        // Delete background file
+        if (!empty($tpl['background_url']) && !str_starts_with($tpl['background_url'], 'data:')) {
+            $cleanPath = preg_replace('/.*\/storage\//', '', $tpl['background_url']);
+            Storage::disk('public')->delete($cleanPath);
+        }
+
+        // Delete signatory2 signature file
+        if (!empty($tpl['signatory2_signature']) && !str_starts_with($tpl['signatory2_signature'], 'data:')) {
+            $cleanPath = preg_replace('/.*\/storage\//', '', $tpl['signatory2_signature']);
+            Storage::disk('public')->delete($cleanPath);
+        }
+
+        array_splice($templates, $foundIndex, 1);
+        $company->certificate_templates = $templates;
+        $company->save();
+
+        return response()->json([
+            'message' => 'Template deleted successfully'
+        ]);
+    }
 }

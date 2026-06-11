@@ -312,14 +312,12 @@ console.log('unscored count:', internsRes.data.filter(i =>
 
   const handleLogoutClick = () => setLogoutModal(true);
 
-const confirmLogout = async () => {
+  const confirmLogout = async () => {
     try {
-      await mentorApi.logout();
+      await useAuthStore.getState().logout();
+    } catch (err) {
+      console.error("Logout error:", err);
     } finally {
-      const theme = localStorage.getItem("theme");
-      localStorage.clear();
-      if (theme) localStorage.setItem("theme", theme);
-      useAuthStore.setState({ isAuthenticated: false, mentor: null });
       setLogoutModal(false);
       navigate("/", { replace: true });
     }

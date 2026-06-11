@@ -879,11 +879,15 @@ export default function AssignTasksMentor() {
             <p style={{ fontSize: "14px", color: "#64748b", marginBottom: "20px" }}>Are you sure you want to exit?</p>
             <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
               <button onClick={() => setLogoutModal(false)} style={{ border: "none", background: "none", color: "#64748b", fontWeight: 700, cursor: "pointer" }}>Cancel</button>
-              <button onClick={() => {
-                  const theme = localStorage.getItem("theme");
-                  localStorage.clear();
-                  if (theme) localStorage.setItem("theme", theme);
-                  window.location.href = "/";
+              <button onClick={async () => {
+                  try {
+                    await logout();
+                  } catch (err) {
+                    console.error("Logout error:", err);
+                  } finally {
+                    setLogoutModal(false);
+                    window.location.href = "/";
+                  }
                 }} style={{ background: "#ef4444", color: "#fff", border: "none", padding: "8px 16px", borderRadius: "8px", fontWeight: 700, cursor: "pointer" }}>Yes, Logout</button>
             </div>
           </div>

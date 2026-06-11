@@ -825,12 +825,14 @@ export default function CertificateMentor() {
   };
 
   // ─── Templates Customizer Loaders & Actions ──────────────────────────────────
-  const loadTemplates = (mentorProfile) => {
-    const stored = localStorage.getItem('mentor_certificate_templates');
+  // ─── Templates Customizer Loaders & Actions ──────────────────────────────────
+  const loadTemplates = async (mentorProfile) => {
     let parsed = [];
     try {
-      parsed = stored ? JSON.parse(stored) : [];
-    } catch {
+      const response = await mentorApi.getTemplates();
+      parsed = response.data || [];
+    } catch (error) {
+      console.error('Failed to load templates from server:', error);
       parsed = [];
     }
 
@@ -915,12 +917,6 @@ export default function CertificateMentor() {
     setTemplates([...defaults, ...parsed]);
   };
 
-  const saveTemplateList = (newList) => {
-    setTemplates(newList);
-    const customs = newList.filter(t => !t.is_default);
-    localStorage.setItem('mentor_certificate_templates', JSON.stringify(customs));
-  };
-
   const handleCreateTemplate = () => {
     setSelectedSubmissionId(null);
     setActiveBuilderId("new");
@@ -957,7 +953,7 @@ export default function CertificateMentor() {
   const handleEditTemplate = (tpl) => {
     const isDefault = tpl.is_default;
     setSelectedSubmissionId(null);
-    setActiveBuilderId(tpl.id);
+    setActiveBuilderId(isDefault ? "new" : tpl.id);
     setTemplateName(isDefault ? `${tpl.name} - Custom` : tpl.name);
     setTemplateStyle(tpl.template_style);
     setLogoPosition(tpl.logo_position || "center");
@@ -1021,50 +1017,72 @@ export default function CertificateMentor() {
     setCustomBgFile(null);
   };
 
-  const handleSaveTemplate = () => {
+  const handleSaveTemplate = async () => {
     if (!templateName.trim()) {
       pushToast("Please enter a template name", "error");
       return;
     }
 
     const isNew = activeBuilderId === "new";
-    const newTpl = {
-      id: isNew ? `tpl_${Date.now()}` : activeBuilderId,
-      name: templateName,
-      template_style: templateStyle,
-      logo_position: logoPosition,
-      signature_layout: signatureLayout,
-      signatory1_name: signatory1Name,
-      signatory1_title: signatory1Title,
-      signatory2_name: signatory2Name,
-      signatory2_title: signatory2Title,
-      signatory2_signature: signatory2Signature,
-      show_qr: showQr,
-      qr_position: qrPosition,
-      layout_settings: {
-        ...layoutSettings
-      },
-      background_url: customBgUrl,
-      is_default: false
-    };
+    try {
+      const formData = new FormData();
+      formData.append('name', templateName);
+      formData.append('template_style', templateStyle);
+      formData.append('logo_position', logoPosition);
+      formData.append('signature_layout', signatureLayout);
+      formData.append('signatory1_name', signatory1Name || "");
+      formData.append('signatory1_title', signatory1Title || "");
+      formData.append('signatory2_name', signatory2Name || "");
+      formData.append('signatory2_title', signatory2Title || "");
+      formData.append('show_qr', showQr ? "true" : "false");
+      formData.append('qr_position', qrPosition);
+      formData.append('layout_settings', JSON.stringify(layoutSettings));
 
-    let updated;
-    if (isNew) {
-      updated = [...templates.filter(t => t.id !== newTpl.id), newTpl];
-    } else {
-      updated = templates.map(t => t.id === activeBuilderId ? newTpl : t);
+      if (customBgFile) {
+        formData.append('background_file', customBgFile);
+      } else if (customBgUrl) {
+        if (customBgUrl.startsWith('data:image')) {
+          const bgFile = base64ToFile(customBgUrl, 'background.jpg');
+          if (bgFile) formData.append('background_file', bgFile);
+        } else {
+          formData.append('background_path', customBgUrl.replace(/.*\/storage\//, ''));
+        }
+      }
+
+      if (signatory2Signature) {
+        if (signatory2Signature.startsWith('data:image')) {
+          formData.append('signatory2_signature', signatory2Signature);
+        } else {
+          formData.append('signatory2_signature', signatory2Signature.replace(/.*\/storage\//, ''));
+        }
+      }
+
+      if (isNew) {
+        await mentorApi.createTemplate(formData);
+        pushToast("Template created successfully", "success");
+      } else {
+        await mentorApi.updateTemplate(activeBuilderId, formData);
+        pushToast("Template updated successfully", "success");
+      }
+
+      await loadTemplates(mentor);
+      setActiveBuilderId(null);
+    } catch (error) {
+      console.error("Failed to save template:", error);
+      pushToast("Failed to save template", "error");
     }
-
-    saveTemplateList(updated);
-    pushToast("Template saved successfully", "success");
-    setActiveBuilderId(null);
   };
 
-  const handleDeleteTemplate = (id) => {
+  const handleDeleteTemplate = async (id) => {
     if (!window.confirm("Are you sure you want to delete this custom template?")) return;
-    const updated = templates.filter(t => t.id !== id);
-    saveTemplateList(updated);
-    pushToast("Template deleted successfully", "success");
+    try {
+      await mentorApi.deleteTemplate(id);
+      pushToast("Template deleted successfully", "success");
+      await loadTemplates(mentor);
+    } catch (error) {
+      console.error("Failed to delete template:", error);
+      pushToast("Failed to delete template", "error");
+    }
   };
 
   const handlePreviewTemplate = async () => {
@@ -1319,20 +1337,10 @@ export default function CertificateMentor() {
 
   const confirmLogout = async () => {
     try {
-      const token = localStorage.getItem("token");
-      if (token) {
-        await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/auth/logout`, {
-          method: "POST",
-          headers: { "Authorization": `Bearer ${token}` },
-        });
-      }
+      await useAuthStore.getState().logout();
     } catch (err) {
       console.error("Logout error:", err);
     } finally {
-      const savedTheme = localStorage.getItem("theme");
-      localStorage.clear();
-      if (savedTheme) localStorage.setItem("theme", savedTheme);
-      useAuthStore.setState({ isAuthenticated: false, token: null, user: null, company: null });
       setLogoutModal(false);
       navigate("/", { replace: true });
     }

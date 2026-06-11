@@ -85,6 +85,12 @@ export const mentorApi = {
     return URL.createObjectURL(response.data);
   },
 
+  // Templates
+  getTemplates: () => api.get('/mentor/certificate-templates'),
+  createTemplate: (data) => api.post('/mentor/certificate-templates', data, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  updateTemplate: (id, data) => api.post(`/mentor/certificate-templates/${id}`, data, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  deleteTemplate: (id) => api.delete(`/mentor/certificate-templates/${id}`),
+
   // AI Generation
   aiGenerate: (prompt) => api.post('/ai/generate', { prompt }),
 };

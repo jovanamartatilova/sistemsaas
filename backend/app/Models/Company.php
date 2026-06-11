@@ -22,7 +22,8 @@ class Company extends Model
         'phone',
         'description',
         'logo_path',
-        'status'
+        'status',
+        'certificate_templates'
     ];
 
     protected $hidden = [
@@ -33,6 +34,7 @@ class Company extends Model
     {
         return [
             // 'password' => 'hashed', // Removed - handle hashing manually in controller
+            'certificate_templates' => 'array',
         ];
     }
 
