@@ -733,6 +733,25 @@ class MentorController extends Controller
      */
     public function generateCertificate(Request $request, $idSubmission)
     {
+        try {
+            $filePath = $this->generateCertificateInternal($request, $idSubmission);
+            return response()->json([
+                'message' => 'Certificate generated successfully',
+                'file_url' => asset('storage/' . $filePath)
+            ]);
+        } catch (\Throwable $e) {
+            \Log::error('Certificate generation failed for submission ' . $idSubmission . ': ' . $e->getMessage(), [
+                'exception' => $e
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to generate certificate: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    protected function generateCertificateInternal(Request $request, $idSubmission)
+    {
         $mentorId = $request->user()->id_user;
         $mentorName = $request->user()->name;
 
@@ -746,20 +765,14 @@ class MentorController extends Controller
         $assessment = Assessment::where('id_submission', $idSubmission)->first();
 
         if (!$assessment || empty($assessment->scores_data)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Please save assessment scores first before generating a certificate.'
-            ], 400);
+            throw new \Exception('Please save assessment scores first before generating a certificate.');
         }
 
         $scoresData = $assessment->scores_data ?? [];
         $scores = array_filter($scoresData, fn($s) => $s['score'] !== null);
 
         if (count($scores) === 0) {
-            return response()->json([
-                'success' => false,
-                'message' => 'No scores found. Please input and save scores for at least one competency.'
-            ], 400);
+            throw new \Exception('No scores found. Please input and save scores for at least one competency.');
         }
 
         $avgScore = round(array_sum(array_column($scores, 'score')) / count($scores), 2);
@@ -912,11 +925,13 @@ class MentorController extends Controller
         if ($show_qr) {
             try {
                 $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=' . urlencode($verifyUrl);
-                $qrData = file_get_contents($qrUrl);
-                if ($qrData) {
-                    $qr_base64 = 'data:image/png;base64,' . base64_encode($qrData);
+                $response = \Illuminate\Support\Facades\Http::timeout(3)->get($qrUrl);
+                if ($response->successful()) {
+                    $qr_base64 = 'data:image/png;base64,' . base64_encode($response->body());
+                } else {
+                    \Log::warning('QR server returned status ' . $response->status());
                 }
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
                 \Log::error('Failed to generate QR code: ' . $e->getMessage());
             }
         }
@@ -993,10 +1008,7 @@ class MentorController extends Controller
         // Otomatis ubah status Apprentice jadi completed
         \App\Models\Apprentice::where('id_submission', $idSubmission)->update(['status' => 'completed']);
 
-        return response()->json([
-            'message' => 'Certificate generated successfully',
-            'file_url' => asset('storage/' . $filePath)
-        ]);
+        return $filePath;
     }
 
     /**
@@ -1014,9 +1026,10 @@ class MentorController extends Controller
 
         foreach ($submissionIds as $idSubmission) {
             try {
-                $this->generateCertificate($request, $idSubmission);
+                $this->generateCertificateInternal($request, $idSubmission);
                 $results[] = ['id' => $idSubmission, 'success' => true];
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
+                \Log::error('Bulk certificate generation failed for submission ' . $idSubmission . ': ' . $e->getMessage());
                 $results[] = ['id' => $idSubmission, 'success' => false, 'error' => $e->getMessage()];
             }
         }
@@ -1062,229 +1075,238 @@ class MentorController extends Controller
 
     public function previewCertificate(Request $request, $idSubmission)
     {
-        $mentorId = $request->user()->id_user;
-        $mentorName = $request->user()->name;
+        try {
+            $mentorId = $request->user()->id_user;
+            $mentorName = $request->user()->name;
 
-        // Verify submission belongs to this mentor
-        $submission = Submission::where('id_submission', $idSubmission)
-            ->where('id_user_mentor', $mentorId)
-            ->with(['user', 'position', 'vacancy.company'])
-            ->firstOrFail();
+            // Verify submission belongs to this mentor
+            $submission = Submission::where('id_submission', $idSubmission)
+                ->where('id_user_mentor', $mentorId)
+                ->with(['user', 'position', 'vacancy.company'])
+                ->firstOrFail();
 
-        // Calculate average score
-        $assessment = Assessment::where('id_submission', $idSubmission)->first();
-        $scoresData = $assessment->scores_data ?? [];
-        $scores = array_filter($scoresData, fn($s) => $s['score'] !== null);
-        $avgScore = count($scores) > 0 ? round(array_sum(array_column($scores, 'score')) / count($scores), 2) : 0;
+            // Calculate average score
+            $assessment = Assessment::where('id_submission', $idSubmission)->first();
+            $scoresData = $assessment->scores_data ?? [];
+            $scores = array_filter($scoresData, fn($s) => $s['score'] !== null);
+            $avgScore = count($scores) > 0 ? round(array_sum(array_column($scores, 'score')) / count($scores), 2) : 0;
 
-        $positionComps = DB::table('position_competencies')
-            ->join('competencies', 'position_competencies.id_competency', '=', 'competencies.id_competency')
-            ->where('position_competencies.id_position', $submission->id_position)
-            ->select('competencies.*')
-            ->get()->keyBy('id_competency');
+            $positionComps = DB::table('position_competencies')
+                ->join('competencies', 'position_competencies.id_competency', '=', 'competencies.id_competency')
+                ->where('position_competencies.id_position', $submission->id_position)
+                ->select('competencies.*')
+                ->get()->keyBy('id_competency');
 
-        $competenciesData = [];
-        foreach ($scores as $s) {
-            $comp = $positionComps->get($s['id_competency']);
-            if ($comp) {
-                $competenciesData[] = [
-                    'name' => $comp->name,
-                    'description' => $s['definition'] ?? $comp->description,
-                    'achievement_description' => $s['achievement_description'] ?? '',
-                    'hours' => $comp->learning_hours,
-                    'score' => $s['score'],
-                ];
-            }
-        }
-
-        $isDummy = filter_var($request->input('is_dummy', false), FILTER_VALIDATE_BOOLEAN) || $request->input('is_dummy') === 'true';
-        if ($isDummy) {
-            if ($submission->user) {
-                $submission->user = clone $submission->user;
-                $submission->user->name = '[Nama Intern]';
-            }
-            if ($submission->position) {
-                $submission->position = clone $submission->position;
-                $submission->position->name = '[Nama Posisi]';
-            }
-            if ($submission->vacancy) {
-                $submission->vacancy = clone $submission->vacancy;
-                $submission->vacancy->title = '[Program Magang]';
-            }
-        }
-
-        $certExists = Certificate::where('id_submission', $idSubmission)->first();
-        
-        // Generate Certificate Number for preview
-        if ($certExists && $certExists->certificate_number) {
-            $certNumber = $certExists->certificate_number;
-        } else {
-            $year = now()->year;
-            $count = Certificate::whereYear('issued_date', $year)->count() + 1;
-            $certNumber = 'CERT/' . $year . '/' . str_pad($count, 3, '0', STR_PAD_LEFT);
-        }
-
-        $hasCustomizationParams = $request->has('template_style') || $request->has('layout_settings');
-
-        if ($certExists && !$hasCustomizationParams) {
-            $template_style = $certExists->template_style;
-            $logo_position = $certExists->logo_position;
-            $signature_layout = $certExists->signature_layout;
-            $signatory1_name = $certExists->signatory1_name;
-            $signatory1_title = $certExists->signatory1_title;
-            $signatory2_name = $certExists->signatory2_name;
-            $signatory2_title = $certExists->signatory2_title;
-            $show_qr = (bool)$certExists->show_qr;
-            $qr_position = $certExists->qr_position;
-            $layout_settings = json_decode($certExists->layout_settings, true) ?: [];
-            $background_path = $certExists->background_path;
-            $signatory2_signature_path = $certExists->signatory2_signature;
-        } else {
-            // Read Customization parameters from Request
-            $template_style = $request->input('template_style', 'classic');
-            $logo_position = $request->input('logo_position', 'center');
-            $signature_layout = $request->input('signature_layout', 'single');
-            $signatory1_name = $request->input('signatory1_name', $mentorName);
-            $signatory1_title = $request->input('signatory1_title', 'Mentor ' . ($submission->vacancy->company->name ?? ''));
-            $signatory2_name = $request->input('signatory2_name');
-            $signatory2_title = $request->input('signatory2_title');
-            $show_qr = filter_var($request->input('show_qr', true), FILTER_VALIDATE_BOOLEAN);
-            $qr_position = $request->input('qr_position', 'bottom-left');
-
-            $layout_settings = $request->input('layout_settings');
-            if (!is_array($layout_settings)) {
-                $layout_settings = json_decode($layout_settings, true) ?: [];
-            }
-
-            // Handle custom background file upload/path
-            $background_path = null;
-            if ($request->hasFile('background_file')) {
-                $background_path = $request->file('background_file')->store('certificates/backgrounds', 'public');
-            } elseif ($request->filled('background_path')) {
-                $background_path = $request->input('background_path');
-            }
-
-            // Handle signatory 2 signature upload/canvas
-            $signatory2_signature_path = null;
-            if ($request->filled('signatory2_signature')) {
-                $sigData = $request->input('signatory2_signature');
-                if (str_starts_with($sigData, 'data:image')) {
-                    $type = explode(';', $sigData)[0];
-                    $type = explode('/', $type)[1];
-                    $dataDec = explode(',', $sigData)[1];
-                    $decoded = base64_decode($dataDec);
-
-                    $sigFileName = 'signatures/sig2_temp_' . Str::random(10) . '.' . $type;
-                    Storage::disk('public')->put($sigFileName, $decoded);
-                    $signatory2_signature_path = $sigFileName;
-                } else {
-                    $signatory2_signature_path = $sigData;
+            $competenciesData = [];
+            foreach ($scores as $s) {
+                $comp = $positionComps->get($s['id_competency']);
+                if ($comp) {
+                    $competenciesData[] = [
+                        'name' => $comp->name,
+                        'description' => $s['definition'] ?? $comp->description,
+                        'achievement_description' => $s['achievement_description'] ?? '',
+                        'hours' => $comp->learning_hours,
+                        'score' => $s['score'],
+                    ];
                 }
             }
-        }
 
-        // Prepare Base64 assets
-        $company = $submission->vacancy->company;
-        $logo_base64 = null;
-        if ($company && $company->logo_path) {
-            $logoPath = storage_path('app/public/' . $company->logo_path);
-            if (file_exists($logoPath)) {
-                $type = pathinfo($logoPath, PATHINFO_EXTENSION);
-                $data = file_get_contents($logoPath);
-                $logo_base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
-            }
-        }
-
-        $background_base64 = null;
-        if ($background_path) {
-            if (Storage::disk('public')->exists($background_path)) {
-                $fileContent = Storage::disk('public')->get($background_path);
-                $type = pathinfo($background_path, PATHINFO_EXTENSION);
-                $background_base64 = 'data:image/' . $type . ';base64,' . base64_encode($fileContent);
-            }
-        }
-
-        $signature_base64 = null;
-        $employee = auth()->user()->employee;
-        if ($employee && $employee->signature_path) {
-            if (Storage::disk('public')->exists($employee->signature_path)) {
-                $fileContent = Storage::disk('public')->get($employee->signature_path);
-                $type = pathinfo($employee->signature_path, PATHINFO_EXTENSION);
-                $signature_base64 = 'data:image/' . $type . ';base64,' . base64_encode($fileContent);
-            }
-        }
-
-        $signature2_base64 = null;
-        if ($signature_layout === 'double' && $signatory2_signature_path) {
-            if (Storage::disk('public')->exists($signatory2_signature_path)) {
-                $fileContent = Storage::disk('public')->get($signatory2_signature_path);
-                $type = pathinfo($signatory2_signature_path, PATHINFO_EXTENSION);
-                $signature2_base64 = 'data:image/' . $type . ';base64,' . base64_encode($fileContent);
-            }
-        }
-
-        // Generate QR code base64
-        $qr_base64 = null;
-        $appUrl = env('APP_URL', 'http://localhost');
-        $frontendUrl = $appUrl;
-        if (str_contains($appUrl, 'localhost') || str_contains($appUrl, '127.0.0.1')) {
-            $frontendUrl = 'http://localhost:5173';
-        }
-        $verifyUrl = $frontendUrl . '/verify-certificate/PREVIEW';
-
-        if ($show_qr) {
-            try {
-                $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=' . urlencode($verifyUrl);
-                $qrData = file_get_contents($qrUrl);
-                if ($qrData) {
-                    $qr_base64 = 'data:image/png;base64,' . base64_encode($qrData);
+            $isDummy = filter_var($request->input('is_dummy', false), FILTER_VALIDATE_BOOLEAN) || $request->input('is_dummy') === 'true';
+            if ($isDummy) {
+                if ($submission->user) {
+                    $submission->user = clone $submission->user;
+                    $submission->user->name = '[Nama Intern]';
                 }
-            } catch (\Exception $e) {
-                \Log::error('Failed to generate QR code: ' . $e->getMessage());
+                if ($submission->position) {
+                    $submission->position = clone $submission->position;
+                    $submission->position->name = '[Nama Posisi]';
+                }
+                if ($submission->vacancy) {
+                    $submission->vacancy = clone $submission->vacancy;
+                    $submission->vacancy->title = '[Program Magang]';
+                }
             }
-        }
 
-        $companyCity = 'Jakarta';
-        if ($company && $company->address) {
-            $parts = explode(',', $company->address);
-            if (count($parts) > 1) {
-                $companyCity = trim(end($parts));
+            $certExists = Certificate::where('id_submission', $idSubmission)->first();
+            
+            // Generate Certificate Number for preview
+            if ($certExists && $certExists->certificate_number) {
+                $certNumber = $certExists->certificate_number;
             } else {
-                $companyCity = $company->address;
+                $year = now()->year;
+                $count = Certificate::whereYear('issued_date', $year)->count() + 1;
+                $certNumber = 'CERT/' . $year . '/' . str_pad($count, 3, '0', STR_PAD_LEFT);
             }
+
+            $hasCustomizationParams = $request->has('template_style') || $request->has('layout_settings');
+
+            if ($certExists && !$hasCustomizationParams) {
+                $template_style = $certExists->template_style;
+                $logo_position = $certExists->logo_position;
+                $signature_layout = $certExists->signature_layout;
+                $signatory1_name = $certExists->signatory1_name;
+                $signatory1_title = $certExists->signatory1_title;
+                $signatory2_name = $certExists->signatory2_name;
+                $signatory2_title = $certExists->signatory2_title;
+                $show_qr = (bool)$certExists->show_qr;
+                $qr_position = $certExists->qr_position;
+                $layout_settings = json_decode($certExists->layout_settings, true) ?: [];
+                $background_path = $certExists->background_path;
+                $signatory2_signature_path = $certExists->signatory2_signature;
+            } else {
+                // Read Customization parameters from Request
+                $template_style = $request->input('template_style', 'classic');
+                $logo_position = $request->input('logo_position', 'center');
+                $signature_layout = $request->input('signature_layout', 'single');
+                $signatory1_name = $request->input('signatory1_name', $mentorName);
+                $signatory1_title = $request->input('signatory1_title', 'Mentor ' . ($submission->vacancy->company->name ?? ''));
+                $signatory2_name = $request->input('signatory2_name');
+                $signatory2_title = $request->input('signatory2_title');
+                $show_qr = filter_var($request->input('show_qr', true), FILTER_VALIDATE_BOOLEAN);
+                $qr_position = $request->input('qr_position', 'bottom-left');
+
+                $layout_settings = $request->input('layout_settings');
+                if (!is_array($layout_settings)) {
+                    $layout_settings = json_decode($layout_settings, true) ?: [];
+                }
+
+                // Handle custom background file upload/path
+                $background_path = null;
+                if ($request->hasFile('background_file')) {
+                    $background_path = $request->file('background_file')->store('certificates/backgrounds', 'public');
+                } elseif ($request->filled('background_path')) {
+                    $background_path = $request->input('background_path');
+                }
+
+                // Handle signatory 2 signature upload/canvas
+                $signatory2_signature_path = null;
+                if ($request->filled('signatory2_signature')) {
+                    $sigData = $request->input('signatory2_signature');
+                    if (str_starts_with($sigData, 'data:image')) {
+                        $type = explode(';', $sigData)[0];
+                        $type = explode('/', $type)[1];
+                        $dataDec = explode(',', $sigData)[1];
+                        $decoded = base64_decode($dataDec);
+
+                        $sigFileName = 'signatures/sig2_temp_' . Str::random(10) . '.' . $type;
+                        Storage::disk('public')->put($sigFileName, $decoded);
+                        $signatory2_signature_path = $sigFileName;
+                    } else {
+                        $signatory2_signature_path = $sigData;
+                    }
+                }
+            }
+
+            // Prepare Base64 assets
+            $company = $submission->vacancy->company;
+            $logo_base64 = null;
+            if ($company && $company->logo_path) {
+                $logoPath = storage_path('app/public/' . $company->logo_path);
+                if (file_exists($logoPath)) {
+                    $type = pathinfo($logoPath, PATHINFO_EXTENSION);
+                    $data = file_get_contents($logoPath);
+                    $logo_base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
+                }
+            }
+
+            $background_base64 = null;
+            if ($background_path) {
+                if (Storage::disk('public')->exists($background_path)) {
+                    $fileContent = Storage::disk('public')->get($background_path);
+                    $type = pathinfo($background_path, PATHINFO_EXTENSION);
+                    $background_base64 = 'data:image/' . $type . ';base64,' . base64_encode($fileContent);
+                }
+            }
+
+            $signature_base64 = null;
+            $employee = auth()->user()->employee;
+            if ($employee && $employee->signature_path) {
+                if (Storage::disk('public')->exists($employee->signature_path)) {
+                    $fileContent = Storage::disk('public')->get($employee->signature_path);
+                    $type = pathinfo($employee->signature_path, PATHINFO_EXTENSION);
+                    $signature_base64 = 'data:image/' . $type . ';base64,' . base64_encode($fileContent);
+                }
+            }
+
+            $signature2_base64 = null;
+            if ($signature_layout === 'double' && $signatory2_signature_path) {
+                if (Storage::disk('public')->exists($signatory2_signature_path)) {
+                    $fileContent = Storage::disk('public')->get($signatory2_signature_path);
+                    $type = pathinfo($signatory2_signature_path, PATHINFO_EXTENSION);
+                    $signature2_base64 = 'data:image/' . $type . ';base64,' . base64_encode($fileContent);
+                }
+            }
+
+            // Generate QR code base64
+            $qr_base64 = null;
+            $appUrl = env('APP_URL', 'http://localhost');
+            $frontendUrl = $appUrl;
+            if (str_contains($appUrl, 'localhost') || str_contains($appUrl, '127.0.0.1')) {
+                $frontendUrl = 'http://localhost:5173';
+            }
+            $verifyUrl = $frontendUrl . '/verify-certificate/PREVIEW';
+
+            if ($show_qr) {
+                try {
+                    $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=' . urlencode($verifyUrl);
+                    $response = \Illuminate\Support\Facades\Http::timeout(3)->get($qrUrl);
+                    if ($response->successful()) {
+                        $qr_base64 = 'data:image/png;base64,' . base64_encode($response->body());
+                    } else {
+                        \Log::warning('QR server returned status ' . $response->status());
+                    }
+                } catch (\Throwable $e) {
+                    \Log::error('Failed to generate QR code: ' . $e->getMessage());
+                }
+            }
+
+            $companyCity = 'Jakarta';
+            if ($company && $company->address) {
+                $parts = explode(',', $company->address);
+                if (count($parts) > 1) {
+                    $companyCity = trim(end($parts));
+                } else {
+                    $companyCity = $company->address;
+                }
+            }
+
+            $data = [
+                'submission' => $submission,
+                'company' => $company,
+                'mentorName' => $mentorName,
+                'logo_base64' => $logo_base64,
+                'background_base64' => $background_base64,
+                'companyCity' => $companyCity,
+                'certNumber' => $certNumber,
+                'issuedDate' => now()->translatedFormat('d F Y'),
+                'competencies' => $competenciesData,
+                'avgScore' => $avgScore,
+                'evaluation' => $assessment->narrative ?? '',
+                'signature_base64' => $signature_base64,
+
+                // Customization Options
+                'template_style' => $template_style,
+                'logo_position' => $logo_position,
+                'signature_layout' => $signature_layout,
+                'signatory1_name' => $signatory1_name,
+                'signatory1_title' => $signatory1_title,
+                'signatory2_name' => $signatory2_name,
+                'signatory2_title' => $signatory2_title,
+                'signature2_base64' => $signature2_base64,
+                'show_qr' => $show_qr,
+                'qr_position' => $qr_position,
+                'qr_base64' => $qr_base64,
+                'layout_settings' => $layout_settings,
+            ];
+
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('certificate.template', $data)->setPaper('a4', 'landscape');
+            return @$pdf->stream('preview.pdf');
+        } catch (\Throwable $e) {
+            \Log::error('Certificate preview failed for submission ' . $idSubmission . ': ' . $e->getMessage(), [
+                'exception' => $e
+            ]);
+            return response($e->getMessage(), 500)->header('Content-Type', 'text/plain');
         }
-
-        $data = [
-            'submission' => $submission,
-            'company' => $company,
-            'mentorName' => $mentorName,
-            'logo_base64' => $logo_base64,
-            'background_base64' => $background_base64,
-            'companyCity' => $companyCity,
-            'certNumber' => $certNumber,
-            'issuedDate' => now()->translatedFormat('d F Y'),
-            'competencies' => $competenciesData,
-            'avgScore' => $avgScore,
-            'evaluation' => $assessment->narrative ?? '',
-            'signature_base64' => $signature_base64,
-
-            // Customization Options
-            'template_style' => $template_style,
-            'logo_position' => $logo_position,
-            'signature_layout' => $signature_layout,
-            'signatory1_name' => $signatory1_name,
-            'signatory1_title' => $signatory1_title,
-            'signatory2_name' => $signatory2_name,
-            'signatory2_title' => $signatory2_title,
-            'signature2_base64' => $signature2_base64,
-            'show_qr' => $show_qr,
-            'qr_position' => $qr_position,
-            'qr_base64' => $qr_base64,
-            'layout_settings' => $layout_settings,
-        ];
-
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('certificate.template', $data)->setPaper('a4', 'landscape');
-        return @$pdf->stream('preview.pdf');
     }
 
     /**
