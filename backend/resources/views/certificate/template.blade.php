@@ -43,7 +43,7 @@
     $sig_invert_1 = !empty($layout_settings['sig_invert_1']);
     $sig_invert_2 = !empty($layout_settings['sig_invert_2']);
 
-    if ($sig_invert_1 && isset($signature_base64) && $signature_base64) {
+    if ($sig_invert_1 && isset($signature_base64) && $signature_base64 && function_exists('imagecreatefromstring') && function_exists('imagefilter') && function_exists('imagepng')) {
         try {
             $imgData = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $signature_base64));
             $src = @imagecreatefromstring($imgData);
@@ -54,10 +54,10 @@
                 $signature_base64 = 'data:image/png;base64,' . base64_encode(ob_get_clean());
                 imagedestroy($src);
             }
-        } catch (\Exception $e) { /* keep original */
+        } catch (\Throwable $e) { /* keep original */
         }
     }
-    if ($sig_invert_2 && isset($signature2_base64) && $signature2_base64) {
+    if ($sig_invert_2 && isset($signature2_base64) && $signature2_base64 && function_exists('imagecreatefromstring') && function_exists('imagefilter') && function_exists('imagepng')) {
         try {
             $imgData = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $signature2_base64));
             $src = @imagecreatefromstring($imgData);
@@ -68,7 +68,7 @@
                 $signature2_base64 = 'data:image/png;base64,' . base64_encode(ob_get_clean());
                 imagedestroy($src);
             }
-        } catch (\Exception $e) { /* keep original */
+        } catch (\Throwable $e) { /* keep original */
         }
     }
 
