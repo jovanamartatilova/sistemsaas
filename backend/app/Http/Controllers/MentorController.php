@@ -976,7 +976,20 @@ class MentorController extends Controller
         ];
 
         $filePath = 'certificates/' . $idCert . '.pdf';
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('certificate.template', $data)->setPaper('a4', 'landscape');
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('certificate.template', $data)
+            ->setPaper('a4', 'landscape')
+            ->setOption('isRemoteEnabled', true)
+            ->setOption('isHtml5ParserEnabled', true);
+        
+        $dompdf = $pdf->getDompdf();
+        $context = stream_context_create([
+            'ssl' => [
+                'verify_peer' => false,
+                'verify_peer_name' => false,
+                'allow_self_signed' => true,
+            ]
+        ]);
+        $dompdf->setHttpContext($context);
         Storage::disk('public')->put($filePath, $pdf->output());
 
         Certificate::updateOrCreate(
@@ -1299,7 +1312,20 @@ class MentorController extends Controller
                 'layout_settings' => $layout_settings,
             ];
 
-            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('certificate.template', $data)->setPaper('a4', 'landscape');
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('certificate.template', $data)
+                ->setPaper('a4', 'landscape')
+                ->setOption('isRemoteEnabled', true)
+                ->setOption('isHtml5ParserEnabled', true);
+            
+            $dompdf = $pdf->getDompdf();
+            $context = stream_context_create([
+                'ssl' => [
+                    'verify_peer' => false,
+                    'verify_peer_name' => false,
+                    'allow_self_signed' => true,
+                ]
+            ]);
+            $dompdf->setHttpContext($context);
             return @$pdf->stream('preview.pdf');
         } catch (\Throwable $e) {
             \Log::error('Certificate preview failed for submission ' . $idSubmission . ': ' . $e->getMessage(), [

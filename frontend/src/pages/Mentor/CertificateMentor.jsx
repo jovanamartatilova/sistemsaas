@@ -59,6 +59,31 @@ const VARIANT = {
   ghost: { bg: "#f8fafc", color: "#475569", border: "#e2e8f0" },
 };
 
+const FONT_OPTIONS = [
+  { value: "", label: "Default Style Font" },
+  { value: "Arial", label: "Arial" },
+  { value: "Helvetica", label: "Helvetica" },
+  { value: "Times New Roman", label: "Times New Roman" },
+  { value: "Georgia", label: "Georgia" },
+  { value: "Courier New", label: "Courier New" },
+  { value: "Montserrat", label: "Montserrat" },
+  { value: "Inter", label: "Inter" },
+  { value: "Poppins", label: "Poppins" },
+  { value: "Outfit", label: "Outfit" },
+  { value: "Roboto", label: "Roboto" },
+  { value: "Playfair Display", label: "Playfair Display" },
+  { value: "Cinzel", label: "Cinzel" },
+  { value: "Cormorant Garamond", label: "Cormorant Garamond" },
+  { value: "Merriweather", label: "Merriweather" },
+  { value: "Great Vibes", label: "Great Vibes" },
+  { value: "Alex Brush", label: "Alex Brush" },
+  { value: "Rochester", label: "Rochester" },
+  { value: "Sacramento", label: "Sacramento" },
+  { value: "Parisienne", label: "Parisienne" },
+  { value: "Pinyon Script", label: "Pinyon Script" }
+];
+
+
 function ActionBtn({ label, icon, variant = "blue", onClick, disabled, title }) {
   const v = VARIANT[variant];
   const [hov, setHov] = useState(false);
@@ -154,6 +179,9 @@ export default function CertificateMentor() {
     signature_y: 0, signature_x: 0, show_signatures: true,
     qr_y: 0, qr_x: 0, show_qr: true,
     font_size_title: 30, font_size_name: 34, font_size_body: 11,
+    font_family_title: '',
+    font_family_name: '',
+    font_family_body: '',
     font_color_title: '',        // SERTIFIKAT heading
     font_color_cert_id: '',      // certificate number under title
     font_color_name: '',         // candidate name
@@ -367,7 +395,7 @@ export default function CertificateMentor() {
               letterSpacing: "1.5px",
               textTransform: "uppercase",
               lineHeight: "1.1",
-              fontFamily: templateStyle === "elegant" ? "Georgia, serif" : "inherit"
+              fontFamily: layoutSettings.font_family_title || (templateStyle === "elegant" ? "Georgia, serif" : "inherit")
             }}>
               SERTIFIKAT
             </span>
@@ -402,7 +430,7 @@ export default function CertificateMentor() {
               display: "inline-block",
               minWidth: "140px",
               lineHeight: "1.1",
-              fontFamily: templateStyle === "elegant" ? "Georgia, serif" : templateStyle === "classic" ? "Times New Roman, serif" : "inherit",
+              fontFamily: layoutSettings.font_family_name || (templateStyle === "elegant" ? "Georgia, serif" : templateStyle === "classic" ? "Times New Roman, serif" : "inherit"),
               fontStyle: templateStyle === "modern" ? "normal" : "italic"
             }}>
               {internName}
@@ -419,7 +447,8 @@ export default function CertificateMentor() {
                 whiteSpace: "normal",
                 wordWrap: "break-word",
                 width: "100%",
-                boxSizing: "border-box"
+                boxSizing: "border-box",
+                fontFamily: layoutSettings.font_family_body || "inherit"
               }}>
                 Telah menyelesaikan program magang di <strong>{companyName}</strong> pada program <strong>{internProgram}</strong> bertipe <strong>magang</strong> yang dilaksanakan pada tanggal 12 May 2026 - 12 Nov 2026.
               </p>
@@ -574,6 +603,16 @@ export default function CertificateMentor() {
 
   // ─── EFFECTS ─────────────────────────────────────────────────────────────
   useEffect(() => {
+    // Dynamically insert Google Fonts stylesheet link to head
+    const linkId = "google-fonts-certificate";
+    if (!document.getElementById(linkId)) {
+      const link = document.createElement("link");
+      link.id = linkId;
+      link.rel = "stylesheet";
+      link.href = "https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,700;1,400&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Great+Vibes&family=Alex+Brush&family=Rochester&family=Sacramento&family=Parisienne&family=Pinyon+Script&family=Cinzel:wght@400;700&family=Cormorant+Garamond:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;700&family=Poppins:ital,wght@0,300;0,400;0,700;1,400&family=Roboto:ital,wght@0,300;0,400;0,700;1,400&family=Outfit:wght@300;400;700&family=Merriweather:ital,wght@0,300;0,400;0,700;1,400&display=swap";
+      document.head.appendChild(link);
+    }
+
     fetchAll('');
 
     const cacheRef = { lastFetchTime: null };
@@ -849,6 +888,7 @@ export default function CertificateMentor() {
       signature_y: 0, signature_x: 0, show_signatures: true,
       qr_y: 0, qr_x: 0, show_qr: true,
       font_size_title: 30, font_size_name: 34, font_size_body: 11,
+      font_family_title: '', font_family_name: '', font_family_body: '',
       font_color_title: '', font_color_cert_id: '', font_color_name: '',
       font_color_labels: '', font_color_role: '',
       font_color_body: '', font_color_signatures: '',
@@ -906,6 +946,9 @@ export default function CertificateMentor() {
       font_size_title: parsedSettings.font_size_title || (tpl.template_style === 'classic' ? 30 : tpl.template_style === 'modern' ? 28 : 26),
       font_size_name: parsedSettings.font_size_name || (tpl.template_style === 'modern' ? 32 : 34),
       font_size_body: parsedSettings.font_size_body || 11,
+      font_family_title: parsedSettings.font_family_title || '',
+      font_family_name: parsedSettings.font_family_name || '',
+      font_family_body: parsedSettings.font_family_body || '',
       font_color_title: parsedSettings.font_color_title || '',
       font_color_cert_id: parsedSettings.font_color_cert_id || '',
       font_color_name: parsedSettings.font_color_name || '',
@@ -1265,6 +1308,7 @@ export default function CertificateMentor() {
   return (
     <div style={s.app}>
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,700;1,400&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Great+Vibes&family=Alex+Brush&family=Rochester&family=Sacramento&family=Parisienne&family=Pinyon+Script&family=Cinzel:wght@400;700&family=Cormorant+Garamond:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;700&family=Poppins:ital,wght@0,300;0,400;0,700;1,400&family=Roboto:ital,wght@0,300;0,400;0,700;1,400&family=Outfit:wght@300;400;700&family=Merriweather:ital,wght@0,300;0,400;0,700;1,400&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
         ::-webkit-scrollbar { width: 5px; }
         @keyframes spin { to { transform: rotate(360deg); } }
@@ -1768,6 +1812,46 @@ export default function CertificateMentor() {
                         </div>
                       )}
                     </div>
+
+                    {/* Typography & Fonts Selection */}
+                    <div style={{ display: "flex", flexDirection: "column", gap: "10px", borderTop: "1px solid #cbd5e1", paddingTop: "12px", marginTop: "8px" }}>
+                      <span style={{ fontSize: "11.5px", fontWeight: "750", color: "#475569", textTransform: "uppercase" }}>Typography & Fonts</span>
+                      
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+                          <label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600" }}>Title Font ("SERTIFIKAT")</label>
+                          <select
+                            value={layoutSettings.font_family_title || ""}
+                            onChange={(e) => setLayoutSettings(prev => ({ ...prev, font_family_title: e.target.value }))}
+                            style={{ padding: "5px 8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "11.5px", background: "#fff", outline: "none", color: "#0f172a" }}
+                          >
+                            {FONT_OPTIONS.map(opt => <option key={opt.value} value={opt.value} style={{ fontFamily: opt.value ? `"${opt.value}"` : 'inherit', fontSize: '13px' }}>{opt.label}</option>)}
+                          </select>
+                        </div>
+                        
+                        <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+                          <label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600" }}>Recipient Name Font</label>
+                          <select
+                            value={layoutSettings.font_family_name || ""}
+                            onChange={(e) => setLayoutSettings(prev => ({ ...prev, font_family_name: e.target.value }))}
+                            style={{ padding: "5px 8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "11.5px", background: "#fff", outline: "none", color: "#0f172a" }}
+                          >
+                            {FONT_OPTIONS.map(opt => <option key={opt.value} value={opt.value} style={{ fontFamily: opt.value ? `"${opt.value}"` : 'inherit', fontSize: '13px' }}>{opt.label}</option>)}
+                          </select>
+                        </div>
+                      </div>
+
+                      <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+                        <label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600" }}>Body / Description Font</label>
+                        <select
+                          value={layoutSettings.font_family_body || ""}
+                          onChange={(e) => setLayoutSettings(prev => ({ ...prev, font_family_body: e.target.value }))}
+                          style={{ padding: "5px 8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "11.5px", background: "#fff", outline: "none", color: "#0f172a" }}
+                        >
+                          {FONT_OPTIONS.map(opt => <option key={opt.value} value={opt.value} style={{ fontFamily: opt.value ? `"${opt.value}"` : 'inherit', fontSize: '13px' }}>{opt.label}</option>)}
+                        </select>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -2268,6 +2352,18 @@ export default function CertificateMentor() {
                         font_size_title: parsedSettings.font_size_title || (tpl.template_style === 'classic' ? 30 : tpl.template_style === 'modern' ? 28 : 26),
                         font_size_name: parsedSettings.font_size_name || (tpl.template_style === 'modern' ? 32 : 34),
                         font_size_body: parsedSettings.font_size_body || 11,
+                        font_family_title: parsedSettings.font_family_title || '',
+                        font_family_name: parsedSettings.font_family_name || '',
+                        font_family_body: parsedSettings.font_family_body || '',
+                        font_color_title: parsedSettings.font_color_title || '',
+                        font_color_cert_id: parsedSettings.font_color_cert_id || '',
+                        font_color_name: parsedSettings.font_color_name || '',
+                        font_color_labels: parsedSettings.font_color_labels || '',
+                        font_color_role: parsedSettings.font_color_role || '',
+                        font_color_body: parsedSettings.font_color_body || '',
+                        font_color_signatures: parsedSettings.font_color_signatures || '',
+                        sig_invert_1: parsedSettings.sig_invert_1 || false,
+                        sig_invert_2: parsedSettings.sig_invert_2 || false,
                         custom_images: parsedSettings.custom_images || [],
                       });
                       setCustomBgUrl(tpl.background_url || null);
@@ -2756,6 +2852,46 @@ export default function CertificateMentor() {
                             </select>
                           </div>
                         )}
+                      </div>
+
+                      {/* Typography & Fonts Selection */}
+                      <div style={{ display: "flex", flexDirection: "column", gap: "10px", borderTop: "1px solid #cbd5e1", paddingTop: "12px", marginTop: "8px" }}>
+                        <span style={{ fontSize: "11.5px", fontWeight: "750", color: "#475569", textTransform: "uppercase" }}>Typography & Fonts</span>
+                        
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                          <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+                            <label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600" }}>Title Font ("SERTIFIKAT")</label>
+                            <select
+                              value={layoutSettings.font_family_title || ""}
+                              onChange={(e) => setLayoutSettings(prev => ({ ...prev, font_family_title: e.target.value }))}
+                              style={{ padding: "5px 8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "11.5px", background: "#fff", outline: "none", color: "#0f172a" }}
+                            >
+                              {FONT_OPTIONS.map(opt => <option key={opt.value} value={opt.value} style={{ fontFamily: opt.value ? `"${opt.value}"` : 'inherit', fontSize: '13px' }}>{opt.label}</option>)}
+                            </select>
+                          </div>
+                          
+                          <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+                            <label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600" }}>Recipient Name Font</label>
+                            <select
+                              value={layoutSettings.font_family_name || ""}
+                              onChange={(e) => setLayoutSettings(prev => ({ ...prev, font_family_name: e.target.value }))}
+                              style={{ padding: "5px 8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "11.5px", background: "#fff", outline: "none", color: "#0f172a" }}
+                            >
+                              {FONT_OPTIONS.map(opt => <option key={opt.value} value={opt.value} style={{ fontFamily: opt.value ? `"${opt.value}"` : 'inherit', fontSize: '13px' }}>{opt.label}</option>)}
+                            </select>
+                          </div>
+                        </div>
+
+                        <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+                          <label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600" }}>Body / Description Font</label>
+                          <select
+                            value={layoutSettings.font_family_body || ""}
+                            onChange={(e) => setLayoutSettings(prev => ({ ...prev, font_family_body: e.target.value }))}
+                            style={{ padding: "5px 8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "11.5px", background: "#fff", outline: "none", color: "#0f172a" }}
+                          >
+                            {FONT_OPTIONS.map(opt => <option key={opt.value} value={opt.value} style={{ fontFamily: opt.value ? `"${opt.value}"` : 'inherit', fontSize: '13px' }}>{opt.label}</option>)}
+                          </select>
+                        </div>
                       </div>
 
                     </div>

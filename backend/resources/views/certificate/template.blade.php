@@ -39,6 +39,84 @@
     $font_color_body = isset($layout_settings['font_color_body']) && $layout_settings['font_color_body'] ? $layout_settings['font_color_body'] : null;
     $font_color_signatures = isset($layout_settings['font_color_signatures']) && $layout_settings['font_color_signatures'] ? $layout_settings['font_color_signatures'] : null;
 
+    $font_family_title = isset($layout_settings['font_family_title']) && $layout_settings['font_family_title'] ? $layout_settings['font_family_title'] : null;
+    $font_family_name = isset($layout_settings['font_family_name']) && $layout_settings['font_family_name'] ? $layout_settings['font_family_name'] : null;
+    $font_family_body = isset($layout_settings['font_family_body']) && $layout_settings['font_family_body'] ? $layout_settings['font_family_body'] : null;
+
+    $used_fonts = [];
+    if (!empty($font_family_title)) { $used_fonts[] = $font_family_title; }
+    if (!empty($font_family_name)) { $used_fonts[] = $font_family_name; }
+    if (!empty($font_family_body)) { $used_fonts[] = $font_family_body; }
+    $used_fonts = array_unique($used_fonts);
+
+    $font_configs_v1 = [
+        'Montserrat' => 'Montserrat:300,400,700',
+        'Playfair Display' => 'Playfair+Display:400,700',
+        'Great Vibes' => 'Great+Vibes',
+        'Alex Brush' => 'Alex+Brush',
+        'Rochester' => 'Rochester',
+        'Sacramento' => 'Sacramento',
+        'Parisienne' => 'Parisienne',
+        'Pinyon Script' => 'Pinyon+Script',
+        'Cinzel' => 'Cinzel:400,700',
+        'Cormorant Garamond' => 'Cormorant+Garamond:400,700',
+        'Inter' => 'Inter:300,400,700',
+        'Poppins' => 'Poppins:300,400,700',
+        'Roboto' => 'Roboto:300,400,700',
+        'Outfit' => 'Outfit:300,400,700',
+        'Merriweather' => 'Merriweather:300,400,700',
+    ];
+
+    $v1_families = [];
+    foreach ($used_fonts as $font) {
+        if (isset($font_configs_v1[$font])) {
+            $v1_families[] = $font_configs_v1[$font];
+        }
+    }
+@endphp
+@if(!empty($v1_families))
+    <link href="https://fonts.googleapis.com/css?family={{ implode('|', $v1_families) }}" rel="stylesheet">
+@endif
+@php
+    $logo_x = isset($layout_settings['logo_x']) ? (int) $layout_settings['logo_x'] : 0;
+    $show_logo = isset($layout_settings['show_logo']) ? filter_var($layout_settings['show_logo'], FILTER_VALIDATE_BOOLEAN) : true;
+
+    $title_y = isset($layout_settings['title_y']) ? (int) $layout_settings['title_y'] : 0;
+    $title_x = isset($layout_settings['title_x']) ? (int) $layout_settings['title_x'] : 0;
+    $show_title = isset($layout_settings['show_title']) ? filter_var($layout_settings['show_title'], FILTER_VALIDATE_BOOLEAN) : true;
+
+    $recipient_y = isset($layout_settings['recipient_y']) ? (int) $layout_settings['recipient_y'] : 0;
+    $recipient_x = isset($layout_settings['recipient_x']) ? (int) $layout_settings['recipient_x'] : 0;
+    $show_recipient = isset($layout_settings['show_recipient']) ? filter_var($layout_settings['show_recipient'], FILTER_VALIDATE_BOOLEAN) : true;
+
+    $body_y = isset($layout_settings['body_y']) ? (int) $layout_settings['body_y'] : 0;
+    $body_x = isset($layout_settings['body_x']) ? (int) $layout_settings['body_x'] : 0;
+    $show_body = isset($layout_settings['show_body']) ? filter_var($layout_settings['show_body'], FILTER_VALIDATE_BOOLEAN) : true;
+
+    $signature_y = isset($layout_settings['signature_y']) ? (int) $layout_settings['signature_y'] : 0;
+    $signature_x = isset($layout_settings['signature_x']) ? (int) $layout_settings['signature_x'] : 0;
+    $show_signatures = isset($layout_settings['show_signatures']) ? filter_var($layout_settings['show_signatures'], FILTER_VALIDATE_BOOLEAN) : true;
+
+    $qr_y = isset($layout_settings['qr_y']) ? (int) $layout_settings['qr_y'] : 0;
+    $qr_x = isset($layout_settings['qr_x']) ? (int) $layout_settings['qr_x'] : 0;
+
+    $font_size_title = isset($layout_settings['font_size_title']) ? (int) $layout_settings['font_size_title'] : null;
+    $font_size_name = isset($layout_settings['font_size_name']) ? (int) $layout_settings['font_size_name'] : null;
+    $font_size_body = isset($layout_settings['font_size_body']) ? (int) $layout_settings['font_size_body'] : null;
+
+    // Custom font colors (empty string = use theme default)
+    $font_color_title = isset($layout_settings['font_color_title']) && $layout_settings['font_color_title'] ? $layout_settings['font_color_title'] : null;
+    $font_color_cert_id = isset($layout_settings['font_color_cert_id']) && $layout_settings['font_color_cert_id'] ? $layout_settings['font_color_cert_id'] : null;
+    $font_color_name = isset($layout_settings['font_color_name']) && $layout_settings['font_color_name'] ? $layout_settings['font_color_name'] : null;
+    $font_color_labels = isset($layout_settings['font_color_labels']) && $layout_settings['font_color_labels'] ? $layout_settings['font_color_labels'] : null;
+    $font_color_role = isset($layout_settings['font_color_role']) && $layout_settings['font_color_role'] ? $layout_settings['font_color_role'] : null;
+    $font_color_body = isset($layout_settings['font_color_body']) && $layout_settings['font_color_body'] ? $layout_settings['font_color_body'] : null;
+    $font_color_signatures = isset($layout_settings['font_color_signatures']) && $layout_settings['font_color_signatures'] ? $layout_settings['font_color_signatures'] : null;
+
+    $font_family_title = isset($layout_settings['font_family_title']) && $layout_settings['font_family_title'] ? $layout_settings['font_family_title'] : null;
+    $font_family_name = isset($layout_settings['font_family_name']) && $layout_settings['font_family_name'] ? $layout_settings['font_family_name'] : null;
+    $font_family_body = isset($layout_settings['font_family_body']) && $layout_settings['font_family_body'] ? $layout_settings['font_family_body'] : null;
+
     // Signature image inversion: if sig_invert_1/2 is true, invert the base64 image using PHP GD
     $sig_invert_1 = !empty($layout_settings['sig_invert_1']);
     $sig_invert_2 = !empty($layout_settings['sig_invert_2']);
@@ -258,13 +336,14 @@
     .logo { max-height: 60px; max-width: 250px; }
     
     .given-to { font-size: 11pt; color: #475569; margin-bottom: 4px; }
-    .as-role { font-size: 11pt; color: #475569; margin-bottom: 4px; }
+    .as-role { font-size: 11pt; color: #475569; margin-top: 15px; margin-bottom: 4px; }
     
     .description {
         font-size: {{ $font_size_body ?? 11 }}pt;
-        line-height: 1.5;
+        line-height: 1.6;
         color: #334155;
-        margin-bottom: 8px;
+        margin-top: 15px;
+        margin-bottom: 15px;
         padding: 0 20px;
     }
 
@@ -321,6 +400,22 @@
         margin-top: 15px;
         page-break-inside: avoid;
     }
+
+    @if($font_family_title)
+    .cert-title {
+        font-family: "{{ $font_family_title }}", sans-serif !important;
+    }
+    @endif
+    @if($font_family_name)
+    .candidate-name {
+        font-family: "{{ $font_family_name }}", serif !important;
+    }
+    @endif
+    @if($font_family_body)
+    .description, .given-to, .as-role, .signature-date, .signature-title, .signature-name {
+        font-family: "{{ $font_family_body }}", sans-serif !important;
+    }
+    @endif
 </style>
 </head>
 <body>
