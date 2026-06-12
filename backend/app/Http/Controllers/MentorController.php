@@ -847,15 +847,27 @@ class MentorController extends Controller
             }
 
             // Handle custom background file upload
-            $background_path = $certExists ? $certExists->background_path : null;
+            $background_path = null;
             if ($request->hasFile('background_file')) {
                 $background_path = $request->file('background_file')->store('certificates/backgrounds', 'public');
             } elseif ($request->filled('background_path')) {
-                $background_path = $request->input('background_path');
+                $bgData = $request->input('background_path');
+                if (str_starts_with($bgData, 'data:image')) {
+                    $type = explode(';', $bgData)[0];
+                    $type = explode('/', $type)[1];
+                    $dataDec = explode(',', $bgData)[1];
+                    $decoded = base64_decode($dataDec);
+
+                    $bgFileName = 'certificates/backgrounds/bg_' . Str::random(10) . '.' . $type;
+                    Storage::disk('public')->put($bgFileName, $decoded);
+                    $background_path = $bgFileName;
+                } else {
+                    $background_path = preg_replace('/.*\/storage\//', '', $bgData);
+                }
             }
 
             // Handle signatory 2 signature upload/canvas
-            $signatory2_signature_path = $certExists ? $certExists->signatory2_signature : null;
+            $signatory2_signature_path = null;
             if ($request->filled('signatory2_signature')) {
                 $sigData = $request->input('signatory2_signature');
                 if (str_starts_with($sigData, 'data:image')) {
@@ -868,7 +880,7 @@ class MentorController extends Controller
                     Storage::disk('public')->put($sigFileName, $decoded);
                     $signatory2_signature_path = $sigFileName;
                 } else {
-                    $signatory2_signature_path = $sigData;
+                    $signatory2_signature_path = preg_replace('/.*\/storage\//', '', $sigData);
                 }
             }
         }
@@ -925,7 +937,7 @@ class MentorController extends Controller
         if ($show_qr) {
             try {
                 $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=' . urlencode($verifyUrl);
-                $response = \Illuminate\Support\Facades\Http::timeout(3)->get($qrUrl);
+                $response = \Illuminate\Support\Facades\Http::withOptions(['verify' => false])->timeout(3)->get($qrUrl);
                 if ($response->successful()) {
                     $qr_base64 = 'data:image/png;base64,' . base64_encode($response->body());
                 } else {
@@ -976,7 +988,40 @@ class MentorController extends Controller
         ];
 
         $filePath = 'certificates/' . $idCert . '.pdf';
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('certificate.template', $data)->setPaper('a4', 'landscape');
+        
+        // Globally bypass SSL validation for file_get_contents inside DomPDF font downloads
+        stream_context_set_default([
+            'ssl' => [
+                'verify_peer' => false,
+                'verify_peer_name' => false,
+                'allow_self_signed' => true,
+            ]
+        ]);
+
+        $logo_remove_bg = isset($layout_settings['logo_remove_bg'])
+            ? filter_var($layout_settings['logo_remove_bg'], FILTER_VALIDATE_BOOLEAN)
+            : ($background_base64 ? true : false);
+        if ($logo_remove_bg && $logo_base64) {
+            $logo_base64 = $this->removeLogoBackground($logo_base64);
+            $data['logo_base64'] = $logo_base64;
+        }
+
+        $viewName = $background_base64 ? 'certificate.custom_template' : 'certificate.template';
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView($viewName, $data)
+            ->setPaper('a4', 'landscape')
+            ->setOption('isRemoteEnabled', true)
+            ->setOption('isHtml5ParserEnabled', true);
+        
+        $dompdf = $pdf->getDompdf();
+        $context = stream_context_create([
+            'ssl' => [
+                'verify_peer' => false,
+                'verify_peer_name' => false,
+                'allow_self_signed' => true,
+            ]
+        ]);
+        $dompdf->setHttpContext($context);
         Storage::disk('public')->put($filePath, $pdf->output());
 
         Certificate::updateOrCreate(
@@ -1175,7 +1220,7 @@ class MentorController extends Controller
                 if ($request->hasFile('background_file')) {
                     $background_path = $request->file('background_file')->store('certificates/backgrounds', 'public');
                 } elseif ($request->filled('background_path')) {
-                    $background_path = $request->input('background_path');
+                    $background_path = preg_replace('/.*\/storage\//', '', $request->input('background_path'));
                 }
 
                 // Handle signatory 2 signature upload/canvas
@@ -1192,7 +1237,7 @@ class MentorController extends Controller
                         Storage::disk('public')->put($sigFileName, $decoded);
                         $signatory2_signature_path = $sigFileName;
                     } else {
-                        $signatory2_signature_path = $sigData;
+                        $signatory2_signature_path = preg_replace('/.*\/storage\//', '', $sigData);
                     }
                 }
             }
@@ -1249,7 +1294,7 @@ class MentorController extends Controller
             if ($show_qr) {
                 try {
                     $qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=' . urlencode($verifyUrl);
-                    $response = \Illuminate\Support\Facades\Http::timeout(3)->get($qrUrl);
+                    $response = \Illuminate\Support\Facades\Http::withOptions(['verify' => false])->timeout(3)->get($qrUrl);
                     if ($response->successful()) {
                         $qr_base64 = 'data:image/png;base64,' . base64_encode($response->body());
                     } else {
@@ -1299,7 +1344,39 @@ class MentorController extends Controller
                 'layout_settings' => $layout_settings,
             ];
 
-            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('certificate.template', $data)->setPaper('a4', 'landscape');
+            // Globally bypass SSL validation for file_get_contents inside DomPDF font downloads
+            stream_context_set_default([
+                'ssl' => [
+                    'verify_peer' => false,
+                    'verify_peer_name' => false,
+                    'allow_self_signed' => true,
+                ]
+            ]);
+
+            $logo_remove_bg = isset($layout_settings['logo_remove_bg'])
+                ? filter_var($layout_settings['logo_remove_bg'], FILTER_VALIDATE_BOOLEAN)
+                : ($background_base64 ? true : false);
+            if ($logo_remove_bg && $logo_base64) {
+                $logo_base64 = $this->removeLogoBackground($logo_base64);
+                $data['logo_base64'] = $logo_base64;
+            }
+
+            $viewName = $background_base64 ? 'certificate.custom_template' : 'certificate.template';
+
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView($viewName, $data)
+                ->setPaper('a4', 'landscape')
+                ->setOption('isRemoteEnabled', true)
+                ->setOption('isHtml5ParserEnabled', true);
+            
+            $dompdf = $pdf->getDompdf();
+            $context = stream_context_create([
+                'ssl' => [
+                    'verify_peer' => false,
+                    'verify_peer_name' => false,
+                    'allow_self_signed' => true,
+                ]
+            ]);
+            $dompdf->setHttpContext($context);
             return @$pdf->stream('preview.pdf');
         } catch (\Throwable $e) {
             \Log::error('Certificate preview failed for submission ' . $idSubmission . ': ' . $e->getMessage(), [
@@ -1366,5 +1443,338 @@ class MentorController extends Controller
                 })
                 ->update(['id_user_mentor' => $mentorId]);
         }
+    }
+
+    /**
+     * List all custom templates for the mentor's company
+     */
+    public function listTemplates(Request $request)
+    {
+        $company = $request->user()->company;
+        if (!$company) {
+            return response()->json([], 404);
+        }
+
+        $templates = $company->certificate_templates ?? [];
+
+        // Convert stored relative storage paths to full URLs for the frontend
+        $formatted = array_map(function ($tpl) {
+            if (!empty($tpl['background_url']) && !str_starts_with($tpl['background_url'], 'http') && !str_starts_with($tpl['background_url'], 'data:')) {
+                $tpl['background_url'] = asset('storage/' . $tpl['background_url']);
+            }
+            if (!empty($tpl['signatory2_signature']) && !str_starts_with($tpl['signatory2_signature'], 'http') && !str_starts_with($tpl['signatory2_signature'], 'data:')) {
+                $tpl['signatory2_signature'] = asset('storage/' . $tpl['signatory2_signature']);
+            }
+            return $tpl;
+        }, $templates);
+
+        return response()->json($formatted);
+    }
+
+    /**
+     * Store a new custom template
+     */
+    public function storeTemplate(Request $request)
+    {
+        $company = $request->user()->company;
+        if (!$company) {
+            return response()->json(['message' => 'Company not found'], 404);
+        }
+
+        $request->validate([
+            'name' => 'required|string',
+            'template_style' => 'string',
+            'logo_position' => 'string',
+            'signature_layout' => 'string',
+            'signatory1_name' => 'nullable|string',
+            'signatory1_title' => 'nullable|string',
+            'signatory2_name' => 'nullable|string',
+            'signatory2_title' => 'nullable|string',
+            'show_qr' => 'string', // Form data sends boolean as string
+            'qr_position' => 'string',
+            'layout_settings' => 'nullable|string',
+        ]);
+
+        $templates = $company->certificate_templates ?? [];
+
+        // Prepare new template object
+        $id = 'tpl_' . time() . '_' . rand(100, 999);
+        $newTemplate = [
+            'id' => $id,
+            'name' => $request->name,
+            'template_style' => $request->input('template_style', 'classic'),
+            'logo_position' => $request->input('logo_position', 'center'),
+            'signature_layout' => $request->input('signature_layout', 'single'),
+            'signatory1_name' => $request->input('signatory1_name'),
+            'signatory1_title' => $request->input('signatory1_title'),
+            'signatory2_name' => $request->input('signatory2_name'),
+            'signatory2_title' => $request->input('signatory2_title'),
+            'show_qr' => filter_var($request->input('show_qr', true), FILTER_VALIDATE_BOOLEAN),
+            'qr_position' => $request->input('qr_position', 'bottom-left'),
+            'layout_settings' => json_decode($request->input('layout_settings', '{}'), true),
+            'is_default' => false,
+            'background_url' => null,
+            'signatory2_signature' => null,
+        ];
+
+        // Handle background file upload
+        if ($request->hasFile('background_file')) {
+            $path = $request->file('background_file')->store('templates/backgrounds', 'public');
+            $newTemplate['background_url'] = $path;
+        } elseif ($request->filled('background_path')) {
+            $newTemplate['background_url'] = preg_replace('/.*\/storage\//', '', $request->background_path);
+        }
+
+        // Handle signatory 2 signature upload/drawn signature
+        if ($request->filled('signatory2_signature')) {
+            $sigData = $request->input('signatory2_signature');
+            if (str_starts_with($sigData, 'data:image')) {
+                $type = explode(';', $sigData)[0];
+                $type = explode('/', $type)[1];
+                $dataDec = explode(',', $sigData)[1];
+                $decoded = base64_decode($dataDec);
+
+                $sigFileName = 'templates/signatures/sig2_' . Str::random(10) . '.' . $type;
+                Storage::disk('public')->put($sigFileName, $decoded);
+                $newTemplate['signatory2_signature'] = $sigFileName;
+            } else {
+                $newTemplate['signatory2_signature'] = preg_replace('/.*\/storage\//', '', $sigData);
+            }
+        }
+
+        $templates[] = $newTemplate;
+        $company->certificate_templates = $templates;
+        $company->save();
+
+        // Format paths to URLs for response
+        if (!empty($newTemplate['background_url'])) {
+            $newTemplate['background_url'] = asset('storage/' . $newTemplate['background_url']);
+        }
+        if (!empty($newTemplate['signatory2_signature'])) {
+            $newTemplate['signatory2_signature'] = asset('storage/' . $newTemplate['signatory2_signature']);
+        }
+
+        return response()->json([
+            'message' => 'Template created successfully',
+            'template' => $newTemplate
+        ]);
+    }
+
+    /**
+     * Update an existing custom template
+     */
+    public function updateTemplate(Request $request, $id)
+    {
+        $company = $request->user()->company;
+        if (!$company) {
+            return response()->json(['message' => 'Company not found'], 404);
+        }
+
+        $request->validate([
+            'name' => 'required|string',
+            'template_style' => 'string',
+            'logo_position' => 'string',
+            'signature_layout' => 'string',
+            'signatory1_name' => 'nullable|string',
+            'signatory1_title' => 'nullable|string',
+            'signatory2_name' => 'nullable|string',
+            'signatory2_title' => 'nullable|string',
+            'show_qr' => 'string',
+            'qr_position' => 'string',
+            'layout_settings' => 'nullable|string',
+        ]);
+
+        $templates = $company->certificate_templates ?? [];
+        $foundIndex = -1;
+
+        foreach ($templates as $index => $tpl) {
+            if ($tpl['id'] === $id) {
+                $foundIndex = $index;
+                break;
+            }
+        }
+
+        if ($foundIndex === -1) {
+            return response()->json(['message' => 'Template not found'], 404);
+        }
+
+        $existingTpl = $templates[$foundIndex];
+
+        // Update fields
+        $existingTpl['name'] = $request->name;
+        $existingTpl['template_style'] = $request->input('template_style', $existingTpl['template_style'] ?? 'classic');
+        $existingTpl['logo_position'] = $request->input('logo_position', $existingTpl['logo_position'] ?? 'center');
+        $existingTpl['signature_layout'] = $request->input('signature_layout', $existingTpl['signature_layout'] ?? 'single');
+        $existingTpl['signatory1_name'] = $request->input('signatory1_name');
+        $existingTpl['signatory1_title'] = $request->input('signatory1_title');
+        $existingTpl['signatory2_name'] = $request->input('signatory2_name');
+        $existingTpl['signatory2_title'] = $request->input('signatory2_title');
+        $existingTpl['show_qr'] = filter_var($request->input('show_qr', $existingTpl['show_qr'] ?? true), FILTER_VALIDATE_BOOLEAN);
+        $existingTpl['qr_position'] = $request->input('qr_position', $existingTpl['qr_position'] ?? 'bottom-left');
+        $existingTpl['layout_settings'] = json_decode($request->input('layout_settings', '{}'), true);
+
+        // Handle custom background file upload
+        if ($request->hasFile('background_file')) {
+            // Delete old background file if exists
+            if (!empty($existingTpl['background_url']) && !str_starts_with($existingTpl['background_url'], 'data:')) {
+                $cleanPath = preg_replace('/.*\/storage\//', '', $existingTpl['background_url']);
+                Storage::disk('public')->delete($cleanPath);
+            }
+            $path = $request->file('background_file')->store('templates/backgrounds', 'public');
+            $existingTpl['background_url'] = $path;
+        } elseif ($request->filled('background_path')) {
+            $existingTpl['background_url'] = preg_replace('/.*\/storage\//', '', $request->background_path);
+        }
+
+        // Handle signatory 2 signature upload/drawn signature
+        if ($request->filled('signatory2_signature')) {
+            $sigData = $request->input('signatory2_signature');
+            if (str_starts_with($sigData, 'data:image')) {
+                // Delete old signature file if exists
+                if (!empty($existingTpl['signatory2_signature']) && !str_starts_with($existingTpl['signatory2_signature'], 'data:')) {
+                    $cleanPath = preg_replace('/.*\/storage\//', '', $existingTpl['signatory2_signature']);
+                    Storage::disk('public')->delete($cleanPath);
+                }
+                $type = explode(';', $sigData)[0];
+                $type = explode('/', $type)[1];
+                $dataDec = explode(',', $sigData)[1];
+                $decoded = base64_decode($dataDec);
+
+                $sigFileName = 'templates/signatures/sig2_' . Str::random(10) . '.' . $type;
+                Storage::disk('public')->put($sigFileName, $decoded);
+                $existingTpl['signatory2_signature'] = $sigFileName;
+            } else {
+                $existingTpl['signatory2_signature'] = preg_replace('/.*\/storage\//', '', $sigData);
+            }
+        }
+
+        $templates[$foundIndex] = $existingTpl;
+        $company->certificate_templates = $templates;
+        $company->save();
+
+        // Format paths to URLs for response
+        if (!empty($existingTpl['background_url'])) {
+            $existingTpl['background_url'] = asset('storage/' . $existingTpl['background_url']);
+        }
+        if (!empty($existingTpl['signatory2_signature'])) {
+            $existingTpl['signatory2_signature'] = asset('storage/' . $existingTpl['signatory2_signature']);
+        }
+
+        return response()->json([
+            'message' => 'Template updated successfully',
+            'template' => $existingTpl
+        ]);
+    }
+
+    /**
+     * Delete a custom template
+     */
+    public function destroyTemplate(Request $request, $id)
+    {
+        $company = $request->user()->company;
+        if (!$company) {
+            return response()->json(['message' => 'Company not found'], 404);
+        }
+
+        $templates = $company->certificate_templates ?? [];
+        $foundIndex = -1;
+
+        foreach ($templates as $index => $tpl) {
+            if ($tpl['id'] === $id) {
+                $foundIndex = $index;
+                break;
+            }
+        }
+
+        if ($foundIndex === -1) {
+            return response()->json(['message' => 'Template not found'], 404);
+        }
+
+        $tpl = $templates[$foundIndex];
+
+        // Delete background file
+        if (!empty($tpl['background_url']) && !str_starts_with($tpl['background_url'], 'data:')) {
+            $cleanPath = preg_replace('/.*\/storage\//', '', $tpl['background_url']);
+            Storage::disk('public')->delete($cleanPath);
+        }
+
+        // Delete signatory2 signature file
+        if (!empty($tpl['signatory2_signature']) && !str_starts_with($tpl['signatory2_signature'], 'data:')) {
+            $cleanPath = preg_replace('/.*\/storage\//', '', $tpl['signatory2_signature']);
+            Storage::disk('public')->delete($cleanPath);
+        }
+
+        array_splice($templates, $foundIndex, 1);
+        $company->certificate_templates = $templates;
+        $company->save();
+
+        return response()->json([
+            'message' => 'Template deleted successfully'
+        ]);
+    }
+
+    /**
+     * Remove white background from company logo using GD library
+     */
+    private function removeLogoBackground($logo_base64)
+    {
+        if (!$logo_base64) {
+            return null;
+        }
+        if (!function_exists('imagecreatefromstring') || !function_exists('imagepng')) {
+            return $logo_base64;
+        }
+
+        try {
+            $imgData = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $logo_base64));
+            $src = @imagecreatefromstring($imgData);
+            if ($src) {
+                $width = imagesx($src);
+                $height = imagesy($src);
+
+                // Convert palette-based images to truecolor to fully preserve transparent alpha
+                if (!imageistruecolor($src)) {
+                    $tc = imagecreatetruecolor($width, $height);
+                    imagealphablending($tc, false);
+                    imagesavealpha($tc, true);
+                    $transparentColor = imagecolorallocatealpha($tc, 0, 0, 0, 127);
+                    imagefill($tc, 0, 0, $transparentColor);
+                    imagecopy($tc, $src, 0, 0, 0, 0, $width, $height);
+                    imagedestroy($src);
+                    $src = $tc;
+                } else {
+                    imagealphablending($src, false);
+                    imagesavealpha($src, true);
+                }
+
+                $transparentColor = imagecolorallocatealpha($src, 0, 0, 0, 127);
+
+                // Replace near-white pixels (R, G, B > 230) with alpha transparency
+                for ($x = 0; $x < $width; $x++) {
+                    for ($y = 0; $y < $height; $y++) {
+                        $color = imagecolorat($src, $x, $y);
+                        $r = ($color >> 16) & 0xFF;
+                        $g = ($color >> 8) & 0xFF;
+                        $b = $color & 0xFF;
+                        $a = ($color >> 24) & 0x7F; // GD alpha is 7 bits (0-127)
+
+                        // If color is near white and not already transparent, make it transparent
+                        if ($r > 230 && $g > 230 && $b > 230 && $a < 100) {
+                            imagesetpixel($src, $x, $y, $transparentColor);
+                        }
+                    }
+                }
+                
+                ob_start();
+                imagepng($src);
+                $output = 'data:image/png;base64,' . base64_encode(ob_get_clean());
+                imagedestroy($src);
+                return $output;
+            }
+        } catch (\Throwable $e) {
+            \Log::error('GD transparent bg processing failed: ' . $e->getMessage());
+        }
+
+        return $logo_base64;
     }
 }

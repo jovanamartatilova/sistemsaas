@@ -73,7 +73,7 @@ export const mentorApi = {
     const headers = data instanceof FormData ? { 'Content-Type': 'multipart/form-data' } : {};
     return api.post(`/mentor/interns/${idSubmission}/generate-certificate`, data, { headers });
   },
-  bulkGenerateCertificates: (submissionIds) => api.post('/mentor/certificates/bulk-generate', { submission_ids: submissionIds }),
+  bulkGenerateCertificates: (submissionIds, data = {}) => api.post('/mentor/certificates/bulk-generate', { submission_ids: submissionIds, ...data }),
   bulkSendCertificates: (submissionIds) => api.post('/mentor/certificates/bulk-send', { submission_ids: submissionIds }),
   sendCertificate: (idSubmission) => api.post(`/mentor/interns/${idSubmission}/send-certificate`),
   previewCertificate: async (idSubmission, data) => {
@@ -84,6 +84,12 @@ export const mentorApi = {
     });
     return URL.createObjectURL(response.data);
   },
+
+  // Templates
+  getTemplates: () => api.get('/mentor/certificate-templates'),
+  createTemplate: (data) => api.post('/mentor/certificate-templates', data, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  updateTemplate: (id, data) => api.post(`/mentor/certificate-templates/${id}`, data, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  deleteTemplate: (id) => api.delete(`/mentor/certificate-templates/${id}`),
 
   // AI Generation
   aiGenerate: (prompt) => api.post('/ai/generate', { prompt }),

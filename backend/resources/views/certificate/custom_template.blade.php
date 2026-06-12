@@ -87,61 +87,6 @@
             $v1_families[] = $font_configs_v1[$font];
         }
     }
-@endphp
-@if(!empty($v1_families))
-    <link href="https://fonts.googleapis.com/css?family={{ implode('|', $v1_families) }}" rel="stylesheet">
-@endif
-@php
-    $logo_x = isset($layout_settings['logo_x']) ? (int) $layout_settings['logo_x'] : 0;
-    $show_logo = isset($layout_settings['show_logo']) ? filter_var($layout_settings['show_logo'], FILTER_VALIDATE_BOOLEAN) : true;
-
-    $title_y = isset($layout_settings['title_y']) ? (int) $layout_settings['title_y'] : 0;
-    $title_x = isset($layout_settings['title_x']) ? (int) $layout_settings['title_x'] : 0;
-    $show_title = isset($layout_settings['show_title']) ? filter_var($layout_settings['show_title'], FILTER_VALIDATE_BOOLEAN) : true;
-
-    $recipient_y = isset($layout_settings['recipient_y']) ? (int) $layout_settings['recipient_y'] : 0;
-    $recipient_x = isset($layout_settings['recipient_x']) ? (int) $layout_settings['recipient_x'] : 0;
-    $show_recipient = isset($layout_settings['show_recipient']) ? filter_var($layout_settings['show_recipient'], FILTER_VALIDATE_BOOLEAN) : true;
-
-    $body_y = isset($layout_settings['body_y']) ? (int) $layout_settings['body_y'] : 0;
-    $body_x = isset($layout_settings['body_x']) ? (int) $layout_settings['body_x'] : 0;
-    $show_body = isset($layout_settings['show_body']) ? filter_var($layout_settings['show_body'], FILTER_VALIDATE_BOOLEAN) : true;
-
-    $signature_y = isset($layout_settings['signature_y']) ? (int) $layout_settings['signature_y'] : 0;
-    $signature_x = isset($layout_settings['signature_x']) ? (int) $layout_settings['signature_x'] : 0;
-    $show_signatures = isset($layout_settings['show_signatures']) ? filter_var($layout_settings['show_signatures'], FILTER_VALIDATE_BOOLEAN) : true;
-
-    $qr_y = isset($layout_settings['qr_y']) ? (int) $layout_settings['qr_y'] : 0;
-    $qr_x = isset($layout_settings['qr_x']) ? (int) $layout_settings['qr_x'] : 0;
-
-    $font_size_title = isset($layout_settings['font_size_title']) ? (int) $layout_settings['font_size_title'] : null;
-    $font_size_name = isset($layout_settings['font_size_name']) ? (int) $layout_settings['font_size_name'] : null;
-    $font_size_body = isset($layout_settings['font_size_body']) ? (int) $layout_settings['font_size_body'] : null;
-
-    // Custom font colors (empty string = use theme default)
-    $font_color_title = isset($layout_settings['font_color_title']) && $layout_settings['font_color_title'] ? $layout_settings['font_color_title'] : null;
-    $font_color_cert_id = isset($layout_settings['font_color_cert_id']) && $layout_settings['font_color_cert_id'] ? $layout_settings['font_color_cert_id'] : null;
-    $font_color_name = isset($layout_settings['font_color_name']) && $layout_settings['font_color_name'] ? $layout_settings['font_color_name'] : null;
-    $font_color_labels = isset($layout_settings['font_color_labels']) && $layout_settings['font_color_labels'] ? $layout_settings['font_color_labels'] : null;
-    $font_color_role = isset($layout_settings['font_color_role']) && $layout_settings['font_color_role'] ? $layout_settings['font_color_role'] : null;
-    $font_color_body = isset($layout_settings['font_color_body']) && $layout_settings['font_color_body'] ? $layout_settings['font_color_body'] : null;
-    $font_color_signatures = isset($layout_settings['font_color_signatures']) && $layout_settings['font_color_signatures'] ? $layout_settings['font_color_signatures'] : null;
-
-    $font_family_title = isset($layout_settings['font_family_title']) && $layout_settings['font_family_title'] ? $layout_settings['font_family_title'] : null;
-    $font_family_name = isset($layout_settings['font_family_name']) && $layout_settings['font_family_name'] ? $layout_settings['font_family_name'] : null;
-    $font_family_body = isset($layout_settings['font_family_body']) && $layout_settings['font_family_body'] ? $layout_settings['font_family_body'] : null;
-    $font_family_table = isset($layout_settings['font_family_table']) && $layout_settings['font_family_table'] ? $layout_settings['font_family_table'] : null;
-
-    $font_mapping = [
-        'Times New Roman' => 'Times-Roman',
-        'Arial' => 'Helvetica',
-        'Courier New' => 'Courier',
-    ];
-
-    $mapped_font_title = isset($font_mapping[$font_family_title]) ? $font_mapping[$font_family_title] : $font_family_title;
-    $mapped_font_name = isset($font_mapping[$font_family_name]) ? $font_mapping[$font_family_name] : $font_family_name;
-    $mapped_font_body = isset($font_mapping[$font_family_body]) ? $font_mapping[$font_family_body] : $font_family_body;
-    $mapped_font_table = isset($font_mapping[$font_family_table]) ? $font_mapping[$font_family_table] : $font_family_table;
 
     // Signature image inversion: if sig_invert_1/2 is true, invert the base64 image using PHP GD
     $sig_invert_1 = !empty($layout_settings['sig_invert_1']);
@@ -244,140 +189,50 @@
         }
     }
 @endphp
+@if(!empty($v1_families))
+    <link href="https://fonts.googleapis.com/css?family={{ implode('|', $v1_families) }}" rel="stylesheet">
+@endif
 <style type="text/css">
-    @if($background_base64)
-        @page { 
-            size: A4 landscape;
-            margin: 0;
-        }
-    @else
-        @page { 
-            size: A4 landscape;
-            margin: 30px;
-        }
-    @endif
+    @page { 
+        size: A4 landscape;
+        margin: 0;
+    }
     
     body {
         margin: 0 !important;
         padding: 40px 60px !important;
+        font-family: "Arial", sans-serif;
+        color: #1e293b;
     }
 
-    /* Template Themes */
-    @if($template_style === 'modern')
-        body {
-            font-family: "Helvetica", Arial, sans-serif;
-            color: #1e293b;
-        }
-        .main-border { border: 4px solid #1e293b; }
-        .inner-border { border: 1px solid #cbd5e1; }
-        .cert-title {
-            font-size: {{ $font_size_title ?? 28 }}pt;
-            letter-spacing: 4px;
-            font-weight: 800;
-            color: #0f172a;
-            margin-top: 10px;
-            margin-bottom: 15px;
-            text-transform: uppercase;
-        }
-        .candidate-name {
-            font-size: {{ $font_size_name ?? 32 }}pt;
-            font-family: "Helvetica", sans-serif;
-            font-weight: 700;
-            color: #1e3a8a;
-            margin-bottom: 15px;
-            text-transform: capitalize;
-        }
-        .internship-type {
-            background-color: {{ $badge_bg_color ?? '#6366f1' }};
-            color: {{ $font_color_role ?? '#fff' }};
-            padding: 6px 20px;
-            border-radius: 4px;
-            font-size: 12pt;
-            font-weight: bold;
-            display: inline-block;
-            margin-bottom: 25px;
-        }
-    @elseif($template_style === 'elegant')
-        body {
-            font-family: "Georgia", serif;
-            color: #2c2520;
-        }
-        .main-border { border: 4px double #d4af37; }
-        .inner-border { border: 1px solid #fef08a; }
-        .cert-title {
-            font-size: {{ $font_size_title ?? 26 }}pt;
-            letter-spacing: 8px;
-            font-weight: 400;
-            color: #854d0e;
-            margin-top: 10px;
-            margin-bottom: 15px;
-            text-transform: uppercase;
-            font-style: italic;
-        }
-        .candidate-name {
-            font-size: {{ $font_size_name ?? 34 }}pt;
-            font-family: "Georgia", serif;
-            font-style: italic;
-            color: #854d0e;
-            margin-bottom: 15px;
-            text-transform: capitalize;
-        }
-        .internship-type {
-            background-color: {{ $badge_bg_color ?? '#854d0e' }};
-            color: {{ $font_color_role ?? '#fff' }};
-            padding: 6px 20px;
-            border-radius: 30px;
-            font-size: 11pt;
-            font-weight: bold;
-            display: inline-block;
-            margin-bottom: 25px;
-        }
-    @else
-        /* Classic - current default */
-        body {
-            font-family: "Arial", sans-serif;
-            color: #1e293b;
-        }
-        .main-border { border: 3px solid #3b82f6; }
-        .inner-border { border: 1px solid #93c5fd; }
-        .cert-title {
-            font-size: {{ $font_size_title ?? 30 }}pt;
-            letter-spacing: 6px;
-            font-weight: 700;
-            color: #0f172a;
-            margin-top: 10px;
-            margin-bottom: 15px;
-            text-transform: uppercase;
-        }
-        .candidate-name {
-            font-size: {{ $font_size_name ?? 34 }}pt;
-            font-family: "Times New Roman", serif;
-            font-style: italic;
-            color: #0f172a;
-            margin-bottom: 15px;
-            text-transform: capitalize;
-        }
-        .internship-type {
-            background-color: {{ $badge_bg_color ?? '#2563eb' }};
-            color: {{ $font_color_role ?? '#fff' }};
-            padding: 6px 20px;
-            border-radius: 20px;
-            font-size: 12pt;
-            font-weight: bold;
-            display: inline-block;
-            margin-bottom: 25px;
-        }
-    @endif
-
-    .main-border {
-        position: fixed;
-        top: 0px; left: 0px; right: 0px; bottom: 0px;
-        z-index: -1;
+    .cert-title {
+        font-size: {{ $font_size_title ?? 30 }}pt;
+        letter-spacing: 6px;
+        font-weight: 700;
+        color: #0f172a;
+        margin-top: 10px;
+        margin-bottom: 15px;
+        text-transform: uppercase;
     }
-    .inner-border {
-        position: fixed;
-        top: 10px; left: 10px; right: 10px; bottom: 10px;
-        z-index: -1;
+    
+    .candidate-name {
+        font-size: {{ $font_size_name ?? 34 }}pt;
+        font-family: "Times New Roman", serif;
+        font-style: italic;
+        color: #0f172a;
+        margin-bottom: 15px;
+        text-transform: capitalize;
+    }
+    
+    .internship-type {
+        background-color: {{ $badge_bg_color ?? '#2563eb' }};
+        color: {{ $font_color_role ?? '#fff' }};
+        padding: 6px 20px;
+        border-radius: 20px;
+        font-size: 12pt;
+        font-weight: bold;
+        display: inline-block;
+        margin-bottom: 15px;
     }
 
     .page-1 {
@@ -403,30 +258,21 @@
 
     .page-content {
         box-sizing: border-box;
-        @if($background_base64)
-            padding-top: 45px;
-        @endif
+        padding-top: 50px; /* Shifted up so middle content doesn't crowd bottom signatures/QR */
     }
 
     .logo-container { margin-bottom: 8px; }
-    .logo { max-height: 60px; max-width: 250px; mix-blend-mode: multiply; }
+    .logo { max-height: 60px; max-width: 250px; }
     
     .given-to { font-size: 11pt; color: #475569; margin-bottom: 4px; }
-    .as-role { font-size: 11pt; color: #475569; margin-top: 15px; margin-bottom: 4px; }
+    .as-role { font-size: 11pt; color: #475569; margin-top: 10px; margin-bottom: 4px; }
     
     .description {
-        font-size: {{ $font_size_body ?? 11 }}pt;
-        @if($background_base64)
-            line-height: 1.8;
-            margin-top: 25px;
-            margin-bottom: 25px;
-            padding: 0 40px;
-        @else
-            line-height: 1.6;
-            margin-top: 15px;
-            margin-bottom: 15px;
-            padding: 0 20px;
-        @endif
+        font-size: {{ $font_size_body ?? 5 }}pt;
+        line-height: 1.7; /* Reduced vertical line spacing to allow badge to rise */
+        margin-top: 18px;
+        margin-bottom: 18px;
+        padding: 0 60px;
         color: #334155;
     }
 
@@ -452,26 +298,19 @@
     .table-title {
         font-size: 15pt;
         font-weight: bold;
-        @if($background_base64)
-            margin-top: 40px;
-            margin-bottom: 25px;
-        @else
-            margin-bottom: 15px;
-        @endif
+        margin-top: 55px; /* Shifted up slightly to stay safe from top border line */
+        margin-bottom: 35px; /* Added spacing between title and table */
         color: {{ $font_color_labels ?? '#0f172a' }};
         text-transform: uppercase;
     }
+    
     .competency-table {
-        @if($background_base64)
-            width: 86%;
-            margin: 0 auto 12px auto;
-        @else
-            width: 100%;
-            margin-bottom: 12px;
-        @endif
+        width: 84%; /* Slightly widened to balance centered layout but avoid border line */
+        margin: 0 auto 12px auto; /* Centered */
         border-collapse: collapse;
         font-size: {{ $fontSize }};
     }
+    
     .competency-table th {
         background-color: transparent;
         border: 1px solid {{ $font_color_labels ?? '#cbd5e1' }};
@@ -479,6 +318,7 @@
         font-weight: bold;
         color: {{ $font_color_labels ?? '#0f172a' }};
     }
+    
     .competency-table td {
         background-color: transparent;
         border: 1px solid {{ $font_color_labels ?? '#cbd5e1' }};
@@ -486,6 +326,7 @@
         vertical-align: middle;
         color: {{ $font_color_body ?? '#334155' }};
     }
+    
     .text-center { text-align: center; }
     .text-left { text-align: left; }
 
@@ -520,10 +361,7 @@
 <body>
     <!-- Page 1 -->
     <div class="page-1">
-        @if(!$background_base64)
-            <div class="main-border"></div>
-            <div class="inner-border"></div>
-        @else
+        @if($background_base64)
             <img class="custom-bg-img" src="{{ $background_base64 }}" alt="Background Design">
         @endif
         <div class="page-content">
@@ -550,7 +388,7 @@
                 <div class="given-to" style="{{ $font_color_labels ? 'color: ' . $font_color_labels . ';' : '' }}">diberikan kepada:</div>
                 <div class="candidate-name" style="font-size: {{ $font_size_name ?? 34 }}pt;{{ $font_color_name ? ' color: ' . $font_color_name . ';' : '' }}">{{ $submission->user->name }}</div>
                 @if($show_body)
-                    <div class="description" style="font-size: {{ $font_size_body ?? 11 }}pt;{{ $font_color_body ? ' color: ' . $font_color_body . ';' : '' }}">
+                    <div class="description" style="font-size: {{ $font_size_body ?? 5 }}pt;{{ $font_color_body ? ' color: ' . $font_color_body . ';' : '' }}">
                         Telah menyelesaikan program magang di <strong>{{ $company ? $company->name : '-' }}</strong> 
                         pada program <strong>{{ $submission->vacancy->title }}</strong> bertipe <strong>{{ $submission->vacancy->type }}</strong><br>
                         yang dilaksanakan pada tanggal 
@@ -624,12 +462,12 @@
             </div>
         @endif
         
-        <!-- QR Code Block & Cert Number -->
+        <!-- QR Code Block & Cert Number (Moved Inwards and aligned with signatures) -->
         @php
-            $base_qr_bottom = $background_base64 ? 50 : 25;
-            $base_qr_left_right = $background_base64 ? 50 : 25;
+            $base_qr_bottom = 40;
+            $base_qr_left_right = 75;
         @endphp
-        <div style="position: absolute; bottom: {{ max($base_qr_bottom, $base_qr_bottom + 10 + $qr_y) }}px; {{ $qr_position === 'bottom-left' ? 'left: ' . ($base_qr_left_right + ($qr_x > 0 ? $qr_x : 0)) . 'px' : 'right: ' . ($base_qr_left_right + (abs($qr_x))) . 'px' }}; text-align: left; display: {{ $show_qr ? 'block' : 'none' }};">
+        <div style="position: absolute; bottom: {{ max($base_qr_bottom, $base_qr_bottom + $qr_y) }}px; {{ $qr_position === 'bottom-left' ? 'left: ' . ($base_qr_left_right + ($qr_x > 0 ? $qr_x : 0)) . 'px' : 'right: ' . ($base_qr_left_right + (abs($qr_x))) . 'px' }}; text-align: left; display: {{ $show_qr ? 'block' : 'none' }};">
             @if($qr_base64)
                 <div style="margin-bottom: 3px;">
                     <img src="{{ $qr_base64 }}" style="width: 65px; height: 65px;" alt="Verification QR">
@@ -655,10 +493,7 @@
 
     <!-- Page 2 (Dynamic Flow) -->
     <div class="page-2">
-        @if(!$background_base64)
-            <div class="main-border"></div>
-            <div class="inner-border"></div>
-        @else
+        @if($background_base64)
             <img class="custom-bg-img" src="{{ $background_base64 }}" alt="Background Design">
         @endif
         <div class="table-title">CAPAIAN PEMBELAJARAN PROGRAM</div>

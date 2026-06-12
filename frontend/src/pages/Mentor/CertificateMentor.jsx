@@ -59,6 +59,31 @@ const VARIANT = {
   ghost: { bg: "#f8fafc", color: "#475569", border: "#e2e8f0" },
 };
 
+const FONT_OPTIONS = [
+  { value: "", label: "Default Style Font" },
+  { value: "Arial", label: "Arial" },
+  { value: "Helvetica", label: "Helvetica" },
+  { value: "Times New Roman", label: "Times New Roman" },
+  { value: "Georgia", label: "Georgia" },
+  { value: "Courier New", label: "Courier New" },
+  { value: "Montserrat", label: "Montserrat" },
+  { value: "Inter", label: "Inter" },
+  { value: "Poppins", label: "Poppins" },
+  { value: "Outfit", label: "Outfit" },
+  { value: "Roboto", label: "Roboto" },
+  { value: "Playfair Display", label: "Playfair Display" },
+  { value: "Cinzel", label: "Cinzel" },
+  { value: "Cormorant Garamond", label: "Cormorant Garamond" },
+  { value: "Merriweather", label: "Merriweather" },
+  { value: "Great Vibes", label: "Great Vibes" },
+  { value: "Alex Brush", label: "Alex Brush" },
+  { value: "Rochester", label: "Rochester" },
+  { value: "Sacramento", label: "Sacramento" },
+  { value: "Parisienne", label: "Parisienne" },
+  { value: "Pinyon Script", label: "Pinyon Script" }
+];
+
+
 function ActionBtn({ label, icon, variant = "blue", onClick, disabled, title }) {
   const v = VARIANT[variant];
   const [hov, setHov] = useState(false);
@@ -154,15 +179,21 @@ export default function CertificateMentor() {
     signature_y: 0, signature_x: 0, show_signatures: true,
     qr_y: 0, qr_x: 0, show_qr: true,
     font_size_title: 30, font_size_name: 34, font_size_body: 11,
+    font_family_title: '',
+    font_family_name: '',
+    font_family_body: '',
+    font_family_table: '',
     font_color_title: '',        // SERTIFIKAT heading
     font_color_cert_id: '',      // certificate number under title
     font_color_name: '',         // candidate name
     font_color_labels: '',       // 'diberikan kepada:' / 'Sebagai:' labels
     font_color_role: '',         // role/position badge text
+    badge_bg_color: '',          // position badge background color
     font_color_body: '',         // body paragraph
     font_color_signatures: '',   // signature block text
     sig_invert_1: false,         // invert signature 1 image colors
     sig_invert_2: false,         // invert signature 2 image colors
+    logo_remove_bg: false,       // remove white background from logo
     custom_images: [],
   });
   const [customBgFile, setCustomBgFile] = useState(null);
@@ -175,6 +206,9 @@ export default function CertificateMentor() {
   const [templateName, setTemplateName] = useState("");
   const [generateModal, setGenerateModal] = useState(false);
   const [selectedTemplateId, setSelectedTemplateId] = useState("tpl_classic");
+  const [showBulkModal, setShowBulkModal] = useState(false);
+  const [bulkModalType, setBulkModalType] = useState("generate");
+  const [selectedBulkTemplateId, setSelectedBulkTemplateId] = useState("tpl_classic");
 
   const canvasRef = useRef(null);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -332,11 +366,11 @@ export default function CertificateMentor() {
               alignItems: "center",
               justifyContent: "center",
               left: logoPosition === "left" ? "24px" : logoPosition === "right" ? "calc(100% - 150px)" : "calc(50% - 60px)",
-              top: "10%"
+              top: customBgUrl ? "13%" : "10%"
             }}
           >
             {logoSrc ? (
-              <img src={logoSrc} alt="logo" style={{ maxHeight: "30px", maxWidth: "110px", pointerEvents: "none" }} />
+              <img src={logoSrc} alt="logo" style={{ maxHeight: "30px", maxWidth: "110px", pointerEvents: "none", mixBlendMode: "multiply" }} />
             ) : (
               <div style={{ fontWeight: 800, fontSize: "11px", color: "#2563eb", pointerEvents: "none", textTransform: "uppercase" }}>{companyName}</div>
             )}
@@ -350,7 +384,7 @@ export default function CertificateMentor() {
               position: "absolute",
               width: "70%",
               left: "15%",
-              top: "22%",
+              top: customBgUrl ? "18%" : "22%",
               zIndex: 10,
               borderRadius: "4px",
               padding: "4px",
@@ -367,7 +401,7 @@ export default function CertificateMentor() {
               letterSpacing: "1.5px",
               textTransform: "uppercase",
               lineHeight: "1.1",
-              fontFamily: templateStyle === "elegant" ? "Georgia, serif" : "inherit"
+              fontFamily: layoutSettings.font_family_title || (templateStyle === "elegant" ? "Georgia, serif" : "inherit")
             }}>
               SERTIFIKAT
             </span>
@@ -382,7 +416,7 @@ export default function CertificateMentor() {
               position: "absolute",
               width: "80%",
               left: "10%",
-              top: "38%",
+              top: customBgUrl ? "34%" : "38%",
               zIndex: 10,
               borderRadius: "4px",
               padding: "4px",
@@ -402,7 +436,7 @@ export default function CertificateMentor() {
               display: "inline-block",
               minWidth: "140px",
               lineHeight: "1.1",
-              fontFamily: templateStyle === "elegant" ? "Georgia, serif" : templateStyle === "classic" ? "Times New Roman, serif" : "inherit",
+              fontFamily: layoutSettings.font_family_name || (templateStyle === "elegant" ? "Georgia, serif" : templateStyle === "classic" ? "Times New Roman, serif" : "inherit"),
               fontStyle: templateStyle === "modern" ? "normal" : "italic"
             }}>
               {internName}
@@ -410,23 +444,24 @@ export default function CertificateMentor() {
 
             {layoutSettings.show_body !== false && (
               <p style={{
-                fontSize: `${(layoutSettings.font_size_body || 11) * 0.35}px`,
+                fontSize: `${(layoutSettings.font_size_body || (customBgUrl ? 5 : 11)) * 0.35}px`,
                 color: layoutSettings.font_color_body || "#475569",
-                lineHeight: "1.3",
-                margin: "3px 0",
+                lineHeight: customBgUrl ? "1.7" : "1.3",
+                margin: customBgUrl ? "5px 0" : "3px 0",
                 textAlign: "center",
-                padding: "0 20px",
+                padding: customBgUrl ? "0 55px" : "0 20px",
                 whiteSpace: "normal",
                 wordWrap: "break-word",
                 width: "100%",
-                boxSizing: "border-box"
+                boxSizing: "border-box",
+                fontFamily: layoutSettings.font_family_body || "inherit"
               }}>
                 Telah menyelesaikan program magang di <strong>{companyName}</strong> pada program <strong>{internProgram}</strong> bertipe <strong>magang</strong> yang dilaksanakan pada tanggal 12 May 2026 - 12 Nov 2026.
               </p>
             )}
             <span style={{ fontSize: "6.5px", color: layoutSettings.font_color_labels || "#475569", marginTop: "2px" }}>Sebagai:</span>
             <span style={{
-              backgroundColor: templateStyle === "classic" ? "#2563eb" : templateStyle === "modern" ? "#6366f1" : "#854d0e",
+              backgroundColor: layoutSettings.badge_bg_color || (templateStyle === "classic" ? "#2563eb" : templateStyle === "modern" ? "#6366f1" : "#854d0e"),
               color: layoutSettings.font_color_role || "#fff",
               padding: "2px 8px",
               borderRadius: templateStyle === "elegant" ? "30px" : "4px",
@@ -505,10 +540,10 @@ export default function CertificateMentor() {
               zIndex: 10,
               borderRadius: "4px",
               padding: "1px",
-              top: "73%",
+              top: customBgUrl ? "73%" : "73%",
               left: qrPosition === "bottom-left"
-                ? "6%"
-                : "calc(94% - 24px)",
+                ? (customBgUrl ? "11%" : "6%")
+                : (customBgUrl ? "calc(89% - 24px)" : "calc(94% - 24px)"),
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -574,6 +609,16 @@ export default function CertificateMentor() {
 
   // ─── EFFECTS ─────────────────────────────────────────────────────────────
   useEffect(() => {
+    // Dynamically insert Google Fonts stylesheet link to head
+    const linkId = "google-fonts-certificate";
+    if (!document.getElementById(linkId)) {
+      const link = document.createElement("link");
+      link.id = linkId;
+      link.rel = "stylesheet";
+      link.href = "https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,700;1,400&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Great+Vibes&family=Alex+Brush&family=Rochester&family=Sacramento&family=Parisienne&family=Pinyon+Script&family=Cinzel:wght@400;700&family=Cormorant+Garamond:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;700&family=Poppins:ital,wght@0,300;0,400;0,700;1,400&family=Roboto:ital,wght@0,300;0,400;0,700;1,400&family=Outfit:wght@300;400;700&family=Merriweather:ital,wght@0,300;0,400;0,700;1,400&display=swap";
+      document.head.appendChild(link);
+    }
+
     fetchAll('');
 
     const cacheRef = { lastFetchTime: null };
@@ -625,7 +670,7 @@ export default function CertificateMentor() {
   }, [search]);
 
   // ─── ACTIONS ─────────────────────────────────────────────────────────────
-  const handleBulkGenerate = async () => {
+  const handleBulkGenerate = () => {
     if (!hasSignature) {
       pushToast("Please set up your signature first", "error");
       return;
@@ -639,25 +684,12 @@ export default function CertificateMentor() {
       return;
     }
 
-    if (!window.confirm(`Are you sure you want to generate certificates for ${eligibleIds.length} interns?`)) {
-      return;
-    }
-
-    try {
-      setBulkGenerating(true);
-      await mentorApi.bulkGenerateCertificates(eligibleIds);
-      broadcastDataRefresh('certificate');
-      await fetchCerts(search);
-      pushToast(`Bulk generation successful for ${eligibleIds.length} interns.`, 'success');
-    } catch (error) {
-      console.error('Bulk generation error:', error);
-      pushToast('Failed to process bulk generation', 'error');
-    } finally {
-      setBulkGenerating(false);
-    }
+    setBulkModalType("generate");
+    setSelectedBulkTemplateId("tpl_classic");
+    setShowBulkModal(true);
   };
 
-  const handleBulkRegenerate = async () => {
+  const handleBulkRegenerate = () => {
     if (!hasSignature) {
       pushToast("Please set up your signature first", "error");
       return;
@@ -671,19 +703,83 @@ export default function CertificateMentor() {
       return;
     }
 
-    if (!window.confirm(`Are you sure you want to regenerate certificates for ${eligibleIds.length} interns?`)) {
+    setBulkModalType("regenerate");
+    setSelectedBulkTemplateId("tpl_classic");
+    setShowBulkModal(true);
+  };
+
+  const executeBulkAction = async () => {
+    const tpl = templates.find(t => t.id === selectedBulkTemplateId);
+    if (!tpl) {
+      pushToast("Selected template not found", "error");
       return;
     }
 
+    if (!hasSignature) {
+      pushToast("Please set up your signature first", "error");
+      return;
+    }
+
+    const eligibleIds = filteredCerts
+      .filter(cert => bulkModalType === "generate" ? cert.status === "Done" : cert.status === "Generated")
+      .map(cert => cert.id_submission);
+
+    if (eligibleIds.length === 0) {
+      pushToast(`No eligible interns to ${bulkModalType} certificates for.`, "info");
+      return;
+    }
+
+    let parsedSettings = {};
+    if (tpl.layout_settings) {
+      if (typeof tpl.layout_settings === 'string') {
+        try {
+          parsedSettings = JSON.parse(tpl.layout_settings);
+        } catch {
+          parsedSettings = {};
+        }
+      } else {
+        parsedSettings = tpl.layout_settings;
+      }
+    }
+
+    const payload = {
+      template_style: tpl.template_style,
+      logo_position: tpl.logo_position || 'center',
+      signature_layout: tpl.signature_layout,
+      signatory1_name: tpl.signatory1_name || '',
+      signatory1_title: tpl.signatory1_title || '',
+      signatory2_name: tpl.signatory2_name || '',
+      signatory2_title: tpl.signatory2_title || '',
+      show_qr: tpl.show_qr ? "true" : "false",
+      qr_position: tpl.qr_position || 'bottom-left',
+      layout_settings: parsedSettings,
+    };
+
+    if (tpl.background_url) {
+      if (tpl.background_url.startsWith('data:image')) {
+        payload.background_path = tpl.background_url;
+      } else {
+        payload.background_path = tpl.background_url.replace(/.*\/storage\//, '');
+      }
+    }
+    if (tpl.signatory2_signature) {
+      if (tpl.signatory2_signature.startsWith('data:image')) {
+        payload.signatory2_signature = tpl.signatory2_signature;
+      } else {
+        payload.signatory2_signature = tpl.signatory2_signature.replace(/.*\/storage\//, '');
+      }
+    }
+
     try {
+      setShowBulkModal(false);
       setBulkGenerating(true);
-      await mentorApi.bulkGenerateCertificates(eligibleIds);
+      await mentorApi.bulkGenerateCertificates(eligibleIds, payload);
       broadcastDataRefresh('certificate');
       await fetchCerts(search);
-      pushToast(`Bulk generation successful for ${eligibleIds.length} interns.`, 'success');
+      pushToast(`Bulk ${bulkModalType} successful for ${eligibleIds.length} interns.`, 'success');
     } catch (error) {
-      console.error('Bulk generation error:', error);
-      pushToast('Failed to process bulk generation', 'error');
+      console.error(`Bulk ${bulkModalType} error:`, error);
+      pushToast(`Failed to process bulk ${bulkModalType}`, 'error');
     } finally {
       setBulkGenerating(false);
     }
@@ -731,12 +827,14 @@ export default function CertificateMentor() {
   };
 
   // ─── Templates Customizer Loaders & Actions ──────────────────────────────────
-  const loadTemplates = (mentorProfile) => {
-    const stored = localStorage.getItem('mentor_certificate_templates');
+  // ─── Templates Customizer Loaders & Actions ──────────────────────────────────
+  const loadTemplates = async (mentorProfile) => {
     let parsed = [];
     try {
-      parsed = stored ? JSON.parse(stored) : [];
-    } catch {
+      const response = await mentorApi.getTemplates();
+      parsed = response.data || [];
+    } catch (error) {
+      console.error('Failed to load templates from server:', error);
       parsed = [];
     }
 
@@ -821,12 +919,6 @@ export default function CertificateMentor() {
     setTemplates([...defaults, ...parsed]);
   };
 
-  const saveTemplateList = (newList) => {
-    setTemplates(newList);
-    const customs = newList.filter(t => !t.is_default);
-    localStorage.setItem('mentor_certificate_templates', JSON.stringify(customs));
-  };
-
   const handleCreateTemplate = () => {
     setSelectedSubmissionId(null);
     setActiveBuilderId("new");
@@ -849,10 +941,13 @@ export default function CertificateMentor() {
       signature_y: 0, signature_x: 0, show_signatures: true,
       qr_y: 0, qr_x: 0, show_qr: true,
       font_size_title: 30, font_size_name: 34, font_size_body: 11,
+      font_family_title: '', font_family_name: '', font_family_body: '', font_family_table: '',
       font_color_title: '', font_color_cert_id: '', font_color_name: '',
       font_color_labels: '', font_color_role: '',
+      badge_bg_color: '',
       font_color_body: '', font_color_signatures: '',
       sig_invert_1: false, sig_invert_2: false,
+      logo_remove_bg: false,
       custom_images: []
     });
     setCustomBgUrl(null);
@@ -862,7 +957,7 @@ export default function CertificateMentor() {
   const handleEditTemplate = (tpl) => {
     const isDefault = tpl.is_default;
     setSelectedSubmissionId(null);
-    setActiveBuilderId(tpl.id);
+    setActiveBuilderId(isDefault ? "new" : tpl.id);
     setTemplateName(isDefault ? `${tpl.name} - Custom` : tpl.name);
     setTemplateStyle(tpl.template_style);
     setLogoPosition(tpl.logo_position || "center");
@@ -906,15 +1001,21 @@ export default function CertificateMentor() {
       font_size_title: parsedSettings.font_size_title || (tpl.template_style === 'classic' ? 30 : tpl.template_style === 'modern' ? 28 : 26),
       font_size_name: parsedSettings.font_size_name || (tpl.template_style === 'modern' ? 32 : 34),
       font_size_body: parsedSettings.font_size_body || 11,
+      font_family_title: parsedSettings.font_family_title || '',
+      font_family_name: parsedSettings.font_family_name || '',
+      font_family_body: parsedSettings.font_family_body || '',
+      font_family_table: parsedSettings.font_family_table || '',
       font_color_title: parsedSettings.font_color_title || '',
       font_color_cert_id: parsedSettings.font_color_cert_id || '',
       font_color_name: parsedSettings.font_color_name || '',
       font_color_labels: parsedSettings.font_color_labels || '',
       font_color_role: parsedSettings.font_color_role || '',
+      badge_bg_color: parsedSettings.badge_bg_color || '',
       font_color_body: parsedSettings.font_color_body || '',
       font_color_signatures: parsedSettings.font_color_signatures || '',
       sig_invert_1: parsedSettings.sig_invert_1 || false,
       sig_invert_2: parsedSettings.sig_invert_2 || false,
+      logo_remove_bg: parsedSettings.logo_remove_bg !== undefined ? parsedSettings.logo_remove_bg : (tpl.background_url ? true : false),
       custom_images: parsedSettings.custom_images || [],
     });
 
@@ -922,50 +1023,72 @@ export default function CertificateMentor() {
     setCustomBgFile(null);
   };
 
-  const handleSaveTemplate = () => {
+  const handleSaveTemplate = async () => {
     if (!templateName.trim()) {
       pushToast("Please enter a template name", "error");
       return;
     }
 
     const isNew = activeBuilderId === "new";
-    const newTpl = {
-      id: isNew ? `tpl_${Date.now()}` : activeBuilderId,
-      name: templateName,
-      template_style: templateStyle,
-      logo_position: logoPosition,
-      signature_layout: signatureLayout,
-      signatory1_name: signatory1Name,
-      signatory1_title: signatory1Title,
-      signatory2_name: signatory2Name,
-      signatory2_title: signatory2Title,
-      signatory2_signature: signatory2Signature,
-      show_qr: showQr,
-      qr_position: qrPosition,
-      layout_settings: {
-        ...layoutSettings
-      },
-      background_url: customBgUrl,
-      is_default: false
-    };
+    try {
+      const formData = new FormData();
+      formData.append('name', templateName);
+      formData.append('template_style', templateStyle);
+      formData.append('logo_position', logoPosition);
+      formData.append('signature_layout', signatureLayout);
+      formData.append('signatory1_name', signatory1Name || "");
+      formData.append('signatory1_title', signatory1Title || "");
+      formData.append('signatory2_name', signatory2Name || "");
+      formData.append('signatory2_title', signatory2Title || "");
+      formData.append('show_qr', showQr ? "true" : "false");
+      formData.append('qr_position', qrPosition);
+      formData.append('layout_settings', JSON.stringify(layoutSettings));
 
-    let updated;
-    if (isNew) {
-      updated = [...templates.filter(t => t.id !== newTpl.id), newTpl];
-    } else {
-      updated = templates.map(t => t.id === activeBuilderId ? newTpl : t);
+      if (customBgFile) {
+        formData.append('background_file', customBgFile);
+      } else if (customBgUrl) {
+        if (customBgUrl.startsWith('data:image')) {
+          const bgFile = base64ToFile(customBgUrl, 'background.jpg');
+          if (bgFile) formData.append('background_file', bgFile);
+        } else {
+          formData.append('background_path', customBgUrl.replace(/.*\/storage\//, ''));
+        }
+      }
+
+      if (signatory2Signature) {
+        if (signatory2Signature.startsWith('data:image')) {
+          formData.append('signatory2_signature', signatory2Signature);
+        } else {
+          formData.append('signatory2_signature', signatory2Signature.replace(/.*\/storage\//, ''));
+        }
+      }
+
+      if (isNew) {
+        await mentorApi.createTemplate(formData);
+        pushToast("Template created successfully", "success");
+      } else {
+        await mentorApi.updateTemplate(activeBuilderId, formData);
+        pushToast("Template updated successfully", "success");
+      }
+
+      await loadTemplates(mentor);
+      setActiveBuilderId(null);
+    } catch (error) {
+      console.error("Failed to save template:", error);
+      pushToast("Failed to save template", "error");
     }
-
-    saveTemplateList(updated);
-    pushToast("Template saved successfully", "success");
-    setActiveBuilderId(null);
   };
 
-  const handleDeleteTemplate = (id) => {
+  const handleDeleteTemplate = async (id) => {
     if (!window.confirm("Are you sure you want to delete this custom template?")) return;
-    const updated = templates.filter(t => t.id !== id);
-    saveTemplateList(updated);
-    pushToast("Template deleted successfully", "success");
+    try {
+      await mentorApi.deleteTemplate(id);
+      pushToast("Template deleted successfully", "success");
+      await loadTemplates(mentor);
+    } catch (error) {
+      console.error("Failed to delete template:", error);
+      pushToast("Failed to delete template", "error");
+    }
   };
 
   const handlePreviewTemplate = async () => {
@@ -1185,7 +1308,8 @@ export default function CertificateMentor() {
 
   const handleDirectPreview = async (cert) => {
     if (cert.file_url) {
-      window.open(cert.file_url, '_blank');
+      const cacheBuster = cert.file_url + (cert.file_url.includes('?') ? '&' : '?') + 't=' + Date.now();
+      window.open(cacheBuster, '_blank');
       return;
     }
     try {
@@ -1219,20 +1343,10 @@ export default function CertificateMentor() {
 
   const confirmLogout = async () => {
     try {
-      const token = localStorage.getItem("token");
-      if (token) {
-        await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/auth/logout`, {
-          method: "POST",
-          headers: { "Authorization": `Bearer ${token}` },
-        });
-      }
+      await useAuthStore.getState().logout();
     } catch (err) {
       console.error("Logout error:", err);
     } finally {
-      const savedTheme = localStorage.getItem("theme");
-      localStorage.clear();
-      if (savedTheme) localStorage.setItem("theme", savedTheme);
-      useAuthStore.setState({ isAuthenticated: false, token: null, user: null, company: null });
       setLogoutModal(false);
       navigate("/", { replace: true });
     }
@@ -1265,6 +1379,7 @@ export default function CertificateMentor() {
   return (
     <div style={s.app}>
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,700;1,400&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Great+Vibes&family=Alex+Brush&family=Rochester&family=Sacramento&family=Parisienne&family=Pinyon+Script&family=Cinzel:wght@400;700&family=Cormorant+Garamond:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;700&family=Poppins:ital,wght@0,300;0,400;0,700;1,400&family=Roboto:ital,wght@0,300;0,400;0,700;1,400&family=Outfit:wght@300;400;700&family=Merriweather:ital,wght@0,300;0,400;0,700;1,400&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
         ::-webkit-scrollbar { width: 5px; }
         @keyframes spin { to { transform: rotate(360deg); } }
@@ -1403,6 +1518,7 @@ export default function CertificateMentor() {
                               setCustomBgFile(file);
                               compressImageBase64(file, (compressedBase64) => {
                                 setCustomBgUrl(compressedBase64);
+                                setLayoutSettings(prev => ({ ...prev, logo_remove_bg: true }));
                               });
                             }
                           }} style={{ display: "none" }} />
@@ -1558,16 +1674,31 @@ export default function CertificateMentor() {
                     </label>
 
                     {/* Logo Visibility */}
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #e2e8f0", paddingBottom: "8px" }}>
-                      <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", fontSize: "12px", fontWeight: "600", color: "#334155" }}>
-                        <input
-                          type="checkbox"
-                          checked={layoutSettings.show_logo !== false}
-                          onChange={(e) => setLayoutSettings(prev => ({ ...prev, show_logo: e.target.checked }))}
-                          style={{ accentColor: "#8b5cf6", width: "15px", height: "15px" }}
-                        />
-                        Show Logo
-                      </label>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "6px", borderBottom: "1px solid #e2e8f0", paddingBottom: "8px" }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                        <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", fontSize: "12px", fontWeight: "600", color: "#334155" }}>
+                          <input
+                            type="checkbox"
+                            checked={layoutSettings.show_logo !== false}
+                            onChange={(e) => setLayoutSettings(prev => ({ ...prev, show_logo: e.target.checked }))}
+                            style={{ accentColor: "#8b5cf6", width: "15px", height: "15px" }}
+                          />
+                          Show Logo
+                        </label>
+                      </div>
+                      {layoutSettings.show_logo !== false && (
+                        <div style={{ paddingLeft: "23px" }}>
+                          <label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", fontSize: "11px", color: "#64748b" }}>
+                            <input
+                              type="checkbox"
+                              checked={!!layoutSettings.logo_remove_bg}
+                              onChange={(e) => setLayoutSettings(prev => ({ ...prev, logo_remove_bg: e.target.checked }))}
+                              style={{ accentColor: "#8b5cf6" }}
+                            />
+                            Remove Logo Background (Transparency)
+                          </label>
+                        </div>
+                      )}
                     </div>
 
                     {/* Title Elements & Colors */}
@@ -1663,6 +1794,18 @@ export default function CertificateMentor() {
                               />
                               {layoutSettings.font_color_role && (
                                 <button onClick={() => setLayoutSettings(prev => ({ ...prev, font_color_role: "" }))} style={{ border: "none", background: "transparent", color: "#ef4444", fontSize: "11px", cursor: "pointer", marginLeft: "2px" }}>✕ Reset</button>
+                              )}
+                            </label>
+                            <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "11.5px", color: "#475569" }}>
+                              🎨 Badge Background Color:
+                              <input
+                                type="color"
+                                value={layoutSettings.badge_bg_color || "#2563eb"}
+                                onChange={(e) => setLayoutSettings(prev => ({ ...prev, badge_bg_color: e.target.value }))}
+                                style={{ width: "24px", height: "20px", padding: 0, border: "1px solid #cbd5e1", borderRadius: "4px", cursor: "pointer" }}
+                              />
+                              {layoutSettings.badge_bg_color && (
+                                <button onClick={() => setLayoutSettings(prev => ({ ...prev, badge_bg_color: "" }))} style={{ border: "none", background: "transparent", color: "#ef4444", fontSize: "11px", cursor: "pointer", marginLeft: "2px" }}>✕ Reset</button>
                               )}
                             </label>
                           </div>
@@ -1767,6 +1910,59 @@ export default function CertificateMentor() {
                           </select>
                         </div>
                       )}
+                    </div>
+
+                    {/* Typography & Fonts Selection */}
+                    <div style={{ display: "flex", flexDirection: "column", gap: "10px", borderTop: "1px solid #cbd5e1", paddingTop: "12px", marginTop: "8px" }}>
+                      <span style={{ fontSize: "11.5px", fontWeight: "750", color: "#475569", textTransform: "uppercase" }}>Typography & Fonts</span>
+                      
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+                          <label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600" }}>Title Font ("SERTIFIKAT")</label>
+                          <select
+                            value={layoutSettings.font_family_title || ""}
+                            onChange={(e) => setLayoutSettings(prev => ({ ...prev, font_family_title: e.target.value }))}
+                            style={{ padding: "5px 8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "11.5px", background: "#fff", outline: "none", color: "#0f172a" }}
+                          >
+                            {FONT_OPTIONS.map(opt => <option key={opt.value} value={opt.value} style={{ fontFamily: opt.value ? `"${opt.value}"` : 'inherit', fontSize: '13px' }}>{opt.label}</option>)}
+                          </select>
+                        </div>
+                        
+                        <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+                          <label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600" }}>Recipient Name Font</label>
+                          <select
+                            value={layoutSettings.font_family_name || ""}
+                            onChange={(e) => setLayoutSettings(prev => ({ ...prev, font_family_name: e.target.value }))}
+                            style={{ padding: "5px 8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "11.5px", background: "#fff", outline: "none", color: "#0f172a" }}
+                          >
+                            {FONT_OPTIONS.map(opt => <option key={opt.value} value={opt.value} style={{ fontFamily: opt.value ? `"${opt.value}"` : 'inherit', fontSize: '13px' }}>{opt.label}</option>)}
+                          </select>
+                        </div>
+                      </div>
+
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+                          <label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600" }}>Body / Description Font</label>
+                          <select
+                            value={layoutSettings.font_family_body || ""}
+                            onChange={(e) => setLayoutSettings(prev => ({ ...prev, font_family_body: e.target.value }))}
+                            style={{ padding: "5px 8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "11.5px", background: "#fff", outline: "none", color: "#0f172a" }}
+                          >
+                            {FONT_OPTIONS.map(opt => <option key={opt.value} value={opt.value} style={{ fontFamily: opt.value ? `"${opt.value}"` : 'inherit', fontSize: '13px' }}>{opt.label}</option>)}
+                          </select>
+                        </div>
+
+                        <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+                          <label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600" }}>Table / Page 2 Font</label>
+                          <select
+                            value={layoutSettings.font_family_table || ""}
+                            onChange={(e) => setLayoutSettings(prev => ({ ...prev, font_family_table: e.target.value }))}
+                            style={{ padding: "5px 8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "11.5px", background: "#fff", outline: "none", color: "#0f172a" }}
+                          >
+                            {FONT_OPTIONS.map(opt => <option key={opt.value} value={opt.value} style={{ fontFamily: opt.value ? `"${opt.value}"` : 'inherit', fontSize: '13px' }}>{opt.label}</option>)}
+                          </select>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -2268,6 +2464,21 @@ export default function CertificateMentor() {
                         font_size_title: parsedSettings.font_size_title || (tpl.template_style === 'classic' ? 30 : tpl.template_style === 'modern' ? 28 : 26),
                         font_size_name: parsedSettings.font_size_name || (tpl.template_style === 'modern' ? 32 : 34),
                         font_size_body: parsedSettings.font_size_body || 11,
+                        font_family_title: parsedSettings.font_family_title || '',
+                        font_family_name: parsedSettings.font_family_name || '',
+                        font_family_body: parsedSettings.font_family_body || '',
+                        font_family_table: parsedSettings.font_family_table || '',
+                        font_color_title: parsedSettings.font_color_title || '',
+                        font_color_cert_id: parsedSettings.font_color_cert_id || '',
+                        font_color_name: parsedSettings.font_color_name || '',
+                        font_color_labels: parsedSettings.font_color_labels || '',
+                        font_color_role: parsedSettings.font_color_role || '',
+                        badge_bg_color: parsedSettings.badge_bg_color || '',
+                        font_color_body: parsedSettings.font_color_body || '',
+                        font_color_signatures: parsedSettings.font_color_signatures || '',
+                        sig_invert_1: parsedSettings.sig_invert_1 || false,
+                        sig_invert_2: parsedSettings.sig_invert_2 || false,
+                        logo_remove_bg: parsedSettings.logo_remove_bg !== undefined ? parsedSettings.logo_remove_bg : (tpl.background_url ? true : false),
                         custom_images: parsedSettings.custom_images || [],
                       });
                       setCustomBgUrl(tpl.background_url || null);
@@ -2310,6 +2521,93 @@ export default function CertificateMentor() {
             </div>
           </div>
         )}
+
+        {/* Bulk Generate/Regenerate Certificates Modal */}
+        {showBulkModal && (() => {
+          const eligibleIds = filteredCerts
+            .filter(cert => bulkModalType === "generate" ? cert.status === "Done" : cert.status === "Generated")
+            .map(cert => cert.id_submission);
+
+          return (
+            <div style={{ position: "fixed", inset: 0, zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(15, 23, 42, 0.45)", backdropFilter: "blur(6px)" }}>
+              <div style={{ background: "#fff", borderRadius: "14px", width: "90vw", maxWidth: "480px", boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)", overflow: "hidden" }}>
+                
+                <div style={{ padding: "18px 24px", borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <div>
+                    <span style={{ fontSize: "14.5px", fontWeight: "750", color: "#0f172a" }}>
+                      {bulkModalType === "generate" ? "Bulk Generate Certificates" : "Bulk Regenerate Certificates"}
+                    </span>
+                    <div style={{ fontSize: "12px", color: "#64748b", marginTop: "2px" }}>
+                      Target: <b>{eligibleIds.length} eligible interns</b>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowBulkModal(false)}
+                    style={{ background: "#f1f5f9", border: "none", borderRadius: "50%", width: "24px", height: "24px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#64748b" }}
+                  >
+                    <X size={13} />
+                  </button>
+                </div>
+
+                <div style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: "14px" }}>
+                  <div>
+                    <label style={{ fontSize: "11.5px", fontWeight: "700", color: "#334155", display: "block", marginBottom: "6px" }}>Select Certificate Template Preset</label>
+                    <select
+                      value={selectedBulkTemplateId}
+                      onChange={(e) => setSelectedBulkTemplateId(e.target.value)}
+                      style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "12.5px", outline: "none", background: "#fff", cursor: "pointer", color: "#0f172a", fontWeight: "600" }}
+                    >
+                      {templates.map(t => (
+                        <option key={t.id} value={t.id}>{t.name} ({t.template_style})</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {(() => {
+                    const tpl = templates.find(t => t.id === selectedBulkTemplateId);
+                    if (!tpl) return null;
+                    return (
+                      <div style={{ padding: "12px 14px", background: "#f8fafc", borderRadius: "10px", border: "1px solid #e2e8f0", fontSize: "11.5px", display: "flex", flexDirection: "column", gap: "5px", color: "#475569" }}>
+                        <div style={{ fontWeight: "750", color: "#334155", marginBottom: "2px" }}>Template Summary:</div>
+                        <div>• Theme Style: <span style={{ textTransform: "capitalize", fontWeight: "600", color: "#0f172a" }}>{tpl.template_style}</span></div>
+                        <div>• Layout Mode: <span style={{ fontWeight: "600", color: "#0f172a" }}>{tpl.signature_layout === 'double' ? "Double Signatures" : "Single Signature"}</span></div>
+                        <div>• Primary Signatory: <span style={{ fontWeight: "600", color: "#0f172a" }}>{tpl.signatory1_name || "-"} ({tpl.signatory1_title || "-"})</span></div>
+                        {tpl.signature_layout === 'double' && (
+                          <div>• Secondary Signatory: <span style={{ fontWeight: "600", color: "#0f172a" }}>{tpl.signatory2_name || "-"} ({tpl.signatory2_title || "-"})</span></div>
+                        )}
+                        <div>• Background Design: <span style={{ fontWeight: "600", color: "#0f172a" }}>{tpl.background_url ? "Custom Background Image" : "Default Border Template"}</span></div>
+                      </div>
+                    );
+                  })()}
+                </div>
+
+                <div style={{ padding: "12px 24px", borderTop: "1px solid #f1f5f9", display: "flex", justifyContent: "flex-end", gap: "8px", background: "#f8fafc" }}>
+                  <button
+                    onClick={() => setShowBulkModal(false)}
+                    style={{
+                      padding: "6px 12px", background: "#fff", border: "1px solid #cbd5e1", borderRadius: "8px",
+                      fontSize: "11.5px", fontWeight: "600", color: "#475569", cursor: "pointer", fontFamily: "inherit"
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={executeBulkAction}
+                    disabled={bulkGenerating}
+                    style={{
+                      padding: "6px 14px", background: "linear-gradient(135deg, #10b981, #059669)", border: "none", borderRadius: "8px",
+                      fontSize: "11.5px", fontWeight: "600", color: "#fff", cursor: bulkGenerating ? "not-allowed" : "pointer",
+                      fontFamily: "inherit"
+                    }}
+                  >
+                    {bulkGenerating ? "Processing..." : bulkModalType === "generate" ? "Generate All" : "Regenerate All"}
+                  </button>
+                </div>
+
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Candidate Specific Customizer Offsets Tweaker Modal */}
         {customizerModal && (
@@ -2403,6 +2701,7 @@ export default function CertificateMentor() {
                               setCustomBgFile(file);
                               compressImageBase64(file, (compressedBase64) => {
                                 setCustomBgUrl(compressedBase64);
+                                setLayoutSettings(prev => ({ ...prev, logo_remove_bg: true }));
                               });
                             }
                           }} style={{ display: "none" }} />
@@ -2547,16 +2846,31 @@ export default function CertificateMentor() {
                     <div style={{ display: "flex", flexDirection: "column", gap: "12px", border: "1px solid #cbd5e1", borderRadius: "10px", padding: "16px", background: "#f8fafc" }}>
 
                       {/* Logo Visibility */}
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #e2e8f0", paddingBottom: "8px" }}>
-                        <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", fontSize: "12px", fontWeight: "600", color: "#334155" }}>
-                          <input
-                            type="checkbox"
-                            checked={layoutSettings.show_logo !== false}
-                            onChange={(e) => setLayoutSettings(prev => ({ ...prev, show_logo: e.target.checked }))}
-                            style={{ accentColor: "#8b5cf6", width: "15px", height: "15px" }}
-                          />
-                          Show Logo
-                        </label>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "6px", borderBottom: "1px solid #e2e8f0", paddingBottom: "8px" }}>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                          <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", fontSize: "12px", fontWeight: "600", color: "#334155" }}>
+                            <input
+                              type="checkbox"
+                              checked={layoutSettings.show_logo !== false}
+                              onChange={(e) => setLayoutSettings(prev => ({ ...prev, show_logo: e.target.checked }))}
+                              style={{ accentColor: "#8b5cf6", width: "15px", height: "15px" }}
+                            />
+                            Show Logo
+                          </label>
+                        </div>
+                        {layoutSettings.show_logo !== false && (
+                          <div style={{ paddingLeft: "23px" }}>
+                            <label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", fontSize: "11px", color: "#64748b" }}>
+                              <input
+                                type="checkbox"
+                                checked={!!layoutSettings.logo_remove_bg}
+                                onChange={(e) => setLayoutSettings(prev => ({ ...prev, logo_remove_bg: e.target.checked }))}
+                                style={{ accentColor: "#8b5cf6" }}
+                              />
+                              Remove Logo Background (Transparency)
+                            </label>
+                          </div>
+                        )}
                       </div>
 
                       {/* Title Elements & Colors */}
@@ -2652,6 +2966,18 @@ export default function CertificateMentor() {
                                 />
                                 {layoutSettings.font_color_role && (
                                   <button onClick={() => setLayoutSettings(prev => ({ ...prev, font_color_role: "" }))} style={{ border: "none", background: "transparent", color: "#ef4444", fontSize: "11px", cursor: "pointer", marginLeft: "2px" }}>✕ Reset</button>
+                                )}
+                              </label>
+                              <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "11.5px", color: "#475569" }}>
+                                🎨 Badge Background Color:
+                                <input
+                                  type="color"
+                                  value={layoutSettings.badge_bg_color || "#2563eb"}
+                                  onChange={(e) => setLayoutSettings(prev => ({ ...prev, badge_bg_color: e.target.value }))}
+                                  style={{ width: "24px", height: "20px", padding: 0, border: "1px solid #cbd5e1", borderRadius: "4px", cursor: "pointer" }}
+                                />
+                                {layoutSettings.badge_bg_color && (
+                                  <button onClick={() => setLayoutSettings(prev => ({ ...prev, badge_bg_color: "" }))} style={{ border: "none", background: "transparent", color: "#ef4444", fontSize: "11px", cursor: "pointer", marginLeft: "2px" }}>✕ Reset</button>
                                 )}
                               </label>
                             </div>
@@ -2756,6 +3082,59 @@ export default function CertificateMentor() {
                             </select>
                           </div>
                         )}
+                      </div>
+
+                      {/* Typography & Fonts Selection */}
+                      <div style={{ display: "flex", flexDirection: "column", gap: "10px", borderTop: "1px solid #cbd5e1", paddingTop: "12px", marginTop: "8px" }}>
+                        <span style={{ fontSize: "11.5px", fontWeight: "750", color: "#475569", textTransform: "uppercase" }}>Typography & Fonts</span>
+                        
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                          <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+                            <label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600" }}>Title Font ("SERTIFIKAT")</label>
+                            <select
+                              value={layoutSettings.font_family_title || ""}
+                              onChange={(e) => setLayoutSettings(prev => ({ ...prev, font_family_title: e.target.value }))}
+                              style={{ padding: "5px 8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "11.5px", background: "#fff", outline: "none", color: "#0f172a" }}
+                            >
+                              {FONT_OPTIONS.map(opt => <option key={opt.value} value={opt.value} style={{ fontFamily: opt.value ? `"${opt.value}"` : 'inherit', fontSize: '13px' }}>{opt.label}</option>)}
+                            </select>
+                          </div>
+                          
+                          <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+                            <label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600" }}>Recipient Name Font</label>
+                            <select
+                              value={layoutSettings.font_family_name || ""}
+                              onChange={(e) => setLayoutSettings(prev => ({ ...prev, font_family_name: e.target.value }))}
+                              style={{ padding: "5px 8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "11.5px", background: "#fff", outline: "none", color: "#0f172a" }}
+                            >
+                              {FONT_OPTIONS.map(opt => <option key={opt.value} value={opt.value} style={{ fontFamily: opt.value ? `"${opt.value}"` : 'inherit', fontSize: '13px' }}>{opt.label}</option>)}
+                            </select>
+                          </div>
+                        </div>
+
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                          <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+                            <label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600" }}>Body / Description Font</label>
+                            <select
+                              value={layoutSettings.font_family_body || ""}
+                              onChange={(e) => setLayoutSettings(prev => ({ ...prev, font_family_body: e.target.value }))}
+                              style={{ padding: "5px 8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "11.5px", background: "#fff", outline: "none", color: "#0f172a" }}
+                            >
+                              {FONT_OPTIONS.map(opt => <option key={opt.value} value={opt.value} style={{ fontFamily: opt.value ? `"${opt.value}"` : 'inherit', fontSize: '13px' }}>{opt.label}</option>)}
+                            </select>
+                          </div>
+
+                          <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+                            <label style={{ fontSize: "11px", color: "#64748b", fontWeight: "600" }}>Table / Page 2 Font</label>
+                            <select
+                              value={layoutSettings.font_family_table || ""}
+                              onChange={(e) => setLayoutSettings(prev => ({ ...prev, font_family_table: e.target.value }))}
+                              style={{ padding: "5px 8px", borderRadius: "6px", border: "1px solid #cbd5e1", fontSize: "11.5px", background: "#fff", outline: "none", color: "#0f172a" }}
+                            >
+                              {FONT_OPTIONS.map(opt => <option key={opt.value} value={opt.value} style={{ fontFamily: opt.value ? `"${opt.value}"` : 'inherit', fontSize: '13px' }}>{opt.label}</option>)}
+                            </select>
+                          </div>
+                        </div>
                       </div>
 
                     </div>
@@ -2863,4 +3242,4 @@ export default function CertificateMentor() {
       </main>
     </div>
   );
-}
+}

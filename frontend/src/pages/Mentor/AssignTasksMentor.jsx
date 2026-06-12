@@ -516,7 +516,14 @@ export default function AssignTasksMentor() {
                                         <p style={{ fontSize: "13px", color: "#334155" }}>{project.description}</p>
                                       </div>
                                       <div style={{ width: "350px", borderLeft: "1px solid #f1f5f9", paddingLeft: "24px", display: "flex", flexDirection: "column", gap: "12px" }}>
-                                        <p style={{ fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase" }}>Submission & Feedback</p>
+                                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                          <p style={{ fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", margin: 0 }}>Submission & Feedback</p>
+                                          {project.status === 'done' && project.feedback_notes && (
+                                            <span style={{ fontSize: "9px", color: "#e11d48", background: "#ffe4e6", border: "1px solid #fecdd3", padding: "2px 6px", borderRadius: "4px", fontWeight: 850, textTransform: "uppercase", display: "inline-block" }}>
+                                              Revised Submission
+                                            </span>
+                                          )}
+                                        </div>
                                         {project.work_attachments?.length > 0 ? (
                                           <>
                                             <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
@@ -532,7 +539,7 @@ export default function AssignTasksMentor() {
                                             />
                                             <div style={{ display: "flex", gap: "8px" }}>
                                               <button onClick={() => handleUpdateTask(project.id_task, { feedback_notes: noteMap[project.id_task], status: "in_progress" })} style={{ ...s.btnCancel, padding: "6px 12px", flex: 1, fontSize: "12px" }}>Revision</button>
-                                              {project.status !== 'done' && <button onClick={() => handleUpdateTask(project.id_task, { status: "done" })} style={{ ...s.btnSubmit, padding: "6px 12px", flex: 1, fontSize: "12px", background: "#059669" }}>Approve</button>}
+                                              {project.status !== 'done' && <button onClick={() => handleUpdateTask(project.id_task, { status: "done", feedback_notes: "" })} style={{ ...s.btnSubmit, padding: "6px 12px", flex: 1, fontSize: "12px", background: "#059669" }}>Approve</button>}
                                             </div>
                                           </>
                                         ) : <div style={{ fontSize: "12px", color: "#94a3b8" }}>No submission yet</div>}
@@ -541,7 +548,14 @@ export default function AssignTasksMentor() {
                                   </div>
                                   ) : project.type === "Team" ? (
                                   <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: "16px", padding: "20px" }}>
-                                    <p style={{ fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", marginBottom: "12px" }}>Team Submission (from Leader)</p>
+                                    <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
+                                      <p style={{ fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", margin: 0 }}>Team Submission (from Leader)</p>
+                                      {project.status === 'done' && project.feedback_notes && (
+                                        <span style={{ fontSize: "9px", color: "#e11d48", background: "#ffe4e6", border: "1px solid #fecdd3", padding: "2px 6px", borderRadius: "4px", fontWeight: 850, textTransform: "uppercase", display: "inline-block" }}>
+                                          Revised Submission
+                                        </span>
+                                      )}
+                                    </div>
                                     {project.work_attachments?.length > 0 ? (
                                       <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
                                         <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
@@ -562,7 +576,7 @@ export default function AssignTasksMentor() {
                                           <button onClick={() => handleUpdateTask(project.id_task, { feedback_notes: noteMap[project.id_task], status: "in_progress" })}
                                             style={{ ...s.btnCancel, padding: "6px 12px", flex: 1, fontSize: "12px" }}>Revision</button>
                                           {project.status !== 'done' && (
-                                            <button onClick={() => handleUpdateTask(project.id_task, { status: "done" })}
+                                            <button onClick={() => handleUpdateTask(project.id_task, { status: "done", feedback_notes: "" })}
                                               style={{ ...s.btnSubmit, padding: "6px 12px", flex: 1, fontSize: "12px", background: "#059669" }}>Approve</button>
                                           )}
                                         </div>
@@ -605,7 +619,14 @@ export default function AssignTasksMentor() {
                                       </div>
 
                                       <div style={{ width: "350px", borderLeft: "1px solid #f1f5f9", paddingLeft: "24px", display: "flex", flexDirection: "column", gap: "12px" }}>
-                                        <p style={{ fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase" }}>Submission & Feedback</p>
+                                        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
+                                          <p style={{ fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", margin: 0 }}>Submission & Feedback</p>
+                                          {st.status === 'done' && st.feedback_notes && (
+                                            <span style={{ fontSize: "9px", color: "#e11d48", background: "#ffe4e6", border: "1px solid #fecdd3", padding: "2px 6px", borderRadius: "4px", fontWeight: 850, textTransform: "uppercase", display: "inline-block" }}>
+                                              Revised Submission
+                                            </span>
+                                          )}
+                                        </div>
 
                                         {st.work_attachments?.length > 0 ? (
                                           <>
@@ -626,7 +647,7 @@ export default function AssignTasksMentor() {
                                               />
                                               <div style={{ display: "flex", gap: "8px", marginTop: "10px" }}>
                                                 <button onClick={() => handleUpdateTask(st.id, { feedback_notes: noteMap[st.id], status: "in_progress" })} style={{ ...s.btnCancel, padding: "6px 12px", flex: 1, fontSize: "12px" }}>Revision</button>
-                                                {st.status !== 'done' && <button onClick={() => handleUpdateTask(st.id, { status: "done" })} style={{ ...s.btnSubmit, padding: "6px 12px", flex: 1, fontSize: "12px", background: "#059669" }}>Approve</button>}
+                                                {st.status !== 'done' && <button onClick={() => handleUpdateTask(st.id, { status: "done", feedback_notes: "" })} style={{ ...s.btnSubmit, padding: "6px 12px", flex: 1, fontSize: "12px", background: "#059669" }}>Approve</button>}
                                               </div>
                                             </div>
                                           </>
@@ -858,11 +879,15 @@ export default function AssignTasksMentor() {
             <p style={{ fontSize: "14px", color: "#64748b", marginBottom: "20px" }}>Are you sure you want to exit?</p>
             <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
               <button onClick={() => setLogoutModal(false)} style={{ border: "none", background: "none", color: "#64748b", fontWeight: 700, cursor: "pointer" }}>Cancel</button>
-              <button onClick={() => {
-                  const theme = localStorage.getItem("theme");
-                  localStorage.clear();
-                  if (theme) localStorage.setItem("theme", theme);
-                  window.location.href = "/";
+              <button onClick={async () => {
+                  try {
+                    await logout();
+                  } catch (err) {
+                    console.error("Logout error:", err);
+                  } finally {
+                    setLogoutModal(false);
+                    window.location.href = "/";
+                  }
                 }} style={{ background: "#ef4444", color: "#fff", border: "none", padding: "8px 16px", borderRadius: "8px", fontWeight: 700, cursor: "pointer" }}>Yes, Logout</button>
             </div>
           </div>

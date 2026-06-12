@@ -320,6 +320,12 @@ Route::prefix('mentor')->middleware(['auth:sanctum', 'mentorRole'])->group(funct
     Route::post('/certificates/bulk-generate', [MentorController::class, 'bulkGenerateCertificates']);
     Route::post('/certificates/bulk-send',     [MentorController::class, 'bulkSendCertificates']);
 
+    // Certificate Templates
+    Route::get('/certificate-templates',       [MentorController::class, 'listTemplates']);
+    Route::post('/certificate-templates',      [MentorController::class, 'storeTemplate']);
+    Route::post('/certificate-templates/{id}', [MentorController::class, 'updateTemplate']);
+    Route::delete('/certificate-templates/{id}', [MentorController::class, 'destroyTemplate']);
+
     // Tasks
     Route::get('/assign-targets', [App\Http\Controllers\MentorTaskController::class, 'getAssignTargets']);
     Route::get('/competencies', [App\Http\Controllers\MentorTaskController::class, 'getCompetencies']);

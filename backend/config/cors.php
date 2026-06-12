@@ -19,13 +19,15 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => [
+    'allowed_origins' => array_values(array_filter(array_merge([
         'http://localhost:5173',
         'http://127.0.0.1:5173',
         'http://167.172.83.139',
         'http://167.172.83.139:5173',
-        'http://167.172.83.139:8000', 
-    ],
+        'http://167.172.83.139:8000',
+        'http://earlypath.chrisant.works',
+        'https://earlypath.chrisant.works',
+    ], explode(',', env('CORS_ALLOWED_ORIGINS', ''))))),
 
     'allowed_origins_patterns' => [],
 
