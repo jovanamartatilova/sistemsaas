@@ -394,11 +394,9 @@ export default function AssignMentorHR() {
           position: "sticky", top: 0, zIndex: 50,
         }}>
           <div style={{ flex: 1, display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
-            <span style={{ fontSize: "15px", fontWeight: "700", color: "#1e293b" }}>Dashboard</span>
+            <span style={{ fontSize: "15px", fontWeight: "700", color: "#1e293b" }}>Selection Flow</span>
             <span style={{ fontSize: "13px", color: "#94a3b8", margin: "0 2px" }}>/</span>
-            <span style={{ fontSize: "13px", color: "#94a3b8" }}>Administration</span>
-            <span style={{ fontSize: "13px", color: "#94a3b8", margin: "0 2px" }}>/</span>
-            <span style={{ fontSize: "13px", color: "#1e293b", fontWeight: "600" }}>Assign Mentor</span>
+            <span style={{ fontSize: "13px", color: "#94a3b8" }}>Assign Mentor</span>
           </div>
           <span className="am-topbar-date" style={{ fontSize: "12px", color: "#94a3b8", whiteSpace: "nowrap" }}>{todayStr()}</span>
         </header>

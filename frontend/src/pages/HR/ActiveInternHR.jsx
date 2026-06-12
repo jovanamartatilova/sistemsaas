@@ -398,7 +398,7 @@ useEffect(() => {
           display: 'flex', alignItems: 'center', gap: '16px', position: 'sticky', top: 0, zIndex: 50,
         }}>
           <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 'clamp(13px, 1.5vw, 15px)', fontWeight: '700', color: '#1e293b' }}>Dashboard</span>
+            <span style={{ fontSize: 'clamp(13px, 1.5vw, 15px)', fontWeight: '700', color: '#1e293b' }}>Selection Flow</span>
             <span style={{ fontSize: '13px', color: '#94a3b8', margin: '0 6px' }}>/</span>
             <span style={{ fontSize: 'clamp(12px, 1.3vw, 13px)', color: '#94a3b8' }}>Active Intern</span>
           </div>
@@ -585,4 +585,4 @@ useEffect(() => {
     </div>
   );
 }
-
+

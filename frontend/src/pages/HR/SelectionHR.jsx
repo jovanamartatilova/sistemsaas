@@ -451,15 +451,19 @@ export default function SelectionHR() {
   }, [selectionFlow]);
 
   useEffect(() => {
-    if (stageTabs.length > 0) {
-      setActiveTab('stage');
-      setActiveSubStageIndex(0);
-    } else { 
-      setActiveTab('final'); 
-      setActiveSubStageIndex(null); 
-    }
-    setExpandedStageIndex(null);
-  }, [stageTabs]);
+  if (stageTabs.length > 0) {
+    // Hanya set default kalau belum ada tab aktif, atau index yang aktif sudah out-of-range
+    setActiveTab(prev => prev ?? 'stage');
+    setActiveSubStageIndex(prev => {
+      if (prev !== null && prev < stageTabs.length) return prev; // preserve
+      return 0; // fallback ke index 0 kalau invalid
+    });
+  } else {
+    setActiveTab('final');
+    setActiveSubStageIndex(null);
+  }
+  setExpandedStageIndex(null);
+}, [stageTabs]);
 
   const handleTabChange = (tab, index = null) => {
     setActiveTab(tab);
@@ -649,9 +653,9 @@ const handleLogout = () => {
         {/* Header */}
         <header className="sel-topbar" style={{ height:'56px', background:'#fff', borderBottom:'1px solid #e2e8f0', display:'flex', alignItems:'center', padding:'0 28px', gap:'16px', position:'sticky', top:0, zIndex:50 }}>
           <div style={{ flex:1, display:'flex', alignItems:'center', gap:'6px', flexWrap:'wrap' }}>
-            <span style={{ fontSize:'15px', fontWeight:'700', color:'#1e293b' }}>Dashboard</span>
+            <span style={{ fontSize:'15px', fontWeight:'700', color:'#1e293b' }}>Selection Flow</span>
             <span style={{ fontSize:'13px', color:'#94a3b8', margin:'0 6px' }}>/</span>
-            <span style={{ fontSize:'13px', color:'#94a3b8' }}>Selection Flow</span>
+            <span style={{ fontSize:'13px', color:'#94a3b8' }}>Selection</span>
           </div>
           <span className="sel-topbar-date" style={{ fontSize:'12px', color:'#94a3b8' }}>{todayStr()}</span>
         </header>
@@ -662,46 +666,53 @@ const handleLogout = () => {
               <h1 style={{ fontSize:'22px', fontWeight:'800', color:'#0f172a', margin:0 }}>Selection Management</h1>
               <p style={{ fontSize:'13px', color:'#64748b', marginTop:'4px' }}>Manage candidate stages dynamically based on position requirements.</p>
             </div>
-            <div style={{ display:'flex', alignItems:'center', gap:'10px' }}>
-              <span style={{ fontSize:'12px', fontWeight:'700', color:'#64748b', textTransform:'uppercase' }}>Position</span>
-              <div style={{ position:'relative' }}>
-                <select value={activePositionId} onChange={e=>setActivePositionId(e.target.value)} style={{ appearance:'none', background:'#fff', border:'1px solid #cbd5e1', borderRadius:'10px', padding:'8px 36px 8px 16px', fontSize:'13.5px', fontWeight:'600', color:'#1e293b', outline:'none', cursor:'pointer', boxShadow:'0 1px 2px rgba(0,0,0,0.05)', minWidth:'220px' }}>
-                  {positions.map(p=><option key={p.id_position} value={p.id_position}>{p.name}</option>)}
-                </select>
-                <div style={{ position:'absolute', right:'12px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none', color:'#64748b' }}><IC.ChevronDown /></div>
-              </div>
-            </div>
           </div>
 
           {/* Flow Visualizer */}
           {stageTabs.length > 0 && (
-            <div style={{ background:'#fff', padding:'16px 20px', borderRadius:'12px', marginBottom:'24px', border:'1px solid #e2e8f0', display:'flex', flexDirection:'column', gap:'12px' }}>
-              <div style={{ display:'flex', alignItems:'center', gap:'12px', overflowX:'auto' }}>
-                <div style={{ fontSize:'11px', fontWeight:'700', color:'#94a3b8', textTransform:'uppercase', marginRight:'8px' }}>Flow Path:</div>
-                <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
-                  {stageTabs.map((s,idx)=>(
-                    <div key={idx} style={{ display:'flex', alignItems:'center', gap:'8px' }}>
-                      {idx>0&&<span style={{ color:'#cbd5e1' }}>→</span>}
-                      <button 
-                        onClick={() => handleTabChange('stage', idx)}
-                        style={{ display:'flex', alignItems:'center', gap:'6px', cursor:'pointer', border:'none', fontSize:'12.5px', fontWeight:'600', 
-                          color:activeSubStageIndex===idx?'#1d4ed8':'#3b82f6', 
-                          background:activeSubStageIndex===idx?'#dbeafe':'#eff6ff', 
-                          padding:'4px 12px', borderRadius:'20px', whiteSpace:'nowrap', transition:'all 0.2s', fontFamily:'inherit' }}
-                      >
-                        {s.label}
-                      </button>
-                    </div>
-                  ))}
-                  <span style={{ color:'#cbd5e1' }}>→</span>
-                  <span 
-                    onClick={() => handleTabChange('final')}
-                    style={{ fontSize:'12.5px', fontWeight:'600', color:activeTab==='final'?'#059669':'#10b981', background:activeTab==='final'?'#d1fae5':'#ecfdf5', padding:'4px 10px', borderRadius:'20px', cursor:'pointer' }}
-                  >Final</span>
+          <div style={{ background:'#fff', padding:'16px 20px', borderRadius:'12px', marginBottom:'24px', border:'1px solid #e2e8f0' }}>
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:'12px' }}>
+              
+              {/* Kiri: Flow Path */}
+              <div style={{ display:'flex', alignItems:'center', gap:'8px', overflowX:'auto', flex:1 }}>
+                <div style={{ fontSize:'11px', fontWeight:'700', color:'#94a3b8', textTransform:'uppercase', marginRight:'8px', flexShrink:0 }}>Flow Path:</div>
+                {stageTabs.map((s,idx)=>(
+                  <div key={idx} style={{ display:'flex', alignItems:'center', gap:'8px' }}>
+                    {idx>0&&<span style={{ color:'#cbd5e1' }}>→</span>}
+                    <button onClick={() => handleTabChange('stage', idx)}
+                      style={{ display:'flex',alignItems:'center',gap:'6px',cursor:'pointer',border:'none',fontSize:'12.5px',fontWeight:'600',
+                        color:activeSubStageIndex===idx?'#1d4ed8':'#3b82f6',
+                        background:activeSubStageIndex===idx?'#dbeafe':'#eff6ff',
+                        padding:'4px 12px',borderRadius:'20px',whiteSpace:'nowrap',transition:'all 0.2s',fontFamily:'inherit' }}>
+                      {s.label}
+                    </button>
+                  </div>
+                ))}
+                <span style={{ color:'#cbd5e1' }}>→</span>
+                <span onClick={() => handleTabChange('final')}
+                  style={{ fontSize:'12.5px',fontWeight:'600',color:activeTab==='final'?'#059669':'#10b981',background:activeTab==='final'?'#d1fae5':'#ecfdf5',padding:'4px 10px',borderRadius:'20px',cursor:'pointer',flexShrink:0 }}>
+                  Final
+                </span>
+              </div>
+
+              {/* Kanan: Position Dropdown */}
+              <div style={{ display:'flex', alignItems:'center', gap:'8px', flexShrink:0 }}>
+                <span style={{ fontSize:'11px', fontWeight:'700', color:'#94a3b8', textTransform:'uppercase', whiteSpace:'nowrap' }}>Position</span>
+                <div style={{ position:'relative' }}>
+                  <select value={activePositionId} onChange={e=>setActivePositionId(e.target.value)}
+                    style={{ appearance:'none', background:'#fff', border:'1px solid #cbd5e1', borderRadius:'8px', padding:'6px 28px 6px 12px', fontSize:'13px', fontWeight:'600', color:'#1e293b', outline:'none', cursor:'pointer', minWidth:'180px', fontFamily:'inherit' }}>
+                    <option value=''>All Positions</option>
+                    {positions.map(p=><option key={p.id_position} value={p.id_position}>{p.name}</option>)}
+                  </select>
+                  <div style={{ position:'absolute', right:'8px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none', color:'#64748b' }}>
+                    <IC.ChevronDown />
+                  </div>
                 </div>
               </div>
+
             </div>
-          )}
+          </div>
+        )}
 
           {/* Test Types Panel — show if current stage is 'test' */}
           {currentStage?.type === 'test' && (
