@@ -40,15 +40,29 @@ class CandidateController extends Controller
 
             $submission = null;
             if (isset($user->id_user)) {
-                $submission = Submission::where('id_user', $user->id_user)
-                    ->whereNotIn('status', ['rejected', 'draft'])
-                    ->with(['vacancy', 'position.competencies', 'mentor', 'interviews'])
-                    ->latest('submitted_at')
-                    ->first();
+                $idSubmission = $request->query('id_submission');
 
-                if ($submission) {
-                    \Log::info("Dashboard Submission found for user {$user->id_user}: status={$submission->status}, test_details=" . json_encode($submission->test_details));
-                }
+$submissionQuery = Submission::where('id_user', $user->id_user)
+    ->whereNotIn('status', ['rejected', 'draft'])
+    ->with(['vacancy', 'position.competencies', 'mentor', 'interviews']);
+
+if ($idSubmission) {
+    $submission = $submissionQuery
+        ->where('id_submission', $idSubmission)
+        ->first();
+
+    // Fallback kalau id_submission tidak ditemukan / bukan milik user ini
+    if (!$submission) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Submission not found for the given id_submission',
+        ], 404);
+    }
+} else {
+    $submission = $submissionQuery
+        ->latest('submitted_at')
+        ->first();
+}
             }
 
             $apprentice = null;
@@ -99,6 +113,7 @@ class CandidateController extends Controller
                             ->exists(),
                     ],
                     'apprentice' => ($apprentice || $submission) ? [
+                        'id_submission' => $submission?->id_submission,
                         'id_apprentice' => $apprentice->id_apprentice ?? null,
                         'position' => $submission?->position?->name ?? '-',
                         'company' => $submission?->vacancy?->company_name ?? '-',
