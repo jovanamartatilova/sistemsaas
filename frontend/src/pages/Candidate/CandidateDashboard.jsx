@@ -186,36 +186,79 @@ function EarlyPathDashboard() {
   const [logoutModal, setLogoutModal] = useState(false);
   const { logout: globalLogout } = useAuthStore();
 
-  useEffect(() => {
-    setError(null);
-    fetchDashboardData();
-  }, [location.pathname]);
+  const [submissionList, setSubmissionList] = useState([]);
+const [selectedSubmission, setSelectedSubmission] = useState(null);
+const [submissionsLoading, setSubmissionsLoading] = useState(true);
 
-  const fetchDashboardData = async () => {
-    try {
-      setLoading(true);
-      const token = localStorage.getItem("token") || localStorage.getItem("auth_token");
-      if (!token) { setError("No authentication token found"); setLoading(false); return; }
-      const response = await fetch(`${API_BASE_URL}/candidate/dashboard`, {
-        headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
-      });
-      if (!response.ok) {
-        if (response.status === 401) { await globalLogout(); navigate("/", { replace: true }); return; }
-        throw new Error("Failed to fetch dashboard data");
-      }
-      const data = await response.json();
-      setDashboardData(data.data);
-      if (data.data?.profile?.scoped_role || data.data?.profile?.is_leader !== undefined) {
-        useAuthStore.getState().setUser({ scoped_role: data.data.profile.scoped_role, is_leader: data.data.profile.is_leader });
-      }
-      setError(null);
-      fetchMemberTasks(data.data?.profile?.is_leader);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
+const fetchSubmissions = async () => {
+  try {
+    setSubmissionsLoading(true);
+    const token = localStorage.getItem("token") || localStorage.getItem("auth_token");
+    const res = await fetch(`${API_BASE_URL}/submissions`, {
+      headers: { "Authorization": `Bearer ${token}` }
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    const list = (data.data || []).filter(s => s.status !== 'rejected' && s.status !== 'draft');
+    setSubmissionList(list);
+
+    // Restore pilihan sebelumnya dari localStorage
+    const savedId = localStorage.getItem("selected_submission_id");
+    const found = list.find(s => s.id_submission === savedId) || list[0];
+    setSelectedSubmission(found || null);
+  } catch (err) {
+    console.error("Error fetching submissions:", err);
+  } finally {
+    setSubmissionsLoading(false);
+  }
+};
+
+  // Ganti useEffect yang lama
+useEffect(() => {
+  fetchSubmissions();
+}, []);
+
+useEffect(() => {
+  if (selectedSubmission) {
+    localStorage.setItem("selected_submission_id", selectedSubmission.id_submission);
+    fetchDashboardData(selectedSubmission.id_submission);
+  }
+}, [selectedSubmission]);
+
+  // Ubah signature fetchDashboardData
+const fetchDashboardData = async (idSubmission) => {
+  try {
+    setLoading(true);
+    const token = localStorage.getItem("token") || localStorage.getItem("auth_token");
+    if (!token) { setError("No authentication token found"); setLoading(false); return; }
+
+    const url = idSubmission
+      ? `${API_BASE_URL}/candidate/dashboard?id_submission=${idSubmission}`
+      : `${API_BASE_URL}/candidate/dashboard`;
+
+    const response = await fetch(url, {
+      headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+    });
+    if (!response.ok) {
+      if (response.status === 401) { await globalLogout(); navigate("/", { replace: true }); return; }
+      throw new Error("Failed to fetch dashboard data");
     }
-  };
+    const data = await response.json();
+    setDashboardData(data.data);
+    if (data.data?.profile?.scoped_role || data.data?.profile?.is_leader !== undefined) {
+      useAuthStore.getState().setUser({
+        scoped_role: data.data.profile.scoped_role,
+        is_leader: data.data.profile.is_leader
+      });
+    }
+    setError(null);
+    fetchMemberTasks(data.data?.profile?.is_leader);
+  } catch (err) {
+    setError(err.message);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const fetchMemberTasks = async (isLeader = false) => {
     try {
@@ -348,6 +391,29 @@ function EarlyPathDashboard() {
                   <h1 className="text-2xl font-bold text-slate-900 leading-none mb-1">Dashboard</h1>
                   <p className="text-slate-500 text-sm leading-none">Track your internship progress and stay up to date.</p>
                 </div>
+
+                {/* ── Submission Switcher ── */}
+{submissionList.length > 1 && (
+  <div className="flex gap-2 flex-wrap">
+    {submissionList.map((sub) => {
+      const isActive = selectedSubmission?.id_submission === sub.id_submission;
+      return (
+        <button
+          key={sub.id_submission}
+          onClick={() => setSelectedSubmission(sub)}
+          className={`text-xs px-3 py-1.5 rounded-full border font-medium transition-colors ${
+            isActive
+              ? "bg-indigo-600 text-white border-indigo-600"
+              : "bg-white text-slate-600 border-slate-200 hover:border-indigo-300 hover:text-indigo-600"
+          }`}
+        >
+          {sub.name} · {sub.company}
+          {sub.batch && <span className={`ml-1 ${isActive ? "text-indigo-200" : "text-slate-400"}`}>· {sub.batch}</span>}
+        </button>
+      );
+    })}
+  </div>
+)}
 
                 {/* ── Hero Profile Banner ── */}
                 <div
