@@ -30,12 +30,18 @@ class HRCandidateController extends Controller
             } elseif (preg_match('/^stage_(\d+)$/', $statusParam, $m)) {
                 $frontendIdx = (int) $m[1];
                 if ($frontendIdx === 0) {
-                    // Stage 0: hanya pending / stage_1 (belum pernah diadvance)
                     $query->whereIn('status', ['pending', 'stage_1']);
                 } else {
-                    // Frontend kirim 0-based index, DB simpan 1-based
                     $dbStatus = 'stage_' . ($frontendIdx + 1);
-                    $query->where('status', $dbStatus);
+                    $position = \App\Models\Position::find($request->id_position);
+                    $flow = $position?->selection_flow;
+                    if (is_string($flow)) $flow = json_decode($flow, true);
+                    $stageType = $flow[$frontendIdx]['type'] ?? null;
+                    if ($stageType === 'interview') {
+                        $query->whereIn('status', ['interview', $dbStatus]);
+                    } else {
+                        $query->where('status', $dbStatus);
+                    }
                 }
             } else {
                 $query->where('status', $statusParam);
@@ -367,6 +373,7 @@ class HRCandidateController extends Controller
             'interview_time'  => $interviewData['interview_time'] ?? null,
             'interview_notes' => $interviewData['interview_notes'] ?? null,
             'interview_result' => $interviewData['interview_result'] ?? null,
+            'selection_flow'   => $s->position?->selection_flow ?? [],
         ];
     }
 
@@ -531,6 +538,7 @@ class HRCandidateController extends Controller
             'cover_letter_url'       => $s->supporting_document_file ? asset('storage/' . $s->supporting_document_file) : null,
             'portfolio_url'          => $s->portfolio_file ? asset('storage/' . $s->portfolio_file) : null,
             'institution_letter_url' => $s->supporting_document_file ? asset('storage/' . $s->supporting_document_file) : null,
+            'selection_flow'         => $s->position?->selection_flow ?? [],
         ];
     }
 
@@ -550,6 +558,12 @@ class HRCandidateController extends Controller
         // Filter status apprentice
         if ($request->filled('status')) {
             $query->where('status', $request->status);
+        }
+        // Filter by position
+        if ($request->filled('id_position')) {
+            $query->whereHas('submission', fn($q) =>
+                $q->where('id_position', $request->id_position)
+            );
         }
 
         // Search by nama intern atau nama mentor

@@ -44,29 +44,52 @@ class EmbeddingService
     }
     
     public function prepareCandidateText($submission, string $cvText = ''): string
-{
-    $parts = [];
+    {
+        $parts = [];
 
-    // Hanya nama posisi — bukan description/requirements (shared)
-    if ($submission->position) {
-        $parts[] = 'Applying for: ' . $submission->position->name;
+        // Position name
+        if ($submission->position) {
+            $parts[] = 'Applying for: ' . $submission->position->name;
+        }
+
+        // Motivation - unique per candidate
+        if ($submission->motivation_message) {
+            $parts[] = 'Motivation: ' . $submission->motivation_message;
+        }
+
+        // HR notes - unique per candidate
+        if ($submission->hr_notes) {
+            $parts[] = 'HR Notes: ' . $submission->hr_notes;
+        }
+
+        // Auto-extract CV from storage if not passed manually
+        if (empty($cvText) && !empty($submission->cv_file)) {
+            try {
+                $cvPath = storage_path('app/public/' . $submission->cv_file);
+                if (file_exists($cvPath)) {
+                    $ext = strtolower(pathinfo($cvPath, PATHINFO_EXTENSION));
+                    if ($ext === 'pdf') {
+                        $raw = shell_exec('pdftotext ' . escapeshellarg($cvPath) . ' -');
+                        if ($raw) $cvText = $raw;
+                    } elseif (in_array($ext, ['txt', 'md'])) {
+                        $cvText = file_get_contents($cvPath);
+                    }
+                }
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::warning('CV extraction failed: ' . $e->getMessage());
+            }
+        }
+
+        if (!empty($cvText)) {
+            $parts[] = 'CV Content: ' . mb_substr($cvText, 0, 5000);
+        }
+
+        // Portfolio as signal
+        if (!empty($submission->portfolio_file)) {
+            $parts[] = 'Has portfolio: yes';
+        }
+
+        return mb_substr(implode("\n", $parts), 0, 8000);
     }
 
-    // Motivasi — ini unik per kandidat
-    if ($submission->motivation_message) {
-        $parts[] = 'Motivation: ' . $submission->motivation_message;
-    }
-
-    // HR notes — unik per kandidat
-    if ($submission->hr_notes) {
-        $parts[] = 'HR Notes: ' . $submission->hr_notes;
-    }
-
-    // CV — paling unik, paling penting
-    if (!empty($cvText)) {
-        $parts[] = 'CV: ' . mb_substr($cvText, 0, 6000);
-    }
-
-    return mb_substr(implode("\n", $parts), 0, 8000);
-}
 }

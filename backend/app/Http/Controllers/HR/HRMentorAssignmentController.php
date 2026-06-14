@@ -19,7 +19,7 @@ class HRMentorAssignmentController extends Controller
         $search = $request->get('search');
 
         // Get submissions (accepted/interview) with optional search
-        $submissionsQuery = Submission::whereIn('status', ['interview', 'accepted'])
+        $submissionsQuery = Submission::where('status', 'accepted')
             ->whereHas('vacancy', fn($q) => $q->where('id_company', $companyId))
             ->with(['user', 'position', 'vacancy', 'mentor']);
 
