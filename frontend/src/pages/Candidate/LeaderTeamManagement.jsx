@@ -377,6 +377,12 @@ export default function LeaderTeamManagement() {
   const [delegateForm, setDelegateForm] = useState({ title: "", description: "", memberUserId: "", deadline: "" });
   const [editForm, setEditForm] = useState({ title: "", description: "", memberUserId: "", deadline: "" });
   const [logbookDropdown, setLogbookDropdown] = useState(false);
+const [toast, setToast] = useState(null);
+
+const showToast = (message, type = "success") => {
+  setToast({ message, type });
+  setTimeout(() => setToast(null), 3000);
+};
 
   useEffect(() => { fetchLeaderData(); }, []);
 
@@ -413,9 +419,9 @@ export default function LeaderTeamManagement() {
         body: JSON.stringify(data)
       });
       if (!res.ok) throw new Error("Failed to assign");
-      alert("Task delegated to member!");
+showToast("Task delegated to member!")
       fetchLeaderData();
-    } catch (err) { alert(err.message); }
+    } catch (err) { showToast(err.message, "error");}
   };
 
   const handleUpdateSubTask = async (taskId, data) => {
@@ -427,9 +433,9 @@ export default function LeaderTeamManagement() {
         body: JSON.stringify(data)
       });
       if (!res.ok) throw new Error("Failed to update");
-      alert("Task updated!");
+      showToast("Task updated!");
       fetchLeaderData();
-    } catch (err) { alert(err.message); }
+    } catch (err) { showToast(err.message); }
   };
 
   const handleDeleteSubTask = async (taskId) => {
@@ -441,9 +447,9 @@ export default function LeaderTeamManagement() {
         headers: { "Authorization": `Bearer ${token}` }
       });
       if (!res.ok) throw new Error("Failed to delete");
-      alert("Task deleted!");
+      showToast("Task deleted!");
       fetchLeaderData();
-    } catch (err) { alert(err.message); }
+    } catch (err) { showToast(err.message); }
   };
 
   const handleReviewTask = async (subtaskId, notes) => {
@@ -455,9 +461,9 @@ export default function LeaderTeamManagement() {
         body: JSON.stringify({ notes, status: "in_progress" }) // Push back to in progress
       });
       if (!res.ok) throw new Error("Failed to send feedback");
-      alert("Revision note sent to member!");
+      showToast("Revision note sent to member!");
       fetchLeaderData();
-    } catch (err) { alert(err.message); }
+    } catch (err) { showToast(err.message); }
   };
 
   const handleSubmitDelegation = async () => {
@@ -842,7 +848,21 @@ export default function LeaderTeamManagement() {
     document.body.removeChild(link);
   };
 
-  if (loading) return <DashboardLayout company={company}><LoadingSpinner /></DashboardLayout>;
+  if (loading) return <DashboardLayout company={company}><LoadingSpinner />
+{toast && (
+  <div style={{
+    position: "fixed", bottom: "24px", left: "50%", transform: "translateX(-50%)",
+    zIndex: 9999, background: toast.type === "success" ? "#059669" : "#dc2626",
+    color: "#fff", padding: "12px 24px", borderRadius: "12px",
+    boxShadow: "0 8px 24px rgba(0,0,0,0.15)", fontSize: "13px", fontWeight: 600,
+    display: "flex", alignItems: "center", gap: "8px",
+    animation: "slideUp 0.3s ease"
+  }}>
+    {toast.type === "success" ? "✓" : "✕"} {toast.message}
+  </div>
+)}
+<style>{`@keyframes slideUp { from { opacity:0; transform:translateX(-50%) translateY(16px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }`}</style>
+</DashboardLayout>;
 
   return (
     <DashboardLayout userName={user?.name} userPhoto={user?.photo} company={company}>

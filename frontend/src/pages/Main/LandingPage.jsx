@@ -303,7 +303,7 @@ const PositionsPopup = ({ vacancy, onClose, isDark }) => {
       onClick={(e) => e.target === e.currentTarget && onClose()}
       style={{ position: "fixed", inset: 0, background: "rgba(10,22,40,0.85)", backdropFilter: "blur(8px)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}
     >
-      <div style={{ background: isDark ? "#0d1a28" : "#ffffff", borderRadius: "24px", width: "100%", maxHeight: "85vh", overflowY: "auto", position: "relative", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5)", border: isDark ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(0,0,0,0.1)" }}>
+      <div style={{ background: isDark ? "#0d1a28" : "#ffffff", borderRadius: "24px", width: "100%", maxWidth: "480px", maxHeight: "fit-contenth", overflowY: "visible", position: "relative", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5)", border: isDark ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(0,0,0,0.1)" }}>
 
         {/* Header */}
         <div style={{ padding: "28px 28px 0" }}>
