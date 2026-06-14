@@ -549,8 +549,8 @@ function IndividualRow({ candidate, onDetail, onNotes, onViewDoc, irActive }) {
   const hasAnyDoc = candidate.has_cv || candidate.has_supporting_document || candidate.has_portfolio;
 
   const gridCols = irActive
-    ? '1.8fr 0.9fr 0.8fr 1.2fr 1fr 0.8fr 0.9fr'
-    : '1.8fr 1fr 0.8fr 1.2fr 0.8fr 0.9fr';
+    ? '0.9fr 0.9fr 0.8fr 1.2fr 1fr 0.8fr 0.9fr'
+    : '0.9fr 1fr 0.8fr 1.2fr 0.8fr 0.9fr';
 
   return (
     <>
@@ -560,26 +560,24 @@ function IndividualRow({ candidate, onDetail, onNotes, onViewDoc, irActive }) {
         background: candidate.relevance_percent >= 70 ? 'rgba(16,185,129,0.02)' : 'transparent',
       }}>
         {/* Candidate — no avatar bubble */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div style={{ minWidth: 0 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-              <span className="cand-cell-name">{candidate.name}</span>
+              <span className="cand-cell-name" style={{ textAlign: 'center', display: 'block' }}>{candidate.name}</span>
               {candidate._classification && <ClassificationBadge classification={candidate._classification} />}
             </div>
-            <div className="cand-cell-email">{candidate.email}</div>
-          </div>
+            <div className="cand-cell-email" style={{ textAlign: 'center' }}>{candidate.email}</div>
         </div>
 
         {/* University — word-wrap, clamp font */}
-        <div className="cand-cell-uni">{candidate.university || '-'}</div>
+        <div className="cand-cell-uni" style={{ textAlign: 'center' }}>{candidate.university || '-'}</div>
 
         {/* Documents */}
-        <div>
+        <div style={{ display: 'flex', justifyContent: 'center' }}>
           <DocsIconBtn candidate={candidate} hasAny={hasAnyDoc} onOpen={() => setDocModal(true)} />
         </div>
 
         {/* Notes */}
-        <div style={{ fontSize: '11.5px', color: '#64748b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <div style={{ fontSize: '11.5px', color: '#64748b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'center' }}>
           {candidate.hr_notes
             ? <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><IC.MessageSquare /><span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{candidate.hr_notes}</span></span>
             : <span style={{ color: '#cbd5e1' }}>No notes</span>}
@@ -597,9 +595,9 @@ function IndividualRow({ candidate, onDetail, onNotes, onViewDoc, irActive }) {
         )}
 
         {/* Status */}
-        <div><StatusBadge status={candidate.status} /></div>
+        <div style={{ display: 'flex', justifyContent: 'center' }}><StatusBadge status={candidate.status} /></div>
          {/* Actions */}
-        <div style={{ display: 'flex', gap: '5px' }}>
+        <div style={{ display: 'flex', gap: '5px', justifyContent: 'center' }}>
           <IconBtn icon={<IC.Eye />} title="View Detail" onClick={() => onDetail(candidate)} />
           <IconBtn icon={<IC.Edit />} title="Edit Notes" onClick={() => onNotes(candidate)} bgHov="#fef9c3" />
         </div>
@@ -619,8 +617,8 @@ function GroupRow({ candidate, onDetail, onNotes, onViewDoc, irActive }) {
   const hasAnyDoc = candidate.has_cv || candidate.has_supporting_document || candidate.has_portfolio;
 
   const gridCols = irActive
-    ? '1.8fr 0.9fr 0.8fr 1.2fr 1fr 0.8fr 0.9fr'
-    : '1.8fr 1fr 0.8fr 1.2fr 0.8fr 0.9fr';
+    ? '0.9fr 0.9fr 0.8fr 1.2fr 1fr 0.8fr 0.9fr'
+    : '0.9fr 1fr 0.8fr 1.2fr 0.8fr 0.9fr';
 
   return (
     <>
@@ -939,8 +937,8 @@ export default function CandidateHR() {
     ? ['CANDIDATE', 'UNIVERSITY', 'DOCUMENTS', 'NOTES', 'RELEVANCE', 'STATUS', 'ACTION']
     : ['CANDIDATE', 'UNIVERSITY', 'DOCUMENTS', 'NOTES', 'STATUS', 'ACTION'];
   const gridCols = irActive
-    ? '1.8fr 0.9fr 0.8fr 1.2fr 1fr 0.8fr 0.9fr'
-    : '1.8fr 1fr 0.8fr 1.2fr 0.8fr 0.9fr';
+    ? '0.9fr 0.9fr 0.8fr 1.2fr 1fr 0.8fr 0.9fr'
+    : '0.9fr 1fr 0.8fr 1.2fr 0.8fr 0.9fr';
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#f8fafc', fontFamily: "'Poppins', sans-serif" }}>
@@ -1120,7 +1118,7 @@ export default function CandidateHR() {
                 <div key={h} style={{ 
                   fontSize: '10px', fontWeight: '700', color: h === 'RELEVANCE' ? '#3b82f6' : '#94a3b8', 
                   letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '4px',
-                  justifyContent: ['CANDIDATE', 'UNIVERSITY'].includes(h) ? 'flex-start' : 'center'
+                  justifyContent: 'center'
                 }}>
                   {h === 'RELEVANCE' && <IC.BarChart />}
                   {h}

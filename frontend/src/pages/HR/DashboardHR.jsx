@@ -509,15 +509,15 @@ export default function DashboardHR() {
               <div className="hr-table-inner">
               {/* Table header */}
               <div style={{
-                display: "grid", gridTemplateColumns: "1fr 1fr 1.2fr 0.8fr",
+                display: "grid", gridTemplateColumns: "1.4fr 1.2fr 1fr 1.2fr 0.8fr",
                 gap: "12px", padding: "10px 20px",
                 background: "#f8fafc", borderBottom: "1px solid #f1f5f9",
               }}>
-                {["CANDIDATE", "POSITION", "UNIVERSITY", "STATUS"].map((h) => (
+                {["CANDIDATE", "EMAIL", "POSITION", "UNIVERSITY", "STATUS"].map((h) => (
                   <span key={h} style={{ 
                     fontSize: "10px", fontWeight: "700", color: "#94a3b8", 
                     letterSpacing: "0.06em",
-                    textAlign: h === "CANDIDATE" ? "left" : "center",
+                    textAlign: "center",
                     display: "block"
                   }}>
                     {h}
@@ -541,7 +541,7 @@ export default function DashboardHR() {
                     key={i}
                     className="row-hover"
                     style={{
-                      display: "grid", gridTemplateColumns: "1fr 1fr 1.2fr 0.8fr",
+                      display: "grid", gridTemplateColumns: "1.4fr 1.2fr 1fr 1.2fr 0.8fr",
                       gap: "8px", padding: "9px 16px", alignItems: "center",
                       borderBottom: i < data.recent_candidates.length - 1 ? "1px solid #f8fafc" : "none",
                       transition: "background 0.15s",
@@ -549,10 +549,11 @@ export default function DashboardHR() {
                   >
                     {/* Name + email — no avatar bubble */}
                     <div style={{ minWidth: 0 }}>
-                      <div style={{ fontSize: "12.5px", fontWeight: "600", color: "#1e293b", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{c.name}</div>
-                      <div style={{ fontSize: "11px", color: "#94a3b8", marginTop: "1px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{c.email}</div>
+                      <div style={{ fontSize: "12.5px", fontWeight: "600", color: "#1e293b", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", textAlign: "center" }}>{c.name}</div>
                     </div>
 
+                    {/* Email */}
+                    <div style={{ fontSize: "11.5px", color: "#94a3b8", textAlign: "center", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.email}</div>
                     {/* Position */}
                     <div style={{ fontSize: "11.5px", color: "#475569", textAlign: "center", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.position}</div>
                     {/* University */}

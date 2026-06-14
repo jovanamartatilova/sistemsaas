@@ -222,14 +222,14 @@ function InternRow({ intern, onDetail, isLast }) {
 
   return (
     <div style={{
-      display: 'grid', gridTemplateColumns: '1.8fr 1fr 1.1fr 1fr 0.8fr 0.7fr', gap: '8px',
+      display: 'grid', gridTemplateColumns: '1.2fr 1.2fr 1fr 1fr 1fr 0.8fr 0.6fr', gap: '8px',
       padding: '10px 16px', alignItems: 'center',
       borderBottom: isLast ? 'none' : '1px solid #f1f5f9',
     }}>
       {/* Intern — no avatar bubble */}
-      <div style={{ minWidth: 0 }}>
-        <div style={{ fontSize: '12.5px', fontWeight: '700', color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{intern.name}</div>
-        <div style={{ fontSize: '11px', color: '#94a3b8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{intern.email}</div>
+      <div style={{ width: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <div style={{ fontSize: '12.5px', fontWeight: '700', color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'center' }}>{intern.name}</div>
+        <div style={{ fontSize: '11px', color: '#94a3b8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'center' }}>{intern.email}</div>
       </div>
 
       {/* University */}
@@ -263,9 +263,12 @@ function InternRow({ intern, onDetail, isLast }) {
         </div>
       </div>
 
-      {/* Status + Action */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', justifyContent: 'center', minWidth: 0 }}>
+      {/* Status */}
+      <div style={{ display: 'flex', justifyContent: 'center' }}>
         <StatusBadge status={intern.status} />
+      </div>
+      {/* Action */}
+      <div style={{ display: 'flex', justifyContent: 'center' }}>
         <IconBtn icon={<IC.Eye />} title="View Detail" onClick={() => onDetail(intern)} />
       </div>
     </div>
@@ -507,14 +510,14 @@ useEffect(() => {
             <div className="ai-table-inner">
 
             {/* Table Header */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1.8fr 1fr 1.1fr 1fr 0.8fr 0.7fr', gap: '8px', padding: 'clamp(8px,1vw,10px) clamp(12px,2vw,24px)', background: '#fcfcfd', borderBottom: '1px solid #f1f5f9' }}>
-              {['INTERN', 'UNIVERSITY', 'MENTOR', 'START DATE', 'POSITION', 'STATUS'].map(h => (
+            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.2fr 1fr 1fr 1fr 0.8fr 0.6fr', gap: '8px', padding: 'clamp(8px,1vw,10px) clamp(12px,2vw,24px)', background: '#fcfcfd', borderBottom: '1px solid #f1f5f9' }}>
+              {['INTERN', 'UNIVERSITY', 'MENTOR', 'START DATE', 'POSITION', 'STATUS', 'ACTION'].map(h => (
                 <div key={h} style={{
                   fontSize: 'clamp(9px, 0.8vw, 10px)', fontWeight: '700', color: '#94a3b8',
                   letterSpacing: '0.05em',
-                  textAlign: h === 'INTERN' ? 'left' : 'center',
+                  textAlign: 'center',
                   display: 'flex',
-                  justifyContent: h === 'INTERN' ? 'flex-start' : 'center',
+                  justifyContent: 'center',
                 }}>{h}</div>
               ))}
             </div>
