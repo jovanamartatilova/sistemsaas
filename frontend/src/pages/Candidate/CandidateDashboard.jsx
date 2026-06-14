@@ -175,7 +175,7 @@ function EarlyPathDashboard() {
       setError(null);
       // Fetch member tasks after dashboard loads
       const isLeader = data.data?.profile?.is_leader;
-	fetchMemberTasks(isLeader);
+        fetchMemberTasks(isLeader);
     } catch (err) {
       setError(err.message);
       console.error("Error fetching dashboard:", err);
@@ -189,7 +189,7 @@ function EarlyPathDashboard() {
       setTasksLoading(true);
       const token = localStorage.getItem("token") || localStorage.getItem("auth_token");
       const endpoint = isLeader ? `${API_BASE_URL}/leader/tasks` : `${API_BASE_URL}/member/tasks`;
-	const response = await fetch(endpoint, {
+        const response = await fetch(endpoint, {
         headers: {
           "Authorization": `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -200,7 +200,7 @@ function EarlyPathDashboard() {
         const data = await response.json();
         if (isLeader && Array.isArray(data.data)) {
           const userId = localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user")).id_user : null;
-	  const leaderTasks = data.data.flatMap(t => (t.subtasks || []).flatMap(st => st.delegations || [])).filter(d => d.id_assignee === userId);
+          const leaderTasks = data.data.flatMap(t => (t.subtasks || []).flatMap(st => st.delegations || [])).filter(d => d.id_assignee === userId);
           setMemberTasks(leaderTasks);
         } else {
           setMemberTasks(data.data || []);
@@ -231,7 +231,9 @@ function EarlyPathDashboard() {
       console.error("Error during logout:", err);
     } finally {
       setLogoutModal(false);
-      navigate("/", { replace: true });
+      const company = JSON.parse(localStorage.getItem("company"));
+      const idCompany = company?.id_company;
+      navigate(idCompany ? `/c/${idCompany}` : "/", { replace: true });
     }
   };
 

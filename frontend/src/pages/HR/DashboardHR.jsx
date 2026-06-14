@@ -509,11 +509,11 @@ export default function DashboardHR() {
               <div className="hr-table-inner">
               {/* Table header */}
               <div style={{
-                display: "grid", gridTemplateColumns: "2fr 1.4fr 1fr 1.4fr",
+                display: "grid", gridTemplateColumns: "1fr 1fr 1.2fr 0.8fr",
                 gap: "12px", padding: "10px 20px",
                 background: "#f8fafc", borderBottom: "1px solid #f1f5f9",
               }}>
-                {["CANDIDATE", "POSITION", "STATUS", "ACTION"].map((h) => (
+                {["CANDIDATE", "POSITION", "UNIVERSITY", "STATUS"].map((h) => (
                   <span key={h} style={{ 
                     fontSize: "10px", fontWeight: "700", color: "#94a3b8", 
                     letterSpacing: "0.06em",
@@ -541,7 +541,7 @@ export default function DashboardHR() {
                     key={i}
                     className="row-hover"
                     style={{
-                      display: "grid", gridTemplateColumns: "2fr 1.4fr 1fr 1.4fr",
+                      display: "grid", gridTemplateColumns: "1fr 1fr 1.2fr 0.8fr",
                       gap: "8px", padding: "9px 16px", alignItems: "center",
                       borderBottom: i < data.recent_candidates.length - 1 ? "1px solid #f8fafc" : "none",
                       transition: "background 0.15s",
@@ -555,6 +555,8 @@ export default function DashboardHR() {
 
                     {/* Position */}
                     <div style={{ fontSize: "11.5px", color: "#475569", textAlign: "center", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.position}</div>
+                    {/* University */}
+                    <div style={{ fontSize: "11.5px", color: "#475569", textAlign: "center", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.university || "-"}</div>
 
                     {/* Status badge */}
                     <div style={{ textAlign: "center" }}>
@@ -570,30 +572,6 @@ export default function DashboardHR() {
                       </span>
                     </div>
 
-                    {/* Actions */}
-                    <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", justifyContent: "center" }}>
-                      {c.status === "screening" && (
-                        <>
-                          <ActionBtn label="Interview" variant="purple" onClick={() => setConfirmAction({ type: "interview", candidate: c })} />
-                          <ActionBtn label="Reject" variant="red" onClick={() => setConfirmAction({ type: "reject", candidate: c })} />
-                        </>
-                      )}
-                      {c.status === "test" && (
-                        <>
-                          <ActionBtn label="Interview" variant="purple" onClick={() => setConfirmAction({ type: "interview", candidate: c })} />
-                          <ActionBtn label="Reject" variant="red" onClick={() => setConfirmAction({ type: "reject", candidate: c })} />
-                        </>
-                      )}
-                      {c.status === "interview" && (
-                        <>
-                          <ActionBtn label="Accept" variant="green" onClick={() => setConfirmAction({ type: "accept", candidate: c })} />
-                          <ActionBtn label="Reject" variant="red" onClick={() => setConfirmAction({ type: "reject", candidate: c })} />
-                        </>
-                      )}
-                      {c.status === "accepted" && (
-                        <ActionBtn label="Create LoA" variant="blue" onClick={() => navigate("/hr/generate-loa")} />
-                      )}
-                    </div>
                   </div>
                 ))
               )}

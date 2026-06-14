@@ -44,7 +44,7 @@ class HRDashboardController extends Controller
         $accepted = (clone $totalBase)->where('status', 'accepted')->count();
         
         // Count how many are in "Test" stages vs "Interview" vs "Screening"
-        $allSubmissions = (clone $totalBase)->with(['position', 'user'])->get();
+        $allSubmissions = (clone $totalBase)->with(['position', 'user', 'user.candidate'])->get();
         
         $mappedSubmissions = $allSubmissions->map(function($s) {
             $status = $s->status;
@@ -86,6 +86,7 @@ class HRDashboardController extends Controller
                 'name'          => $s->user?->name,
                 'email'         => $s->user?->email,
                 'position'      => $s->position?->name,
+                'university'    => $s->user?->candidate?->institution ?? '-',
                 'status'        => $s->mapped_status,
                 'submitted_at'  => $s->submitted_at,
                 'has_cv'            => !empty($s->cv_file),

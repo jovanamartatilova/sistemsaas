@@ -363,7 +363,7 @@ function DocsIconBtn({ candidate, onOpen, hasAny }) {
 }
 
 // ─── Detail Modal ─────────────────────────────────────────────────────────────
-function DetailModal({ candidate, onClose, onViewDoc }) {
+function DetailModal({ candidate, onClose, onViewDoc, onAction }) {
   if (!candidate) return null;
   const isGroup = !!candidate.id_team;
   return (
@@ -445,6 +445,41 @@ function DetailModal({ candidate, onClose, onViewDoc }) {
               </div>
             </div>
           )}
+
+          {onAction && !['accepted', 'rejected'].includes(candidate.status) && (() => {
+            const flow = Array.isArray(candidate.selection_flow) ? candidate.selection_flow : [];
+            const currentStatus = candidate.status;
+
+            // Cari index stage saat ini
+            let currentIdx = -1;
+            if (currentStatus === 'pending' || currentStatus === 'stage_1') currentIdx = 0;
+            else if (/^stage_(\d+)$/.test(currentStatus)) currentIdx = parseInt(currentStatus.split('_')[1]) - 1;
+            else if (currentStatus === 'interview') currentIdx = flow.findIndex(s => s.type === 'interview');
+            else if (currentStatus === 'screening') currentIdx = flow.findIndex(s => s.type === 'screening');
+            else if (currentStatus === 'test') currentIdx = flow.findIndex(s => s.type === 'test');
+
+            const nextStage = flow[currentIdx + 1];
+            const isLastStage = currentIdx >= flow.length - 1;
+
+            return (
+              <div>
+                <div style={{ fontSize: '11px', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', marginBottom: '8px' }}>Actions</div>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  {!isLastStage && nextStage && (
+                    <ActionBtn
+                      label={`Move to ${nextStage.name || nextStage.type.charAt(0).toUpperCase() + nextStage.type.slice(1)}`}
+                      variant={nextStage.type === 'interview' ? 'purple' : nextStage.type === 'test' ? 'blue' : 'green'}
+                      onClick={() => { onAction('next', candidate, currentIdx); onClose(); }}
+                    />
+                  )}
+                  {isLastStage && (
+                    <ActionBtn label="Accept" variant="green" onClick={() => { onAction('accept', candidate); onClose(); }} />
+                  )}
+                  <ActionBtn label="Reject" variant="red" onClick={() => { onAction('reject', candidate); onClose(); }} />
+                </div>
+              </div>
+            );
+          })()}
         </div>
       </div>
     </div>
@@ -487,6 +522,28 @@ function NotesModal({ candidate, onClose, onSave }) {
  * IR-enhanced Individual Row
  * Menampilkan kolom Relevance Score saat IR search aktif
  */
+const ACTION_VARIANT = {
+  green:  { bg: '#f0fdf4', color: '#15803d', border: '#86efac' },
+  red:    { bg: '#fff1f2', color: '#be123c', border: '#fecdd3' },
+  purple: { bg: '#f5f3ff', color: '#6d28d9', border: '#ddd6fe' },
+  blue:   { bg: '#eff6ff', color: '#1d4ed8', border: '#bfdbfe' },
+};
+function ActionBtn({ label, variant = 'blue', onClick }) {
+  const v = ACTION_VARIANT[variant];
+  const [hov, setHov] = useState(false);
+  return (
+    <button onClick={onClick} onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
+      style={{
+        padding: '3px 8px', borderRadius: '7px', fontSize: '11px', fontWeight: '600',
+        cursor: 'pointer', border: `1px solid ${v.border}`,
+        background: hov ? v.border : v.bg, color: v.color,
+        whiteSpace: 'nowrap', fontFamily: 'inherit', transition: 'background 0.15s',
+      }}>
+      {label}
+    </button>
+  );
+}
+
 function IndividualRow({ candidate, onDetail, onNotes, onViewDoc, irActive }) {
   const [docModal, setDocModal] = useState(false);
   const hasAnyDoc = candidate.has_cv || candidate.has_supporting_document || candidate.has_portfolio;
@@ -541,8 +598,7 @@ function IndividualRow({ candidate, onDetail, onNotes, onViewDoc, irActive }) {
 
         {/* Status */}
         <div><StatusBadge status={candidate.status} /></div>
-
-        {/* Actions */}
+         {/* Actions */}
         <div style={{ display: 'flex', gap: '5px' }}>
           <IconBtn icon={<IC.Eye />} title="View Detail" onClick={() => onDetail(candidate)} />
           <IconBtn icon={<IC.Edit />} title="Edit Notes" onClick={() => onNotes(candidate)} bgHov="#fef9c3" />
@@ -840,6 +896,40 @@ export default function CandidateHR() {
     }
   };
 
+  const handleAction = async (type, candidate, currentIdx = null) => {
+     let endpoint;
+    if (type === 'accept') {
+      endpoint = `/hr/candidates/${candidate.id_submission}/accept`;
+    } else if (type === 'reject') {
+      endpoint = `/hr/candidates/${candidate.id_submission}/reject`;
+    } else if (type === 'interview') {
+      endpoint = `/hr/candidates/${candidate.id_submission}/interview`;
+    } else if (type === 'next' && currentIdx !== null) {
+      const nextFrontendIdx = currentIdx + 1;
+      const flow = Array.isArray(candidate.selection_flow) ? candidate.selection_flow : [];
+      const nextStage = flow[nextFrontendIdx];
+      if (nextStage?.type === 'interview') {
+        endpoint = `/hr/candidates/${candidate.id_submission}/interview`;
+      } else {
+        endpoint = `/hr/candidates/${candidate.id_submission}/stage`;
+      }
+    }
+    try {
+      const isStage = type === 'next' && (() => {
+        const flow = Array.isArray(candidate.selection_flow) ? candidate.selection_flow : [];
+        return flow[currentIdx + 1]?.type !== 'interview';
+      })();
+      await api(endpoint, {
+        method: 'PATCH',
+        data: isStage ? { stage: `stage_${currentIdx + 1}` } : undefined,
+      });
+      fetchCandidates();
+      pushToast('Candidate status updated successfully', 'success');
+    } catch (err) {
+      pushToast(err?.message || 'Failed to update status', 'error');
+    }
+  };
+
   const handleLogout = async () => { await logout(); navigate('/', { replace: true }); };
 
   const irActive = irResults !== null;
@@ -1090,7 +1180,7 @@ export default function CandidateHR() {
       </div>
 
       {/* ── Modals ── */}
-      {detailCandidate && <DetailModal candidate={detailCandidate} onClose={() => setDetailCandidate(null)} onViewDoc={viewDoc} />}
+      {detailCandidate && <DetailModal candidate={detailCandidate} onClose={() => setDetailCandidate(null)} onViewDoc={viewDoc} onAction={handleAction} />}
       {notesCandidate && <NotesModal candidate={notesCandidate} onClose={() => setNotesCandidate(null)} onSave={saveNotes} />}
 
       {showLogoutModal && (
