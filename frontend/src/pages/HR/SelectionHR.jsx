@@ -614,8 +614,8 @@ const handleLogout = () => {
 
   let gridCols, headerCols;
   if (isInterview) {
-    gridCols   = smartRankActive ? '1.4fr 1fr 1.5fr 1.5fr 1.2fr 1fr 1.5fr' : '1.4fr 1fr 1.5fr 1.5fr 1.2fr 1.5fr';
-    headerCols = smartRankActive ? ['CANDIDATE','UNIVERSITY','SCHEDULE','LOCATION','NOTES','RANK & MATCH','ACTION'] : ['CANDIDATE','UNIVERSITY','SCHEDULE','LOCATION','NOTES','ACTION'];
+    gridCols   = smartRankActive ? '1.4fr 1fr 1.5fr 1.5fr 1fr 1.5fr' : '1.4fr 1fr 1.5fr 1.5fr 1.2fr 1.5fr';
+    headerCols = smartRankActive ? ['CANDIDATE','UNIVERSITY','SCHEDULE','LOCATION','RANK & MATCH','ACTION'] : ['CANDIDATE','UNIVERSITY','SCHEDULE','LOCATION','NOTES','ACTION'];
   } else if (isTest) {
     gridCols   = smartRankActive ? '1.4fr 1.2fr 1fr 1.4fr 1.2fr 0.8fr 1fr 1.5fr' : '1.4fr 1.2fr 1fr 1.4fr 1.2fr 0.8fr 1.2fr 1.5fr';
     headerCols = smartRankActive ? ['CANDIDATE','UNIVERSITY','LOCATIONS','SCHEDULE','SUBMISSIONS','SCORE','RANK & MATCH','ACTION'] : ['CANDIDATE','UNIVERSITY','LOCATIONS','SCHEDULE','SUBMISSIONS','SCORE','NOTES','ACTION'];
@@ -871,12 +871,17 @@ const handleLogout = () => {
                                 </div>
                               </>
                             ) : (
-                              <div style={{ gridColumn:'span 2', display:'flex', justifyContent:'center', alignItems:'center' }}>
-                                <button onClick={()=>setAssignInterviewCandidate(c)} style={{ display:'flex', alignItems:'center', gap:'6px', padding:'6px 14px', borderRadius:'8px', border:'1px dashed #cbd5e1', background:'#fff', color:'#64748b', fontSize:'11.5px', fontWeight:'600', cursor:'pointer', transition:'all 0.15s' }} onMouseEnter={e=>{e.currentTarget.style.borderColor='#3b82f6';e.currentTarget.style.color='#3b82f6';e.currentTarget.style.background='#f0f7ff'}} onMouseLeave={e=>{e.currentTarget.style.borderColor='#cbd5e1';e.currentTarget.style.color='#64748b';e.currentTarget.style.background='#fff'}}>
-                                  <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2'><rect x='3' y='4' width='18' height='18' rx='2'/><line x1='16' y1='2' x2='16' y2='6'/><line x1='8' y1='2' x2='8' y2='6'/><line x1='3' y1='10' x2='21' y2='10'/></svg>
-                                  Assign Interview
-                                </button>
-                              </div>
+                              <>
+                                <div style={{ display:'flex', justifyContent:'center', alignItems:'center' }}>
+                                  <button onClick={()=>setAssignInterviewCandidate(c)} style={{ display:'flex', alignItems:'center', gap:'6px', padding:'6px 14px', borderRadius:'8px', border:'1px dashed #cbd5e1', background:'#fff', color:'#64748b', fontSize:'11.5px', fontWeight:'600', cursor:'pointer', transition:'all 0.15s' }} onMouseEnter={e=>{e.currentTarget.style.borderColor='#3b82f6';e.currentTarget.style.color='#3b82f6';e.currentTarget.style.background='#f0f7ff'}} onMouseLeave={e=>{e.currentTarget.style.borderColor='#cbd5e1';e.currentTarget.style.color='#64748b';e.currentTarget.style.background='#fff'}}>
+                                    <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2'><rect x='3' y='4' width='18' height='18' rx='2'/><line x1='16' y1='2' x2='16' y2='6'/><line x1='8' y1='2' x2='8' y2='6'/><line x1='3' y1='10' x2='21' y2='10'/></svg>
+                                    Assign Interview
+                                  </button>
+                                </div>
+                                <div style={{ display:'flex', justifyContent:'center', alignItems:'center' }}>
+                                  <span style={{ fontSize:'12px', color:'#cbd5e1' }}>-</span>
+                                </div>
+                              </>
                             )}
                           </>
                         ) : isTest ? (
