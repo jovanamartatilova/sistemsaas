@@ -128,12 +128,12 @@ Route::middleware('auth:sanctum')->group(function () {
     // AI Proxy (Groq)
     Route::post('/ai/generate', function (Request $request) {
         try {
-            if (!env('GROQ_API_KEY')) {
+            if (!config('services.groq.api_key')) {
                 return response()->json(['error' => 'API Key belum di set. Silakan masukkan GROQ_API_KEY di file .env backend Anda.'], 500);
             }
             $response = Http::withOptions(['verify' => false, 'timeout' => 30])
                 ->withHeaders([
-                    'Authorization' => 'Bearer ' . env('GROQ_API_KEY'),
+                    'Authorization' => 'Bearer ' . config('services.groq.api_key'),
                     'Content-Type'  => 'application/json',
                 ])->post('https://api.groq.com/openai/v1/chat/completions', [
                     'model'       => 'llama-3.3-70b-versatile',
