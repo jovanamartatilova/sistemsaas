@@ -1,13 +1,123 @@
-import { useState, useEffect } from "react";
-import { LayoutDashboard, BookOpen, User, Award, LogOut, MapPin } from "lucide-react";
-import { useNavigate, useParams, Link, useLocation } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { LogOut, MapPin, User } from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
-import { getScopedRole, debugUserRole } from "../../utils/roleUtils";
+import SidebarCandidate from "../../components/SidebarCandidate";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}`;
 
-// --- Progress Bar ---
+// ─── Shared Task Status Color Map ───────────────────────────────────────────
+const TASK_COLORS = {
+  done:        { bg: "bg-emerald-500", hex: "#10b981", label: "Done",        badge: "bg-emerald-50 text-emerald-600 border-emerald-200" },
+  in_progress: { bg: "bg-amber-400",   hex: "#fbbf24", label: "In Progress", badge: "bg-blue-50 text-blue-600 border-blue-200" },
+  pending:     { bg: "bg-slate-300",   hex: "#cbd5e1", label: "Pending",     badge: "bg-amber-50 text-amber-600 border-amber-200" },
+};
+
+// ─── Donut Chart ────────────────────────────────────────────────────────────
+function DonutChart({ done, inProgress, pending, total }) {
+  const size = 160;
+  const cx = size / 2;
+  const cy = size / 2;
+  const R = 58;
+  const strokeWidth = 22;
+  const gap = 3; // degrees gap between segments
+
+  const pct = (n) => (total > 0 ? n / total : 0);
+  const segments = [
+    { key: "done",        value: done,       color: TASK_COLORS.done.hex },
+    { key: "in_progress", value: inProgress, color: TASK_COLORS.in_progress.hex },
+    { key: "pending",     value: pending,    color: TASK_COLORS.pending.hex },
+  ].filter((s) => s.value > 0);
+
+  const circumference = 2 * Math.PI * R;
+  const totalGapDeg = segments.length * gap;
+  const availableDeg = 360 - totalGapDeg;
+
+  // Build arc paths
+  let currentAngle = -90;
+  const arcs = segments.map((seg) => {
+    const segDeg = pct(seg.value) * availableDeg;
+    const startAngle = currentAngle + gap / 2;
+    const endAngle = startAngle + segDeg;
+    currentAngle = endAngle + gap / 2;
+
+    const toRad = (deg) => (deg * Math.PI) / 180;
+    const x1 = cx + R * Math.cos(toRad(startAngle));
+    const y1 = cy + R * Math.sin(toRad(startAngle));
+    const x2 = cx + R * Math.cos(toRad(endAngle));
+    const y2 = cy + R * Math.sin(toRad(endAngle));
+    const largeArc = segDeg > 180 ? 1 : 0;
+
+    return {
+      ...seg,
+      d: `M ${x1} ${y1} A ${R} ${R} 0 ${largeArc} 1 ${x2} ${y2}`,
+    };
+  });
+
+  const progressPct = total > 0 ? Math.round((done / total) * 100) : 0;
+
+  return (
+  <div className="flex flex-row items-center gap-6 w-full">
+    <div className="relative flex-shrink-0" style={{ width: size, height: size }}>
+        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+          {/* background ring */}
+          <circle cx={cx} cy={cy} r={R} fill="none" stroke="#f1f5f9" strokeWidth={strokeWidth} />
+          {/* segments */}
+          {total === 0 ? (
+            <circle cx={cx} cy={cy} r={R} fill="none" stroke="#e2e8f0" strokeWidth={strokeWidth} />
+          ) : (
+            arcs.map((arc) => (
+              <path
+                key={arc.key}
+                d={arc.d}
+                fill="none"
+                stroke={arc.color}
+                strokeWidth={strokeWidth}
+                strokeLinecap="round"
+              />
+            ))
+          )}
+        </svg>
+        {/* Center label */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+          <span className="text-3xl font-extrabold text-slate-800 leading-none">{progressPct}%</span>
+          <span className="text-[10px] font-medium text-slate-400 mt-0.5 tracking-wide">DONE</span>
+        </div>
+      </div>
+
+      {/* Legend */}
+      <div className="flex flex-col gap-2 flex-1">
+        {[
+          { key: "done",        value: done,       label: "Done" },
+          { key: "in_progress", value: inProgress, label: "In Progress" },
+          { key: "pending",     value: pending,    label: "Pending" },
+        ].map((s) => (
+          <div key={s.key} className="flex items-center gap-2">
+            <span
+              className="w-2.5 h-2.5 rounded-sm flex-shrink-0"
+              style={{ background: TASK_COLORS[s.key].hex }}
+            />
+            <span className="text-xs text-slate-500 flex-1">{s.label}</span>
+            <span className="text-xs font-semibold text-slate-700">
+              {s.value}
+              <span className="font-normal text-slate-400 ml-1">
+                ({total > 0 ? Math.round((s.value / total) * 100) : 0}%)
+              </span>
+            </span>
+          </div>
+        ))}
+        <div className="flex items-center gap-2 border-t border-slate-100 pt-2 mt-1">
+          <span className="w-2.5 h-2.5 flex-shrink-0" />
+          <span className="text-xs text-slate-400 flex-1">Total</span>
+          <span className="text-xs font-bold text-slate-700">{total} Tasks</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Progress Bar ────────────────────────────────────────────────────────────
 function ProgressBar({ value, max, color = "bg-indigo-500", height = "h-1.5" }) {
   const pct = Math.round((value / max) * 100);
   return (
@@ -17,10 +127,9 @@ function ProgressBar({ value, max, color = "bg-indigo-500", height = "h-1.5" }) 
   );
 }
 
-// --- Competency Card ---
-function CompetencyCard({ title, hours, score, maxScore, status }) {
+// ─── Competency Card ─────────────────────────────────────────────────────────
+function CompetencyCard({ title, hours, status }) {
   const dotColor = status === "Done" ? "bg-emerald-500" : "bg-indigo-400";
-
   return (
     <div className="flex items-center justify-between py-3 border-b border-slate-100 last:border-0">
       <div className="flex items-center gap-3">
@@ -30,91 +139,42 @@ function CompetencyCard({ title, hours, score, maxScore, status }) {
           <p className="text-xs text-slate-400 mt-0.5">{hours}</p>
         </div>
       </div>
-      {score !== undefined ? (
-        <div className="flex items-center gap-2 text-right">
-          <span className="text-xs text-emerald-600 font-semibold">{score}/{maxScore}</span>
-          <div className="w-16">
-            <ProgressBar value={score} max={maxScore} color="bg-emerald-500" />
-          </div>
-        </div>
-      ) : (
-        <span className="text-xs text-indigo-500 font-medium">Active</span>
-      )}
+      <span className="text-xs text-indigo-500 font-medium">Active</span>
     </div>
   );
 }
 
-// --- Certificate Card ---
-function CertificateCard({ subject, date }) {
-  return (
-    <div className="bg-white border border-slate-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
-      <div className="h-1.5 bg-gradient-to-r from-emerald-500 to-teal-400" />
-      <div className="p-4 space-y-3">
-        <div>
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Competency Certificate</p>
-          <p className="text-sm font-bold text-slate-800 mt-1">{subject}</p>
-          <p className="text-xs text-slate-400 mt-0.5">Issued: {date}</p>
-        </div>
-        <button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold py-2 rounded-lg transition-colors">
-          Download PDF
-        </button>
-      </div>
-    </div>
-  );
-}
-
-import SidebarCandidate from "../../components/SidebarCandidate";
-// --- Task Card ---
+// ─── Task Item (integrated colors from TASK_COLORS) ──────────────────────────
 function TaskItem({ title, status, deadline }) {
-  const statusStyles = {
-    "Done": "bg-emerald-50 text-emerald-600 border-emerald-200",
-    "In Progress": "bg-blue-50 text-blue-600 border-blue-200",
-    "Pending": "bg-amber-50 text-amber-600 border-amber-200",
-  };
-  const dotColors = {
-    "Done": "bg-emerald-500",
-    "In Progress": "bg-blue-500",
-    "Pending": "bg-amber-400",
-  };
+  // status here arrives as "Done" | "In Progress" | "Pending"
+  const keyMap = { "Done": "done", "In Progress": "in_progress", "Pending": "pending" };
+  const key = keyMap[status] || "pending";
+  const color = TASK_COLORS[key];
+
   return (
     <div className="flex items-center justify-between py-3 border-b border-slate-100 last:border-0">
       <div className="flex items-start gap-3">
-        <span className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${dotColors[status]}`} />
+        <span
+          className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${color.bg}`}
+        />
         <div>
           <p className="text-sm font-medium text-slate-700">{title}</p>
           {deadline && <p className="text-xs text-slate-400 mt-0.5">Due: {deadline}</p>}
         </div>
       </div>
-      <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium border whitespace-nowrap ${statusStyles[status]}`}>
+      <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium border whitespace-nowrap ${color.badge}`}>
         {status}
       </span>
     </div>
   );
 }
 
-// --- Role-based Redirect Component ---
-// TODO: This will work once backend provides scoped_role field and creates
-// /member/tasks, /member/dashboard, /leader/dashboard, /leader/team endpoints
+// ─── Role-based Redirect ─────────────────────────────────────────────────────
 function CandidateDashboardWithRedirect() {
-  const navigate = useNavigate();
-  const { user } = useAuthStore();
-
-  // FOR NOW: Just show base dashboard
-  // Backend doesn't have scoped_role field or member/leader endpoints yet
-  console.log("DEBUG: Backend role detection pending - showing base dashboard");
-
   return <EarlyPathDashboard />;
 }
 
-// --- Main Dashboard ---
-// BACKEND INTEGRATION:
-// - Fetches candidate profile, apprentice status, interviews, tests, and competencies from /candidate/dashboard
-// - Auto-refreshes every 10 seconds to reflect real-time updates from HR
-// - Data display is conditional based on apprentice status:
-//   * Screening (pending): Shows only screening hint, no tests/competencies/tasks
-//   * Accepted/Active: Shows all available data (interviews, tests, competencies, tasks)
-// - Interview and test links appear automatically when HR sends them
-// - No manual refresh needed - system monitors changes automatically
+// ─── Main Dashboard ───────────────────────────────────────────────────────────
 function EarlyPathDashboard() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -129,56 +189,29 @@ function EarlyPathDashboard() {
   useEffect(() => {
     setError(null);
     fetchDashboardData();
-    // Removed auto-refresh - user can refresh manually with button instead
   }, [location.pathname]);
 
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem("token") || localStorage.getItem("auth_token");
-
-      if (!token) {
-        setError("No authentication token found");
-        setLoading(false);
-        return;
-      }
-
+      if (!token) { setError("No authentication token found"); setLoading(false); return; }
       const response = await fetch(`${API_BASE_URL}/candidate/dashboard`, {
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
+        headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
       });
-
       if (!response.ok) {
-        if (response.status === 401) {
-          await globalLogout();
-          navigate("/", { replace: true });
-          return;
-        }
+        if (response.status === 401) { await globalLogout(); navigate("/", { replace: true }); return; }
         throw new Error("Failed to fetch dashboard data");
       }
-
       const data = await response.json();
-      console.log("📊 Dashboard Data from Backend:", data);
-      console.log("🧪 Test Data:", data.data?.test);
       setDashboardData(data.data);
-      
-      // Sync role to store
       if (data.data?.profile?.scoped_role || data.data?.profile?.is_leader !== undefined) {
-        useAuthStore.getState().setUser({ 
-          scoped_role: data.data.profile.scoped_role,
-          is_leader: data.data.profile.is_leader
-        });
+        useAuthStore.getState().setUser({ scoped_role: data.data.profile.scoped_role, is_leader: data.data.profile.is_leader });
       }
-
       setError(null);
-      // Fetch member tasks after dashboard loads
-      const isLeader = data.data?.profile?.is_leader;
-        fetchMemberTasks(isLeader);
+      fetchMemberTasks(data.data?.profile?.is_leader);
     } catch (err) {
       setError(err.message);
-      console.error("Error fetching dashboard:", err);
     } finally {
       setLoading(false);
     }
@@ -189,13 +222,7 @@ function EarlyPathDashboard() {
       setTasksLoading(true);
       const token = localStorage.getItem("token") || localStorage.getItem("auth_token");
       const endpoint = isLeader ? `${API_BASE_URL}/leader/tasks` : `${API_BASE_URL}/member/tasks`;
-        const response = await fetch(endpoint, {
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-
+      const response = await fetch(endpoint, { headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" } });
       if (response.ok) {
         const data = await response.json();
         if (isLeader && Array.isArray(data.data)) {
@@ -205,81 +232,68 @@ function EarlyPathDashboard() {
         } else {
           setMemberTasks(data.data || []);
         }
-        if (data.data?.scoped_role || data.data?.is_leader !== undefined) {
-          useAuthStore.getState().setUser({ 
-            scoped_role: data.data.scoped_role,
-            is_leader: data.data.is_leader
-          });
-        }
       }
     } catch (err) {
       console.error("Error fetching member tasks:", err);
-      // Don't show error, just keep empty array
     } finally {
       setTasksLoading(false);
     }
   };
 
-  const handleLogoutClick = () => {
-    setLogoutModal(true);
-  };
-
   const confirmLogout = async () => {
-    try {
-      await globalLogout();
-    } catch (err) {
-      console.error("Error during logout:", err);
-    } finally {
+    try { await globalLogout(); } catch (err) { console.error(err); } finally {
       setLogoutModal(false);
       const company = JSON.parse(localStorage.getItem("company"));
-      const idCompany = company?.id_company;
-      navigate(idCompany ? `/c/${idCompany}` : "/", { replace: true });
+      navigate(company?.id_company ? `/c/${company.id_company}` : "/", { replace: true });
     }
   };
-
-  const handleLogout = handleLogoutClick;
-
-  if (loading) {
-    // Loading state will be shown inside main with Sidebar visible
-  }
 
   const userData = dashboardData ? {
     profile: dashboardData.profile,
     apprentice: dashboardData.apprentice,
     vacancy: dashboardData.vacancy,
     interviews: dashboardData.interviews,
-    learning_progress: dashboardData.learning_progress,
     competencies: dashboardData.competencies,
-  } : { profile: null, apprentice: null, vacancy: null, interviews: [], learning_progress: null, competencies: [] };
+  } : { profile: null, apprentice: null, vacancy: null, interviews: [], competencies: [] };
 
-  if (error || !dashboardData) {
+  const formatStatus = (status) => {
+    const map = { pending: "Screening", accepted: "Accepted", rejected: "Rejected", active: "Active", inactive: "Inactive" };
+    return map[status?.toLowerCase()] || (status ? status.charAt(0).toUpperCase() + status.slice(1) : "Unknown");
+  };
+
+  const getStatusColor = (status) => {
+    const n = status?.toLowerCase();
+    if (n === "accepted" || n === "active") return "bg-emerald-50 text-emerald-600 border-emerald-200";
+    if (n === "rejected") return "bg-rose-50 text-rose-600 border-rose-200";
+    return "bg-amber-50 text-amber-600 border-amber-200";
+  };
+
+  const competencyList = (userData.competencies || []).map((comp) => ({
+    title: comp.name,
+    hours: `${comp.learning_hours} learning hours`,
+    status: "Active",
+  }));
+
+  const { profile, apprentice, vacancy, interviews } = userData;
+  const company = JSON.parse(localStorage.getItem("company") || "{}");
+
+  const doneTasks       = memberTasks.filter(t => t.status === "done").length;
+  const inProgressTasks = memberTasks.filter(t => t.status === "in_progress").length;
+  const pendingTasks    = memberTasks.filter(t => t.status !== "done" && t.status !== "in_progress").length;
+  const progressPct     = memberTasks.length > 0 ? Math.round((doneTasks / memberTasks.length) * 100) : 0;
+
+  // ── Error / Loading shell ─────────────────────────────────────────────────
+  if (error || (!dashboardData && !loading)) {
     return (
-      <div className="min-h-screen bg-gray-50 flex" style={{ fontFamily: 'Poppins, sans-serif' }}>
-        <SidebarCandidate
-          userName={userData.profile?.name}
-          userPhoto={userData.profile?.photo_url || userData.profile?.photo_path}
-          company={JSON.parse(localStorage.getItem("company"))}
-          onLogout={handleLogout}
-        />
+      <div className="min-h-screen bg-gray-50 flex" style={{ fontFamily: "Poppins, sans-serif" }}>
+        <SidebarCandidate userName={profile?.name} userPhoto={profile?.photo_url || profile?.photo_path} company={company} onLogout={() => setLogoutModal(true)} />
         <main className="md:ml-56 pt-14 md:pt-0 flex-1 flex items-center justify-center">
-          {loading ? (
-            <LoadingSpinner message="Loading dashboard..." />
-          ) : (
+          {loading ? <LoadingSpinner message="Loading dashboard..." /> : (
             <div className="text-center">
               <p className="text-slate-600 mb-4">{error || "Failed to load dashboard"}</p>
               <div className="flex gap-3 justify-center">
-                <button
-                  onClick={fetchDashboardData}
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-                >
-                  Retry
-                </button>
-                <button
-                  onClick={() => navigate("/")}
-                  className="px-4 py-2 bg-slate-300 text-slate-700 rounded-lg hover:bg-slate-400"
-                >
-                  Back Home
-                </button>
+                <button onClick={fetchDashboardData} className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Retry</button>
+                <button onClick={() => navigate("/")} className="px-4 py-2 bg-slate-300 text-slate-700 rounded-lg hover:bg-slate-400">Back Home</button>
               </div>
             </div>
           )}
@@ -288,453 +302,365 @@ function EarlyPathDashboard() {
     );
   }
 
-  const { profile, apprentice, vacancy, interviews, learning_progress, competencies } = userData;
-
-  // Format status display
-  const formatStatus = (status) => {
-    const statusMap = {
-      'pending': 'Screening',
-      'accepted': 'Accepted',
-      'rejected': 'Rejected',
-      'active': 'Active',
-      'inactive': 'Inactive',
-    };
-    return statusMap[status?.toLowerCase()] || (status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Unknown');
-  };
-
-  const getStatusColor = (status) => {
-    const normalized = status?.toLowerCase();
-    if (normalized === 'accepted' || normalized === 'active') {
-      return 'bg-emerald-50 text-emerald-600 border-emerald-200';
-    } else if (normalized === 'rejected') {
-      return 'bg-rose-50 text-rose-600 border-rose-200';
-    }
-    return 'bg-amber-50 text-amber-600 border-amber-200';
-  };
-
-  const competencyList = competencies.map((comp) => ({
-    title: comp.name,
-    hours: `${comp.learning_hours} learning hours`,
-    projects: "0 projects",
-    progress: 0,
-    status: "Active",
-  }));
-
   return (
-    <div className="min-h-screen bg-gray-50 flex" style={{ fontFamily: 'Poppins, sans-serif' }}>
+    <div className="min-h-screen bg-gray-50 flex" style={{ fontFamily: "Poppins, sans-serif" }}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');`}</style>
       <SidebarCandidate
         userName={profile?.name}
         userPhoto={profile?.photo_url || profile?.photo_path}
-        company={JSON.parse(localStorage.getItem("company"))}
-        onLogout={handleLogoutClick}
+        company={company}
+        onLogout={() => setLogoutModal(true)}
       />
 
-      <main className="md:ml-56 pt-14 md:pt-0 flex-1 px-6 py-6 min-w-0 flex flex-col">
-        <style>{`@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');`}</style>
+      <main className="md:ml-56 pt-14 md:pt-0 flex-1 px-6 py-6 min-w-0 flex flex-col gap-5">
 
-        {loading && (
-          <LoadingSpinner message="Loading dashboard..." />
-        )}
+        {loading && <LoadingSpinner message="Loading dashboard..." />}
 
         {!loading && (
-                  <>  {apprentice && (
-        <div className="mb-4">
-          <h1 className="text-2xl font-bold text-slate-900 leading-none mb-2">Dashboard</h1>
-          <p className="text-slate-500 text-sm leading-none">Track your internship progress and stay up to date.</p>
-        </div>
-         )}
-
-                    {!apprentice ? (
+          <>
+            {/* ── No apprentice: welcome state ── */}
+            {!apprentice ? (
               <div className="flex-1 flex items-center justify-center">
                 {!vacancy && (
-          <div>
-            <div>
-              <div className="flex flex-col items-center text-center gap-4">
-              <div className="flex flex-col items-center">
-            <h3 className="text-xl font-bold text-slate-800 mb-2">Welcome to EarlyPath!</h3>
-            <p className="text-sm text-slate-500 leading-relaxed max-w-lg">
-              Apply for an internship program to get started. Once accepted, you'll unlock tasks, competencies, and certificates.
-            </p>
-            <div className="flex items-center gap-2 mt-4 flex-wrap justify-center">
-            {[
-              { step: "1", label: "Apply for Program", done: false },
-              { step: "2", label: "Get Accepted", done: false },
-              { step: "3", label: "Start Internship", done: false },
-            ].map((s, i) => (
-              <div key={i} className="flex items-center gap-1.5">
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-slate-200 shadow-sm">
-                <span className="w-4 h-4 rounded-full bg-indigo-500 flex items-center justify-center text-[9px] font-bold text-white">{s.step}</span>
-                <span className="text-[11px] font-medium text-slate-600">{s.label}</span>
-              </div>
-                {i < 2 && <span className="text-slate-300 text-xs">→</span>}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-)}
+                  <div className="flex flex-col items-center text-center gap-4">
+                    <h3 className="text-xl font-bold text-slate-800 mb-2">Welcome to EarlyPath!</h3>
+                    <p className="text-sm text-slate-500 leading-relaxed max-w-lg">
+                      Apply for an internship program to get started. Once accepted, you'll unlock tasks, competencies, and certificates.
+                    </p>
+                    <div className="flex items-center gap-2 mt-4 flex-wrap justify-center">
+                      {[{ step: "1", label: "Apply for Program" }, { step: "2", label: "Get Accepted" }, { step: "3", label: "Start Internship" }].map((s, i) => (
+                        <div key={i} className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-slate-200 shadow-sm">
+                            <span className="w-4 h-4 rounded-full bg-indigo-500 flex items-center justify-center text-[9px] font-bold text-white">{s.step}</span>
+                            <span className="text-[11px] font-medium text-slate-600">{s.label}</span>
+                          </div>
+                          {i < 2 && <span className="text-slate-300 text-xs">→</span>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <>
-
-            {/* Profile Header */}
-            {apprentice && <div className="bg-white border border-slate-200 rounded-2xl px-6 py-5 flex items-center gap-5 shadow-sm">
-                        
-            <div className="relative flex-shrink-0">
-              {profile?.photo_url || profile?.photo_path ? (
-                <img
-                  src={profile?.photo_url || `${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.split("/api")[0] : "http://localhost:8000"}/storage/${profile?.photo_path}`}
-                  alt={profile?.name}
-                  style={{ borderRadius: '9999px', width: '64px', height: '64px', objectFit: 'cover' }}
-                />
-              ) : (
-                <div style={{ borderRadius: '9999px', width: '64px', height: '64px', background: '#e0e7ff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', fontWeight: '700', color: '#4f46e5' }}>
-                  {profile?.name?.charAt(0).toUpperCase() || "?"}
+                {/* ── Page heading ── */}
+                <div>
+                  <h1 className="text-2xl font-bold text-slate-900 leading-none mb-1">Dashboard</h1>
+                  <p className="text-slate-500 text-sm leading-none">Track your internship progress and stay up to date.</p>
                 </div>
-              )}
-              <span className="absolute bottom-0.5 right-0.5 w-3 h-3 bg-emerald-400 rounded-full border-2 border-white" />
-            </div>
 
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h1 className="text-xl font-bold text-slate-800">{profile?.name || "User"}</h1>
-                  {apprentice?.status && (
-                    <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium border ${getStatusColor(apprentice.status)}`}>
-                      {formatStatus(apprentice.status)}
-                    </span>
-                  )}
-                </div>
-                {apprentice ? (
-                  <>
-                    <p className="text-sm text-slate-500 mt-1">
+                {/* ── Hero Profile Banner ── */}
+                <div
+                  className="rounded-2xl px-6 py-5 flex items-center gap-5 relative overflow-hidden"
+                  style={{ background: "linear-gradient(130deg, #4338ca 0%, #6366f1 55%, #818cf8 100%)" }}
+                >
+                  <div className="absolute right-[-40px] top-[-40px] w-48 h-48 rounded-full" style={{ background: "rgba(255,255,255,0.06)", pointerEvents: "none" }} />
+                  <div className="absolute right-[60px] bottom-[-60px] w-36 h-36 rounded-full" style={{ background: "rgba(255,255,255,0.04)", pointerEvents: "none" }} />
+
+                  {/* Avatar */}
+                  <div className="relative flex-shrink-0 z-10">
+                    {profile?.photo_url || profile?.photo_path ? (
+                      <img
+                        src={profile?.photo_url || `${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.split("/api")[0] : "http://localhost:8000"}/storage/${profile?.photo_path}`}
+                        alt={profile?.name}
+                        className="w-16 h-16 rounded-full object-cover border-[3px] border-white/40"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 rounded-full border-[3px] border-white/40 bg-white flex items-center justify-center text-xl font-extrabold text-indigo-600">
+                        {profile?.name?.charAt(0).toUpperCase() || "?"}
+                      </div>
+                    )}
+                    <span className="absolute bottom-0.5 right-0.5 w-3.5 h-3.5 bg-emerald-400 rounded-full border-2 border-indigo-600" />
+                  </div>
+
+                  {/* Name + pills */}
+                  <div className="flex-1 min-w-0 z-10">
+                    <div className="flex items-center gap-2 flex-wrap mb-1">
+                      <h2 className="text-xl font-extrabold text-white">{profile?.name || "User"}</h2>
+                      {apprentice?.status && (
+                        <span className={`text-xs px-2.5 py-0.5 rounded-full font-semibold border ${getStatusColor(apprentice.status)}`}>
+                          {formatStatus(apprentice.status)}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm text-white/75 mb-3">
                       {apprentice?.position || profile?.major || "Candidate"}
                       {vacancy?.location && <> · <MapPin size={11} className="inline mb-0.5" /> {vacancy.location}</>}
                     </p>
-                    {apprentice?.mentor_name && (
-                      <div className="flex flex-wrap gap-3 mt-2">
-                        <span className="text-xs text-slate-400 flex items-center gap-1">
-                          <User size={11} />
-                          Mentor: <span className="font-medium text-slate-600 ml-0.5">{apprentice.mentor_name}</span>
+                    <div className="flex flex-wrap gap-2">
+                      {apprentice?.mentor_name && (
+                        <span className="text-xs px-3 py-1 rounded-full border border-white/25 bg-white/15 text-white font-medium flex items-center gap-1.5">
+                          <User size={10} /> Mentor: {apprentice.mentor_name}
                         </span>
+                      )}
+                      <span className="text-xs px-3 py-1 rounded-full border border-white/25 bg-white/15 text-white font-medium">
+                        {memberTasks.length} Tasks · {doneTasks} Done · {competencyList.length} Skills
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Meta dates */}
+                  <div className="flex flex-col gap-2 z-10 flex-shrink-0 text-right">
+                    {vacancy?.start_date && (
+                      <p className="text-xs text-white/70">Start <span className="font-semibold text-white ml-1">{new Date(vacancy.start_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span></p>
+                    )}
+                    {vacancy?.end_date && (
+                      <p className="text-xs text-white/70">End <span className="font-semibold text-white ml-1">{new Date(vacancy.end_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span></p>
+                    )}
+                    {vacancy?.type && (
+                      <p className="text-xs text-white/70">Type <span className="font-semibold text-white ml-1">{vacancy.type.charAt(0).toUpperCase() + vacancy.type.slice(1)}</span></p>
+                    )}
+                  </div>
+                </div>
+
+                {/* ── Stats Row ── */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {[
+                    { label: "Total Tasks", value: memberTasks.length, numColor: "text-indigo-600", dot: "bg-indigo-400", accent: "bg-indigo-500", border: "border-indigo-100" },
+                    { label: "Completed",   value: doneTasks,          numColor: "text-emerald-600", dot: "bg-emerald-400", accent: "bg-emerald-500", border: "border-emerald-100" },
+                    { label: "In Progress", value: inProgressTasks,    numColor: "text-amber-500",  dot: "bg-amber-400",   accent: "bg-amber-500",   border: "border-amber-100" },
+                    { label: "Skills",      value: competencyList.length, numColor: "text-purple-600", dot: "bg-purple-400", accent: "bg-purple-500", border: "border-purple-100" },
+                  ].map((m, i) => (
+                    <div key={i} className={`bg-white border ${m.border} rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow`}>
+                      <div className={`h-1 ${m.accent}`} />
+                      <div className="px-5 py-4 flex flex-col items-center text-center gap-1">
+                        <p className={`text-4xl font-extrabold ${m.numColor}`}>{m.value}</p>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <span className={`w-1.5 h-1.5 rounded-full ${m.dot}`} />
+                          <p className="text-xs font-medium text-slate-500">{m.label}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* ── Main 2-col grid ── */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-start">
+
+                  {/* ══ LEFT COLUMN ══ */}
+                  <div className="flex flex-col gap-5">
+
+                    {/* Internship Info */}
+                    <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+                      <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Internship Info</h2>
+                      {[
+                        { label: "Type",       value: vacancy?.type ? vacancy.type.charAt(0).toUpperCase() + vacancy.type.slice(1) : apprentice?.position || "-" },
+                        { label: "Location",   value: vacancy?.location || "-" },
+                        { label: "Start Date", value: vacancy?.start_date ? new Date(vacancy.start_date).toLocaleDateString("en-US") : "-" },
+                        { label: "End Date",   value: vacancy?.end_date   ? new Date(vacancy.end_date).toLocaleDateString("en-US")   : "-" },
+                        {
+                          label: "Status", badge: true, value: (() => {
+                            const s = apprentice?.status?.toLowerCase();
+                            if (!s || s === "pending") return "Screening";
+                            if (s.startsWith("stage_")) return `Interview Stage ${parseInt(s.split("_")[1]) + 1}`;
+                            return formatStatus(apprentice?.status);
+                          })()
+                        },
+                      ].map((row, i) => (
+                        <div key={i} className="flex justify-between items-center text-sm py-2.5 border-b border-slate-50 last:border-0">
+                          <span className="text-slate-400 font-medium">{row.label}</span>
+                          {row.badge ? (
+                            <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium border ${getStatusColor(apprentice?.status)}`}>● {row.value}</span>
+                          ) : (
+                            <span className="text-slate-700 font-medium text-right max-w-[55%] leading-snug">{row.value}</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* ── Task Progress — DONUT CHART ── */}
+                    {memberTasks.length > 0 && (
+                      <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+                        <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-5">Task Progress</h2>
+                        <div className="flex items-center justify-center">
+                          <DonutChart
+                            done={doneTasks}
+                            inProgress={inProgressTasks}
+                            pending={pendingTasks}
+                            total={memberTasks.length}
+                          />
+                        </div>
                       </div>
                     )}
-                    <div className="flex items-center gap-3 mt-3 pt-3 border-t border-slate-100 flex-wrap">
-                      <div className="flex items-center gap-1.5 text-xs text-slate-500">
-                        <span className="w-5 h-5 rounded-md bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-500 font-bold text-[10px]">{memberTasks.length}</span>
-                        <span>Tasks</span>
+
+                    {/* Screening hint */}
+                    {apprentice?.status === "pending" && (!interviews || interviews.length === 0) && (
+                      <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 shadow-sm">
+                        <p className="text-sm font-semibold text-blue-800">Currently in Screening</p>
+                        <p className="text-xs text-blue-600 mt-0.5 leading-relaxed">
+                          Your application is being reviewed. An interview schedule will appear here once HR sets it up.
+                        </p>
                       </div>
-                      <span className="text-slate-200">|</span>
-                      <div className="flex items-center gap-1.5 text-xs text-slate-500">
-                        <span className="w-5 h-5 rounded-md bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-500 font-bold text-[10px]">{memberTasks.filter(t => t.status === 'done').length}</span>
-                        <span>Completed</span>
+                    )}
+
+                    {/* Interview Schedule */}
+                    {interviews && interviews.length > 0 && (
+                      <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+                        <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Interview Schedule</h2>
+                        <div className="space-y-3">
+                          {interviews.map((interview, idx) => {
+                            const interviewDateTime = interview.interview_date && interview.interview_time
+                              ? new Date(`${interview.interview_date}T${interview.interview_time}`).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })
+                              : "TBD";
+                            const link  = interview.link  || interview.interview_link;
+                            const notes = interview.notes || interview.interview_notes;
+                            const isPassed = interview.status === "passed";
+                            const isFailed = interview.status === "failed";
+                            return (
+                              <div key={idx} className="space-y-2">
+                                <div className="flex justify-between items-center text-sm py-1.5 border-b border-slate-50">
+                                  <span className="text-slate-400 font-medium">Interview {idx + 1}</span>
+                                  <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium border ${isPassed ? "bg-emerald-50 text-emerald-600 border-emerald-200" : isFailed ? "bg-rose-50 text-rose-600 border-rose-200" : "bg-blue-50 text-blue-600 border-blue-200"}`}>
+                                    ● {interview.status || "pending"}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between items-center text-sm py-1.5 border-b border-slate-50">
+                                  <span className="text-slate-400 font-medium">Schedule</span>
+                                  <span className="text-slate-700 font-medium text-right">{interviewDateTime}</span>
+                                </div>
+                                {link && (
+                                  <div className="flex justify-between items-center text-sm py-1.5 border-b border-slate-50">
+                                    <span className="text-slate-400 font-medium">Link</span>
+                                    <a href={link} target="_blank" rel="noopener noreferrer"
+                                      className="text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 rounded-lg transition-colors inline-flex items-center gap-1.5">
+                                      🎥 Join Interview →
+                                    </a>
+                                  </div>
+                                )}
+                                {notes && (
+                                  <div className="flex justify-between items-start text-sm py-1.5">
+                                    <span className="text-slate-400 font-medium">Notes</span>
+                                    <span className="text-slate-700 font-medium text-right max-w-[60%] leading-snug">{notes}</span>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
-                      <span className="text-slate-200">|</span>
-                      <div className="flex items-center gap-1.5 text-xs text-slate-500">
-                        <span className="w-5 h-5 rounded-md bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-500 font-bold text-[10px]">{competencyList.length}</span>
-                        <span>Competencies</span>
+                    )}
+
+                    {/* Assessment */}
+                    {dashboardData?.test && (
+                      <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+                        <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Assessment</h2>
+                        <div className="space-y-1">
+                          <div className="flex justify-between items-center text-sm py-1.5 border-b border-slate-50">
+                            <span className="text-slate-400 font-medium">Test Name</span>
+                            <span className="text-slate-700 font-medium">{dashboardData.test.test_name || "Test"}</span>
+                          </div>
+                          {dashboardData.test.test_date && (
+                            <div className="flex justify-between items-center text-sm py-1.5 border-b border-slate-50">
+                              <span className="text-slate-400 font-medium">Schedule</span>
+                              <span className="text-slate-700 font-medium">
+                                {new Date(dashboardData.test.test_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                                {dashboardData.test.test_time && ` · ${dashboardData.test.test_time}`}
+                              </span>
+                            </div>
+                          )}
+                          <div className="flex justify-between items-center text-sm py-1.5 border-b border-slate-50">
+                            <span className="text-slate-400 font-medium">Score</span>
+                            {dashboardData.test.test_score ? (
+                              <span className="text-xs font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full">{dashboardData.test.test_score}/100</span>
+                            ) : (
+                              <span className="text-xs font-medium text-amber-600 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full">Pending</span>
+                            )}
+                          </div>
+                          {dashboardData.test.test_link && (
+                            <div className="flex justify-between items-center text-sm py-1.5 border-b border-slate-50">
+                              <span className="text-slate-400 font-medium">Link</span>
+                              <a href={dashboardData.test.test_link} target="_blank" rel="noopener noreferrer"
+                                className="text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 rounded-lg transition-colors inline-flex items-center gap-1.5">
+                                🔗 Open Test Link →
+                              </a>
+                            </div>
+                          )}
+                          {dashboardData.test.test_notes && (
+                            <div className="flex justify-between items-start text-sm py-1.5">
+                              <span className="text-slate-400 font-medium">Notes</span>
+                              <span className="text-slate-700 font-medium text-right max-w-[60%] leading-snug">{dashboardData.test.test_notes}</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
+                    )}
+                  </div>
+
+                  {/* ══ RIGHT COLUMN ══ */}
+                  <div className="flex flex-col gap-5">
+
+                    {/* My Tasks — colors from TASK_COLORS (same as donut) */}
+                    <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+                      <div className="flex items-center justify-between mb-4">
+                        <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400">My Tasks</h2>
+                        {memberTasks.length > 0 && (
+                          <span className="text-xs bg-indigo-50 text-indigo-600 border border-indigo-200 px-2.5 py-0.5 rounded-full font-medium">
+                            {memberTasks.length} Active
+                          </span>
+                        )}
+                      </div>
+                      {tasksLoading ? (
+                        <div className="py-6 text-center">
+                          <div className="inline-block w-5 h-5 border-2 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
+                          <p className="text-xs text-slate-400 mt-2">Loading tasks...</p>
+                        </div>
+                      ) : apprentice?.status === "pending" ? (
+                        <div className="py-8 text-center">
+                          <p className="text-sm text-slate-400">Tasks will appear once your application is reviewed</p>
+                        </div>
+                      ) : memberTasks.length > 0 ? (
+                        <div>
+                          {memberTasks.slice(0, 7).map((task) => (
+                            <TaskItem
+                              key={task.id_task}
+                              title={task.title}
+                              status={task.status === "in_progress" ? "In Progress" : task.status === "done" ? "Done" : "Pending"}
+                              deadline={task.deadline ? new Date(task.deadline).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : null}
+                            />
+                          ))}
+                          {memberTasks.length > 7 && (
+                            <button
+                              onClick={() => navigate(`/c/${company?.id_company}/member/tasks`)}
+                              className="w-full text-xs font-semibold text-indigo-600 hover:text-indigo-700 py-3 mt-2 border-t border-slate-100"
+                            >
+                              View all {memberTasks.length} tasks →
+                            </button>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="py-8 text-center">
+                          <p className="text-sm text-slate-400">No tasks assigned yet</p>
+                          <p className="text-xs text-slate-400 mt-1">Tasks will appear once your mentor assigns you</p>
+                        </div>
+                      )}
                     </div>
-                  </>
-                  ) : (
-                  <p className="text-sm text-slate-400 mt-1">
-                    {profile?.university || profile?.major || "Candidate"}
-                  </p>
-                )}
-              </div>
-            </div>}
 
-            {apprentice && <div className="flex flex-col gap-5">
+                    {/* Competencies */}
+                    {(apprentice?.status === "active" || apprentice?.status === "accepted") ? (
+                      <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+                        <div className="flex items-center justify-between mb-4">
+                          <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400">Competencies</h2>
+                          <span className="text-xs bg-indigo-50 text-indigo-600 border border-indigo-200 px-2.5 py-0.5 rounded-full font-medium">
+                            {competencyList.length} Skills
+                          </span>
+                        </div>
+                        {competencyList.length > 0 ? (
+                          competencyList.map((c, i) => <CompetencyCard key={i} {...c} />)
+                        ) : (
+                          <p className="text-sm text-slate-400 text-center py-4">No competencies available</p>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm text-center">
+                        <p className="text-sm font-medium text-slate-500">Competencies locked</p>
+                        <p className="text-[11px] text-slate-400 mt-1">Will unlock once you're accepted into a program</p>
+                      </div>
+                    )}
 
-            {/* Stats Bar */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-2">
-              {[
-                { label: "Total Tasks", value: memberTasks.length, color: "text-indigo-600", bg: "bg-white", border: "border-indigo-100", dot: "bg-indigo-400" },
-                { label: "Completed", value: memberTasks.filter(t => t.status === 'done').length, color: "text-emerald-600", bg: "bg-white", border: "border-emerald-100", dot: "bg-emerald-400" },
-                { label: "In Progress", value: memberTasks.filter(t => t.status === 'in_progress').length, color: "text-amber-500", bg: "bg-white", border: "border-amber-100", dot: "bg-amber-400" },
-                { label: "Skills", value: competencyList.length, color: "text-purple-600", bg: "bg-white", border: "border-purple-100", dot: "bg-purple-400" },
-              ].map((m, i) => (
-
-                <div key={i} className={`${m.bg} border ${m.border} rounded-2xl p-5 flex flex-col items-center justify-center text-center gap-1 shadow-sm hover:shadow-md transition-shadow`}>
-                  <p className={`text-4xl font-extrabold ${m.color}`}>{m.value}</p>
-                  <div className="flex items-center gap-1.5 mt-1">
-                    <span className={`w-1.5 h-1.5 rounded-full ${m.dot}`} />
-                    <p className="text-xs font-medium text-slate-500">{m.label}</p>
                   </div>
                 </div>
-              ))}
-            </div>
 
-  {/* Main Grid */}
-  <div className="grid grid-cols-1 md:grid-cols-[1fr_1.6fr] gap-5 items-start">
-
-    {/* Left Column */}
-    <div className="flex flex-col gap-5">
-
-      {/* Internship Info */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-        <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Internship Info</h2>
-        {apprentice || vacancy ? (
-          <div className="space-y-0">
-            {[
-              { label: "Type", value: vacancy?.type ? vacancy.type.charAt(0).toUpperCase() + vacancy.type.slice(1) : apprentice?.position || "-" },
-              { label: "Location", value: vacancy?.location || "-" },
-              { label: "Start Date", value: vacancy?.start_date ? new Date(vacancy.start_date).toLocaleDateString('en-US') : "-" },
-              { label: "End Date", value: vacancy?.end_date ? new Date(vacancy.end_date).toLocaleDateString('en-US') : "-" },
-              { label: "Status", value: (() => {
-                const s = apprentice?.status?.toLowerCase();
-                if (!s || s === 'pending') return 'Screening';
-                if (s.startsWith('stage_')) return `Interview Stage ${parseInt(s.split('_')[1]) + 1}`;
-                return formatStatus(apprentice?.status);
-              })(), badge: true },
-            ].map((row, i) => (
-              <div key={i} className="flex justify-between items-center text-sm py-2.5 border-b border-slate-50 last:border-0">
-                <span className="text-slate-400 font-medium">{row.label}</span>
-                {row.badge ? (
-                  <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium border ${getStatusColor(apprentice?.status)}`}>
-                    ● {row.value}
-                  </span>
-                ) : (
-                  <span className="text-slate-700 font-medium text-right max-w-[55%] leading-snug">{row.value}</span>
-                )}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-6 gap-2">
-            <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-lg">📋</div>
-            <p className="text-sm font-medium text-slate-500">No internship yet</p>
-            <p className="text-[11px] text-slate-400 text-center leading-relaxed">Apply for a program first.<br/>HR will assign you once accepted.</p>
-          </div>
-        )}
-      </div>
-
-      {/* Progress Card */}
-      {apprentice && memberTasks.length > 0 && (
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-          <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Task Progress</h2>
-          <div className="flex items-end justify-between mb-2">
-            <span className="text-3xl font-extrabold text-slate-800">
-              {Math.round((memberTasks.filter(t => t.status === 'done').length / memberTasks.length) * 100)}%
-            </span>
-            <span className="text-xs text-slate-400 mb-1">{memberTasks.filter(t => t.status === 'done').length}/{memberTasks.length} completed</span>
-          </div>
-          <div className="w-full bg-slate-100 rounded-full h-2 mb-4">
-            <div
-              className="bg-emerald-500 rounded-full h-2 transition-all"
-              style={{ width: `${Math.round((memberTasks.filter(t => t.status === 'done').length / memberTasks.length) * 100)}%` }}
-            />
-          </div>
-          <div className="flex gap-3">
-            {[
-              { label: "Done", value: memberTasks.filter(t => t.status === 'done').length, color: "bg-emerald-500" },
-              { label: "On Going", value: memberTasks.filter(t => t.status === 'in_progress').length, color: "bg-amber-400" },
-              { label: "Pending", value: memberTasks.filter(t => t.status !== 'done' && t.status !== 'in_progress').length, color: "bg-slate-300" },
-            ].map((s, i) => (
-              <div key={i} className="flex items-center gap-1.5 text-xs text-slate-500">
-                <span className={`w-2 h-2 rounded-full ${s.color}`} />
-                {s.label} <span className="font-semibold text-slate-700">{s.value}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Screening hint */}
-      {apprentice?.status === 'pending' && (!interviews || interviews.length === 0) && (
-        <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 shadow-sm">
-          <div className="flex items-start gap-3">
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-blue-800">Currently in Screening</p>
-              <p className="text-xs text-blue-600 mt-0.5 leading-relaxed">
-                Your application is being reviewed. An interview schedule will appear here once HR sets it up.
-              </p>
-            </div>
-          </div>
-      )}
-
-      {/* Interview Section */}
-      {interviews && interviews.length > 0 && (
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-          <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Interview Schedule</h2>
-          <div className="space-y-3">
-            {interviews.map((interview, idx) => {
-              const interviewDateTime = interview.interview_date && interview.interview_time
-                ? new Date(`${interview.interview_date}T${interview.interview_time}`).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })
-                : 'TBD';
-              const link = interview.link || interview.interview_link;
-              const notes = interview.notes || interview.interview_notes;
-              const isPassed = interview.status === 'passed';
-              const isFailed = interview.status === 'failed';
-              return (
-                <div key={idx} className="space-y-2">
-                  <div className="flex justify-between items-center text-sm py-1.5 border-b border-slate-50">
-                    <span className="text-slate-400 font-medium">Interview {idx + 1}</span>
-                    <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium border ${isPassed ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : isFailed ? 'bg-rose-50 text-rose-600 border-rose-200' : 'bg-blue-50 text-blue-600 border-blue-200'}`}>
-                      ● {interview.status || 'pending'}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center text-sm py-1.5 border-b border-slate-50">
-                    <span className="text-slate-400 font-medium">Schedule</span>
-                    <span className="text-slate-700 font-medium text-right">{interviewDateTime}</span>
-                  </div>
-                  {link && (
-                    <div className="flex justify-between items-center text-sm py-1.5 border-b border-slate-50">
-                      <span className="text-slate-400 font-medium">Link</span>
-                      <a href={link} target="_blank" rel="noopener noreferrer"
-                        className="text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 rounded-lg transition-colors inline-flex items-center gap-1.5">
-                        🎥 Join Interview →
-                      </a>
-                    </div>
-                  )}
-                  {notes && (
-                    <div className="flex justify-between items-start text-sm py-1.5">
-                      <span className="text-slate-400 font-medium">Notes</span>
-                      <span className="text-slate-700 font-medium text-right max-w-[60%] leading-snug">{notes}</span>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-    </div>
-
-    {/* Right Column */}
-    <div className="flex flex-col gap-5">
-
-      {/* My Tasks */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400">My Tasks</h2>
-          {memberTasks.length > 0 && (
-            <span className="text-xs bg-indigo-50 text-indigo-600 border border-indigo-200 px-2.5 py-0.5 rounded-full font-medium">
-              {memberTasks.length} Active
-            </span>
-          )}
-        </div>
-        {tasksLoading ? (
-          <div className="py-6 text-center">
-            <div className="inline-block w-5 h-5 border-2 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
-            <p className="text-xs text-slate-400 mt-2">Loading tasks...</p>
-          </div>
-        ) : apprentice?.status === 'pending' ? (
-          <div className="py-8 text-center">
-            <p className="text-sm text-slate-400">Tasks will appear once your application is reviewed</p>
-          </div>
-        ) : memberTasks.length > 0 ? (
-          <div>
-            <div className="space-y-0">
-              {memberTasks.slice(0, 5).map((task) => (
-                <TaskItem
-                  key={task.id_task}
-                  title={task.title}
-                  status={task.status === 'in_progress' ? 'In Progress' : task.status === 'done' ? 'Done' : 'Pending'}
-                  deadline={task.deadline ? new Date(task.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : null}
-                />
-              ))}
-            </div>
-            {memberTasks.length > 5 && (
-              <button
-                onClick={() => navigate(`/c/${JSON.parse(localStorage.getItem("company"))?.id_company}/member/tasks`)}
-                className="w-full text-xs font-semibold text-indigo-600 hover:text-indigo-700 py-3 mt-2 border-t border-slate-100"
-              >
-                View all {memberTasks.length} tasks →
-              </button>
-            )}
-          </div>
-        ) : (
-          <div className="py-8 text-center">
-            <p className="text-sm text-slate-400">No tasks assigned yet</p>
-            <p className="text-xs text-slate-400 mt-1">Tasks will appear once your mentor assigns you</p>
-          </div>
-        )}
-      </div>
-
-      {/* Competencies */}
-      {apprentice?.status === 'active' || apprentice?.status === 'accepted' ? (
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400">Competencies</h2>
-            <span className="text-xs bg-indigo-50 text-indigo-600 border border-indigo-200 px-2.5 py-0.5 rounded-full font-medium">
-              {competencyList.length} Skills
-            </span>
-          </div>
-          <div>
-            {competencyList.length > 0 ? (
-              competencyList.map((c, i) => <CompetencyCard key={i} {...c} />)
-            ) : (
-              <p className="text-sm text-slate-400 text-center py-4">No competencies available</p>
-            )}
-          </div>
-        </div>
-      ) : (
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm text-center">
-          <div className="flex flex-col items-center gap-2 py-2">
-            <p className="text-sm font-medium text-slate-500">Competencies locked</p>
-            <p className="text-[11px] text-slate-400">Will unlock once you're accepted into a program</p>
-          </div>
-        </div>
-      )}
-
-      {/* Assessment */}
-      {dashboardData?.test && (
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-          <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Assessment</h2>
-          <div className="space-y-3">
-            <div className="flex justify-between items-center text-sm py-1.5 border-b border-slate-50">
-              <span className="text-slate-400 font-medium">Test Name</span>
-              <span className="text-slate-700 font-medium">{dashboardData.test.test_name || "Test"}</span>
-            </div>
-            {dashboardData.test.test_date && (
-              <div className="flex justify-between items-center text-sm py-1.5 border-b border-slate-50">
-                <span className="text-slate-400 font-medium">Schedule</span>
-                <span className="text-slate-700 font-medium">
-                  {new Date(dashboardData.test.test_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                  {dashboardData.test.test_time && ` · ${dashboardData.test.test_time}`}
-                </span>
-              </div>
-            )}
-            <div className="flex justify-between items-center text-sm py-1.5 border-b border-slate-50">
-              <span className="text-slate-400 font-medium">Score</span>
-              {dashboardData.test.test_score ? (
-                <span className="text-xs font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full">
-                  {dashboardData.test.test_score}/100
-                </span>
-              ) : (
-                <span className="text-xs font-medium text-amber-600 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full">
-                  Pending
-                </span>
-              )}
-            </div>
-            {dashboardData.test.test_link && (
-              <div className="flex justify-between items-center text-sm py-1.5 border-b border-slate-50">
-                <span className="text-slate-400 font-medium">Link</span>
-                <a href={dashboardData.test.test_link} target="_blank" rel="noopener noreferrer"
-                  className="text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 rounded-lg transition-colors inline-flex items-center gap-1.5">
-                  🔗 Open Test Link →
-                </a>
-              </div>
-            )}
-            {dashboardData.test.test_notes && (
-              <div className="flex justify-between items-start text-sm py-1.5">
-                <span className="text-slate-400 font-medium">Notes</span>
-                <span className="text-slate-700 font-medium text-right max-w-[60%] leading-snug">{dashboardData.test.test_notes}</span>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-    </div> {/* End Right Column */}
-  </div> {/* End Main Grid */}
-</div> }{/* End Flex Wrapper */}
-           <p className="text-center text-xs text-slate-400 py-2">
-              © 2026 EarlyPath · All rights reserved
-            </p>
+                <p className="text-center text-xs text-slate-400 py-2">© 2026 EarlyPath · All rights reserved</p>
               </>
             )}
           </>
@@ -761,5 +687,4 @@ function EarlyPathDashboard() {
   );
 }
 
-// Export the wrapper component with redirect logic
 export default CandidateDashboardWithRedirect;
