@@ -85,7 +85,7 @@ const DashboardRouter = () => {
 
     // If no role, redirect to onboarding
     if (!role || role === 'new' || role === 'null' || role === '') {
-        return <Navigate to="/onboarding" replace />;
+        return <Navigate to="/" replace />;
     }
     
     const normalizedRole = String(role || "").trim().toLowerCase();
@@ -138,10 +138,10 @@ export default function App() {
                 {/* Company — Public */}
                 <Route path="/c/:idCompany"                   element={<LandingPage />} />
                 <Route path="/c/:idCompany/register"          element={<CandidateRegisterRedirect />} />
-                <Route path="/c/:idCompany/login"             element={<Navigate to="/onboarding" replace />} />
+                <Route path="/c/:idCompany/login"             element={<Navigate to="/" replace />} />
                 <Route path="/c/:idCompany/forgot-password"   element={<ForgotPasswordCandidate />} />
                 <Route path="/c/:idCompany/reset-password"    element={<ResetPasswordCandidate />} />
-                <Route path="/c/:idCompany/staff/login"       element={<Navigate to="/onboarding" replace />} />
+                <Route path="/c/:idCompany/staff/login"       element={<Navigate to="/" replace />} />
                 <Route path="/c/:idCompany/staff/forgot-password"   element={<ForgotPasswordStaff />} />
                 <Route path="/c/:idCompany/staff/reset-password"    element={<ResetPasswordStaff />} />
                 <Route path="/onboarding" element={<PreviewOnboarding />} />

@@ -243,8 +243,8 @@ function EarlyPathDashboard() {
   const confirmLogout = async () => {
     try { await globalLogout(); } catch (err) { console.error(err); } finally {
       setLogoutModal(false);
-      const company = JSON.parse(localStorage.getItem("company"));
-      navigate(company?.id_company ? `/c/${company.id_company}` : "/", { replace: true });
+      localStorage.clear();
+      navigate("/", { replace: true });
     }
   };
 
