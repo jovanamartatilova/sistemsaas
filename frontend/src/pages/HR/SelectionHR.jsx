@@ -813,7 +813,7 @@ const handleLogout = () => {
                   fontSize:'10px', fontWeight:'700', color: h==='RANK & MATCH'?'#6366f1':'#94a3b8', 
                   letterSpacing:'0.05em', 
                   display:'flex', alignItems:'center', gap:'4px',
-                  justifyContent: ['CANDIDATE','UNIVERSITY'].includes(h) ? 'flex-start' : 'center'
+                  justifyContent: 'center'
                 }}>
                   {h==='RANK & MATCH'&&<IC.Sparkles />}{h}
                 </div>
@@ -837,18 +837,16 @@ const handleLogout = () => {
                       <div style={{ display:'grid', gridTemplateColumns:gridCols, gap:'8px', padding:'9px 16px', alignItems:'center', borderBottom: !isSumOpen&&i<displayCandidates.length-1?'1px solid #f1f5f9':'none', background: aiData?.rank===1?'rgba(99,102,241,0.02)':'transparent' }}>
 
                         {/* Candidate — no avatar bubble */}
-                        <div style={{ display:'flex', alignItems:'flex-start', gap:'0', textAlign:'left', minWidth: 0 }}>
-                          <div style={{ minWidth:0 }}>
+                        <div style={{ display:'flex', flexDirection:'column', alignItems:'center', textAlign:'center', minWidth:0 }}>
                             <div style={{ display:'flex', alignItems:'center', gap:'5px', flexWrap:'wrap' }}>
-                              <span className="sel-cell-name">{c.name}</span>
+                              <span className="sel-cell-name" style={{ textAlign:'center', display:'block' }}>{c.name}</span>
                               {aiData?.suggestion && <SuggestionBadge suggestion={aiData.suggestion} />}
                             </div>
-                            <div className="sel-cell-email">{c.email}</div>
-                          </div>
+                            <div className="sel-cell-email" style={{ textAlign:'center' }}>{c.email}</div>
                         </div>
 
                         {/* University — word-wrap, prefer 1 line, clamp font */}
-                        <div className="sel-cell-uni">
+                        <div className="sel-cell-uni" style={{ textAlign:'center' }}>
                           {c.university || '-'}
                         </div>
 
@@ -857,7 +855,7 @@ const handleLogout = () => {
                           <>
                           {(c.interview || c.interview_date) ? (
                               <>
-                                <div onClick={()=>setAssignInterviewCandidate(c)} style={{ fontSize:'12.5px', color:'#475569', textAlign:'center', cursor:'pointer', padding:'6px', borderRadius:'8px', border:'1px solid transparent', transition:'all 0.15s' }} onMouseEnter={e=>{e.currentTarget.style.borderColor='#3b82f6';e.currentTarget.style.background='#f0fdf4'}} onMouseLeave={e=>{e.currentTarget.style.borderColor='transparent';e.currentTarget.style.background='transparent'}}>
+                                <div onClick={()=>setAssignInterviewCandidate(c)} style={{ fontSize:'12.5px', color:'#475569', textAlign:'center', cursor:'pointer', padding:'6px', borderRadius:'8px', border:'1px solid transparent', transition:'all 0.15s', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center' }} onMouseEnter={e=>{e.currentTarget.style.borderColor='#3b82f6';e.currentTarget.style.background='#f0fdf4'}} onMouseLeave={e=>{e.currentTarget.style.borderColor='transparent';e.currentTarget.style.background='transparent'}}>
                                   {new Date(c.interview_date || c.interview?.interview_date).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})}<br/>
                                   <span style={{ fontSize:'11.5px', color:'#64748b' }}>{(c.interview_time || c.interview?.interview_time || '').substring(0,5)} WIB</span>
                                 </div>
@@ -890,7 +888,7 @@ const handleLogout = () => {
                             <div style={{ display:'flex', justifyContent:'center', alignItems:'center' }}>
                               {c.test_link||c.test_submission?<a href={c.test_submission||c.test_link} target='_blank' rel='noreferrer' style={{ fontSize:'12px', color:'#2563eb', background:'#eff6ff', padding:'4px 12px', borderRadius:'8px', textDecoration:'none', fontWeight:'600' }}>View</a>:<span style={{ fontSize:'12px', color:'#94a3b8' }}>-</span>}
                             </div>
-                            <div style={{ fontSize:'13px', color:'#0f172a', fontWeight:'700', textAlign:'center' }}>
+                            <div style={{ fontSize:'13px', color:'#0f172a', fontWeight:'700', textAlign:'center', display:'flex', justifyContent:'center', alignItems:'center' }}>
                               {c.test_score?<span style={{ color:'#10b981', background:'#ecfdf5', padding:'2px 8px', borderRadius:'12px', cursor:'pointer' }} onClick={()=>{setAssignTestCandidate(c);setTestName(c.test_name||'');setTestLink(c.test_link||'');setTestDate(c.test_date||'');setTestTime(c.test_time||'');setTestNotes(c.test_notes||'')}}>{c.test_score}/100</span>:<button style={{ display:'flex', alignItems:'center', gap:'4px', padding:'4px 10px', borderRadius:'6px', border:'1px solid #cbd5e1', background:'#fff', color:'#64748b', fontSize:'11px', fontWeight:'600', cursor:'pointer', transition:'all 0.15s' }} onMouseEnter={e=>{e.currentTarget.style.borderColor='#3b82f6';e.currentTarget.style.color='#3b82f6';e.currentTarget.style.background='#f0f7ff'}} onMouseLeave={e=>{e.currentTarget.style.borderColor='#cbd5e1';e.currentTarget.style.color='#64748b';e.currentTarget.style.background='#fff'}} onClick={()=>{setAssignTestCandidate(c);setTestName(c.test_name||'');setTestLink(c.test_link||'');setTestDate(c.test_date||'');setTestTime(c.test_time||'');setTestNotes(c.test_notes||'')}}>Grade</button>}
                             </div>
                           </>

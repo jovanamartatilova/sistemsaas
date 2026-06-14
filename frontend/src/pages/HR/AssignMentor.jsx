@@ -473,7 +473,7 @@ export default function AssignMentorHR() {
               <div className="am-table-inner">
               {/* Table header */}
               <div style={{
-                display: "grid", gridTemplateColumns: "2fr 1fr 1.2fr 0.8fr 1.8fr 1fr",
+                display: "grid", gridTemplateColumns: "1.2fr 1fr 1.2fr 0.8fr 1.8fr 1fr",
                 gap: "8px", padding: "8px 16px",
                 background: "#f8fafc", borderBottom: "1px solid #f1f5f9",
               }}>
@@ -481,8 +481,8 @@ export default function AssignMentorHR() {
                   <span key={h} style={{ 
                     fontSize: "10px", fontWeight: "700", color: "#94a3b8", 
                     letterSpacing: "0.06em", 
-                    textAlign: h === "INTERN" ? "left" : "center", 
-                    display: "flex", alignItems: "center", justifyContent: h === "INTERN" ? "flex-start" : "center"
+                    textAlign: "center", 
+                    display: "flex", alignItems: "center", justifyContent: "center"
                   }}>
                     {h}
                   </span>
@@ -516,7 +516,7 @@ export default function AssignMentorHR() {
                       key={intern.id_submission}
                       className="row-hover"
                       style={{
-                        display: "grid", gridTemplateColumns: "2fr 1fr 1.2fr 0.8fr 1.8fr 1fr",
+                        display: "grid", gridTemplateColumns: "1.2fr 1fr 1.2fr 0.8fr 1.8fr 1fr",
                         gap: "8px", padding: "9px 16px", alignItems: "center",
                         borderBottom: i < data.interns.length - 1 ? "1px solid #f8fafc" : "none",
                         transition: "background 0.15s",
@@ -524,7 +524,7 @@ export default function AssignMentorHR() {
                       }}
                     >
                       {/* Name + email — no avatar bubble */}
-                      <div style={{ minWidth: 0 }}>
+                      <div style={{ minWidth: 0, textAlign: "center" }}>
                         <div style={{ fontSize: "clamp(11px,1.1vw,13px)", fontWeight: "600", color: "#1e293b", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{intern.name}</div>
                         <div style={{ fontSize: "clamp(10px,0.9vw,11px)", color: "#94a3b8", marginTop: "1px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{intern.email}</div>
                       </div>
