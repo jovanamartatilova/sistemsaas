@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, useParams, useSearchParams } fr
 import { useAuthStore } from './stores/authStore';
 import PrivateRoute from './components/PrivateRoute';
 import { initSession, isSessionValid, clearSession } from './utils/sessionManager';
+import { GoogleOAuthProvider } from "@react-oauth/google";
 
 // Auth
 import LoginPage         from './pages/Auth/Login';
@@ -39,7 +40,6 @@ import LandingPage  from './pages/Main/LandingPage';
 import ProfilePage  from './pages/Main/ProfilePage';
 import PreviewOnboarding from "./pages/Main/PreviewOnBoarding";
 import CertificateVerification from './pages/Main/CertificateVerification';
-
 
 // Super Admin
 import SuperAdminPages from './pages/SuperAdmin/SuperAdminPages';
@@ -79,20 +79,18 @@ const CandidateRegisterRedirect = () => {
 const DashboardRouter = () => {
     const { user, company } = useAuthStore();
     const storedUserType = localStorage.getItem('user_type');
-    
-    // Resolve role without any fallback to 'candidate'
+
     const role = user?.role || user?.user_type || storedUserType || company?.role || null;
 
-    // If no role, redirect to onboarding
     if (!role || role === 'new' || role === 'null' || role === '') {
         return <Navigate to="/" replace />;
     }
-    
+
     const normalizedRole = String(role || "").trim().toLowerCase();
-    
+
     if (normalizedRole === "mentor") return <Navigate to="/mentor/dashboard" replace />;
     if (normalizedRole === "hr") return <Navigate to="/hr/dashboard" replace />;
-    
+
     return <DashboardPage />;
 };
 
@@ -101,99 +99,93 @@ export default function App() {
     const { hydrateFromStorage, logoutSilent, isAuthenticated } = useAuthStore();
 
     useEffect(() => {
-    if (!isAuthenticated) return;
+        if (!isAuthenticated) return;
 
-    // Kalau sessionStorage kosong tapi localStorage ada token
-    // berarti ini fresh load setelah browser ditutup ATAU
-    // ini pertama kali session manager dipasang
-    // Hanya logout kalau memang pernah ada session sebelumnya
-    const hadSession = sessionStorage.getItem('had_session'); console.log("APP SESSION CHECK:", {isAuthenticated, hadSession, isSessionValid: isSessionValid()});
-    
-    // Reset session jika tidak valid (tab refresh/reopen)
-    // Tidak logout, biarkan token tetap ada
+        const hadSession = sessionStorage.getItem('had_session');
+        console.log("APP SESSION CHECK:", { isAuthenticated, hadSession, isSessionValid: isSessionValid() });
 
-    // Start session baru
-    sessionStorage.setItem('had_session', 'true');
-    
-    const cleanup = initSession(() => {
-        clearSession();
-        logoutSilent();
-    });
+        sessionStorage.setItem('had_session', 'true');
 
-    return cleanup;
-}, [isAuthenticated, logoutSilent]);
+        const cleanup = initSession(() => {
+            clearSession();
+            logoutSilent();
+        });
+
+        return cleanup;
+    }, [isAuthenticated, logoutSilent]);
 
     return (
-        <BrowserRouter>
-            <Routes>
-                {/* Public */}
-                <Route path="/"                          element={<LandingPage />} />
-                <Route path="/login"                     element={<LoginPage />} />
-                <Route path="/register"                  element={<RegisterPage />} />
-                <Route path="/forgot-password"           element={<ForgotPassword />} />
-                <Route path="/reset-password"            element={<ResetPassword />} />
-                <Route path="/activate"                  element={<ActivateAccount />} />
-                <Route path="/forgot-password-candidate" element={<ForgotPasswordCandidate />} />
+        <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
+            <BrowserRouter>
+                <Routes>
+                    {/* Public */}
+                    <Route path="/"                          element={<LandingPage />} />
+                    <Route path="/login"                     element={<LoginPage />} />
+                    <Route path="/register"                  element={<RegisterPage />} />
+                    <Route path="/forgot-password"           element={<ForgotPassword />} />
+                    <Route path="/reset-password"            element={<ResetPassword />} />
+                    <Route path="/activate"                  element={<ActivateAccount />} />
+                    <Route path="/forgot-password-candidate" element={<ForgotPasswordCandidate />} />
 
-                {/* Company — Public */}
-                <Route path="/c/:idCompany"                   element={<LandingPage />} />
-                <Route path="/c/:idCompany/register"          element={<CandidateRegisterRedirect />} />
-                <Route path="/c/:idCompany/login"             element={<Navigate to="/" replace />} />
-                <Route path="/c/:idCompany/forgot-password"   element={<ForgotPasswordCandidate />} />
-                <Route path="/c/:idCompany/reset-password"    element={<ResetPasswordCandidate />} />
-                <Route path="/c/:idCompany/staff/login"       element={<Navigate to="/" replace />} />
-                <Route path="/c/:idCompany/staff/forgot-password"   element={<ForgotPasswordStaff />} />
-                <Route path="/c/:idCompany/staff/reset-password"    element={<ResetPasswordStaff />} />
-                <Route path="/onboarding" element={<PreviewOnboarding />} />
+                    {/* Company — Public */}
+                    <Route path="/c/:idCompany"                   element={<LandingPage />} />
+                    <Route path="/c/:idCompany/register"          element={<CandidateRegisterRedirect />} />
+                    <Route path="/c/:idCompany/login"             element={<Navigate to="/" replace />} />
+                    <Route path="/c/:idCompany/forgot-password"   element={<ForgotPasswordCandidate />} />
+                    <Route path="/c/:idCompany/reset-password"    element={<ResetPasswordCandidate />} />
+                    <Route path="/c/:idCompany/staff/login"       element={<Navigate to="/" replace />} />
+                    <Route path="/c/:idCompany/staff/forgot-password"   element={<ForgotPasswordStaff />} />
+                    <Route path="/c/:idCompany/staff/reset-password"    element={<ResetPasswordStaff />} />
+                    <Route path="/onboarding" element={<PreviewOnboarding />} />
 
-                {/* Team Invitation - Public */}
-                <Route path="/join-team/:token" element={<JoinTeamPage />} />
-                <Route path="/join/:token" element={<JoinTeamPage />} />
-                <Route path="/verify-certificate/:id_certificate" element={<CertificateVerification />} />
+                    {/* Team Invitation - Public */}
+                    <Route path="/join-team/:token" element={<JoinTeamPage />} />
+                    <Route path="/join/:token" element={<JoinTeamPage />} />
+                    <Route path="/verify-certificate/:id_certificate" element={<CertificateVerification />} />
 
-                {/* Candidate — Private */}
-                <Route path="/candidate/dashboard"                   element={<Private><CandidateDashboard /></Private>} />
-                <Route path="/c/:idCompany/dashboard"                     element={<Private><CandidateDashboard /></Private>} />
-                <Route path="/c/:idCompany/leader/dashboard"              element={<Private><LeaderDashboard /></Private>} />
-                <Route path="/c/:idCompany/leader/team"                   element={<Private><LeaderTeamManagement /></Private>} />
-                <Route path="/c/:idCompany/leader/tasks"                  element={<Private><MemberDashboard /></Private>} />
-                <Route path="/c/:idCompany/member/dashboard"              element={<Private><MemberDashboard /></Private>} />
-                <Route path="/c/:idCompany/member/tasks"                  element={<Private><MemberDashboard /></Private>} />
-                <Route path="/c/:idCompany/programs"                      element={<Private><ProgramsPage /></Private>} />
-                <Route path="/c/:idCompany/certificates"                  element={<Private><CertificateCandidate /></Private>} />
-                <Route path="/c/:idCompany/profile"                       element={<Private><ProfileSettings /></Private>} />
-                <Route path="/c/:idCompany/apply/:vacancyId/:positionId"  element={<Private><SubmissionForm /></Private>} />
-                <Route path="/c/:idCompany/apply/:vacancyId"              element={<Private><SubmissionForm /></Private>} />
-                <Route path="/candidate/programs"   element={<Private><ProgramsPage /></Private>} /> 
+                    {/* Candidate — Private */}
+                    <Route path="/candidate/dashboard"                   element={<Private><CandidateDashboard /></Private>} />
+                    <Route path="/c/:idCompany/dashboard"                     element={<Private><CandidateDashboard /></Private>} />
+                    <Route path="/c/:idCompany/leader/dashboard"              element={<Private><LeaderDashboard /></Private>} />
+                    <Route path="/c/:idCompany/leader/team"                   element={<Private><LeaderTeamManagement /></Private>} />
+                    <Route path="/c/:idCompany/leader/tasks"                  element={<Private><MemberDashboard /></Private>} />
+                    <Route path="/c/:idCompany/member/dashboard"              element={<Private><MemberDashboard /></Private>} />
+                    <Route path="/c/:idCompany/member/tasks"                  element={<Private><MemberDashboard /></Private>} />
+                    <Route path="/c/:idCompany/programs"                      element={<Private><ProgramsPage /></Private>} />
+                    <Route path="/c/:idCompany/certificates"                  element={<Private><CertificateCandidate /></Private>} />
+                    <Route path="/c/:idCompany/profile"                       element={<Private><ProfileSettings /></Private>} />
+                    <Route path="/c/:idCompany/apply/:vacancyId/:positionId"  element={<Private><SubmissionForm /></Private>} />
+                    <Route path="/c/:idCompany/apply/:vacancyId"              element={<Private><SubmissionForm /></Private>} />
+                    <Route path="/candidate/programs"   element={<Private><ProgramsPage /></Private>} />
 
-                {/* Admin — Private */}
-                <Route path="/dashboard"  element={<Private><DashboardRouter /></Private>} />
-                <Route path="/positions"  element={<Private><PositionsManagement /></Private>} />
-                <Route path="/programs"   element={<Private><ProgramManagement /></Private>} />
-                <Route path="/users"      element={<Private><UserManagement /></Private>} />
-                <Route path="/settings"   element={<Private><SettingsAdmin /></Private>} />
-                <Route path="/profile"    element={<Private><ProfilePage /></Private>} />
+                    {/* Admin — Private */}
+                    <Route path="/dashboard"  element={<Private><DashboardRouter /></Private>} />
+                    <Route path="/positions"  element={<Private><PositionsManagement /></Private>} />
+                    <Route path="/programs"   element={<Private><ProgramManagement /></Private>} />
+                    <Route path="/users"      element={<Private><UserManagement /></Private>} />
+                    <Route path="/settings"   element={<Private><SettingsAdmin /></Private>} />
+                    <Route path="/profile"    element={<Private><ProfilePage /></Private>} />
 
-                {/* Super Admin */}
-                <Route path="/superadmin/*" element={<SuperAdminPages />} />
+                    {/* Super Admin */}
+                    <Route path="/superadmin/*" element={<SuperAdminPages />} />
 
-                {/* HR — Private */}
-                <Route path="/hr/dashboard"     element={<Private><DashboardHR /></Private>} />
-                <Route path="/hr/selection"     element={<Private><SelectionHR /></Private>} />
-                <Route path="/hr/generate-loa"  element={<Private><GenerateLOA /></Private>} />
-                <Route path="/hr/payroll"       element={<Private><PayrollHR /></Private>} />
-                <Route path="/hr/assign-mentor" element={<Private><AssignMentor /></Private>} />
-                <Route path="/hr/candidates" element={<Private><CandidateHR /></Private>} />
-                <Route path="/hr/kandidate" element={<Navigate to="/hr/candidates" replace />} />
-                <Route path="/hr/active-intern" element={<Private><ActiveInternHR /></Private>} />
+                    {/* HR — Private */}
+                    <Route path="/hr/dashboard"     element={<Private><DashboardHR /></Private>} />
+                    <Route path="/hr/selection"     element={<Private><SelectionHR /></Private>} />
+                    <Route path="/hr/generate-loa"  element={<Private><GenerateLOA /></Private>} />
+                    <Route path="/hr/payroll"       element={<Private><PayrollHR /></Private>} />
+                    <Route path="/hr/assign-mentor" element={<Private><AssignMentor /></Private>} />
+                    <Route path="/hr/candidates" element={<Private><CandidateHR /></Private>} />
+                    <Route path="/hr/kandidate" element={<Navigate to="/hr/candidates" replace />} />
+                    <Route path="/hr/active-intern" element={<Private><ActiveInternHR /></Private>} />
 
-                {/* Mentor — Private */}
-                <Route path="/mentor/dashboard"     element={<Private><DashboardMentor /></Private>} />
-                <Route path="/mentor/assign-tasks"   element={<Private><AssignTasksMentor /></Private>} />
-                <Route path="/mentor/input-score"    element={<Private><InputScoreMentor /></Private>} />
-                <Route path="/mentor/certificates"   element={<Private><CertificateMentor /></Private>} />
-
-            </Routes>
-        </BrowserRouter>
+                    {/* Mentor — Private */}
+                    <Route path="/mentor/dashboard"     element={<Private><DashboardMentor /></Private>} />
+                    <Route path="/mentor/assign-tasks"   element={<Private><AssignTasksMentor /></Private>} />
+                    <Route path="/mentor/input-score"    element={<Private><InputScoreMentor /></Private>} />
+                    <Route path="/mentor/certificates"   element={<Private><CertificateMentor /></Private>} />
+                </Routes>
+            </BrowserRouter>
+        </GoogleOAuthProvider>
     );
 }
