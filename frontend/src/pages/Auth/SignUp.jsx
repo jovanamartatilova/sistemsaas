@@ -87,6 +87,45 @@ export default function SignUp() {
     }
   };
 
+  const handleGoogleSignUp = useGoogleLogin({
+  onSuccess: async (tokenResponse) => {
+    setLoading(true);
+    setErrorMsg("");
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/auth/google`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ access_token: tokenResponse.access_token }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "Google sign up failed");
+
+      localStorage.setItem("auth_token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+      localStorage.setItem("user_type", data.redirect_role || "new");
+      localStorage.setItem("is_new_user", String(!!data.is_new_user));
+
+      useAuthStore.setState({
+        isAuthenticated: true,
+        token: data.token,
+        user: data.user,
+        company: data.company || null,
+      });
+
+      if (data.is_new_user) {
+        setShowOnboarding(true);
+      } else {
+        navigate(data.redirect_path, { replace: true });
+      }
+    } catch (err) {
+      setErrorMsg(err.message);
+    } finally {
+      setLoading(false);
+    }
+  },
+  onError: () => setErrorMsg("Google sign up failed"),
+});
+
 const inputBase = {
   background: isDark ? "rgba(255,255,255,0.07)" : "rgba(255,255,255,0.85)",
   border: isDark ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(0,0,0,0.15)",
@@ -317,6 +356,7 @@ const inputBase = {
               {/* Google */}
               <button
                 type="button"
+                onClick={() => handleGoogleSignUp()}
                 className="w-full py-3.5 rounded-xl font-medium text-sm flex items-center justify-center gap-3 transition-all duration-200"
                 style={{ background: "rgba(255,255,255,0.97)", color: "#1a1a2e" }}
                 onMouseEnter={(e) => {

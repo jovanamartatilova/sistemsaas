@@ -54,7 +54,7 @@ const IC = {
 export default function PreviewOnboarding() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { token, getRoleForRouting, loading: authLoading } = useAuthStore();
+  const { token, user, getRoleForRouting, loading: authLoading } = useAuthStore();
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState('entry'); // entry, form, invite_form, success
   const [path, setPath] = useState(null); // 'candidate', 'admin', or 'invitation'
@@ -65,6 +65,8 @@ export default function PreviewOnboarding() {
   });
   const [error, setError] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
+  const [existingAccount, setExistingAccount] = useState(null);
+  const [loginPassword, setLoginPassword] = useState('');
 
   // Form fields - Registration
   const [firstName, setFirstName] = useState('');
@@ -86,7 +88,45 @@ export default function PreviewOnboarding() {
   const [companyPassword, setCompanyPassword] = useState('');
   const [companyPasswordConfirm, setCompanyPasswordConfirm] = useState('');
 
-const handleActivationEmailChange = async (emailValue) => {
+const alreadyAuthSameEmail = Boolean(token) && Boolean(user?.email) &&
+  user.email.toLowerCase() === email.trim().toLowerCase();
+const isLocked = Boolean(existingAccount) || alreadyAuthSameEmail;
+const needsPasswordLogin = Boolean(existingAccount) && !alreadyAuthSameEmail;
+
+// Kalau user udah login (misal dari login biasa atau Google) tapi role-nya null,
+// otomatis isi nama & email dari data yang udah ada, biar nggak disuruh isi ulang
+useEffect(() => {
+  if (token && user?.email) {
+    setEmail(user.email);
+    const parts = (user.name || '').split(' ');
+    setFirstName(parts[0] || '');
+    setLastName(parts.slice(1).join(' ') || '');
+  }
+}, [token, user]);
+
+const handleEmailChange = async (value) => {
+  setEmail(value);
+  if (token && user?.email && user.email.toLowerCase() === value.trim().toLowerCase()) {
+    setExistingAccount(null);
+    return;
+  }
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!value || !emailRegex.test(value)) { setExistingAccount(null); return; }
+  try {
+    const res = await api(`/auth/check-email/${encodeURIComponent(value)}`);
+    if (res.exists && res.user) {
+      setExistingAccount(res.user);
+      setFirstName(res.user.first_name || '');
+      setLastName(res.user.last_name || '');
+    } else {
+      setExistingAccount(false);
+    }
+  } catch (_) {
+    setExistingAccount(false);
+  }
+};
+
+  const handleActivationEmailChange = async (emailValue) => {
   setActivationForm(f => ({ ...f, email: emailValue }));
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailValue || !emailRegex.test(emailValue)) return;
@@ -118,121 +158,121 @@ const handleActivationEmailChange = async (emailValue) => {
   }, [token, authLoading, navigate, getRoleForRouting]);
 
   const handleRegister = async (e) => {
-    e.preventDefault();
-    setError('');
+  e.preventDefault();
+  setError('');
 
-    // Validation
-    if (!firstName.trim() || !lastName.trim() || !email.trim() || !password.trim()) {
-      setError('Please fill in all required fields');
-      return;
+  if (!email.trim()) {
+    setError('Please fill in all required fields');
+    return;
+  }
+
+  setLoading(true);
+
+  try {
+    let workingToken = token;
+
+    if (!alreadyAuthSameEmail) {
+      if (existingAccount) {
+        // Email sudah terdaftar tapi belum login di sesi ini -> login dulu
+        if (!loginPassword.trim()) {
+          setError('Please enter your password to continue');
+          setLoading(false);
+          return;
+        }
+        const loginRes = await api('/login', {
+          method: 'POST',
+          data: { email: email.trim(), password: loginPassword },
+        });
+        if (!loginRes.token) throw new Error('Login failed');
+        workingToken = loginRes.token;
+      } else {
+        // Email belum terdaftar -> register baru seperti biasa
+        if (!firstName.trim() || !lastName.trim() || !password.trim()) {
+          setError('Please fill in all required fields');
+          setLoading(false);
+          return;
+        }
+        const { valid: isPasswordValid, errors: passwordErrors } = validatePassword(password);
+        if (!isPasswordValid) {
+          setError(passwordErrors[0] || 'Invalid password');
+          setLoading(false);
+          return;
+        }
+        if (password !== passwordConfirm) {
+          setError('Passwords do not match');
+          setLoading(false);
+          return;
+        }
+        const registerRes = await api('/register', {
+          method: 'POST',
+          data: { name: `${firstName} ${lastName}`, email, password, password_confirmation: passwordConfirm },
+        });
+        if (!registerRes.token) throw new Error('Registration failed');
+        workingToken = registerRes.token;
+      }
     }
 
-    // Validate password
-    const { valid: isPasswordValid, errors: passwordErrors } = validatePassword(password);
-    if (!isPasswordValid) {
-      setError(passwordErrors[0] || 'Invalid password');
-      return;
-    }
+    let profileRes;
+    let resolvedRole = null;
 
-    if (password !== passwordConfirm) {
-      setError('Passwords do not match');
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      // 1. Register user
-      const registerRes = await api('/register', {
+    if (path === 'candidate') {
+      profileRes = await api('/create-candidate-profile', {
         method: 'POST',
         data: {
-          name: `${firstName} ${lastName}`,
-          email,
-          password,
-          password_confirmation: passwordConfirm
-        }
+          phone: phone || null,
+          institution: institution || null,
+          education_level: educationLevel || null,
+          major: major || null,
+        },
+        headers: { Authorization: `Bearer ${workingToken}` },
       });
-
-      if (!registerRes.token) {
-        throw new Error('Registration failed');
-      }
-
-      // Store token temporarily for profile creation
-      const tempToken = registerRes.token;
-
-      // 2. Create profile based on path
-      let profileRes;
-      let resolvedRole = null;
-      
-      if (path === 'candidate') {
-        profileRes = await api('/create-candidate-profile', {
-          method: 'POST',
-          data: {
-            phone: phone || null,
-            institution: institution || null,
-            education_level: educationLevel || null,
-            major: major || null
-          },
-          headers: { 'Authorization': `Bearer ${tempToken}` }
-        });
-        resolvedRole = 'candidate';
-      } else if (path === 'admin') {
-        profileRes = await api('/create-company', {
-          method: 'POST',
-          data: {
-            name: companyName,
-            phone: companyPhone,
-            address: companyAddress,
-            password: companyPassword
-          },
-          headers: { 'Authorization': `Bearer ${tempToken}` }
-        });
-        resolvedRole = 'admin';
-      }
-
-      if (!profileRes || !profileRes.message) {
-        throw new Error('Profile creation failed');
-      }
-
-      // 3. Use store's setAuthData to commit all state properly
-      useAuthStore.setState(state => ({
-        ...state,
-        token: tempToken,
-        user: profileRes.user || null,
-        company: profileRes.company || null,
-        candidate_profile: profileRes.candidate_profile || null,
-        isAuthenticated: true,
-      }));
-
-      // Also update localStorage
-      localStorage.setItem('auth_token', tempToken);
-      localStorage.setItem('user_type', resolvedRole);
-      if (profileRes.user) {
-        localStorage.setItem('user', JSON.stringify(profileRes.user));
-      }
-      if (profileRes.company) {
-        localStorage.setItem('company', JSON.stringify(profileRes.company));
-      }
-      if (profileRes.candidate_profile) {
-        localStorage.setItem('candidate_profile', JSON.stringify(profileRes.candidate_profile));
-      }
-
-      // Show success screen briefly, then navigate
-      setShowSuccess(true);
-
-      // Use a short timeout to allow success screen to render
-      setTimeout(() => {
-        const targetPath = path === 'candidate' ? '/candidate/dashboard' : '/dashboard';
-        navigate(targetPath, { replace: true });
-      }, 1200);
-
-    } catch (err) {
-      console.error('Registration error:', err);
-      setError(err.response?.data?.message || err.message || 'Registration failed');
-    } finally {
-      setLoading(false);
+      resolvedRole = 'candidate';
+    } else if (path === 'admin') {
+      profileRes = await api('/create-company', {
+        method: 'POST',
+        data: {
+          name: companyName,
+          phone: companyPhone,
+          address: companyAddress,
+          password: companyPassword,
+        },
+        headers: { Authorization: `Bearer ${workingToken}` },
+      });
+      resolvedRole = 'admin';
     }
-  };
+
+    if (!profileRes || !profileRes.message) {
+      throw new Error('Profile creation failed');
+    }
+
+    useAuthStore.setState(state => ({
+      ...state,
+      token: workingToken,
+      user: profileRes.user || null,
+      company: profileRes.company || null,
+      candidate_profile: profileRes.candidate_profile || null,
+      isAuthenticated: true,
+    }));
+
+    localStorage.setItem('auth_token', workingToken);
+    localStorage.setItem('user_type', resolvedRole);
+    if (profileRes.user) localStorage.setItem('user', JSON.stringify(profileRes.user));
+    if (profileRes.company) localStorage.setItem('company', JSON.stringify(profileRes.company));
+    if (profileRes.candidate_profile) localStorage.setItem('candidate_profile', JSON.stringify(profileRes.candidate_profile));
+
+    setShowSuccess(true);
+    setTimeout(() => {
+      const targetPath = path === 'candidate' ? '/candidate/dashboard' : '/dashboard';
+      navigate(targetPath, { replace: true });
+    }, 1200);
+
+  } catch (err) {
+    console.error('Registration error:', err);
+    setError(err.response?.data?.message || err.message || 'Registration failed');
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleInvitationCodeSubmit = async (e) => {
     e.preventDefault();
@@ -840,6 +880,7 @@ const handleActivationEmailChange = async (emailValue) => {
                       value={activationForm[field]}
                       onChange={e => setActivationForm(f => ({ ...f, [field]: e.target.value }))}
                       required={field === 'first_name'}
+                      readOnly={isLocked}
                       style={{ width:'100%', padding:'11px 14px', fontSize:'14px', border:'1.5px solid #e2e8f0', borderRadius:'10px', outline:'none', boxSizing:'border-box', color:'#1e293b', background:'#fff' }}
                       onFocus={e => e.target.style.borderColor='#3b82f6'}
                       onBlur={e => e.target.style.borderColor='#e2e8f0'}
@@ -1088,8 +1129,9 @@ const handleActivationEmailChange = async (emailValue) => {
                 <input
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => handleEmailChange(e.target.value)}
                   placeholder="you@example.com"
+                  readOnly={isLocked}
                   style={{
                     width: '100%',
                     padding: '12px 16px',
@@ -1098,18 +1140,18 @@ const handleActivationEmailChange = async (emailValue) => {
                     borderRadius: '12px',
                     outline: 'none',
                     boxSizing: 'border-box',
-                    background: '#ffffff',
-                    color: '#1e293b'
+                    background: isLocked ? '#f8fafc' : '#ffffff',
+                    color: isLocked ? '#94a3b8' : '#1e293b',
+                    cursor: isLocked ? 'not-allowed' : 'text',
                   }}
-                  onFocus={(e) => { 
-                    e.currentTarget.style.borderColor = '#3b82f6'; 
-                    e.currentTarget.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)'; 
-                  }}
-                  onBlur={(e) => { 
-                    e.currentTarget.style.borderColor = '#e2e8f0'; 
-                    e.currentTarget.style.boxShadow = 'none'; 
-                  }}
+                  onFocus={(e) => { if (!isLocked) { e.currentTarget.style.borderColor = '#3b82f6'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)'; } }}
+                  onBlur={(e) => { if (!isLocked) { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.boxShadow = 'none'; } }}
                 />
+                {existingAccount && !alreadyAuthSameEmail && (
+                  <p style={{ fontSize: '12px', color: '#3b82f6', marginTop: '6px' }}>
+                    Email ini sudah terdaftar atas nama {existingAccount.first_name} {existingAccount.last_name}. Masukkan password untuk lanjut.
+                  </p>
+                )}
               </div>
 
               {/* Candidate-specific fields */}
@@ -1389,47 +1431,38 @@ const handleActivationEmailChange = async (emailValue) => {
               )}
 
               {/* Password Fields */}
-              {isCandidateForm && (
-                <>
-                  <PasswordInput
-                    value={password}
-                    onChange={(val) => setPassword(val)}
-                    label="Password"
-                    isDark={false}
-                    showStrength={true}
-                    showRules={true}
-                  />
-
-                  <PasswordInput
-                    value={passwordConfirm}
-                    onChange={(val) => setPasswordConfirm(val)}
-                    label="Confirm Password"
-                    isDark={false}
-                    showStrength={false}
-                    showRules={false}
-                  />
-                </>
+              {!alreadyAuthSameEmail && (
+                needsPasswordLogin ? (
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#1e293b', marginBottom: '8px' }}>
+                      Password
+                    </label>
+                    <input
+                      type="password"
+                      value={loginPassword}
+                      onChange={(e) => setLoginPassword(e.target.value)}
+                      placeholder="Input your account password"
+                      style={{
+                        width: '100%', padding: '12px 16px', fontSize: '14px',
+                        border: '1.5px solid #e2e8f0', borderRadius: '12px',
+                        outline: 'none', boxSizing: 'border-box',
+                        background: '#ffffff', color: '#1e293b',
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <>
+                    <PasswordInput value={password} onChange={(val) => setPassword(val)} label="Password" isDark={false} showStrength={true} showRules={true} />
+                    <PasswordInput value={passwordConfirm} onChange={(val) => setPasswordConfirm(val)} label="Confirm Password" isDark={false} showStrength={false} showRules={false} />
+                  </>
+                )
               )}
 
+              {/* Company password tetap terpisah, khusus path admin */}
               {isAdminForm && (
                 <>
-                  <PasswordInput
-                    value={companyPassword}
-                    onChange={(val) => setCompanyPassword(val)}
-                    label="Company Password"
-                    isDark={false}
-                    showStrength={true}
-                    showRules={true}
-                  />
-
-                  <PasswordInput
-                    value={companyPasswordConfirm}
-                    onChange={(val) => setCompanyPasswordConfirm(val)}
-                    label="Confirm Company Password"
-                    isDark={false}
-                    showStrength={false}
-                    showRules={false}
-                  />
+                  <PasswordInput value={companyPassword} onChange={(val) => setCompanyPassword(val)} label="Company Password" isDark={false} showStrength={true} showRules={true} />
+                  <PasswordInput value={companyPasswordConfirm} onChange={(val) => setCompanyPasswordConfirm(val)} label="Confirm Company Password" isDark={false} showStrength={false} showRules={false} />
                 </>
               )}
 
