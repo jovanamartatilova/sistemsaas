@@ -4,6 +4,7 @@ import { useAuthStore } from "../../stores/authStore";
 import OnboardingModal from "../../components/OnboardingModal";
 import PasswordInput from "../../components/PasswordInput";
 import { validatePassword } from "../../utils/passwordValidator";
+import { useGoogleLogin } from '@react-oauth/google';
 
 export default function SignUp() {
   const navigate = useNavigate();
