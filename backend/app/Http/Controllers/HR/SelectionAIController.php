@@ -117,14 +117,30 @@ class SelectionAIController extends Controller
             return response()->json(['success' => false, 'message' => 'No candidates provided'], 400);
         }
 
-        // Ambil deskripsi posisi sebagai "query dokumen"
-        $position    = Position::find($idPosition);
-        $positionText = $position
-            ? ($position->name . ' ' . ($position->description ?? '') . ' ' . ($position->requirements ?? ''))
-            : '';
+        // Ambil posisi beserta kompetensi yang dibutuhkan
+        $position    = Position::with('competencies')->find($idPosition);
+        $competencies = $position?->competencies ?? collect();
 
-        // Ambil submissions
-        $submissions = Submission::with(['user', 'position', 'vacancy'])
+        // Susun deskripsi kompetensi posisi untuk konteks LLM
+        $competencyContext = "";
+        if ($competencies->isNotEmpty()) {
+            $competencyContext = "\n--- REQUIRED COMPETENCIES FOR THIS POSITION ---\n";
+            foreach ($competencies as $comp) {
+                $competencyContext .= "- {$comp->name}";
+                if (!empty($comp->description)) {
+                    $competencyContext .= ": {$comp->description}";
+                }
+                if (!empty($comp->learning_hours)) {
+                    $competencyContext .= " ({$comp->learning_hours} learning hours required)";
+                }
+                $competencyContext .= "\n";
+            }
+        }
+
+        $positionText = $position ? ($position->name . ' ' . $competencies->pluck('name')->implode(' ')) : '';
+
+        // Ambil submissions beserta CV dan info kandidat
+        $submissions = Submission::with(['user.candidate', 'position', 'vacancy'])
             ->whereIn('id_submission', $idSubmissions)
             ->whereHas('vacancy', fn($q) => $q->where('id_company', $companyId))
             ->get();
@@ -142,14 +158,19 @@ class SelectionAIController extends Controller
                 foreach ($submissions as $index => $s) {
                     $candIdx = $index + 1;
                     $cvText = $this->extractCvTextLocal($s);
-                    
+                    $testScore = $s->test_details['test_score'] ?? null;
+                    $candidate = $s->user?->candidate;
+
                     $candidatesContext .= "Candidate #{$candIdx}:\n";
                     $candidatesContext .= "- Submission ID: {$s->id_submission}\n";
                     $candidatesContext .= "- Name: " . ($s->user?->name ?? 'Unknown') . "\n";
-                    $candidatesContext .= "- University: " . ($s->user?->university ?? '-') . "\n";
+                    $candidatesContext .= "- University/Institution: " . ($candidate?->institution ?? $s->user?->university ?? '-') . "\n";
+                    $candidatesContext .= "- Major/Field: " . ($candidate?->major ?? '-') . "\n";
+                    $candidatesContext .= "- Education Level: " . ($candidate?->education_level ?? '-') . "\n";
+                    $candidatesContext .= "- About/Profile: " . ($candidate?->about ?? '-') . "\n";
                     $candidatesContext .= "- Motivation Message: " . ($s->motivation_message ?? '-') . "\n";
                     $candidatesContext .= "- HR Notes: " . ($s->hr_notes ?? '-') . "\n";
-                    $candidatesContext .= "- Test Score: " . ($s->test_score ?? '-') . "\n";
+                    $candidatesContext .= "- Test Score: " . ($testScore ?? 'Not yet taken') . "\n";
                     $candidatesContext .= "- Has CV File: " . (!empty($s->cv_file) ? 'Yes' : 'No') . "\n";
                     $candidatesContext .= "- Has Portfolio File: " . (!empty($s->portfolio_file) ? 'Yes' : 'No') . "\n";
                     $candidatesContext .= "- Has Supporting Document: " . (!empty($s->supporting_document_file) ? 'Yes' : 'No') . "\n";
@@ -160,14 +181,12 @@ class SelectionAIController extends Controller
                 }
 
                 $prompt = <<<PROMPT
-You are a professional HR assistant for earlypath, an Internship SaaS platform.
-Your task is to evaluate and rank a list of candidates applying for a position, specifically tailored to the current selection stage.
+You are a professional HR assistant for EarlyPath, an Internship SaaS platform.
+Your task is to evaluate and rank a list of candidates applying for a position, based strictly on how well each candidate matches the REQUIRED COMPETENCIES listed below.
 
 --- POSITION INFO ---
 Position Name: {$position->name}
-Description: {$position->description}
-Requirements: {$position->requirements}
-
+{$competencyContext}
 --- SELECTION STAGE ---
 Current Stage: {$stage}
 
@@ -175,46 +194,93 @@ Current Stage: {$stage}
 {$candidatesContext}
 
 --- TASK ---
-Evaluate each candidate's suitability SPECIFICALLY for the target position "{$position->name}" using their CV content, motivation message, and other profile details. 
-Note: Even if a candidate has strong experience in another field (e.g., IT Support or Software Engineering), if they are applying for a different role (e.g., Digital Marketing) and do not show relevant skills for "{$position->name}", they must be scored lower or marked as "Reject". Do not confuse their target position with their previous experience.
+Your primary evaluation criterion is the REQUIRED COMPETENCIES listed above for the position "{$position->name}".
+For each candidate, evaluate:
+1. How many and how well their skills/experience/CV match the required competencies (this is the MOST IMPORTANT factor).
+2. Quality and relevance of their motivation message to the position.
+3. HR notes and any concerns raised.
+4. Document completeness (CV, portfolio, supporting docs).
+5. Test score if available.
 
-Provide a ranked list of candidates from most suitable for "{$position->name}" to least suitable.
+IMPORTANT: Do NOT rank candidates based on general popularity or breadth of experience. Focus ONLY on competency match. A candidate with deep relevant skills beats a broadly experienced one if they better match the required competencies.
 
-For each candidate, you must determine:
-1. A suitability score (number between 0 and 100) based strictly on their match with the target position "{$position->name}".
-2. A suggestion: "Pass", "Review", or "Reject" based on their credentials and matching requirements.
-3. A detailed suggestion reason in Bahasa Indonesia explaining why they are in this rank/position and why this suggestion was made, referencing specific details from their CV (e.g., matching skills, experience, lack of portfolio, etc.). Keep it concise but specific (1-2 sentences).
+Provide a ranked list from most suitable (Rank 1) to least suitable.
+
+For each candidate you must determine:
+1. A suitability score (0–100) based primarily on competency match.
+2. A suggestion: "Pass", "Review", or "Reject".
+3. A detailed reason in Bahasa Indonesia referencing SPECIFIC competencies matched or missing from their CV/profile.
 
 --- OUTPUT FORMAT ---
-You must output a JSON object containing a "rankings" key, which is an array of objects. Each object must have:
-- "id_submission": (string) The exact Submission ID of the candidate.
-- "rank": (integer) The rank number (starting from 1 for the best candidate).
-- "score": (number) The suitability score (0 to 100).
-- "suggestion": (string) Exactly "Pass", "Review", or "Reject".
-- "suggestion_reason": (string) The reason in Bahasa Indonesia.
+JSON object with "rankings" key containing an array. Each object must have:
+- "id_submission": (string) exact Submission ID
+- "rank": (integer) rank starting from 1
+- "score": (number) suitability score 0–100
+- "suggestion": (string) exactly "Pass", "Review", or "Reject"
+- "suggestion_reason": (string) reason in Bahasa Indonesia
 
-Do NOT include any markdown block formatting or additional text outside the JSON object.
+Do NOT include any markdown or text outside the JSON.
 PROMPT;
 
-                $client = new \GuzzleHttp\Client(['verify' => false, 'timeout' => 45]);
-                $response = $client->post('https://api.groq.com/openai/v1/chat/completions', [
-                    'headers' => [
-                        'Authorization' => 'Bearer ' . $apiKey,
-                        'Content-Type'  => 'application/json',
-                    ],
-                    'json' => [
-                        'model'    => 'llama-3.3-70b-versatile',
-                        'messages' => [
-                            ['role' => 'system', 'content' => 'You are an objective HR Screening assistant. Speak Bahasa Indonesia. You must respond in a valid JSON format containing a single key "rankings" which contains an array of objects with keys "id_submission", "rank", "score", "suggestion", and "suggestion_reason".'],
-                            ['role' => 'user', 'content' => $prompt],
-                        ],
-                        'response_format' => ['type' => 'json_object'],
-                        'temperature' => 0.0,
-                        'max_tokens'  => 2048,
-                    ],
-                ]);
+                // Try multiple models in order (fallback if rate-limited)
+                // Note: smaller models have lower context limits, so we trim the prompt
+                $modelsToTry = [
+                    ['name' => 'llama-3.3-70b-versatile',  'max_tokens' => 2048, 'trim' => false],
+                    ['name' => 'llama3-70b-8192',           'max_tokens' => 2048, 'trim' => false],
+                    ['name' => 'llama-3.1-8b-instant',      'max_tokens' => 1024, 'trim' => true],
+                ];
 
-                $body = json_decode($response->getBody(), true);
+                $client = new \GuzzleHttp\Client(['verify' => false, 'timeout' => 60]);
+                $body = null;
+                $lastError = null;
+                $usedModel = null;
+
+                foreach ($modelsToTry as $modelConfig) {
+                    $modelName  = $modelConfig['name'];
+                    $maxTok     = $modelConfig['max_tokens'];
+                    $trimPrompt = $modelConfig['trim'];
+
+                    // Trim candidates context for smaller models to avoid 413
+                    $activePrompt = $prompt;
+                    if ($trimPrompt) {
+                        // Limit candidate CV text to avoid huge payloads
+                        $activePrompt = mb_substr($prompt, 0, 8000);
+                    }
+
+                    try {
+                        $response = $client->post('https://api.groq.com/openai/v1/chat/completions', [
+                            'headers' => [
+                                'Authorization' => 'Bearer ' . $apiKey,
+                                'Content-Type'  => 'application/json',
+                            ],
+                            'json' => [
+                                'model'    => $modelName,
+                                'messages' => [
+                                    ['role' => 'system', 'content' => 'You are an objective HR Screening assistant. Speak Bahasa Indonesia. You must respond in a valid JSON format containing a single key "rankings" which contains an array of objects with keys "id_submission", "rank", "score", "suggestion", and "suggestion_reason".'],
+                                    ['role' => 'user', 'content' => $activePrompt],
+                                ],
+                                'response_format' => ['type' => 'json_object'],
+                                'temperature' => 0.0,
+                                'max_tokens'  => $maxTok,
+                            ],
+                        ]);
+                        $body = json_decode($response->getBody(), true);
+                        $usedModel = $modelName;
+                        Log::info("Smart Rank using model: {$modelName}");
+                        break; // success, stop trying
+                    } catch (\Exception $modelErr) {
+                        $lastError = $modelErr;
+                        Log::warning("Model {$modelName} failed: " . $modelErr->getMessage() . ". Trying next model.");
+                        if (str_contains($modelErr->getMessage(), 'Rate limit') || str_contains($modelErr->getMessage(), '429')) {
+                            sleep(1);
+                        }
+                    }
+                }
+
+                if (!$body) {
+                    throw $lastError ?? new \Exception('All models failed');
+                }
+
                 $rawContent = $body['choices'][0]['message']['content'] ?? '';
                 Log::info('Smart Rank Llama response raw: ' . $rawContent);
                 $decoded = json_decode($rawContent, true);
@@ -288,14 +354,36 @@ PROMPT;
         foreach ($rankings as $rank => $item) {
             $submission = $submissions->firstWhere('id_submission', $item['id']);
             $classification = $this->classifyForStage($submission, $stage);
+            $candidate = $submission?->user?->candidate;
+
+            // Build a more informative fallback reason using actual profile data
+            $fallbackReason = '';
+            $parts = [];
+            if (!empty($submission?->motivation_message)) {
+                $motivWords = str_word_count($submission->motivation_message);
+                $parts[] = "Motivasi: " . mb_substr($submission->motivation_message, 0, 120) . ($motivWords > 20 ? '...' : '');
+            }
+            if (!empty($submission?->hr_notes)) {
+                $parts[] = "Catatan HR: " . mb_substr($submission->hr_notes, 0, 100);
+            }
+            if (!empty($candidate?->about)) {
+                $parts[] = "Profil: " . mb_substr($candidate->about, 0, 120);
+            }
+            if (!empty($candidate?->major)) {
+                $parts[] = "Jurusan: " . $candidate->major;
+            }
+            if (empty($parts)) {
+                $parts[] = $classification['reason'];
+            }
+            $fallbackReason = implode('. ', $parts);
 
             $results[] = [
                 'id_submission'      => $item['id'],
                 'rank'               => $rank + 1,
-                'smart_rank_score'   => $item['score'],
+                'smart_rank_score'   => $item['percent'],  // use percent so it shows as 0-100
                 'smart_rank_percent' => $item['percent'],
                 'suggestion'         => $classification['suggestion'],
-                'suggestion_reason'  => $classification['reason'],
+                'suggestion_reason'  => '[Analisis berbasis TF-IDF] ' . $fallbackReason,
                 'suggestion_color'   => $classification['color'],
             ];
         }

@@ -818,6 +818,13 @@ const handleLogout = () => {
         .sel-cell-uni { font-size: clamp(10.5px, 1vw, 12.5px); color: #475569; font-weight: 500; overflow-wrap: break-word; word-break: break-word; white-space: normal; line-height: 1.35; }
         .sel-action-btn { padding: clamp(4px,0.4vw,6px) clamp(8px,0.8vw,12px) !important; font-size: clamp(10px,0.95vw,11.5px) !important; white-space: nowrap; }
         .sel-doc-btn { padding: clamp(3px,0.35vw,5px) clamp(6px,0.7vw,10px) !important; font-size: clamp(10px,0.9vw,11.5px) !important; }
+        /* AI Chat thin smooth scrollbar */
+        .ai-chat-scroll { scroll-behavior: smooth; }
+        .ai-chat-scroll::-webkit-scrollbar { width: 4px; }
+        .ai-chat-scroll::-webkit-scrollbar-track { background: transparent; }
+        .ai-chat-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; transition: background 0.2s; }
+        .ai-chat-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .ai-chat-scroll { scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent; }
       `}</style>
 
       <div className="sel-main-wrap" style={{ flex:1, display:'flex', flexDirection:'column', minWidth:0 }}>
@@ -1034,19 +1041,19 @@ const handleLogout = () => {
                 }}
               >
                 {/* Chat Header */}
-                <div style={{ padding: '12px 20px', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)', color: '#fff' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ padding: '8px 16px', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)', color: '#fff' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                       <IC.Sparkles />
                     </div>
                     <div>
-                      <div style={{ fontSize: '13.5px', fontWeight: '700' }}>AI Selection Assistant</div>
-                      <div style={{ fontSize: '10.5px', color: '#94a3b8' }}>Powered by Llama 3.3</div>
+                      <div style={{ fontSize: '12.5px', fontWeight: '700', lineHeight: '1.2' }}>AI Selection Assistant</div>
+                      <div style={{ fontSize: '9.5px', color: '#94a3b8', lineHeight: '1.2' }}>Powered by Llama 3.3</div>
                     </div>
                   </div>
                   <button 
                     onClick={() => setIsChatOpen(false)}
-                    style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '6px', borderRadius: '50%', display: 'flex', transition: 'all 0.2s' }}
+                    style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '4px', borderRadius: '50%', display: 'flex', transition: 'all 0.2s' }}
                     onMouseEnter={e => e.currentTarget.style.color = '#fff'}
                     onMouseLeave={e => e.currentTarget.style.color = '#94a3b8'}
                   >
@@ -1055,7 +1062,10 @@ const handleLogout = () => {
                 </div>
 
                 {/* Chat Messages */}
-                <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '14px', background: '#f8fafc' }}>
+                <div
+                  className="ai-chat-scroll"
+                  style={{ flex: 1, overflowY: 'auto', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: '12px', background: '#f8fafc', scrollBehavior: 'smooth' }}
+                >
                   {chatMessages.map((msg, index) => {
                     const isUser = msg.sender === 'user';
                     return (
@@ -1292,7 +1302,8 @@ const handleLogout = () => {
                                       name: c.name,
                                       rank: aiData.rank,
                                       score: aiData.smart_rank_score,
-                                      reason: aiData.suggestion_reason
+                                      reason: aiData.suggestion_reason,
+                                      isTfidf: (aiData.suggestion_reason || '').startsWith('[Analisis berbasis TF-IDF]')
                                     })}
                                     style={{
                                       display: 'inline-flex',
@@ -1612,7 +1623,7 @@ const handleLogout = () => {
 
       {rankReasonModal && (
         <div style={{ position:'fixed',inset:0,background:'rgba(10,22,40,0.5)',zIndex:300,display:'flex',alignItems:'center',justifyContent:'center',padding:'20px' }}>
-          <div style={{ background:'#fff',borderRadius:'16px',width:'100%',maxWidth:'440px',boxShadow:'0 20px 25px -5px rgba(0,0,0,0.1)',overflow:'hidden' }}>
+          <div style={{ background:'#fff',borderRadius:'16px',width:'100%',maxWidth:'480px',boxShadow:'0 20px 25px -5px rgba(0,0,0,0.1)',overflow:'hidden' }}>
             <div style={{ padding:'20px 24px',borderBottom:'1px solid #f1f5f9',display:'flex',alignItems:'center',justifyContent:'space-between' }}>
               <div>
                 <h3 style={{ margin:0,fontSize:'16px',fontWeight:'700',color:'#0f172a' }}>AI Suitability Analysis</h3>
@@ -1620,20 +1631,30 @@ const handleLogout = () => {
               </div>
               <button onClick={()=>setRankReasonModal(null)} style={{ background:'none',border:'none',cursor:'pointer',color:'#64748b',display:'flex' }}><IC.X/></button>
             </div>
-            <div style={{ padding:'24px',display:'flex',flexDirection:'column',gap:'16px' }}>
-              <div style={{ display:'flex', gap:'12px', alignItems:'center' }}>
+            <div style={{ padding:'20px 24px',display:'flex',flexDirection:'column',gap:'14px' }}>
+              <div style={{ display:'flex', gap:'12px', alignItems:'center', flexWrap:'wrap' }}>
                 <RankBadge rank={rankReasonModal.rank} />
                 <span style={{ fontSize:'13px', fontWeight:'600', color:'#475569' }}>
-                  Score: <strong style={{ color:'#4f46e5' }}>{rankReasonModal.score}/100</strong>
+                  Score: <strong style={{ color:'#4f46e5' }}>{Math.round(rankReasonModal.score)}/100</strong>
                 </span>
+                {rankReasonModal.isTfidf && (
+                  <span style={{ fontSize:'10.5px', fontWeight:'700', padding:'2px 8px', borderRadius:'20px', background:'#f1f5f9', color:'#64748b', border:'1px solid #e2e8f0' }}>TF-IDF Fallback</span>
+                )}
               </div>
               <div>
-                <label style={{ fontSize:'11.5px',fontWeight:'700',color:'#94a3b8',textTransform:'uppercase',display:'block',marginBottom:'6px' }}>AI Analysis Reason</label>
-                <p style={{ margin:0, fontSize:'13.5px', color:'#334155', lineHeight:'1.65', background:'#f8fafc', border:'1px solid #e2e8f0', borderRadius:'8px', padding:'12px 14px' }}>
-                  {rankReasonModal.reason}
-                </p>
+                <label style={{ fontSize:'11.5px',fontWeight:'700',color:'#94a3b8',textTransform:'uppercase',display:'block',marginBottom:'6px' }}>{
+                  rankReasonModal.isTfidf ? 'Analisis TF-IDF (AI tidak tersedia)' : 'AI Analysis Reason'
+                }</label>
+                <div style={{ margin:0, fontSize:'13px', color:'#334155', lineHeight:'1.7', background:'#f8fafc', border:'1px solid #e2e8f0', borderRadius:'8px', padding:'12px 14px', whiteSpace:'pre-wrap', maxHeight:'220px', overflowY:'auto' }}>
+                  {(rankReasonModal.reason || '').replace(/^\[Analisis berbasis TF-IDF\] /, '')}
+                </div>
+                {rankReasonModal.isTfidf && (
+                  <p style={{ margin:'8px 0 0', fontSize:'11.5px', color:'#94a3b8', fontStyle:'italic' }}>
+                    ⚠️ AI sedang tidak tersedia (rate limit). Hasil ini berbasis analisis TF-IDF otomatis. Coba lagi dalam beberapa menit untuk analisis AI penuh.
+                  </p>
+                )}
               </div>
-              <div style={{ display:'flex',justifyContent:'flex-end',marginTop:'8px' }}>
+              <div style={{ display:'flex',justifyContent:'flex-end',marginTop:'4px' }}>
                 <button onClick={()=>setRankReasonModal(null)} style={{ padding:'8px 20px',borderRadius:'8px',border:'none',background:'#4f46e5',color:'#fff',cursor:'pointer',fontSize:'13px',fontWeight:'600',boxShadow:'0 2px 4px rgba(79,70,229,0.15)' }}>Close</button>
               </div>
             </div>

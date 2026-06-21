@@ -544,6 +544,9 @@ class TFIDFSearchController extends Controller
      */
     private function buildDocumentText(Submission $s): string
     {
+        // Load candidate relation if not already loaded
+        $candidate = $s->user?->candidate;
+
         $parts = [
             // Tinggi bobot: nama, posisi (repeat 3x)
             str_repeat(($s->user?->name ?? '') . ' ', 3),
@@ -551,8 +554,13 @@ class TFIDFSearchController extends Controller
             // Medium: motivasi, notes
             $s->motivation_message ?? '',
             $s->hr_notes ?? '',
-            // Rendah: universitas
+            // Kandidat profil: about (sering berisi info organisasi/ekskul)
+            $candidate?->about ?? '',
+            // Rendah: universitas, jurusan, jenjang
             $s->user?->university ?? '',
+            $candidate?->institution ?? '',
+            $candidate?->major ?? '',
+            $candidate?->education_level ?? '',
             // Status metadata
             $s->status ?? '',
         ];
@@ -783,78 +791,135 @@ class TFIDFSearchController extends Controller
             if ($subModel) {
                 $cvTextContent = $this->extractCvTextLocal($subModel);
             }
-            
+            $candidate = $subModel?->user?->candidate;
+            $testScore = $subModel?->test_details['test_score'] ?? null;
+
             $contextString .= "Candidate #{$candIdx}:\n";
             $contextString .= "- ID: {$c['id_submission']}\n";
             $contextString .= "- Name: {$c['name']}\n";
-            $contextString .= "- Position: {$c['position']}\n";
-            $contextString .= "- University: {$c['university']}\n";
-            $contextString .= "- Motivation: " . ($subModel->motivation_message ?? '-') . "\n";
-            $contextString .= "- HR Notes: " . ($subModel->hr_notes ?? '-') . "\n";
+            $contextString .= "- Position Applied: {$c['position']}\n";
+            $contextString .= "- University/Institution: " . ($candidate?->institution ?? $c['university']) . "\n";
+            $contextString .= "- Major/Field of Study: " . ($candidate?->major ?? '-') . "\n";
+            $contextString .= "- Education Level: " . ($candidate?->education_level ?? '-') . "\n";
+            $contextString .= "- About/Profile: " . ($candidate?->about ?? '-') . "\n";
+            $contextString .= "- Motivation: " . ($subModel?->motivation_message ?? '-') . "\n";
+            $contextString .= "- HR Notes: " . ($subModel?->hr_notes ?? '-') . "\n";
+            $contextString .= "- Test Score: " . ($testScore ?? 'Not yet taken') . "\n";
             if (!empty($cvTextContent)) {
                 $contextString .= "- CV Content Excerpt: " . mb_substr($cvTextContent, 0, 7000) . "\n";
             }
-            $contextString .= "- Match Score: {$c['relevance_percent']}%\n";
+            $contextString .= "- TF-IDF Match Score: {$c['relevance_percent']}%\n";
             $contextString .= "--------------------------------------------------\n\n";
         }
 
         $targetPositionName = "";
+        $positionCompetencyContext = "";
         if ($request->filled('id_position')) {
-            $pos = \App\Models\Position::find($request->id_position);
+            $pos = \App\Models\Position::with('competencies')->find($request->id_position);
             if ($pos) {
                 $targetPositionName = $pos->name;
+                $comps = $pos->competencies ?? collect();
+                if ($comps->isNotEmpty()) {
+                    $positionCompetencyContext = "\n--- REQUIRED COMPETENCIES FOR POSITION \"{$targetPositionName}\" ---\n";
+                    foreach ($comps as $comp) {
+                        $positionCompetencyContext .= "- {$comp->name}";
+                        if (!empty($comp->description)) {
+                            $positionCompetencyContext .= ": {$comp->description}";
+                        }
+                        $positionCompetencyContext .= "\n";
+                    }
+                }
             }
         }
 
+        // Determine query intent: is it asking about a SPECIFIC ATTRIBUTE (organization, GPA, skills, etc.)
+        // or asking for POSITION SUITABILITY (best candidate, recommendation for this role)?
+        $isPositionQuery = !empty($targetPositionName) && (
+            str_contains(strtolower($query), 'rekomen') ||
+            str_contains(strtolower($query), 'terbaik') ||
+            str_contains(strtolower($query), 'paling cocok') ||
+            str_contains(strtolower($query), 'paling sesuai') ||
+            str_contains(strtolower($query), 'paling layak') ||
+            str_contains(strtolower($query), 'paling qualified') ||
+            str_contains(strtolower($query), 'best candidate') ||
+            str_contains(strtolower($query), 'most suitable')
+        );
+
+        $positionGuidance = $isPositionQuery
+            ? "IMPORTANT: Because the recruiter is asking for a recommendation for the position '{$targetPositionName}', evaluate candidates based on how well they match the REQUIRED COMPETENCIES listed above. Prioritize competency match over general experience. A candidate whose skills directly align with the required competencies should rank higher, even if another candidate has a broader but less relevant background."
+            : "IMPORTANT: The recruiter query is asking about a SPECIFIC CANDIDATE ATTRIBUTE (e.g., most active in organizations, highest GPA, strongest motivation). Do NOT filter by position suitability. Focus purely on answering the attribute-based question using data from ALL candidates listed. Rank them according to the specific attribute asked in the query, regardless of which position they applied for.";
+
         $prompt = <<<PROMPT
 You are a professional HR assistant for an Internship SaaS platform.
-You are given a query from the recruiter and a list of candidate profiles retrieved from our database matching this query.
+You are given a query from the recruiter and a list of candidate profiles retrieved from our database.
 The target position for the current selection is "{$targetPositionName}".
-Your goal is to answer the recruiter's query using only the information in the provided candidate profiles.
+Your goal is to answer the recruiter's query accurately using only the information in the provided candidate profiles.
 
 Recruiter Query: "{$query}"
 
+{$positionGuidance}
+{$positionCompetencyContext}
 --- RETRIEVED CANDIDATES DATA ---
 {$contextString}
 
 --- TASK ---
 Based on the retrieved candidate profiles above, provide a comprehensive yet concise response answering the query.
-1. Identify which candidate(s) match the requirements of the query and explain why. Pay close attention to the target position "{$targetPositionName}". Even if a candidate has an outstanding background in another field (e.g. Software Engineering or Backend Development), if they do not possess relevant skills or experience matching "{$targetPositionName}" (e.g. IT Support / Troubleshooting / Networking), they should NOT be highly recommended for "{$targetPositionName}".
-2. Outline specific strengths from their CV / Motivation / HR notes.
-3. Call out any potential concerns or red flags (e.g. weak motivation, missing documents, or remarks in HR notes) if any exist.
+1. Directly answer the recruiter's query. If asking about a specific attribute (e.g., "most active in organizations"), find and rank candidates by that attribute from their CV Content, Motivation, and HR Notes. If asking for position recommendations, evaluate candidates against the REQUIRED COMPETENCIES listed above.
+2. Reference specific evidence from their CV / Motivation / HR notes / Profile that supports your answer.
+3. Call out any potential concerns or red flags (e.g. weak motivation, missing documents, competency gaps) if relevant.
 4. Compare candidates if the query asks for comparison or recommendation.
-5. If the query cannot be answered by the retrieved candidate data (e.g., query asks for details not in candidate profiles), state that clearly.
-6. Translate your analysis to Bahasa Indonesia (since the recruiter is speaking Indonesian). Keep the tone professional, objective, and clear.
+5. If the query cannot be answered by the retrieved candidate data, state that clearly.
+6. Respond in Bahasa Indonesia. Keep the tone professional, objective, and clear.
 
 --- OUTPUT FORMAT ---
 You must output a JSON object containing:
 1. "answer": A string with your detailed analysis in Bahasa Indonesia (using Markdown formatting for lists/bolding).
-2. "recommended_ranking": A JSON array of strings containing the candidate IDs (e.g., the ID listed in the candidate details) in order of your recommendation, from the most suitable candidate to the least suitable candidate based on their match for the recruiter query.
+2. "recommended_ranking": A JSON array of strings containing the candidate IDs in order of your recommendation, from the most relevant to the query to the least relevant.
 
 Do NOT make up any candidate facts, names, or scores. Rely ONLY on the candidates data provided above.
 PROMPT;
 
-        // 3. GENERATION PHASE: Panggil Groq Llama 3.3
+        // 3. GENERATION PHASE: Panggil Groq dengan fallback model
         try {
+            $modelsToTry = ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'gemma2-9b-it'];
             $client = new \GuzzleHttp\Client(['verify' => false, 'timeout' => 45]);
-            $response = $client->post('https://api.groq.com/openai/v1/chat/completions', [
-                'headers' => [
-                    'Authorization' => 'Bearer ' . $apiKey,
-                    'Content-Type'  => 'application/json',
-                ],
-                'json' => [
-                    'model'    => 'llama-3.3-70b-versatile',
-                    'messages' => [
-                        ['role' => 'system', 'content' => 'You are an objective HR Screening assistant. Speak Bahasa Indonesia. You must respond in a valid JSON format containing "answer" (string) and "recommended_ranking" (array of strings representing candidate IDs).'],
-                        ['role' => 'user', 'content' => $prompt],
-                    ],
-                    'response_format' => ['type' => 'json_object'],
-                    'temperature' => 0.0,
-                    'max_tokens'  => 1024,
-                ],
-            ]);
+            $body = null;
+            $lastError = null;
 
-            $body = json_decode($response->getBody(), true);
+            foreach ($modelsToTry as $modelName) {
+                try {
+                    $response = $client->post('https://api.groq.com/openai/v1/chat/completions', [
+                        'headers' => [
+                            'Authorization' => 'Bearer ' . $apiKey,
+                            'Content-Type'  => 'application/json',
+                        ],
+                        'json' => [
+                            'model'    => $modelName,
+                            'messages' => [
+                                ['role' => 'system', 'content' => 'You are an objective HR Screening assistant. Speak Bahasa Indonesia. You must respond in a valid JSON format containing "answer" (string) and "recommended_ranking" (array of strings representing candidate IDs).'],
+                                ['role' => 'user', 'content' => $prompt],
+                            ],
+                            'response_format' => ['type' => 'json_object'],
+                            'temperature' => 0.0,
+                            'max_tokens'  => 1024,
+                        ],
+                    ]);
+                    $body = json_decode($response->getBody(), true);
+                    Log::info("RAG Search using model: {$modelName}");
+                    break;
+                } catch (\Exception $modelErr) {
+                    $lastError = $modelErr;
+                    Log::warning("RAG model {$modelName} failed: " . $modelErr->getMessage());
+                    if (str_contains($modelErr->getMessage(), 'Rate limit') || str_contains($modelErr->getMessage(), '429')) {
+                        sleep(1);
+                    }
+                }
+            }
+
+            if (!$body) {
+                throw $lastError ?? new \Exception('All RAG models failed');
+            }
+
             $rawContent = $body['choices'][0]['message']['content'] ?? 'AI failed to generate answer.';
             
             $answer = $rawContent;
