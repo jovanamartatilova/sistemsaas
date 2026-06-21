@@ -170,7 +170,7 @@ function CalendarPicker({ value, onChange }) {
                         {days.map((d, i) => {
                             if (!d) return <div key={i}/>;
                             const date   = new Date(year, month, d);
-                            const isPast = date < now;
+                            const isPast = false;
                             const isToday= date.getTime() === now.getTime();
                             const dateStr= `${d} ${MONTHS_SHORT[month]} ${year}`;
                             const isSel  = value === dateStr;

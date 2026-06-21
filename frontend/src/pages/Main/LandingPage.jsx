@@ -1,4 +1,3 @@
-import "@fontsource-variable/montserrat";
 import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { useAuthStore } from "../../stores/authStore";

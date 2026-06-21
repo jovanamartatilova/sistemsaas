@@ -133,16 +133,157 @@ class SelectionAIController extends Controller
             return response()->json(['success' => false, 'message' => 'No candidates found'], 404);
         }
 
-        // Build corpus: [id_submission => text]
+        // Cek API Key Groq untuk implementasi Smart Rank cerdas via LLM
+        $apiKey = env('GROQ_API_KEY') ?: config('services.groq.api_key');
+        if ($apiKey) {
+            try {
+                // Build candidates context
+                $candidatesContext = "";
+                foreach ($submissions as $index => $s) {
+                    $candIdx = $index + 1;
+                    $cvText = $this->extractCvTextLocal($s);
+                    
+                    $candidatesContext .= "Candidate #{$candIdx}:\n";
+                    $candidatesContext .= "- Submission ID: {$s->id_submission}\n";
+                    $candidatesContext .= "- Name: " . ($s->user?->name ?? 'Unknown') . "\n";
+                    $candidatesContext .= "- University: " . ($s->user?->university ?? '-') . "\n";
+                    $candidatesContext .= "- Motivation Message: " . ($s->motivation_message ?? '-') . "\n";
+                    $candidatesContext .= "- HR Notes: " . ($s->hr_notes ?? '-') . "\n";
+                    $candidatesContext .= "- Test Score: " . ($s->test_score ?? '-') . "\n";
+                    $candidatesContext .= "- Has CV File: " . (!empty($s->cv_file) ? 'Yes' : 'No') . "\n";
+                    $candidatesContext .= "- Has Portfolio File: " . (!empty($s->portfolio_file) ? 'Yes' : 'No') . "\n";
+                    $candidatesContext .= "- Has Supporting Document: " . (!empty($s->supporting_document_file) ? 'Yes' : 'No') . "\n";
+                    if (!empty($cvText)) {
+                        $candidatesContext .= "- CV Text Excerpt: " . mb_substr($cvText, 0, 3000) . "\n";
+                    }
+                    $candidatesContext .= "--------------------------------------------------\n\n";
+                }
+
+                $prompt = <<<PROMPT
+You are a professional HR assistant for earlypath, an Internship SaaS platform.
+Your task is to evaluate and rank a list of candidates applying for a position, specifically tailored to the current selection stage.
+
+--- POSITION INFO ---
+Position Name: {$position->name}
+Description: {$position->description}
+Requirements: {$position->requirements}
+
+--- SELECTION STAGE ---
+Current Stage: {$stage}
+
+--- CANDIDATES DATA ---
+{$candidatesContext}
+
+--- TASK ---
+Evaluate each candidate's suitability SPECIFICALLY for the target position "{$position->name}" using their CV content, motivation message, and other profile details. 
+Note: Even if a candidate has strong experience in another field (e.g., IT Support or Software Engineering), if they are applying for a different role (e.g., Digital Marketing) and do not show relevant skills for "{$position->name}", they must be scored lower or marked as "Reject". Do not confuse their target position with their previous experience.
+
+Provide a ranked list of candidates from most suitable for "{$position->name}" to least suitable.
+
+For each candidate, you must determine:
+1. A suitability score (number between 0 and 100) based strictly on their match with the target position "{$position->name}".
+2. A suggestion: "Pass", "Review", or "Reject" based on their credentials and matching requirements.
+3. A detailed suggestion reason in Bahasa Indonesia explaining why they are in this rank/position and why this suggestion was made, referencing specific details from their CV (e.g., matching skills, experience, lack of portfolio, etc.). Keep it concise but specific (1-2 sentences).
+
+--- OUTPUT FORMAT ---
+You must output a JSON object containing a "rankings" key, which is an array of objects. Each object must have:
+- "id_submission": (string) The exact Submission ID of the candidate.
+- "rank": (integer) The rank number (starting from 1 for the best candidate).
+- "score": (number) The suitability score (0 to 100).
+- "suggestion": (string) Exactly "Pass", "Review", or "Reject".
+- "suggestion_reason": (string) The reason in Bahasa Indonesia.
+
+Do NOT include any markdown block formatting or additional text outside the JSON object.
+PROMPT;
+
+                $client = new \GuzzleHttp\Client(['verify' => false, 'timeout' => 45]);
+                $response = $client->post('https://api.groq.com/openai/v1/chat/completions', [
+                    'headers' => [
+                        'Authorization' => 'Bearer ' . $apiKey,
+                        'Content-Type'  => 'application/json',
+                    ],
+                    'json' => [
+                        'model'    => 'llama-3.3-70b-versatile',
+                        'messages' => [
+                            ['role' => 'system', 'content' => 'You are an objective HR Screening assistant. Speak Bahasa Indonesia. You must respond in a valid JSON format containing a single key "rankings" which contains an array of objects with keys "id_submission", "rank", "score", "suggestion", and "suggestion_reason".'],
+                            ['role' => 'user', 'content' => $prompt],
+                        ],
+                        'response_format' => ['type' => 'json_object'],
+                        'temperature' => 0.0,
+                        'max_tokens'  => 2048,
+                    ],
+                ]);
+
+                $body = json_decode($response->getBody(), true);
+                $rawContent = $body['choices'][0]['message']['content'] ?? '';
+                Log::info('Smart Rank Llama response raw: ' . $rawContent);
+                $decoded = json_decode($rawContent, true);
+
+                if (json_last_error() === JSON_ERROR_NONE && isset($decoded['rankings']) && is_array($decoded['rankings'])) {
+                    $results = [];
+                    foreach ($decoded['rankings'] as $item) {
+                        $subId = $item['id_submission'];
+                        
+                        $submission = $submissions->firstWhere('id_submission', $subId);
+                        if (!$submission) {
+                            continue;
+                        }
+                        
+                        $sugg = $item['suggestion'] ?? 'Review';
+                        if (stripos($sugg, 'pass') !== false) {
+                            $sugg = 'Pass';
+                        } elseif (stripos($sugg, 'reject') !== false) {
+                            $sugg = 'Reject';
+                        } else {
+                            $sugg = 'Review';
+                        }
+
+                        $color = [
+                            'bg' => '#fefce8', 
+                            'text' => '#a16207', 
+                            'border' => '#fde68a'
+                        ];
+                        if ($sugg === 'Pass') {
+                            $color = ['bg' => '#f0fdf4', 'text' => '#15803d', 'border' => '#86efac'];
+                        } elseif ($sugg === 'Reject') {
+                            $color = ['bg' => '#fff1f2', 'text' => '#be123c', 'border' => '#fecdd3'];
+                        }
+
+                        $results[] = [
+                            'id_submission'      => $subId,
+                            'rank'               => (int) ($item['rank'] ?? 1),
+                            'smart_rank_score'   => (float) ($item['score'] ?? 0.0),
+                            'smart_rank_percent' => (float) ($item['score'] ?? 0.0),
+                            'suggestion'         => $sugg,
+                            'suggestion_reason'  => $item['suggestion_reason'] ?? '',
+                            'suggestion_color'   => $color,
+                        ];
+                    }
+
+                    if (!empty($results)) {
+                        usort($results, fn($a, $b) => $a['rank'] <=> $b['rank']);
+
+                        return response()->json([
+                            'success'  => true,
+                            'stage'    => $stage,
+                            'rankings' => $results,
+                            'method'   => 'llama-3.3',
+                        ]);
+                    }
+                }
+            } catch (\Exception $e) {
+                Log::error('Smart Rank LLM failed, falling back to TF-IDF: ' . $e->getMessage());
+            }
+        }
+
+        // Fallback: TF-IDF VSM (original logic)
         $corpus = [];
         foreach ($submissions as $s) {
             $corpus[$s->id_submission] = $this->buildDocumentText($s);
         }
 
-        // TF-IDF ranking vs posisi description
         $rankings = $this->rankByTfidf($positionText, $corpus);
 
-        // Tambahkan classification per kandidat
         $results = [];
         foreach ($rankings as $rank => $item) {
             $submission = $submissions->firstWhere('id_submission', $item['id']);
@@ -518,6 +659,30 @@ class SelectionAIController extends Controller
         if (str_contains($stage, 'final') || in_array($stage, ['accepted', 'rejected'])) return 'final';
         // stage_0, stage_1, etc — cek dari tipe flow posisi kalau ada
         return 'screening'; // default
+    }
+
+    private function extractCvTextLocal(Submission $s): string
+    {
+        if (empty($s->cv_file)) return '';
+        $path = storage_path('app/public/' . $s->cv_file);
+        if (!file_exists($path)) return '';
+
+        try {
+            $parser = new \Smalot\PdfParser\Parser();
+            $raw    = $parser->parseFile($path)->getText();
+            return mb_substr(preg_replace('/\s+/', ' ', trim($raw)), 0, 4000);
+        } catch (\Exception $e) {
+            try {
+                $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+                if ($ext === 'pdf') {
+                    $raw = shell_exec('pdftotext ' . escapeshellarg($path) . ' -');
+                    if ($raw) return mb_substr(preg_replace('/\s+/', ' ', trim($raw)), 0, 4000);
+                }
+            } catch (\Exception $ex) {
+                // ignore
+            }
+            return '';
+        }
     }
 
     private function findSubmission(string $id, string $companyId): ?Submission

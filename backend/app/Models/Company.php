@@ -22,6 +22,7 @@ class Company extends Model
         'phone',
         'description',
         'logo_path',
+        'stamp_path',
         'status',
         'certificate_templates'
     ];

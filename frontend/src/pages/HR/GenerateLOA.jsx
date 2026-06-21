@@ -6,6 +6,7 @@ import SidebarHR from "../../components/SidebarHR";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { HRToastStack, useHRToast } from "../../components/HRToast";
 import SignatureSelector from "../../components/SignatureSelector";
+import StampSelector from "../../components/StampSelector";
 
 // ── Icons ──────────────────────────────────────────────────────────────────────
 const IC = {
@@ -215,6 +216,7 @@ export default function GenerateLoAHR() {
   const [search, setSearch] = useState("");           
   const [tableLoading, setTableLoading] = useState(false); 
   const [hasSignature, setHasSignature] = useState(false);
+  const [hasStamp, setHasStamp] = useState(false);
   const [typeFilter, setTypeFilter] = useState("all");
 
   // ── Fetch ────────────────────────────────────────────────────────────────────
@@ -461,7 +463,10 @@ export default function GenerateLoAHR() {
             </div>
           </div>
 
-          <SignatureSelector onSignatureChange={(url) => setHasSignature(!!url)} />
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px', marginBottom: '20px' }}>
+            <SignatureSelector onSignatureChange={(url) => setHasSignature(!!url)} />
+            <StampSelector onStampChange={(url) => setHasStamp(!!url)} />
+          </div>
 
 
 

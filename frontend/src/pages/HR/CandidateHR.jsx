@@ -148,7 +148,7 @@ function SearchModeToggle({ mode, onChange }) {
       overflow: 'hidden', background: '#f8fafc',
     }}>
       {[
-        { value: 'tfidf',   label: 'Smart Search',  icon: <IC.Cpu />,    title: 'Authomatically find the best matches' },
+        { value: 'tfidf',   label: 'Smart Search',  icon: <IC.Cpu />,    title: 'Automatically find the best matches' },
         { value: 'boolean', label: 'Keyword Search',        icon: <IC.Filter />, title: 'Search candidates based on keywords you type' },
       ].map(({ value, label, icon, title }) => (
         <button
@@ -718,6 +718,8 @@ export default function CandidateHR() {
   const [irMetrics,        setIrMetrics]        = useState(null);
   const [irMeta,           setIrMeta]           = useState(null);
 
+
+
   // Classification cache [id_submission → classificationObj]
   const [classifyCache,    setClassifyCache]    = useState({});
   const [classifyLoading,  setClassifyLoading]  = useState(false);
@@ -750,7 +752,7 @@ export default function CandidateHR() {
 
   useEffect(() => { fetchCandidates(); }, [statusFilter, typeFilter]);
 
-  // ── IR Search (debounced) ──────────────────────────────────────────────────
+  // ── IR Search (debounced) ──────────────────────────────────────────
   useEffect(() => {
     if (!search || search.length < 2) {
       setIrResults(null);
@@ -1093,6 +1095,8 @@ export default function CandidateHR() {
               </div>
             </div>
 
+
+
             {/* IR Mode Banner */}
             {irActive && (
               <div style={{ padding: '10px 20px', background: 'linear-gradient(90deg, #eff6ff, #f0fdf4)', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -1198,6 +1202,7 @@ export default function CandidateHR() {
 
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes pulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
       `}</style>
     </div>
   );
