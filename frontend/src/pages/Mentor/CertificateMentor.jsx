@@ -8,6 +8,7 @@ import { broadcastDataRefresh, onDataRefresh } from "../../utils/dataRefresh";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { Eye, RefreshCw, Check, Upload, Trash2, X, Sliders, Settings, Award, Sparkles, Image, Plus, ChevronDown, ChevronUp } from 'lucide-react';
 import SignatureSelector from "../../components/SignatureSelector";
+import StampSelector from "../../components/StampSelector";
 
 // ── Icons ──────────────────────────────────────────────────────────────────────
 const IC = {
@@ -158,6 +159,7 @@ export default function CertificateMentor() {
   const [bulkGenerating, setBulkGenerating] = useState(false);
   const [bulkSending, setBulkSending] = useState(false);
   const [hasSignature, setHasSignature] = useState(false);
+  const [hasStamp, setHasStamp] = useState(false);
 
   // ─── Builder and Layout States ──────────────────────────────────────────────
   const [activeBuilderId, setActiveBuilderId] = useState(null); // null, 'new', or template ID
@@ -503,7 +505,7 @@ export default function CertificateMentor() {
                 <div style={{ textAlign: 'center', width: '85px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                   <span style={{ fontSize: '4.5px', color: sigTextColor }}>Jakarta, 06 June 2026</span>
                   <span style={{ fontSize: '4.5px', fontWeight: '700', color: sigTextColor }}>{signatory2Title || 'Supervisor'}</span>
-                  <div style={{ height: '18px', borderBottom: '1px solid #cbd5e1', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', margin: '1px 0' }}>
+                  <div style={{ height: '18px', borderBottom: '1px solid #cbd5e1', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', margin: '4px 0 1px 0' }}>
                     {signatory2Signature ? (
                       <img src={signatory2Signature} alt="sig2" style={{ maxHeight: '16px', maxWidth: '100%', objectFit: 'contain', pointerEvents: 'none', filter: layoutSettings.sig_invert_2 ? 'invert(1)' : 'none' }} />
                     ) : (
@@ -517,7 +519,7 @@ export default function CertificateMentor() {
               <div style={{ textAlign: 'center', width: '85px', display: 'flex', flexDirection: 'column', alignItems: 'center', marginRight: signatureLayout === 'double' ? '0' : '24px' }}>
                 <span style={{ fontSize: '4.5px', color: sigTextColor }}>Jakarta, 06 June 2026</span>
                 <span style={{ fontSize: '4.5px', fontWeight: '700', color: sigTextColor }}>{signatory1Title || 'Internship Mentor'}</span>
-                <div style={{ height: '18px', borderBottom: '1px solid #cbd5e1', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', margin: '1px 0' }}>
+                <div style={{ height: '18px', borderBottom: '1px solid #cbd5e1', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', margin: '4px 0 1px 0' }}>
                   {mentorSigUrl ? (
                     <img src={mentorSigUrl} alt="sig1" style={{ maxHeight: '16px', maxWidth: '100%', objectFit: 'contain', pointerEvents: 'none', filter: layoutSettings.sig_invert_1 ? 'invert(1)' : 'none' }} />
                   ) : (
@@ -1424,7 +1426,10 @@ export default function CertificateMentor() {
           <h1 style={s.h1}>Certificate</h1>
           <p style={s.subtitle}>Generate and manage certificates for interns who have passed all competency assessments.</p>
 
-          <SignatureSelector onSignatureChange={(url) => setHasSignature(!!url)} />
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px', marginBottom: '20px' }}>
+            <SignatureSelector onSignatureChange={(url) => setHasSignature(!!url)} />
+            <StampSelector onStampChange={(url) => setHasStamp(!!url)} />
+          </div>
 
           {/* Inline Template Builder OR Saved Templates List */}
           {activeBuilderId !== null ? (
@@ -1535,6 +1540,9 @@ export default function CertificateMentor() {
                           </div>
                         )}
                       </div>
+                      <span style={{ fontSize: "10.5px", color: "#64748b", display: "block", marginTop: "6px", fontStyle: "italic", lineHeight: "1.4" }}>
+                        Rekomendasi ukuran: <strong>3508 x 2480 px</strong> (300 DPI) atau <strong>29.7 x 21.0 cm</strong> (A4 Landscape dengan rasio 1.414:1) agar gambar tidak pecah atau terpotong.
+                      </span>
                     </div>
                   </div>
 
@@ -1976,6 +1984,10 @@ export default function CertificateMentor() {
 
                   {/* Mockup landscape container */}
                   {renderVisualMockup()}
+
+                  <div style={{ fontSize: "11px", color: "#64748b", display: "flex", alignItems: "center", gap: "4px", justifyContent: "center", marginTop: "-6px", marginBottom: "-2px" }}>
+                    <span>📐 Dimensi Output Sertifikat: <strong>3508 x 2480 px</strong> (A4 Landscape, Rasio 1.414:1)</span>
+                  </div>
 
                   <div style={{ background: "#eff6ff", border: "1px solid #bfdbfe", padding: "10px", borderRadius: "8px", fontSize: "11px", color: "#1e40af", display: "flex", gap: "6px" }}>
                     <span style={{ fontWeight: "700" }}>Tip:</span>
@@ -2718,6 +2730,9 @@ export default function CertificateMentor() {
                           </div>
                         )}
                       </div>
+                      <span style={{ fontSize: "10.5px", color: "#64748b", display: "block", marginTop: "6px", fontStyle: "italic", lineHeight: "1.4" }}>
+                        Rekomendasi ukuran: <strong>3508 x 2480 px</strong> (300 DPI) atau <strong>29.7 x 21.0 cm</strong> (A4 Landscape dengan rasio 1.414:1) agar gambar tidak pecah atau terpotong.
+                      </span>
                       <span style={{ fontSize: "10px", color: "#94a3b8", display: "block", marginTop: "4px" }}>
                         * Uploading background disables default border templates. Use XY offsets below to align texts.
                       </span>
@@ -3150,6 +3165,10 @@ export default function CertificateMentor() {
 
                   {/* Landscape A4 Mockup Box */}
                   {renderVisualMockup()}
+
+                  <div style={{ fontSize: "11px", color: "#64748b", display: "flex", alignItems: "center", gap: "4px", justifyContent: "center", marginTop: "-6px", marginBottom: "-2px" }}>
+                    <span>📐 Dimensi Output Sertifikat: <strong>3508 x 2480 px</strong> (A4 Landscape, Rasio 1.414:1)</span>
+                  </div>
 
                   <div style={{ background: "#eff6ff", border: "1px solid #bfdbfe", padding: "10px 12px", borderRadius: "8px", fontSize: "11px", color: "#1e40af", display: "flex", gap: "8px" }}>
                     <span style={{ fontWeight: "700" }}>Tip:</span>

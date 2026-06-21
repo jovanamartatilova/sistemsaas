@@ -422,40 +422,46 @@
                                 <div class="signature-date" style="{{ $sigStyle }}">{{ $companyCity }}, {{ $issuedDate }}</div>
                                 <div class="signature-title" style="{{ $sigStyle }}">{{ $signatory2_title }}</div>
                                 @if(isset($signature2_base64) && $signature2_base64)
-                                    <div style="margin-bottom: 5px;">
+                                    <div style="margin-top: 20px; margin-bottom: 5px;">
                                         <img src="{{ $signature2_base64 }}" style="max-height: 70px; max-width: 140px; display: inline-block;" alt="Signature 2">
                                     </div>
                                 @else
-                                    <div style="height: 75px;"></div>
+                                    <div style="height: 75px; margin-top: 20px;"></div>
                                 @endif
                                 <div class="signature-name" style="min-width: 160px; {{ $sigStyle }}">{{ $signatory2_name }}</div>
                             </td>
                             <td style="width: 50%; text-align: center; border: none; padding: 0;">
                                 <div class="signature-date" style="{{ $sigStyle }}">{{ $companyCity }}, {{ $issuedDate }}</div>
                                 <div class="signature-title" style="{{ $sigStyle }}">{{ $signatory1_title }}</div>
-                                @if(isset($signature_base64) && $signature_base64)
-                                    <div style="margin-bottom: 5px;">
-                                        <img src="{{ $signature_base64 }}" style="max-height: 70px; max-width: 140px; display: inline-block;" alt="Signature 1">
-                                    </div>
-                                @else
-                                    <div style="height: 75px;"></div>
-                                @endif
+                                <div style="position: relative; height: 75px; width: 140px; margin: 20px auto 0 auto; display: block;">
+                                    @if(isset($signature_base64) && $signature_base64)
+                                        <img src="{{ $signature_base64 }}" style="max-height: 70px; max-width: 140px; display: block; margin: 0 auto;" alt="Signature 1">
+                                    @else
+                                        <div style="height: 70px;"></div>
+                                    @endif
+                                    @if(isset($stamp_base64) && $stamp_base64)
+                                        <img src="{{ $stamp_base64 }}" style="position: absolute; top: -20px; right: -20px; max-height: 100px; max-width: 100px; opacity: 0.85; z-index: 10;" alt="Stamp">
+                                    @endif
+                                </div>
                                 <div class="signature-name" style="min-width: 160px; {{ $sigStyle }}">{{ $signatory1_name }}</div>
                             </td>
                         </tr>
                     </table>
                 @else
                     <!-- Single Signature - right-aligned to match preview -->
-                    <div style="display: inline-block; text-align: center; margin-right: 30px;">
+                    <div style="display: inline-block; text-align: center; margin-right: 30px; position: relative;">
                         <div class="signature-date" style="{{ $sigStyle }}">{{ $companyCity }}, {{ $issuedDate }}</div>
                         <div class="signature-title" style="{{ $sigStyle }}">{{ $signatory1_title }}</div>
-                        @if(isset($signature_base64) && $signature_base64)
-                            <div style="margin-bottom: 5px;">
-                                <img src="{{ $signature_base64 }}" style="max-height: 75px; max-width: 150px; display: inline-block;" alt="Signature">
-                            </div>
-                        @else
-                            <div style="height: 80px;"></div>
-                        @endif
+                        <div style="position: relative; height: 80px; width: 150px; margin: 28px auto 5px auto; display: block;">
+                            @if(isset($signature_base64) && $signature_base64)
+                                <img src="{{ $signature_base64 }}" style="max-height: 75px; max-width: 150px; display: block; margin: 0 auto;" alt="Signature">
+                            @else
+                                <div style="height: 75px;"></div>
+                            @endif
+                            @if(isset($stamp_base64) && $stamp_base64)
+                                <img src="{{ $stamp_base64 }}" style="position: absolute; top: -25px; right: -25px; max-height: 115px; max-width: 115px; opacity: 0.85; z-index: 10;" alt="Stamp">
+                            @endif
+                        </div>
                         <div class="signature-name" style="min-width: 160px; {{ $sigStyle }}">{{ $signatory1_name }}</div>
                     </div>
                 @endif
@@ -542,24 +548,27 @@
                                 <div class="signature-date" style="color: {{ $font_color_signatures ?? '#334155' }};">{{ $companyCity }}, {{ $issuedDate }}</div>
                                 <div class="signature-title" style="color: {{ $font_color_signatures ?? '#334155' }};">{{ $signatory2_title }}</div>
                                 @if(isset($signature2_base64) && $signature2_base64)
-                                    <div style="margin-bottom: 5px;">
+                                    <div style="margin-top: 20px; margin-bottom: 5px;">
                                         <img src="{{ $signature2_base64 }}" style="max-height: {{ $sigImgHeight }}; max-width: 120px; display: inline-block;" alt="Signature 2">
                                     </div>
                                 @else
-                                    <div style="height: {{ $sigSpacerHeight }};"></div>
+                                    <div style="height: {{ $sigSpacerHeight }}; margin-top: 20px;"></div>
                                 @endif
                                 <div class="signature-name" style="border-top: 1px solid {{ $font_color_signatures ?? '#000' }}; padding-top: 3px; display: inline-block; min-width: 150px; font-weight: bold; color: {{ $font_color_signatures ?? '#334155' }};">{{ $signatory2_name }}</div>
                             </td>
                             <td style="width: 50%; text-align: center; border: none; padding: 0; vertical-align: top;">
                                 <div class="signature-date" style="color: {{ $font_color_signatures ?? '#334155' }};">{{ $companyCity }}, {{ $issuedDate }}</div>
                                 <div class="signature-title" style="color: {{ $font_color_signatures ?? '#334155' }};">{{ $signatory1_title }}</div>
-                                @if(isset($signature_base64) && $signature_base64)
-                                    <div style="margin-bottom: 5px;">
-                                        <img src="{{ $signature_base64 }}" style="max-height: {{ $sigImgHeight }}; max-width: 120px; display: inline-block;" alt="Signature 1">
-                                    </div>
-                                @else
-                                    <div style="height: {{ $sigSpacerHeight }};"></div>
-                                @endif
+                                <div style="position: relative; height: {{ $sigSpacerHeight }}; width: 130px; margin: 20px auto 0 auto; display: block;">
+                                    @if(isset($signature_base64) && $signature_base64)
+                                        <img src="{{ $signature_base64 }}" style="max-height: {{ $sigImgHeight }}; max-width: 120px; display: block; margin: 0 auto;" alt="Signature 1">
+                                    @else
+                                        <div style="height: {{ $sigImgHeight }};"></div>
+                                    @endif
+                                    @if(isset($stamp_base64) && $stamp_base64)
+                                        <img src="{{ $stamp_base64 }}" style="position: absolute; top: -20px; right: -20px; max-height: 95px; max-width: 95px; opacity: 0.85; z-index: 10;" alt="Stamp">
+                                    @endif
+                                </div>
                                 <div class="signature-name" style="border-top: 1px solid {{ $font_color_signatures ?? '#000' }}; padding-top: 3px; display: inline-block; min-width: 150px; font-weight: bold; color: {{ $font_color_signatures ?? '#334155' }};">{{ $signatory1_name }}</div>
                             </td>
                         </tr>
@@ -567,16 +576,19 @@
                 </div>
             @else
                 <div class="signature-section-flow" style="margin-top: {{ $sigMargin }}; text-align: right;">
-                    <div style="display: inline-block; text-align: center; margin-right: 40px;">
+                    <div style="display: inline-block; text-align: center; margin-right: 40px; position: relative;">
                         <div class="signature-date" style="color: {{ $font_color_signatures ?? '#334155' }};">{{ $companyCity }}, {{ $issuedDate }}</div>
                         <div class="signature-title" style="color: {{ $font_color_signatures ?? '#334155' }};">{{ $signatory1_title }}</div>
-                        @if(isset($signature_base64) && $signature_base64)
-                            <div style="margin-bottom: 5px;">
-                                <img src="{{ $signature_base64 }}" style="max-height: {{ $sigImgHeight }}; max-width: 130px; display: inline-block;" alt="Signature">
-                            </div>
-                        @else
-                            <div style="height: {{ $sigSpacerHeight }};"></div>
-                        @endif
+                        <div style="position: relative; height: {{ $sigSpacerHeight }}; width: 140px; margin: 28px auto 5px auto; display: block;">
+                            @if(isset($signature_base64) && $signature_base64)
+                                <img src="{{ $signature_base64 }}" style="max-height: {{ $sigImgHeight }}; max-width: 130px; display: block; margin: 0 auto;" alt="Signature">
+                            @else
+                                <div style="height: {{ $sigImgHeight }};"></div>
+                            @endif
+                            @if(isset($stamp_base64) && $stamp_base64)
+                                <img src="{{ $stamp_base64 }}" style="position: absolute; top: -25px; right: -25px; max-height: 105px; max-width: 105px; opacity: 0.85; z-index: 10;" alt="Stamp">
+                            @endif
+                        </div>
                         <div class="signature-name" style="border-top: 1px solid {{ $font_color_signatures ?? '#000' }}; padding-top: 3px; display: inline-block; min-width: 160px; font-weight: bold; color: {{ $font_color_signatures ?? '#334155' }};">{{ $signatory1_name }}</div>
                     </div>
                 </div>

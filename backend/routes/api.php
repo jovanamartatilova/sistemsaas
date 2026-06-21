@@ -197,6 +197,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/company/profile',  [CompanyController::class, 'updateProfile']);
     Route::post('/company/logo',    [CompanyController::class, 'uploadLogo']);
     Route::delete('/company/logo',  [CompanyController::class, 'removeLogo']);
+    Route::get('/company/stamp',     [CompanyController::class, 'getStamp']);
+    Route::post('/company/stamp',    [CompanyController::class, 'uploadStamp']);
+    Route::delete('/company/stamp',  [CompanyController::class, 'deleteStamp']);
 });
 
 // Super Admin Routes
@@ -405,6 +408,8 @@ Route::middleware(['auth:sanctum'])->prefix('hr')->group(function () {
     Route::get('candidates/index-stats', [TFIDFSearchController::class, 'indexStats']);
     Route::post('candidates/classify-batch', [TFIDFSearchController::class, 'classifyBatch']);
     Route::get('candidates/{id}/classify', [TFIDFSearchController::class, 'classify']);
+    Route::get('candidates/rag-search', [TFIDFSearchController::class, 'ragSearch']);
+    Route::get('candidates/slr-evaluate', [TFIDFSearchController::class, 'slrEvaluate']);
 
     // Selection AI
     Route::prefix('selection')->group(function () {

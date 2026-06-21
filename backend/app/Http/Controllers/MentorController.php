@@ -916,6 +916,15 @@ class MentorController extends Controller
             }
         }
 
+        $stamp_base64 = null;
+        if ($company && $company->stamp_path) {
+            if (Storage::disk('public')->exists($company->stamp_path)) {
+                $fileContent = Storage::disk('public')->get($company->stamp_path);
+                $type = pathinfo($company->stamp_path, PATHINFO_EXTENSION);
+                $stamp_base64 = 'data:image/' . $type . ';base64,' . base64_encode($fileContent);
+            }
+        }
+
         $signature2_base64 = null;
         if ($signature_layout === 'double' && $signatory2_signature_path) {
             if (Storage::disk('public')->exists($signatory2_signature_path)) {
@@ -971,6 +980,7 @@ class MentorController extends Controller
             'avgScore' => $avgScore,
             'evaluation' => $assessment->narrative ?? '',
             'signature_base64' => $signature_base64,
+            'stamp_base64' => $stamp_base64,
 
             // Customization Options
             'template_style' => $template_style,
@@ -1273,6 +1283,15 @@ class MentorController extends Controller
                 }
             }
 
+            $stamp_base64 = null;
+            if ($company && $company->stamp_path) {
+                if (Storage::disk('public')->exists($company->stamp_path)) {
+                    $fileContent = Storage::disk('public')->get($company->stamp_path);
+                    $type = pathinfo($company->stamp_path, PATHINFO_EXTENSION);
+                    $stamp_base64 = 'data:image/' . $type . ';base64,' . base64_encode($fileContent);
+                }
+            }
+
             $signature2_base64 = null;
             if ($signature_layout === 'double' && $signatory2_signature_path) {
                 if (Storage::disk('public')->exists($signatory2_signature_path)) {
@@ -1328,6 +1347,7 @@ class MentorController extends Controller
                 'avgScore' => $avgScore,
                 'evaluation' => $assessment->narrative ?? '',
                 'signature_base64' => $signature_base64,
+                'stamp_base64' => $stamp_base64,
 
                 // Customization Options
                 'template_style' => $template_style,

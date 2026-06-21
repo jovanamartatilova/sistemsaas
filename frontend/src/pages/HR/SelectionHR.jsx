@@ -20,6 +20,9 @@ const IC = {
   BarChart2:    () => <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><line x1='18' y1='20' x2='18' y2='10'/><line x1='12' y1='20' x2='12' y2='4'/><line x1='6' y1='20' x2='6' y2='14'/><line x1='2' y1='20' x2='22' y2='20'/></svg>,
   Info:         () => <svg width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><circle cx='12' cy='12' r='10'/><line x1='12' y1='16' x2='12' y2='12'/><line x1='12' y1='8' x2='12.01' y2='8'/></svg>,
   ChevronUp:    () => <svg width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><polyline points='18 15 12 9 6 15'/></svg>,
+  Zap:          () => <svg width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><polygon points='13 2 3 14 12 14 11 22 21 10 12 10 13 2'/></svg>,
+  Send:         () => <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><line x1='22' y1='2' x2='11' y2='13'></line><polygon points='22 2 15 22 11 13 2 9 22 2'></polygon></svg>,
+  MessageSquare: () => <svg width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><path d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'></path></svg>,
 };
 
 function todayStr() {
@@ -218,15 +221,74 @@ function SuggestionBadge({ suggestion }) {
 }
 
 // ─── NEW: Smart Rank Badge ────────────────────────────────────────────────────
-function RankBadge({ rank, percent }) {
+function RankBadge({ rank }) {
   if (!rank) return null;
-  const color = percent >= 70 ? '#15803d' : percent >= 40 ? '#a16207' : '#64748b';
-  const bg    = percent >= 70 ? '#f0fdf4' : percent >= 40 ? '#fefce8' : '#f8fafc';
+  let bg, color, border;
+  
+  if (rank === 1) {
+    bg = '#f0fdf4'; // Light green
+    color = '#15803d'; // Green
+    border = '#86efac';
+  } else if (rank === 2) {
+    bg = '#eff6ff'; // Light blue
+    color = '#1d4ed8'; // Blue
+    border = '#bfdbfe';
+  } else if (rank === 3) {
+    bg = '#fffbeb'; // Light amber
+    color = '#b45309'; // Amber
+    border = '#fde68a';
+  } else {
+    bg = '#f8fafc'; // Gray
+    color = '#64748b';
+    border = '#cbd5e1';
+  }
+
   return (
-    <span style={{ display:'inline-flex', alignItems:'center', gap:'3px', fontSize:'10.5px', fontWeight:'700', padding:'2px 7px', borderRadius:'20px', background:bg, color, border:`1px solid ${color}22`, whiteSpace:'nowrap' }}>
-      #{rank}
+    <span style={{ 
+      display:'inline-flex', 
+      alignItems:'center', 
+      gap:'4px', 
+      fontSize:'11px', 
+      fontWeight:'700', 
+      padding:'3px 9px', 
+      borderRadius:'12px', 
+      background: bg, 
+      color: color, 
+      border: `1px solid ${border}`, 
+      whiteSpace:'nowrap'
+    }}>
+      Rank #{rank}
     </span>
   );
+}
+
+// ─── NEW: Format Markdown Text for Chatbot ─────────────────────────────────────
+function formatMarkdownText(text) {
+  if (!text) return '';
+  let escaped = text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+
+  escaped = escaped.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  escaped = escaped.replace(/__(.*?)__/g, '<strong>$1</strong>');
+
+  escaped = escaped.split('\n').map(line => {
+    const trimmed = line.trim();
+    if (trimmed.startsWith('- ') || trimmed.startsWith('* ') || trimmed.startsWith('• ')) {
+      return `<li style="margin-left: 16px; margin-bottom: 4px; list-style-type: disc;">${trimmed.substring(2)}</li>`;
+    }
+    const numMatch = trimmed.match(/^(\d+)\.\s(.*)/);
+    if (numMatch) {
+      return `<li style="margin-left: 16px; margin-bottom: 4px; list-style-type: decimal;">${numMatch[2]}</li>`;
+    }
+    return line;
+  }).join('\n');
+
+  escaped = escaped.replace(/\n/g, '<br />');
+  return escaped;
 }
 
 // ─── NEW: Inline Summary Panel ────────────────────────────────────────────────
@@ -273,16 +335,16 @@ function SmartRankBtn({ active, loading, onClick }) {
         display:'flex', alignItems:'center', gap:'6px',
         padding:'7px 14px', borderRadius:'8px', cursor:'pointer',
         fontSize:'12px', fontWeight:'700', fontFamily:'inherit',
-        border: active ? '1px solid #a5b4fc' : '1px solid #e2e8f0',
-        background: active ? '#eef2ff' : hov ? '#f8fafc' : '#fff',
-        color: active ? '#4f46e5' : '#475569',
+        border: active ? '1px solid #4f46e5' : '1px solid #cbd5e1',
+        background: active ? '#4f46e5' : hov ? '#f8fafc' : '#fff',
+        color: active ? '#fff' : '#475569',
         transition:'all 0.15s',
-        boxShadow: active ? '0 0 0 3px rgba(99,102,241,0.1)' : 'none',
+        boxShadow: active ? '0 4px 6px rgba(79,70,229,0.15)' : 'none',
       }}
       title='Rank candidates by profile strength using AI scoring'
     >
       {loading
-        ? <div style={{ width:'14px', height:'14px', border:'2px solid #c7d2fe', borderTopColor:'#6366f1', borderRadius:'50%', animation:'spin 0.6s linear infinite' }} />
+        ? <div style={{ width:'14px', height:'14px', border:'2px solid #c7d2fe', borderTopColor: active ? '#fff' : '#6366f1', borderRadius:'50%', animation:'spin 0.6s linear infinite' }} />
         : <IC.Sparkles />
       }
       {loading ? 'Ranking…' : active ? 'Ranked ✓' : 'Smart Rank'}
@@ -365,6 +427,20 @@ export default function SelectionHR() {
   const [summaryMap,      setSummaryMap]      = useState({});
   // which rows have summary panel open
   const [openSummaryId,   setOpenSummaryId]   = useState(null);
+  const [rankReasonModal, setRankReasonModal] = useState(null);
+
+  // Chatbot (RAG) state
+  const [isChatOpen,      setIsChatOpen]      = useState(false);
+  const [chatMessages,    setChatMessages]    = useState([
+    {
+      id: 'welcome',
+      sender: 'ai',
+      text: 'Halo! Saya AI Selection Assistant. Tanyakan apa saja mengenai kandidat di tahap ini (misalnya: *"Siapa yang memiliki pengalaman React?"* atau *"Bandingkan motivasi kandidat"*).'
+    }
+  ]);
+  const [chatInput,       setChatInput]       = useState('');
+  const [chatLoading,     setChatLoading]     = useState(false);
+  const chatEndRef = useRef(null);
 
   // ── Interview prefill ──────────────────────────────────────────────────────
   useEffect(() => {
@@ -401,7 +477,16 @@ export default function SelectionHR() {
     setSmartRankMap({});
     setSmartRankActive(false);
     setOpenSummaryId(null);
+    setRankReasonModal(null);
     setSummaryMap({});
+    setSearch('');
+    setChatMessages([
+      {
+        id: 'welcome',
+        sender: 'ai',
+        text: 'Halo! Saya AI Selection Assistant. Tanyakan apa saja mengenai kandidat di tahap ini (misalnya: *"Siapa yang memiliki pengalaman React?"* atau *"Bandingkan motivasi kandidat"*).'
+      }
+    ]);
   }, [activePositionId, activeTab, activeSubStageIndex]);
 
   // ── NEW: Fetch Test Templates ──────────────────────────────────────────────
@@ -482,15 +567,99 @@ export default function SelectionHR() {
     params.set('id_position', activePositionId);
     if (search) params.set('search', search);
     if (activeTab === 'final') params.set('status', finalStatusFilter);
-   else params.set('status', `stage_${activeSubStageIndex}`);
+    else params.set('status', `stage_${activeSubStageIndex}`);
     api(`/hr/candidates?${params}`)
       .then(res => setCandidates(res.candidates || res.data?.candidates || []))
       .catch(err => console.error(err))
       .finally(() => setTableLoading(false));
   };
 
-  useEffect(() => { if (activePositionId && activeTab) { if (activeTab === 'final' || activeSubStageIndex !== null) fetchCandidates(); } }, [activePositionId, activeTab, activeSubStageIndex, finalStatusFilter]);
-  useEffect(() => { const t = setTimeout(() => { if (search !== undefined) fetchCandidates(true); }, 500); return () => clearTimeout(t); }, [search]);
+  useEffect(() => {
+    if (activePositionId && activeTab) {
+      if (activeTab === 'final' || activeSubStageIndex !== null) fetchCandidates();
+    }
+  }, [activePositionId, activeTab, activeSubStageIndex, finalStatusFilter]);
+
+  useEffect(() => {
+    const t = setTimeout(() => { if (search !== undefined) fetchCandidates(true); }, 500);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  // Scroll to bottom effect for Chatbot
+  useEffect(() => {
+    if (chatEndRef.current) {
+      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [chatMessages]);
+
+  // Chatbot send query function
+  const sendQuery = async (queryText) => {
+    const query = queryText.trim();
+    if (!query) return;
+
+    // Add user message
+    const userMsg = { id: Date.now() + '-user', sender: 'user', text: query };
+    setChatMessages(prev => [...prev, userMsg]);
+    setChatInput('');
+    setChatLoading(true);
+
+    // Add temporary AI loading message
+    const aiTempId = Date.now() + '-ai-loading';
+    setChatMessages(prev => [...prev, { id: aiTempId, sender: 'ai', loading: true }]);
+
+    try {
+      const stage = activeTab === 'final' ? finalStatusFilter : `stage_${activeSubStageIndex}`;
+      const params = new URLSearchParams({
+        q:           query,
+        retriever:   'tfidf',
+        top_k:       '5',
+        id_position: activePositionId || '',
+        status:      stage || '',
+      });
+      
+      const res = await api(`/hr/candidates/rag-search?${params}`);
+      
+      // Remove loading message and add AI response
+      setChatMessages(prev => prev.filter(m => m.id !== aiTempId).concat({
+        id: Date.now() + '-ai',
+        sender: 'ai',
+        text: res.answer || 'Maaf, saya tidak dapat menganalisis data saat ini.',
+        results: res.results || []
+      }));
+    } catch (err) {
+      console.error(err);
+      setChatMessages(prev => prev.filter(m => m.id !== aiTempId).concat({
+        id: Date.now() + '-ai',
+        sender: 'ai',
+        text: 'Terjadi kesalahan saat memanggil AI: ' + (err.message || err)
+      }));
+    } finally {
+      setChatLoading(false);
+    }
+  };
+
+  const handleSendChatMessage = (e) => {
+    if (e) e.preventDefault();
+    sendQuery(chatInput);
+  };
+
+  const handleHighlightCandidate = (idSubmission) => {
+    const el = document.getElementById(`candidate-row-${idSubmission}`);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // Apply background color highlight
+      const originalBg = el.style.background || 'transparent';
+      el.style.background = '#dbeafe'; // light blue highlight
+      el.style.transition = 'background-color 0.3s ease';
+      
+      setTimeout(() => {
+        el.style.transition = 'background-color 1s ease';
+        el.style.background = originalBg;
+      }, 2000);
+    } else {
+      pushToast('Kandidat tidak ditemukan di daftar tabel tahap ini', 'info');
+    }
+  };
 
   // ── NEW: Smart Rank ────────────────────────────────────────────────────────
   const handleSmartRank = async () => {
@@ -612,16 +781,17 @@ const handleLogout = () => {
   const isTest      = currentStage?.type === 'test';
   const isScreening = currentStage?.type === 'screening';
 
+  const aiActive = smartRankActive;
   let gridCols, headerCols;
   if (isInterview) {
-    gridCols   = smartRankActive ? '1.4fr 1fr 1.5fr 1.5fr 1fr 1.5fr' : '1.4fr 1fr 1.5fr 1.5fr 1.2fr 1.5fr';
-    headerCols = smartRankActive ? ['CANDIDATE','UNIVERSITY','SCHEDULE','LOCATION','RANK & MATCH','ACTION'] : ['CANDIDATE','UNIVERSITY','SCHEDULE','LOCATION','NOTES','ACTION'];
+    gridCols   = aiActive ? '1.4fr 1fr 1.5fr 1.5fr 1fr 1.5fr' : '1.4fr 1fr 1.5fr 1.5fr 1.2fr 1.5fr';
+    headerCols = aiActive ? ['CANDIDATE','UNIVERSITY','SCHEDULE','LOCATION','RANK & MATCH','ACTION'] : ['CANDIDATE','UNIVERSITY','SCHEDULE','LOCATION','NOTES','ACTION'];
   } else if (isTest) {
-    gridCols   = smartRankActive ? '1.4fr 1.2fr 1fr 1.4fr 1.2fr 0.8fr 1fr 1.5fr' : '1.4fr 1.2fr 1fr 1.4fr 1.2fr 0.8fr 1.2fr 1.5fr';
-    headerCols = smartRankActive ? ['CANDIDATE','UNIVERSITY','LOCATIONS','SCHEDULE','SUBMISSIONS','SCORE','RANK & MATCH','ACTION'] : ['CANDIDATE','UNIVERSITY','LOCATIONS','SCHEDULE','SUBMISSIONS','SCORE','NOTES','ACTION'];
+    gridCols   = aiActive ? '1.4fr 1.2fr 1fr 1.4fr 1.2fr 0.8fr 1fr 1.5fr' : '1.4fr 1.2fr 1fr 1.4fr 1.2fr 0.8fr 1.2fr 1.5fr';
+    headerCols = aiActive ? ['CANDIDATE','UNIVERSITY','LOCATIONS','SCHEDULE','SUBMISSIONS','SCORE','RANK & MATCH','ACTION'] : ['CANDIDATE','UNIVERSITY','LOCATIONS','SCHEDULE','SUBMISSIONS','SCORE','NOTES','ACTION'];
   } else {
-    gridCols   = smartRankActive ? '1.4fr 1fr 0.6fr 0.6fr 0.9fr 0.9fr 1fr 1.5fr' : '1.4fr 1fr 0.6fr 0.6fr 0.9fr 0.9fr 1.2fr 1.5fr';
-    headerCols = smartRankActive ? ['CANDIDATE','UNIVERSITY','CV','ADDITIONAL PORTFOLIO','SUPPORTING DOCUMENT','APPLIED DATE','RANK & MATCH','ACTION'] : ['CANDIDATE','UNIVERSITY','CV','ADDITIONAL PORTFOLIO','SUPPORTING DOCUMENT','APPLIED DATE','NOTES','ACTION'];
+    gridCols   = aiActive ? '1.4fr 1fr 0.6fr 0.6fr 0.9fr 0.9fr 1fr 1.5fr' : '1.4fr 1fr 0.6fr 0.6fr 0.9fr 0.9fr 1.2fr 1.5fr';
+    headerCols = aiActive ? ['CANDIDATE','UNIVERSITY','CV','ADDITIONAL PORTFOLIO','SUPPORTING DOCUMENT','APPLIED DATE','RANK & MATCH','ACTION'] : ['CANDIDATE','UNIVERSITY','CV','ADDITIONAL PORTFOLIO','SUPPORTING DOCUMENT','APPLIED DATE','NOTES','ACTION'];
   }
 
   return (
@@ -630,6 +800,7 @@ const handleLogout = () => {
       <style>{`
         @keyframes spin{to{transform:rotate(360deg)}}
         @keyframes fadeSlide{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes pulse{0%,100%{opacity:0.6}50%{opacity:1}}
         @media (max-width: 768px) {
           .sel-main-wrap { padding-top: 56px !important; }
           .sel-main { padding: 16px 12px 32px !important; }
@@ -647,6 +818,13 @@ const handleLogout = () => {
         .sel-cell-uni { font-size: clamp(10.5px, 1vw, 12.5px); color: #475569; font-weight: 500; overflow-wrap: break-word; word-break: break-word; white-space: normal; line-height: 1.35; }
         .sel-action-btn { padding: clamp(4px,0.4vw,6px) clamp(8px,0.8vw,12px) !important; font-size: clamp(10px,0.95vw,11.5px) !important; white-space: nowrap; }
         .sel-doc-btn { padding: clamp(3px,0.35vw,5px) clamp(6px,0.7vw,10px) !important; font-size: clamp(10px,0.9vw,11.5px) !important; }
+        /* AI Chat thin smooth scrollbar */
+        .ai-chat-scroll { scroll-behavior: smooth; }
+        .ai-chat-scroll::-webkit-scrollbar { width: 4px; }
+        .ai-chat-scroll::-webkit-scrollbar-track { background: transparent; }
+        .ai-chat-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; transition: background 0.2s; }
+        .ai-chat-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .ai-chat-scroll { scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent; }
       `}</style>
 
       <div className="sel-main-wrap" style={{ flex:1, display:'flex', flexDirection:'column', minWidth:0 }}>
@@ -781,25 +959,231 @@ const handleLogout = () => {
                 </div>
 
                 <div style={{ display:'flex', alignItems:'center', gap:'10px' }}>
-                  {/* ── NEW: Smart Rank Button ── */}
-                  {activeTab!=='final'&&(
+                  
+                  {/* Smart Rank Button */}
+                  {activeTab!=='final' && (
                     <SmartRankBtn active={smartRankActive} loading={smartRankLoading} onClick={handleSmartRank} />
                   )}
 
-                  {isTest &&(
+                  {/* AI Chat Assistant Button */}
+                  {activeTab!=='final' && (
+                    <button
+                      onClick={() => setIsChatOpen(!isChatOpen)}
+                      style={{
+                        display:'flex', alignItems:'center', gap:'6px',
+                        padding:'7px 14px', borderRadius:'8px', cursor:'pointer',
+                        fontSize:'12px', fontWeight:'700', fontFamily:'inherit',
+                        border: isChatOpen ? '1px solid #0f172a' : '1px solid #cbd5e1',
+                        background: isChatOpen ? '#0f172a' : '#fff',
+                        color: isChatOpen ? '#fff' : '#475569',
+                        transition:'all 0.15s',
+                        boxShadow: isChatOpen ? '0 4px 6px rgba(15,23,42,0.15)' : 'none'
+                      }}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.background = isChatOpen ? '#1e293b' : '#f8fafc';
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.background = isChatOpen ? '#0f172a' : '#fff';
+                      }}
+                    >
+                      <IC.MessageSquare /> AI Assistant
+                    </button>
+                  )}
+
+                  {isTest && (
                     <button onClick={()=>setShowBulkTestModal(true)} style={{ display:'flex', alignItems:'center', gap:'6px', padding:'7px 14px', background:'#3b82f6', color:'#fff', border:'none', borderRadius:'8px', fontSize:'12px', fontWeight:'700', cursor:'pointer', transition:'all 0.2s', boxShadow:'0 4px 10px rgba(59,130,246,0.2)' }} onMouseEnter={e=>e.currentTarget.style.background='#2563eb'} onMouseLeave={e=>e.currentTarget.style.background='#3b82f6'}>
                       <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2'><path d='M12 20h9'/><path d='M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z'/></svg>
                       Bulk Assign Test
                     </button>
                   )}
 
-                  <div style={{ display:'flex', alignItems:'center', gap:'8px', background:'#fff', border:'1px solid #e2e8f0', borderRadius:'8px', padding:'4px 10px', width:'220px' }}>
-                    <IC.Search/>
-                    <input placeholder='Search candidate...' value={search} onChange={e=>setSearch(e.target.value)} style={{ border:'none', outline:'none', fontSize:'12.5px', width:'100%', background:'transparent', color:'#1e293b' }}/>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    background: '#fff',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '8px',
+                    padding: '6px 12px',
+                    width: '220px',
+                    transition: 'all 0.2s',
+                  }}>
+                    <IC.Search />
+                    <input
+                      placeholder='Search candidate...'
+                      value={search}
+                      onChange={e => setSearch(e.target.value)}
+                      style={{ border: 'none', outline: 'none', fontSize: '12.5px', width: '100%', background: 'transparent', color: '#1e293b', fontFamily: 'inherit' }}
+                    />
+                    {search && (
+                      <button
+                        onClick={() => setSearch('')}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: 0, display: 'flex' }}
+                      >
+                        <IC.X />
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
             </div>
+
+            {/* ── Chatbot Inline Section ── */}
+            {isChatOpen && (
+              <div 
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  height: '420px',
+                  background: '#fff',
+                  borderBottom: '1px solid #e2e8f0',
+                  fontFamily: "'Poppins', sans-serif"
+                }}
+              >
+                {/* Chat Header */}
+                <div style={{ padding: '8px 16px', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)', color: '#fff' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <IC.Sparkles />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '12.5px', fontWeight: '700', lineHeight: '1.2' }}>AI Selection Assistant</div>
+                      <div style={{ fontSize: '9.5px', color: '#94a3b8', lineHeight: '1.2' }}>Powered by Llama 3.3</div>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => setIsChatOpen(false)}
+                    style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '4px', borderRadius: '50%', display: 'flex', transition: 'all 0.2s' }}
+                    onMouseEnter={e => e.currentTarget.style.color = '#fff'}
+                    onMouseLeave={e => e.currentTarget.style.color = '#94a3b8'}
+                  >
+                    <IC.X />
+                  </button>
+                </div>
+
+                {/* Chat Messages */}
+                <div
+                  className="ai-chat-scroll"
+                  style={{ flex: 1, overflowY: 'auto', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: '12px', background: '#f8fafc', scrollBehavior: 'smooth' }}
+                >
+                  {chatMessages.map((msg, index) => {
+                    const isUser = msg.sender === 'user';
+                    return (
+                      <div key={msg.id || index} style={{ display: 'flex', flexDirection: 'column', alignItems: isUser ? 'flex-end' : 'flex-start', width: '100%' }}>
+                        {/* Bubble */}
+                        <div style={{
+                          maxWidth: '75%',
+                          padding: '10px 14px',
+                          borderRadius: isUser ? '14px 14px 2px 14px' : '14px 14px 14px 2px',
+                          background: isUser ? '#3b82f6' : '#fff',
+                          color: isUser ? '#fff' : '#1e293b',
+                          fontSize: '12.5px',
+                          lineHeight: '1.5',
+                          boxShadow: isUser ? '0 3px 8px rgba(59,130,246,0.12)' : '0 1px 2px rgba(0,0,0,0.02)',
+                          border: isUser ? 'none' : '1px solid #e2e8f0',
+                          position: 'relative'
+                        }}>
+                          {msg.loading ? (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '2px 4px' }}>
+                              <span style={{ fontSize: '12px', color: '#64748b', fontStyle: 'italic' }}>Menganalisis data...</span>
+                              <div style={{ display: 'flex', gap: '4px' }}>
+                                <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#3b82f6', animation: 'pulse 1.2s infinite ease-in-out', animationDelay: '0s' }} />
+                                <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#3b82f6', animation: 'pulse 1.2s infinite ease-in-out', animationDelay: '0.2s' }} />
+                                <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#3b82f6', animation: 'pulse 1.2s infinite ease-in-out', animationDelay: '0.4s' }} />
+                              </div>
+                            </div>
+                          ) : (
+                            <div 
+                              dangerouslySetInnerHTML={{ __html: formatMarkdownText(msg.text) }} 
+                              style={{ overflowWrap: 'break-word', wordBreak: 'break-word' }}
+                            />
+                          )}
+                        </div>
+
+                        {/* Candidate recommendations cards inside chat */}
+                        {!isUser && msg.results && msg.results.length > 0 && (
+                          <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', padding: '6px 2px', width: '100%', scrollbarWidth: 'none' }}>
+                            {msg.results.map((c, idx) => (
+                              <div 
+                                key={idx}
+                                onClick={() => handleHighlightCandidate(c.id_submission)}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'space-between',
+                                  padding: '8px 12px',
+                                  background: '#fff',
+                                  border: '1px solid #e2e8f0',
+                                  borderRadius: '8px',
+                                  cursor: 'pointer',
+                                  transition: 'all 0.2s',
+                                  boxShadow: '0 1px 2px rgba(0,0,0,0.01)',
+                                  minWidth: '200px',
+                                  flexShrink: 0
+                                }}
+                                onMouseEnter={e => { e.currentTarget.style.borderColor = '#3b82f6'; }}
+                                onMouseLeave={e => { e.currentTarget.style.borderColor = '#e2e8f0'; }}
+                                title="Klik untuk melihat dan menyorot baris di tabel"
+                              >
+                                <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, marginRight: '8px' }}>
+                                  <span style={{ fontSize: '11.5px', fontWeight: '700', color: '#1e293b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</span>
+                                  <span style={{ fontSize: '10px', color: '#64748b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.university}</span>
+                                </div>
+                                <RankBadge rank={c.rank} />
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                  <div ref={chatEndRef} />
+                </div>
+
+                {/* Chat Input form */}
+                <form onSubmit={handleSendChatMessage} style={{ padding: '12px 20px', borderTop: '1px solid #e2e8f0', background: '#fff' }}>
+                  {/* Quick suggestions */}
+                  <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', marginBottom: '8px', paddingBottom: '4px', scrollbarWidth: 'none' }}>
+                    {[
+                      "Rekomendasi kandidat terbaik",
+                      "Bandingkan profil kandidat",
+                      "Kandidat yang ahli React/Frontend",
+                      "Kandidat yang aktif organisasi"
+                    ].map((s, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => sendQuery(s)}
+                        disabled={chatLoading}
+                        style={{ padding: '5px 10px', background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '20px', fontSize: '10.5px', color: '#475569', fontWeight: '600', whiteSpace: 'nowrap', cursor: 'pointer', transition: 'all 0.2s', outline: 'none' }}
+                        onMouseEnter={e => { if(!chatLoading) { e.currentTarget.style.background = '#e2e8f0'; e.currentTarget.style.color = '#0f172a'; } }}
+                        onMouseLeave={e => { if(!chatLoading) { e.currentTarget.style.background = '#f1f5f9'; e.currentTarget.style.color = '#475569'; } }}
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                  
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <input
+                      type="text"
+                      placeholder={activePositionId ? "Tanya AI mengenai kandidat..." : "Pilih posisi terlebih dahulu"}
+                      value={chatInput}
+                      onChange={e => setChatInput(e.target.value)}
+                      disabled={chatLoading || !activePositionId}
+                      style={{ flex: 1, padding: '8px 14px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '12.5px', outline: 'none', fontFamily: 'inherit', background: !activePositionId ? '#f1f5f9' : '#fff' }}
+                    />
+                    <button
+                      type="submit"
+                      disabled={chatLoading || !chatInput.trim() || !activePositionId}
+                      style={{ padding: '8px 12px', background: chatLoading || !chatInput.trim() || !activePositionId ? '#cbd5e1' : '#3b82f6', color: '#fff', border: 'none', borderRadius: '8px', display: 'flex', cursor: 'pointer', transition: 'all 0.2s' }}
+                    >
+                      <IC.Send />
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
 
             {/* ── NEW: AI Banner ── */}
             {smartRankActive && <AIBanner count={displayCandidates.length} />}
@@ -834,7 +1218,7 @@ const handleLogout = () => {
 
                   return (
                     <div key={c.id_submission}>
-                      <div style={{ display:'grid', gridTemplateColumns:gridCols, gap:'8px', padding:'9px 16px', alignItems:'center', borderBottom: !isSumOpen&&i<displayCandidates.length-1?'1px solid #f1f5f9':'none', background: aiData?.rank===1?'rgba(99,102,241,0.02)':'transparent' }}>
+                      <div id={`candidate-row-${c.id_submission}`} style={{ display:'grid', gridTemplateColumns:gridCols, gap:'8px', padding:'9px 16px', alignItems:'center', borderBottom: !isSumOpen&&i<displayCandidates.length-1?'1px solid #f1f5f9':'none', background: aiData?.rank===1?'rgba(99,102,241,0.02)':'transparent' }}>
 
                         {/* Candidate — no avatar bubble */}
                         <div style={{ display:'flex', flexDirection:'column', alignItems:'center', textAlign:'center', minWidth:0 }}>
@@ -906,25 +1290,44 @@ const handleLogout = () => {
                           </>
                         )}
 
-                        {/* ── Notes OR Rank & Match column ── */}
-                        {smartRankActive ? (
-                          // When Smart Rank is active: show rank + score bar
+                        {aiActive ? (
+                          // When AI Active (Smart Rank): show rank
                           <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:'4px' }}>
                             {aiData ? (
                               <>
-                                <div style={{ display:'flex', alignItems:'center', gap:'6px' }}>
-                                  <RankBadge rank={aiData.rank} percent={aiData.smart_rank_percent} />
-                                  <span style={{ fontSize:'11.5px', fontWeight:'700', color: aiData.smart_rank_percent>=70?'#15803d':aiData.smart_rank_percent>=40?'#a16207':'#64748b' }}>
-                                    {aiData.smart_rank_percent}%
-                                  </span>
-                                </div>
-                                <div style={{ width:'80px', height:'4px', borderRadius:'2px', background:'#f1f5f9', overflow:'hidden' }}>
-                                  <div style={{ height:'100%', borderRadius:'2px', background: aiData.smart_rank_percent>=70?'#16a34a':aiData.smart_rank_percent>=40?'#ca8a04':'#94a3b8', width:`${Math.min(100,aiData.smart_rank_percent)}%`, transition:'width 0.4s ease' }} />
-                                </div>
+                                <RankBadge rank={aiData.rank} />
                                 {aiData.suggestion_reason && (
-                                  <span style={{ fontSize:'10px', color:'#94a3b8', textAlign:'center', lineHeight:'1.3', maxWidth:'100px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }} title={aiData.suggestion_reason}>
-                                    {aiData.suggestion_reason}
-                                  </span>
+                                  <button
+                                    onClick={() => setRankReasonModal({
+                                      name: c.name,
+                                      rank: aiData.rank,
+                                      score: aiData.smart_rank_score,
+                                      reason: aiData.suggestion_reason,
+                                      isTfidf: (aiData.suggestion_reason || '').startsWith('[Analisis berbasis TF-IDF]')
+                                    })}
+                                    style={{
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '4px',
+                                      padding: '4px 8px',
+                                      background: '#f5f3ff',
+                                      border: '1px solid #ddd6fe',
+                                      borderRadius: '6px',
+                                      color: '#6d28d9',
+                                      fontSize: '11px',
+                                      fontWeight: '600',
+                                      cursor: 'pointer',
+                                      marginTop: '4px',
+                                      transition: 'all 0.15s',
+                                      outline: 'none',
+                                      fontFamily: 'inherit'
+                                    }}
+                                    onMouseEnter={e => { e.currentTarget.style.background = '#ede9fe'; }}
+                                    onMouseLeave={e => { e.currentTarget.style.background = '#f5f3ff'; }}
+                                    title="View AI suitability analysis"
+                                  >
+                                    <IC.Info /> Reason
+                                  </button>
                                 )}
                               </>
                             ) : <span style={{ fontSize:'12px', color:'#cbd5e1' }}>-</span>}
@@ -1211,6 +1614,49 @@ const handleLogout = () => {
             <div style={{ display:'flex',gap:'10px',justifyContent:'flex-end' }}>
               <button onClick={()=>setConfirmAction(null)} style={{ padding:'8px 16px',borderRadius:'8px',border:'1px solid #e2e8f0',background:'#fff',cursor:'pointer' }}>Cancel</button>
               <button onClick={executeAction} style={{ padding:'8px 16px',borderRadius:'8px',border:'none',background:'#3b82f6',color:'#fff',cursor:'pointer',fontWeight:'600' }}>Confirm</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+
+
+      {rankReasonModal && (
+        <div style={{ position:'fixed',inset:0,background:'rgba(10,22,40,0.5)',zIndex:300,display:'flex',alignItems:'center',justifyContent:'center',padding:'20px' }}>
+          <div style={{ background:'#fff',borderRadius:'16px',width:'100%',maxWidth:'480px',boxShadow:'0 20px 25px -5px rgba(0,0,0,0.1)',overflow:'hidden' }}>
+            <div style={{ padding:'20px 24px',borderBottom:'1px solid #f1f5f9',display:'flex',alignItems:'center',justifyContent:'space-between' }}>
+              <div>
+                <h3 style={{ margin:0,fontSize:'16px',fontWeight:'700',color:'#0f172a' }}>AI Suitability Analysis</h3>
+                <p style={{ margin:'2px 0 0',fontSize:'12.5px',color:'#94a3b8' }}>{rankReasonModal.name}</p>
+              </div>
+              <button onClick={()=>setRankReasonModal(null)} style={{ background:'none',border:'none',cursor:'pointer',color:'#64748b',display:'flex' }}><IC.X/></button>
+            </div>
+            <div style={{ padding:'20px 24px',display:'flex',flexDirection:'column',gap:'14px' }}>
+              <div style={{ display:'flex', gap:'12px', alignItems:'center', flexWrap:'wrap' }}>
+                <RankBadge rank={rankReasonModal.rank} />
+                <span style={{ fontSize:'13px', fontWeight:'600', color:'#475569' }}>
+                  Score: <strong style={{ color:'#4f46e5' }}>{Math.round(rankReasonModal.score)}/100</strong>
+                </span>
+                {rankReasonModal.isTfidf && (
+                  <span style={{ fontSize:'10.5px', fontWeight:'700', padding:'2px 8px', borderRadius:'20px', background:'#f1f5f9', color:'#64748b', border:'1px solid #e2e8f0' }}>TF-IDF Fallback</span>
+                )}
+              </div>
+              <div>
+                <label style={{ fontSize:'11.5px',fontWeight:'700',color:'#94a3b8',textTransform:'uppercase',display:'block',marginBottom:'6px' }}>{
+                  rankReasonModal.isTfidf ? 'Analisis TF-IDF (AI tidak tersedia)' : 'AI Analysis Reason'
+                }</label>
+                <div style={{ margin:0, fontSize:'13px', color:'#334155', lineHeight:'1.7', background:'#f8fafc', border:'1px solid #e2e8f0', borderRadius:'8px', padding:'12px 14px', whiteSpace:'pre-wrap', maxHeight:'220px', overflowY:'auto' }}>
+                  {(rankReasonModal.reason || '').replace(/^\[Analisis berbasis TF-IDF\] /, '')}
+                </div>
+                {rankReasonModal.isTfidf && (
+                  <p style={{ margin:'8px 0 0', fontSize:'11.5px', color:'#94a3b8', fontStyle:'italic' }}>
+                    ⚠️ AI sedang tidak tersedia (rate limit). Hasil ini berbasis analisis TF-IDF otomatis. Coba lagi dalam beberapa menit untuk analisis AI penuh.
+                  </p>
+                )}
+              </div>
+              <div style={{ display:'flex',justifyContent:'flex-end',marginTop:'4px' }}>
+                <button onClick={()=>setRankReasonModal(null)} style={{ padding:'8px 20px',borderRadius:'8px',border:'none',background:'#4f46e5',color:'#fff',cursor:'pointer',fontSize:'13px',fontWeight:'600',boxShadow:'0 2px 4px rgba(79,70,229,0.15)' }}>Close</button>
+              </div>
             </div>
           </div>
         </div>

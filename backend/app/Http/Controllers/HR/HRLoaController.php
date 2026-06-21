@@ -536,7 +536,17 @@ class HRLoaController extends Controller
             }
         }
 
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('loa.template', compact('submission', 'loa', 'company', 'logo_base64', 'companyCity', 'signature_base64'));
+        $stamp_base64 = null;
+        if ($company && $company->stamp_path) {
+            $stampPath = storage_path('app/public/' . $company->stamp_path);
+            if (file_exists($stampPath)) {
+                $type = pathinfo($stampPath, PATHINFO_EXTENSION);
+                $data = file_get_contents($stampPath);
+                $stamp_base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
+            }
+        }
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('loa.template', compact('submission', 'loa', 'company', 'logo_base64', 'companyCity', 'signature_base64', 'stamp_base64'));
         
         $filePath = $loa->file_path;
         Storage::disk('public')->put($filePath, $pdf->output());
@@ -582,10 +592,20 @@ class HRLoaController extends Controller
             }
         }
 
+        $stamp_base64 = null;
+        if ($company && $company->stamp_path) {
+            $stampPath = storage_path('app/public/' . $company->stamp_path);
+            if (file_exists($stampPath)) {
+                $type = pathinfo($stampPath, PATHINFO_EXTENSION);
+                $data = file_get_contents($stampPath);
+                $stamp_base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
+            }
+        }
+
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('loa.template_team', compact(
             'loa', 'company', 'logo_base64', 'companyCity',
             'team_name', 'team_members', 'position_name', 'program_title',
-            'internship_type', 'start_date', 'end_date', 'signature_base64'
+            'internship_type', 'start_date', 'end_date', 'signature_base64', 'stamp_base64'
         ));
         
         $filePath = $loa->file_path; // should already have 'loas/...'
