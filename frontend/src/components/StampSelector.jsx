@@ -25,7 +25,7 @@ const StampSelector = ({ onStampChange }) => {
         } catch (error) {
             console.error('Error fetching stamp:', error);
             if (error?.response?.status !== 404) {
-                pushToast('Failed to load company seal', 'error');
+                pushToast('Failed to load company stamp', 'error');
             }
         } finally {
             setIsLoading(false);
@@ -43,18 +43,18 @@ const StampSelector = ({ onStampChange }) => {
     };
 
     const handleDelete = async () => {
-        if (!window.confirm('Are you sure you want to delete this company seal?')) return;
+        if (!window.confirm('Are you sure you want to delete this company stamp?')) return;
         
         try {
             const res = await deleteStamp();
             if (res.success) {
                 setStampUrl(null);
                 if (onStampChange) onStampChange(null);
-                pushToast('Company seal removed successfully', 'success');
+                pushToast('Company stamp removed successfully', 'success');
             }
         } catch (error) {
             console.error('Error deleting stamp:', error);
-            pushToast('Failed to delete company seal', 'error');
+            pushToast('Failed to delete company stamp', 'error');
         }
     };
 
@@ -74,9 +74,9 @@ const StampSelector = ({ onStampChange }) => {
                         {stampUrl ? <ImageIcon className="w-5 h-5" /> : <Award className="w-5 h-5" />}
                     </div>
                     <div className="text-left">
-                        <h3 className="font-semibold text-slate-800">Company seal</h3>
+                        <h3 className="font-semibold text-slate-800">Company Stamp</h3>
                         <p className="text-sm text-slate-500">
-                            {stampUrl ? 'Company seal active' : 'Company seal not set'}
+                            {stampUrl ? 'Company stamp is active' : 'Company stamp is not set'}
                         </p>
                     </div>
                 </div>
@@ -97,17 +97,17 @@ const StampSelector = ({ onStampChange }) => {
                             
                             {/* Preview Area */}
                             <div className="w-full sm:w-1/2 flex flex-col gap-2">
-                                <span className="text-sm font-medium text-slate-700 font-semibold">Seal Preview</span>
+                                <span className="text-sm font-medium text-slate-700 font-semibold">Stamp Preview</span>
                                 <div className="bg-slate-50 border border-dashed border-slate-300 rounded-xl p-4 flex items-center justify-center min-h-[160px] relative overflow-hidden group">
                                     {stampUrl ? (
                                         <>
-                                            <img src={stampUrl} alt="Seal Preview" className="max-h-[120px] object-contain mix-blend-multiply" />
+                                            <img src={stampUrl} alt="Stamp Preview" className="max-h-[120px] object-contain mix-blend-multiply" />
                                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity backdrop-blur-[2px]">
                                                 <button 
                                                     type="button"
                                                     onClick={handleDelete}
                                                     className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors shadow-lg transform translate-y-2 group-hover:translate-y-0 duration-200"
-                                                    title="Delete Seal"
+                                                    title="Delete Stamp"
                                                 >
                                                     <Trash2 className="w-5 h-5" />
                                                 </button>
@@ -116,7 +116,7 @@ const StampSelector = ({ onStampChange }) => {
                                     ) : (
                                         <div className="text-center text-slate-400">
                                             <Award className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                                            <p className="text-sm">No seal available</p>
+                                            <p className="text-sm">No stamp available</p>
                                         </div>
                                     )}
                                 </div>
@@ -125,7 +125,7 @@ const StampSelector = ({ onStampChange }) => {
                             {/* Actions Area */}
                             <div className="w-full sm:w-1/2 flex flex-col justify-center gap-4 py-4 sm:py-8">
                                 <div className="text-sm text-slate-600 mb-2">
-                                    This seal will be overlaid on the primary signature in the document (LoA / Certificate).
+                                    This stamp will be overlaid on the primary signature in the document (LoA / Certificate).
                                 </div>
                                 <button 
                                     type="button"
@@ -133,9 +133,9 @@ const StampSelector = ({ onStampChange }) => {
                                     className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-medium transition-colors shadow-sm shadow-purple-600/20"
                                 >
                                     {stampUrl ? (
-                                        <><Upload className="w-4 h-4" /> Replace Seal</>
+                                        <><Upload className="w-4 h-4" /> Replace Stamp</>
                                     ) : (
-                                        <><Upload className="w-4 h-4" /> Upload Company Seal</>
+                                        <><Upload className="w-4 h-4" /> Upload Company Stamp</>
                                     )}
                                 </button>
                             </div>

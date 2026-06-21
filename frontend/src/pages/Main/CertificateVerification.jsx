@@ -269,7 +269,7 @@ export default function CertificateVerification() {
 
               </div>
 
-              {/* Seal Footer */}
+              {/* Stamp Footer */}
               <div style={{
                 marginTop: '35px',
                 paddingTop: '20px',
