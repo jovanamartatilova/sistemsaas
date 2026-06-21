@@ -103,7 +103,7 @@ const StampModal = ({ isOpen, onClose, onSuccess }) => {
 
     const handleSave = async () => {
         if (!processedImage) {
-            pushToast('Please upload a seal image first', 'error');
+            pushToast('Please upload a stamp image first', 'error');
             return;
         }
 
@@ -111,7 +111,7 @@ const StampModal = ({ isOpen, onClose, onSuccess }) => {
         try {
             const res = await storeStamp(processedImage);
             if (res.success) {
-                pushToast('Seal saved successfully', 'success');
+                pushToast('Stamp saved successfully', 'success');
                 setTimeout(() => {
                     onSuccess(res.stamp_url);
                     handleClose();
@@ -119,7 +119,7 @@ const StampModal = ({ isOpen, onClose, onSuccess }) => {
             }
         } catch (error) {
             console.error('Error saving stamp:', error);
-            pushToast('Error saving seal', 'error');
+            pushToast('Error saving stamp', 'error');
         } finally {
             setIsLoading(false);
         }
@@ -140,8 +140,8 @@ const StampModal = ({ isOpen, onClose, onSuccess }) => {
 
                 <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50">
                     <div>
-                        <h2 className="text-xl font-bold text-slate-800">Kelola Stempel Perusahaan</h2>
-                        <p className="text-sm text-slate-500 mt-1">Upload a company logo or seal to be embedded in the document</p>
+                        <h2 className="text-xl font-bold text-slate-800">Manage Company Stamp</h2>
+                        <p className="text-sm text-slate-500 mt-1">Upload a company logo or stamp to be embedded in the document</p>
                     </div>
                     <button onClick={handleClose} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">
                         <X className="w-5 h-5" />
@@ -157,7 +157,7 @@ const StampModal = ({ isOpen, onClose, onSuccess }) => {
                                         <Camera className="w-8 h-8" />
                                     </div>
                                     <div>
-                                        <p className="text-sm font-medium text-slate-700">Pilih gambar stempel</p>
+                                        <p className="text-sm font-medium text-slate-700">Choose stamp image</p>
                                         <p className="text-xs text-slate-500 mt-1">The white background will be automatically removed (made transparent)</p>
                                     </div>
                                     <input 
@@ -180,7 +180,7 @@ const StampModal = ({ isOpen, onClose, onSuccess }) => {
                                         <img src={processedImage} alt="Processed Stamp" className="max-w-full max-h-full object-contain filter drop-shadow-sm" />
                                     )}
                                     <div className="absolute top-2 left-2 px-2 py-1 bg-white/90 backdrop-blur text-xs font-medium text-slate-600 rounded-md shadow-sm border border-slate-200">
-                                        Pratinjau (Transparan)
+                                        Preview (Transparent)
                                     </div>
                                 </div>
                             )}
@@ -214,7 +214,7 @@ const StampModal = ({ isOpen, onClose, onSuccess }) => {
                             ) : (
                                 <Check className="w-4 h-4" />
                             )}
-                            Save Company Seal
+                            Save Company Stamp
                         </button>
                     </div>
                 </div>

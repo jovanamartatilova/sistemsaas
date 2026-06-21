@@ -569,7 +569,7 @@ function ProgramCard({ program, onOpenInvitation, onChooseRole }) {
       {isAccepted && competencies?.length > 0 && (
         <div className="border-t border-slate-100 pt-4">
           <h4 className="text-[10px] font-bold text-slate-400 mb-3 uppercase tracking-widest flex items-center gap-1.5">
-            <Target size={12} className="text-indigo-400" /> Target Competencies & Modules
+            Target Competencies & Modules
           </h4>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
             {competencies.map((comp, i) => <CompetencyItem key={i} {...comp} />)}

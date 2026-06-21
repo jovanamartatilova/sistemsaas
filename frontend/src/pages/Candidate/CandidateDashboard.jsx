@@ -589,7 +589,7 @@ const fetchDashboardData = async (idSubmission) => {
                                     <span className="text-slate-400 font-medium">Link</span>
                                     <a href={link} target="_blank" rel="noopener noreferrer"
                                       className="text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 rounded-lg transition-colors inline-flex items-center gap-1.5">
-                                      🎥 Join Interview →
+                                      Join Interview →
                                     </a>
                                   </div>
                                 )}

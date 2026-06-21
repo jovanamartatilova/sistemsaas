@@ -83,7 +83,6 @@ export default function LeaderInvitationSection({ program, onInvitationCreated }
           onClick={() => setShowModal(true)}
           className="w-full px-4 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2"
         >
-          <Share2 size={16} />
           Create Team Invitation
         </button>
 
