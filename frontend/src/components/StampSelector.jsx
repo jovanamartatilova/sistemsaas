@@ -55,7 +55,7 @@ const StampSelector = ({ onStampChange }) => {
         } catch (error) {
             console.error('Error deleting stamp:', error);
             pushToast('Failed to delete company seal', 'error');
-        
+        }
     };
 
     return (
