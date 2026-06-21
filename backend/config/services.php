@@ -40,4 +40,8 @@ return [
     'api_url' => env('GROQ_API_URL', 'https://api.groq.com/openai/v1'),
     ],
 
+    'google' => [
+    'client_id' => env('GOOGLE_CLIENT_ID'),
+    ],
+
 ];

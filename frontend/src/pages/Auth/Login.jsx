@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore";
 import PasswordInput from "../../components/PasswordInput";
+import { useGoogleLogin } from "@react-oauth/google";
 
 export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -112,6 +113,43 @@ export default function Login() {
       setLoading(false);
     }
   };
+
+  const handleGoogleLogin = useGoogleLogin({
+  onSuccess: async (tokenResponse) => {
+    setLoading(true);
+    setErrorMsg("");
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/auth/google`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ access_token: tokenResponse.access_token }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "Google login failed");
+
+      localStorage.setItem("auth_token", data.token);
+      localStorage.setItem("user_type", data.redirect_role);
+      localStorage.setItem("is_new_user", String(!!data.is_new_user));
+      if (data.user) localStorage.setItem("user", JSON.stringify(data.user));
+      if (data.company) localStorage.setItem("company", JSON.stringify(data.company));
+
+      useAuthStore.setState({
+        isAuthenticated: true,
+        token: data.token,
+        user: data.user || null,
+        company: data.company || null,
+      });
+
+      setSuccessMsg("✓ Login successful!");
+      setTimeout(() => redirectByRole(data.redirect_role, data.redirect_path), 500);
+    } catch (err) {
+      setErrorMsg(err.message);
+    } finally {
+      setLoading(false);
+    }
+  },
+  onError: () => setErrorMsg("Google login failed"),
+});
 
   const inputBase = {
     background: isDark ? "rgba(255,255,255,0.07)" : "rgba(255,255,255,0.85)",
@@ -364,6 +402,7 @@ export default function Login() {
             {/* Google */}
             <button
               type="button"
+              onClick={() => handleGoogleLogin()}
               className="w-full py-3.5 rounded-xl font-medium text-sm flex items-center justify-center gap-3 transition-all duration-200"
               style={{ background: "rgba(255,255,255,0.97)", color: "#1a1a2e" }}
               onMouseEnter={(e) => {

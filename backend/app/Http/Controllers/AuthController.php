@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Http;
 
 class AuthController extends Controller
 {
@@ -133,6 +134,102 @@ class AuthController extends Controller
             return response()->json(['message' => 'Login failed', 'error' => $e->getMessage()], 500);
         }
     }
+
+    /**
+ * 2b. LOGIN / REGISTER VIA GOOGLE
+ * POST /api/auth/google
+ * Body: { "access_token": "<access_token dari Google Identity Services>" }
+ */
+public function loginWithGoogle(Request $request)
+{
+    try {
+        $validated = $request->validate([
+            'access_token' => 'required|string',
+        ]);
+
+        // Verifikasi access_token langsung ke Google, dapatkan profil user
+        $googleResponse = Http::withToken($validated['access_token'])
+            ->get('https://www.googleapis.com/oauth2/v3/userinfo');
+
+        if (!$googleResponse->successful()) {
+            return response()->json(['message' => 'Invalid Google token'], 401);
+        }
+
+        $payload = $googleResponse->json();
+        $emailVerified = $payload['email_verified'] ?? false;
+
+        if ($emailVerified !== true && $emailVerified !== 'true') {
+            return response()->json(['message' => 'Google email is not verified'], 401);
+        }
+
+        $email = strtolower($payload['email']);
+        $name = $payload['name'] ?? $email;
+
+        $user = User::where('email', $email)->first();
+
+        if (!$user) {
+            do {
+                $id = 'USR' . strtoupper(substr(uniqid(), -7));
+            } while (User::where('id_user', $id)->exists());
+
+            $user = User::create([
+                'id_user' => $id,
+                'name' => $name,
+                'email' => $email,
+                'password' => Hash::make(Str::random(32)), // user Google nggak punya password manual
+                'is_active' => true,
+            ]);
+        }
+
+        $company = $user->company ?: $user->employee?->company ?: Company::where('email', $user->email)->first();
+        $role = strtolower((string) ($user->role ?? ''));
+        if (!$role) {
+            $role = null;
+        }
+
+        $redirectPath = match ($role) {
+            'mentor' => '/mentor/dashboard',
+            'hr' => '/hr/dashboard',
+            'super_admin', 'superadmin' => '/superadmin/dashboard',
+            'candidate' => '/candidate/dashboard',
+            'staff', 'admin' => '/dashboard',
+            null => '/onboarding',
+            default => '/onboarding',
+        };
+
+        $isNewUser = !$role || ($role === 'candidate' && !$user->candidate()->exists());
+
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        $response = [
+            'message' => 'Login successful',
+            'user' => [
+                'id_user' => $user->id_user,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $role,
+                'id_company' => $user->id_company,
+            ],
+            'role' => $role,
+            'redirect_role' => $role,
+            'redirect_path' => $redirectPath,
+            'user_type' => $role,
+            'is_new_user' => $isNewUser,
+            'token' => $token,
+        ];
+
+        if ($company) {
+            $response['company'] = $company;
+        }
+
+        return response()->json($response, 200);
+
+    } catch (ValidationException $e) {
+        return response()->json(['message' => 'Validation failed', 'errors' => $e->errors()], 422);
+    } catch (\Exception $e) {
+        return response()->json(['message' => 'Google login failed', 'error' => $e->getMessage()], 500);
+    }
+}
 
     /**
      * 3. CREATE COMPANY (Admin memulai company)

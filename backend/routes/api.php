@@ -51,6 +51,7 @@ use App\Http\Controllers\Admin\TeamSyncController;
 // Public routes
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/auth/google', [AuthController::class, 'loginWithGoogle']);
 Route::post('/login-company', [AuthController::class, 'loginCompany']);
 Route::get('/test', function() {
     return response()->json(['message' => 'Test route works', 'timestamp' => now()]);
