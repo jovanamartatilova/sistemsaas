@@ -103,7 +103,7 @@ const StampModal = ({ isOpen, onClose, onSuccess }) => {
 
     const handleSave = async () => {
         if (!processedImage) {
-            pushToast('Silakan unggah gambar stempel terlebih dahulu', 'error');
+            pushToast('Please upload a seal image first', 'error');
             return;
         }
 
@@ -111,7 +111,7 @@ const StampModal = ({ isOpen, onClose, onSuccess }) => {
         try {
             const res = await storeStamp(processedImage);
             if (res.success) {
-                pushToast('Stempel berhasil disimpan', 'success');
+                pushToast('Seal saved successfully', 'success');
                 setTimeout(() => {
                     onSuccess(res.stamp_url);
                     handleClose();
@@ -119,7 +119,7 @@ const StampModal = ({ isOpen, onClose, onSuccess }) => {
             }
         } catch (error) {
             console.error('Error saving stamp:', error);
-            pushToast('Gagal menyimpan stempel', 'error');
+            pushToast('Error saving seal', 'error');
         } finally {
             setIsLoading(false);
         }
@@ -141,7 +141,7 @@ const StampModal = ({ isOpen, onClose, onSuccess }) => {
                 <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50">
                     <div>
                         <h2 className="text-xl font-bold text-slate-800">Kelola Stempel Perusahaan</h2>
-                        <p className="text-sm text-slate-500 mt-1">Unggah logo/stempel perusahaan untuk disematkan pada dokumen</p>
+                        <p className="text-sm text-slate-500 mt-1">Upload a company logo or seal to be embedded in the document</p>
                     </div>
                     <button onClick={handleClose} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">
                         <X className="w-5 h-5" />
@@ -158,7 +158,7 @@ const StampModal = ({ isOpen, onClose, onSuccess }) => {
                                     </div>
                                     <div>
                                         <p className="text-sm font-medium text-slate-700">Pilih gambar stempel</p>
-                                        <p className="text-xs text-slate-500 mt-1">Background putih akan otomatis dihapus (transparan)</p>
+                                        <p className="text-xs text-slate-500 mt-1">The white background will be automatically removed (made transparent)</p>
                                     </div>
                                     <input 
                                         type="file" 
@@ -171,7 +171,7 @@ const StampModal = ({ isOpen, onClose, onSuccess }) => {
                                         onClick={() => fileInputRef.current.click()}
                                         className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm"
                                     >
-                                        Pilih File
+                                        Choose a File
                                     </button>
                                 </div>
                             ) : (
@@ -194,7 +194,7 @@ const StampModal = ({ isOpen, onClose, onSuccess }) => {
                         className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors"
                     >
                         <Trash2 className="w-4 h-4" /> 
-                        <span className="hidden sm:inline">Bersihkan</span>
+                        <span className="hidden sm:inline">Clean</span>
                     </button>
                     
                     <div className="flex gap-3">
@@ -202,7 +202,7 @@ const StampModal = ({ isOpen, onClose, onSuccess }) => {
                             onClick={handleClose}
                             className="px-5 py-2.5 text-sm font-medium text-slate-600 hover:text-slate-800 hover:bg-slate-200/50 rounded-xl transition-colors"
                         >
-                            Batal
+                            Cancel
                         </button>
                         <button 
                             onClick={handleSave}
@@ -214,7 +214,7 @@ const StampModal = ({ isOpen, onClose, onSuccess }) => {
                             ) : (
                                 <Check className="w-4 h-4" />
                             )}
-                            Simpan Stempel
+                            Save Company Seal
                         </button>
                     </div>
                 </div>
