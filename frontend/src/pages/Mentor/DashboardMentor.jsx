@@ -167,9 +167,9 @@ useEffect(() => {
 
   const confirmLogout = async () => {
     try {
-      const savedTheme = localStorage.getItem("theme");
+      const savedTheme = sessionStorage.getItem("theme");
       await logout();
-      if (savedTheme) localStorage.setItem("theme", savedTheme);
+      if (savedTheme) sessionStorage.setItem("theme", savedTheme);
     } catch (err) {
       console.error("Logout error:", err);
     } finally {

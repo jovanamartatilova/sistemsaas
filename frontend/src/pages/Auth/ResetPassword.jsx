@@ -23,8 +23,8 @@ export default function ResetPassword() {
 
   const handleBackToLogin = (e) => {
   e.preventDefault();
-  localStorage.clear();
   sessionStorage.clear();
+  localStorage.clear();
   document.cookie.split(";").forEach(c => {
     document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
   });
@@ -136,16 +136,16 @@ if (form.password !== form.password_confirmation) {
       }
 
       // Simpan token untuk auto-login
-      localStorage.setItem("auth_token", data.token);
+      sessionStorage.setItem("auth_token", data.token);
       
       // Simpan user data jika tersedia
       if (data.user) {
-        localStorage.setItem("user", JSON.stringify(data.user));
+        sessionStorage.setItem("user", JSON.stringify(data.user));
       }
       
       // Simpan company data jika tersedia
       if (data.company) {
-        localStorage.setItem("company", JSON.stringify(data.company));
+        sessionStorage.setItem("company", JSON.stringify(data.company));
       }
       
       // Update auth store dengan semua data

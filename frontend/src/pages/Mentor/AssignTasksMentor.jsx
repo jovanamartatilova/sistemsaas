@@ -193,7 +193,7 @@ export default function AssignTasksMentor() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
+      const token = sessionStorage.getItem('auth_token');
       const [resTasks, resAssignTargets, resComp] = await Promise.all([
         axios.get(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/mentor/tasks`, { headers: { Authorization: `Bearer ${token}` } }),
         axios.get(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/mentor/assign-targets`, { headers: { Authorization: `Bearer ${token}` } }),
@@ -256,7 +256,7 @@ export default function AssignTasksMentor() {
     if (target) {
       setInternInfo({ position: target.position, program: target.program });
       if (target.id_position) {
-        const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
+        const token = sessionStorage.getItem('auth_token');
         axios.get(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/mentor/competencies?id_position=${target.id_position}`, { headers: { Authorization: `Bearer ${token}` } })
           .then(res => setCompetencies(res.data.data || []))
           .catch(err => console.error("Failed to load competencies for edit:", err));
@@ -271,7 +271,7 @@ export default function AssignTasksMentor() {
     if (!target) return;
     setInternInfo({ position: target.position, program: target.program });
     if (target.id_position) {
-      const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
+      const token = sessionStorage.getItem('auth_token');
       const res = await axios.get(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/mentor/competencies?id_position=${target.id_position}`, { headers: { Authorization: `Bearer ${token}` } });
       setCompetencies(res.data.data || []);
     }
@@ -349,7 +349,7 @@ export default function AssignTasksMentor() {
     setSubmitting(true);
     try {
       const targetObj = assignTargets.find(t => `${t.id_target}|${t.id_team || ''}` === formData.targetVal);
-      const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
+      const token = sessionStorage.getItem('auth_token');
 
       const payload = {
         id_target: targetObj.id_target,
@@ -384,7 +384,7 @@ export default function AssignTasksMentor() {
 
   const handleUpdateTask = async (taskId, payload) => {
     try {
-      const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
+      const token = sessionStorage.getItem('auth_token');
       await axios.put(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/mentor/tasks/${taskId}`, payload, { headers: { Authorization: `Bearer ${token}` } });
       fetchData();
       showToast("Task updated successfully!");
@@ -394,7 +394,7 @@ export default function AssignTasksMentor() {
   const handleDeleteTask = async (taskId) => {
     if (!window.confirm("Are you sure you want to delete this project and all its targets?")) return;
     try {
-      const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
+      const token = sessionStorage.getItem('auth_token');
       await axios.delete(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/mentor/tasks/${taskId}`, { headers: { Authorization: `Bearer ${token}` } });
       fetchData();
       showToast("Project deleted successfully!");
@@ -403,7 +403,7 @@ export default function AssignTasksMentor() {
 
   const handleApproveLogbook = async (taskId) => {
     try {
-      const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
+      const token = sessionStorage.getItem('auth_token');
       await axios.put(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/mentor/tasks/${taskId}/approve-logbook`,
         { logbook_approved: true },
         { headers: { Authorization: `Bearer ${token}` } }

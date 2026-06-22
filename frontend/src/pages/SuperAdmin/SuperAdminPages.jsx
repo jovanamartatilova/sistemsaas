@@ -22,7 +22,7 @@ function LoginForm({ onLoginSuccess }) {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || "Login failed");
-      localStorage.setItem("auth_token", data.token);
+      sessionStorage.setItem("auth_token", data.token);
       onLoginSuccess();
     } catch (err) {
       setError(err.message || "Login failed");
@@ -264,7 +264,7 @@ function MessagesPage({ onUnreadChange }) {
     setLoading(true);
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/superadmin/messages`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("auth_token")}` },
+        headers: { Authorization: `Bearer ${sessionStorage.getItem("auth_token")}` },
       });
       const data = await res.json();
       setMessages(data);
@@ -283,7 +283,7 @@ function MessagesPage({ onUnreadChange }) {
     if (!msg.is_read) {
       await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/superadmin/messages/${msg.id}/read`, {
         method: "PATCH",
-        headers: { Authorization: `Bearer ${localStorage.getItem("auth_token")}` },
+        headers: { Authorization: `Bearer ${sessionStorage.getItem("auth_token")}` },
       });
       fetchMessages();
     }
@@ -292,7 +292,7 @@ function MessagesPage({ onUnreadChange }) {
   const deleteMsg = async (id) => {
     await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}/superadmin/messages/${id}`, {
       method: "DELETE",
-      headers: { Authorization: `Bearer ${localStorage.getItem("auth_token")}` },
+      headers: { Authorization: `Bearer ${sessionStorage.getItem("auth_token")}` },
     });
     setSelected(null);
     fetchMessages();
@@ -1236,17 +1236,17 @@ export default function SuperAdminPages() {
   const navigate = useNavigate();
   const [logoutModal, setLogoutModal] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("auth_token"));
+  const [isLoggedIn, setIsLoggedIn] = useState(!!sessionStorage.getItem("auth_token"));
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  useEffect(() => { setIsLoggedIn(!!localStorage.getItem("auth_token")); }, []);
+  useEffect(() => { setIsLoggedIn(!!sessionStorage.getItem("auth_token")); }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem("auth_token");
-    localStorage.removeItem("company");
-    localStorage.removeItem("user");
-    if (!localStorage.getItem("theme")) {
-      localStorage.setItem("theme", "dark");
+    sessionStorage.removeItem("auth_token");
+    sessionStorage.removeItem("company");
+    sessionStorage.removeItem("user");
+    if (!sessionStorage.getItem("theme")) {
+      sessionStorage.setItem("theme", "dark");
     }
     setIsLoggedIn(false);
     setLogoutModal(false);

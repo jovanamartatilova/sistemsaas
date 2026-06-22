@@ -15,6 +15,29 @@ use Illuminate\Support\Facades\Storage;
 
 class CandidateController extends Controller
 {
+
+    private function resolveStageLabel($status, $position)
+    {
+        if (!$status) return null;
+        if (in_array($status, ['accepted', 'rejected', 'pending', 'active', 'inactive'])) {
+            return ucfirst($status === 'pending' ? 'Screening' : $status);
+        }
+        if (str_starts_with($status, 'stage_')) {
+            $idx = (int) str_replace('stage_', '', $status);
+            $flow = $position?->selection_flow;
+            if (is_string($flow)) $flow = json_decode($flow, true);
+            if (isset($flow[$idx])) {
+                $stage = $flow[$idx];
+                // Pakai 'name' custom kalau ada, fallback ke 'type' yang diformat rapi
+                if (!empty($stage['name'])) return $stage['name'];
+                $type = $stage['type'] ?? $status;
+                return ucfirst(str_replace('-', ' ', $type));
+            }
+            return "Stage " . ($idx + 1);
+        }
+        return ucfirst($status);
+    }
+
     // ═══════════════════════════════════════════════════
     // DASHBOARD — satu endpoint untuk semua section
     // GET /candidate/dashboard
@@ -42,27 +65,27 @@ class CandidateController extends Controller
             if (isset($user->id_user)) {
                 $idSubmission = $request->query('id_submission');
 
-$submissionQuery = Submission::where('id_user', $user->id_user)
-    ->whereNotIn('status', ['rejected', 'draft'])
-    ->with(['vacancy', 'position.competencies', 'mentor', 'interviews']);
+            $submissionQuery = Submission::where('id_user', $user->id_user)
+                ->whereNotIn('status', ['rejected', 'draft'])
+                ->with(['vacancy', 'position.competencies', 'mentor', 'interviews']);
 
-if ($idSubmission) {
-    $submission = $submissionQuery
-        ->where('id_submission', $idSubmission)
-        ->first();
+            if ($idSubmission) {
+                $submission = $submissionQuery
+                    ->where('id_submission', $idSubmission)
+                    ->first();
 
-    // Fallback kalau id_submission tidak ditemukan / bukan milik user ini
-    if (!$submission) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Submission not found for the given id_submission',
-        ], 404);
-    }
-} else {
-    $submission = $submissionQuery
-        ->latest('submitted_at')
-        ->first();
-}
+                // Fallback kalau id_submission tidak ditemukan / bukan milik user ini
+                if (!$submission) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Submission not found for the given id_submission',
+                    ], 404);
+                }
+            } else {
+                $submission = $submissionQuery
+                    ->latest('submitted_at')
+                    ->first();
+            }
             }
 
             $apprentice = null;
@@ -113,16 +136,17 @@ if ($idSubmission) {
                             ->exists(),
                     ],
                     'apprentice' => ($apprentice || $submission) ? [
-                        'id_submission' => $submission?->id_submission,
-                        'id_apprentice' => $apprentice->id_apprentice ?? null,
-                        'position' => $submission?->position?->name ?? '-',
-                        'company' => $submission?->vacancy?->company_name ?? '-',
-                        'start_date' => $apprentice->start_date ?? null,
-                        'end_date' => $apprentice->end_date ?? null,
-                        'batch' => $submission?->vacancy?->batch ?? '-',
-                        'status' => $submission?->status ?? ($apprentice->status ?? 'inactive'),
-                        'mentor_name' => $submission?->mentor?->name ?? null,
-                    ] : null,
+                    'id_submission' => $submission?->id_submission,
+                    'id_apprentice' => $apprentice->id_apprentice ?? null,
+                    'position' => $submission?->position?->name ?? '-',
+                    'company' => $submission?->vacancy?->company_name ?? '-',
+                    'start_date' => $apprentice->start_date ?? null,
+                    'end_date' => $apprentice->end_date ?? null,
+                    'batch' => $submission?->vacancy?->batch ?? '-',
+                    'status' => $submission?->status ?? ($apprentice->status ?? 'inactive'),
+                    'stage_label' => $this->resolveStageLabel($submission?->status, $submission?->position),
+                    'mentor_name' => $submission?->mentor?->name ?? null,
+                ] : null,
                     'vacancy' => $submission ? [
                         'id_vacancy' => $submission->vacancy?->id_vacancy ?? null,
                         'type' => $submission->vacancy?->type ?? '-',

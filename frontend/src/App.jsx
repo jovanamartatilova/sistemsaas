@@ -78,7 +78,7 @@ const CandidateRegisterRedirect = () => {
 /** Redirect ke mentor dashboard jika role === 'mentor', selain itu tampilkan DashboardPage */
 const DashboardRouter = () => {
     const { user, company } = useAuthStore();
-    const storedUserType = localStorage.getItem('user_type');
+    const storedUserType = sessionStorage.getItem('user_type');
 
     const role = user?.role || user?.user_type || storedUserType || company?.role || null;
 

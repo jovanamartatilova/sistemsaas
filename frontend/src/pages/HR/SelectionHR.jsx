@@ -746,7 +746,7 @@ export default function SelectionHR() {
 
 const handleLogout = () => {
   const theme = localStorage.getItem('theme');
-  localStorage.clear();
+  sessionStorage.clear();
   if (theme) localStorage.setItem('theme', theme);
   useAuthStore.setState({ isAuthenticated:false, token:null, user:null, company:null });
   navigate('/login');
@@ -879,7 +879,6 @@ const handleLogout = () => {
                 <div style={{ position:'relative' }}>
                   <select value={activePositionId} onChange={e=>setActivePositionId(e.target.value)}
                     style={{ appearance:'none', background:'#fff', border:'1px solid #cbd5e1', borderRadius:'8px', padding:'6px 28px 6px 12px', fontSize:'13px', fontWeight:'600', color:'#1e293b', outline:'none', cursor:'pointer', minWidth:'180px', fontFamily:'inherit' }}>
-                    <option value=''>All Positions</option>
                     {positions.map(p=><option key={p.id_position} value={p.id_position}>{p.name}</option>)}
                   </select>
                   <div style={{ position:'absolute', right:'8px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none', color:'#64748b' }}>

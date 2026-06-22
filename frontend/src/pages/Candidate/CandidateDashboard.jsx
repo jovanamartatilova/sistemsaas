@@ -193,7 +193,7 @@ const [submissionsLoading, setSubmissionsLoading] = useState(true);
 const fetchSubmissions = async () => {
   try {
     setSubmissionsLoading(true);
-    const token = localStorage.getItem("token") || localStorage.getItem("auth_token");
+    const token = sessionStorage.getItem("auth_token");
     const res = await fetch(`${API_BASE_URL}/submissions`, {
       headers: { "Authorization": `Bearer ${token}` }
     });
@@ -202,8 +202,8 @@ const fetchSubmissions = async () => {
     const list = (data.data || []).filter(s => s.status !== 'rejected' && s.status !== 'draft');
     setSubmissionList(list);
 
-    // Restore pilihan sebelumnya dari localStorage
-    const savedId = localStorage.getItem("selected_submission_id");
+    // Restore pilihan sebelumnya dari sessionStorage
+    const savedId = sessionStorage.getItem("selected_submission_id");
     const found = list.find(s => s.id_submission === savedId) || list[0];
     setSelectedSubmission(found || null);
   } catch (err) {
@@ -220,16 +220,19 @@ useEffect(() => {
 
 useEffect(() => {
   if (selectedSubmission) {
-    localStorage.setItem("selected_submission_id", selectedSubmission.id_submission);
+    sessionStorage.setItem("selected_submission_id", selectedSubmission.id_submission);
     fetchDashboardData(selectedSubmission.id_submission);
+  } else if (!submissionsLoading) {
+    // Belum pernah daftar lowongan sama sekali — stop loading, tampilkan welcome state
+    setLoading(false);
   }
-}, [selectedSubmission]);
+}, [selectedSubmission, submissionsLoading]);
 
   // Ubah signature fetchDashboardData
 const fetchDashboardData = async (idSubmission) => {
   try {
     setLoading(true);
-    const token = localStorage.getItem("token") || localStorage.getItem("auth_token");
+    const token = sessionStorage.getItem("auth_token");
     if (!token) { setError("No authentication token found"); setLoading(false); return; }
 
     const url = idSubmission
@@ -263,13 +266,13 @@ const fetchDashboardData = async (idSubmission) => {
   const fetchMemberTasks = async (isLeader = false) => {
     try {
       setTasksLoading(true);
-      const token = localStorage.getItem("token") || localStorage.getItem("auth_token");
+      const token = sessionStorage.getItem("auth_token");
       const endpoint = isLeader ? `${API_BASE_URL}/leader/tasks` : `${API_BASE_URL}/member/tasks`;
       const response = await fetch(endpoint, { headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" } });
       if (response.ok) {
         const data = await response.json();
         if (isLeader && Array.isArray(data.data)) {
-          const userId = localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user")).id_user : null;
+          const userId = sessionStorage.getItem("user") ? JSON.parse(sessionStorage.getItem("user")).id_user : null;
           const leaderTasks = data.data.flatMap(t => (t.subtasks || []).flatMap(st => st.delegations || [])).filter(d => d.id_assignee === userId);
           setMemberTasks(leaderTasks);
         } else {
@@ -286,7 +289,7 @@ const fetchDashboardData = async (idSubmission) => {
   const confirmLogout = async () => {
     try { await globalLogout(); } catch (err) { console.error(err); } finally {
       setLogoutModal(false);
-      localStorage.clear();
+      sessionStorage.clear();
       navigate("/", { replace: true });
     }
   };
@@ -318,7 +321,7 @@ const fetchDashboardData = async (idSubmission) => {
   }));
 
   const { profile, apprentice, vacancy, interviews } = userData;
-  const company = JSON.parse(localStorage.getItem("company") || "{}");
+  const company = JSON.parse(sessionStorage.getItem("company") || "{}");
 
   const doneTasks       = memberTasks.filter(t => t.status === "done").length;
   const inProgressTasks = memberTasks.filter(t => t.status === "in_progress").length;
@@ -335,7 +338,7 @@ const fetchDashboardData = async (idSubmission) => {
             <div className="text-center">
               <p className="text-slate-600 mb-4">{error || "Failed to load dashboard"}</p>
               <div className="flex gap-3 justify-center">
-                <button onClick={fetchDashboardData} className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Retry</button>
+                <button onClick={() => fetchDashboardData(selectedSubmission?.id_submission)} className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Retry</button>
                 <button onClick={() => navigate("/")} className="px-4 py-2 bg-slate-300 text-slate-700 rounded-lg hover:bg-slate-400">Back Home</button>
               </div>
             </div>
@@ -363,14 +366,15 @@ const fetchDashboardData = async (idSubmission) => {
           <>
             {/* ── No apprentice: welcome state ── */}
             {!apprentice ? (
-              <div className="flex-1 flex items-center justify-center">
-                {!vacancy && (
+              <>
+                {/* ── Welcome / CTA state ── */}
+                <div className="flex-1 flex items-center justify-center py-10">
                   <div className="flex flex-col items-center text-center gap-4">
-                    <h3 className="text-xl font-bold text-slate-800 mb-2">Welcome to EarlyPath!</h3>
+                    <h3 className="text-xl font-bold text-slate-800 mb-1">Welcome to EarlyPath!</h3>
                     <p className="text-sm text-slate-500 leading-relaxed max-w-lg">
-                      Apply for an internship program to get started. Once accepted, you'll unlock tasks, competencies, and certificates.
+                      You haven't applied to any internship program yet. Apply now to get started — once accepted, you'll unlock tasks, competencies, and certificates.
                     </p>
-                    <div className="flex items-center gap-2 mt-4 flex-wrap justify-center">
+                    <div className="flex items-center gap-2 mt-2 flex-wrap justify-center">
                       {[{ step: "1", label: "Apply for Program" }, { step: "2", label: "Get Accepted" }, { step: "3", label: "Start Internship" }].map((s, i) => (
                         <div key={i} className="flex items-center gap-1.5">
                           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-slate-200 shadow-sm">
@@ -381,9 +385,20 @@ const fetchDashboardData = async (idSubmission) => {
                         </div>
                       ))}
                     </div>
+                    <button
+                      onClick={() => {
+                        navigate("/");
+                        setTimeout(() => {
+                          document.getElementById("open-positions")?.scrollIntoView({ behavior: "smooth" });
+                        }, 150);
+                      }}
+                      className="mt-4 px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-sm transition-colors"
+                    >
+                      Browse Open Programs →
+                    </button>
                   </div>
-                )}
-              </div>
+                </div>
+              </>
             ) : (
               <>
                 {/* ── Page heading ── */}
@@ -515,12 +530,7 @@ const fetchDashboardData = async (idSubmission) => {
                         { label: "Start Date", value: vacancy?.start_date ? new Date(vacancy.start_date).toLocaleDateString("en-US") : "-" },
                         { label: "End Date",   value: vacancy?.end_date   ? new Date(vacancy.end_date).toLocaleDateString("en-US")   : "-" },
                         {
-                          label: "Status", badge: true, value: (() => {
-                            const s = apprentice?.status?.toLowerCase();
-                            if (!s || s === "pending") return "Screening";
-                            if (s.startsWith("stage_")) return `Interview Stage ${parseInt(s.split("_")[1]) + 1}`;
-                            return formatStatus(apprentice?.status);
-                          })()
+                          label: "Status", badge: true, value: apprentice?.stage_label || formatStatus(apprentice?.status)
                         },
                       ].map((row, i) => (
                         <div key={i} className="flex justify-between items-center text-sm py-2.5 border-b border-slate-50 last:border-0">

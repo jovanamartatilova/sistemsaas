@@ -26,8 +26,8 @@ export const broadcastDataChange = (role, dataType, data = {}) => {
     data,
   };
 
-  // Store in localStorage for cross-tab communication
-  localStorage.setItem(channel, JSON.stringify(event));
+  // Store in sessionStorage for cross-tab communication
+  sessionStorage.setItem(channel, JSON.stringify(event));
 
   // Dispatch custom event for same-tab listeners
   window.dispatchEvent(
@@ -113,7 +113,7 @@ export const onAnyDataChange = (callback) => {
 export const getLastSyncTime = (role) => {
   const channel = SYNC_CHANNELS[`${role.toUpperCase()}_DATA`];
   try {
-    const stored = localStorage.getItem(channel);
+    const stored = sessionStorage.getItem(channel);
     if (stored) {
       const event = JSON.parse(stored);
       return event.timestamp || 0;
@@ -129,7 +129,7 @@ export const getLastSyncTime = (role) => {
  */
 export const clearSyncData = () => {
   Object.values(SYNC_CHANNELS).forEach(channel => {
-    localStorage.removeItem(channel);
+    sessionStorage.removeItem(channel);
   });
   console.log('[DataSync] All sync data cleared');
 };

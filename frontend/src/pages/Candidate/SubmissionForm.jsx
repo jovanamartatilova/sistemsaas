@@ -260,7 +260,7 @@ export default function SubmissionForm() {
   useEffect(() => {
     if (user?.name && !form.name) setForm((p) => ({ ...p, name: user.name }));
     try {
-      const cp = JSON.parse(localStorage.getItem("candidate_profile") || "null");
+      const cp = JSON.parse(sessionStorage.getItem("candidate_profile") || "null");
       if (cp) {
         setForm((p) => ({
           ...p,

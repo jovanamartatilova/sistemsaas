@@ -75,7 +75,7 @@ export default function LeaderDashboard() {
 
   const fetchUserProfile = async () => {
     try {
-      const token = localStorage.getItem("token") || localStorage.getItem("auth_token");
+      const token = sessionStorage.getItem("token") || sessionStorage.getItem("auth_token");
       if (!token) return;
 
       const res = await fetch(`${API_BASE_URL}/candidate/profile`, {
@@ -96,7 +96,7 @@ export default function LeaderDashboard() {
     try {
       setLoading(true);
       setError(null);
-      const token = localStorage.getItem("token") || localStorage.getItem("auth_token");
+      const token = sessionStorage.getItem("token") || sessionStorage.getItem("auth_token");
 
       if (!token) {
         setError("No authentication token found");
@@ -145,7 +145,7 @@ export default function LeaderDashboard() {
 
   const fetchHistory = async () => {
   try {
-    const token = localStorage.getItem("token") || localStorage.getItem("auth_token");
+    const token = sessionStorage.getItem("token") || sessionStorage.getItem("auth_token");
 
     const res = await fetch(`${API_BASE_URL}/my-teams`, {
       headers: {

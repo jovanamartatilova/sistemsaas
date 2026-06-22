@@ -3,7 +3,7 @@ import { useAuthStore } from '../stores/authStore';
 
 export default function PrivateRoute({ children }) {
   const { isAuthenticated, loading } = useAuthStore();
-  const hasToken = !!localStorage.getItem("auth_token");
+  const hasToken = !!sessionStorage.getItem("auth_token");
   const location = useLocation();
 
   if (loading) {

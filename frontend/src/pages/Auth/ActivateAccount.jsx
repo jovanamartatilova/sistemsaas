@@ -250,7 +250,7 @@ export default function ActivateAccount() {
         "Content-Type": "application/json",
         Accept: "application/json",
       };
-      const authToken = localStorage.getItem("auth_token");
+      const authToken = sessionStorage.getItem("auth_token");
       if (existingUser && authToken) {
         headers["Authorization"] = `Bearer ${authToken}`;
       }
@@ -270,12 +270,12 @@ export default function ActivateAccount() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || "Activation failed");
 
-      // Update localStorage
-      localStorage.setItem("auth_token", data.token);
-      localStorage.setItem("hr_token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
-      localStorage.setItem("company", JSON.stringify(data.company));
-      localStorage.setItem("user_type", data.redirect_role || data.user?.role);
+      // Update sessionStorage
+      sessionStorage.setItem("auth_token", data.token);
+      sessionStorage.setItem("hr_token", data.token);
+      sessionStorage.setItem("user", JSON.stringify(data.user));
+      sessionStorage.setItem("company", JSON.stringify(data.company));
+      sessionStorage.setItem("user_type", data.redirect_role || data.user?.role);
 
       // Update auth store
       useAuthStore.setState(state => ({

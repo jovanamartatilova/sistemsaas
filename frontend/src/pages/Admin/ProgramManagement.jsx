@@ -811,7 +811,7 @@ export default function ProgramManagement() {
     const [deleteConfirm, setDeleteConfirm] = useState({ open: false, jobId: null });
     const { toasts, pushToast, removeToast } = useHRToast();
 
-    const comp = (() => { try { return JSON.parse(localStorage.getItem("company")); } catch { return null; } })();
+    const comp = (() => { try { return JSON.parse(sessionStorage.getItem("company")); } catch { return null; } })();
     const companyName = comp?.name || "Admin";
     const companyRole = comp?.role  || "Admin";
     const initials    = companyName.slice(0,2).toUpperCase();

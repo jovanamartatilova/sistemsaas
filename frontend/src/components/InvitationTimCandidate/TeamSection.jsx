@@ -21,7 +21,7 @@ export default function TeamSection({ program, userRole = null, team = null, isP
   const [showCreateTeamModal, setShowCreateTeamModal] = useState(false);
   const [creatingTeam, setCreatingTeam] = useState(false);
   const [localTeam, setLocalTeam] = useState(team);
-  const storedCompany = JSON.parse(localStorage.getItem("company") || "{}");
+  const storedCompany = JSON.parse(sessionStorage.getItem("company") || "{}");
   const companyId = storedCompany?.id_company;
 
   const [formData, setFormData] = useState({
@@ -36,7 +36,7 @@ export default function TeamSection({ program, userRole = null, team = null, isP
   });
 
   const API_BASE_URL = import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}`;
-  const authToken = localStorage.getItem("auth_token") || localStorage.getItem("token");
+  const authToken = sessionStorage.getItem("auth_token");
 
   // Validate invitation on mount (for public join flow)
   useEffect(() => {

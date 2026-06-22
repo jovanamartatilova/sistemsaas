@@ -11,9 +11,9 @@ import { LoadingSpinner } from "../../components/LoadingSpinner";
 import SidebarCandidate from "../../components/SidebarCandidate";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}`;
-const getToken = () => localStorage.getItem("auth_token") || localStorage.getItem("token");
+const getToken = () => sessionStorage.getItem("auth_token");
 const getStoredCompany = () => {
-  try { return JSON.parse(localStorage.getItem("company") || "{}") || null; }
+  try { return JSON.parse(sessionStorage.getItem("company") || "{}") || null; }
   catch { return null; }
 };
 
@@ -65,8 +65,8 @@ function InvitationModal({ program, onClose, onCreated }) {
       if (data.already_has_team) {
         // Sudah punya tim, redirect langsung ke dashboard leader
         const updatedUser = { ...user, scoped_role: "leader" };
-        localStorage.setItem("user", JSON.stringify(updatedUser));
-        const company = JSON.parse(localStorage.getItem("company") || "{}");
+        sessionStorage.setItem("user", JSON.stringify(updatedUser));
+        const company = JSON.parse(sessionStorage.getItem("company") || "{}");
         const idCompany = company?.id_company;
         if (idCompany) window.location.href = `/c/${idCompany}/dashboard`;
         return;
@@ -76,13 +76,13 @@ function InvitationModal({ program, onClose, onCreated }) {
       const token = data.data?.token || data.token;
       setGeneratedLink(`${window.location.origin}/join-team/${token}`);
 
-      // Update user object di localStorage supaya sidebar detect role leader
+      // Update user object di sessionStorage supaya sidebar detect role leader
       const updatedUser = { ...user, scoped_role: "leader" };
-      localStorage.setItem("user", JSON.stringify(updatedUser));
+      sessionStorage.setItem("user", JSON.stringify(updatedUser));
 
         // Redirect ke leader dashboard setelah 2.5 detik
       setTimeout(() => {
-        const company = JSON.parse(localStorage.getItem("company") || "{}");
+        const company = JSON.parse(sessionStorage.getItem("company") || "{}");
         const idCompany = company?.id_company;
         if (idCompany) window.location.href = `/c/${idCompany}/dashboard`;
       }, 2500);
@@ -307,9 +307,9 @@ function JoinTeamModal({ onClose, onJoined }) {
       });
       const data = await res.json();
           if (res.ok || data.already_joined) {
-      const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+      const currentUser = JSON.parse(sessionStorage.getItem("user") || "{}");
       const updatedUser = { ...currentUser, scoped_role: "member" };
-      localStorage.setItem("user", JSON.stringify(updatedUser));
+      sessionStorage.setItem("user", JSON.stringify(updatedUser));
       onClose();
       onJoined?.();
     }else {
@@ -607,7 +607,7 @@ const fetchData = useCallback(async () => {
         const subRes = await fetch(`${API_BASE_URL}/submissions`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        if (subRes.status === 401) { localStorage.clear(); navigate("/"); return; }
+        if (subRes.status === 401) { sessionStorage.clear(); navigate("/"); return; }
         const subData = await subRes.json();
         const raw = subData.data || subData;
         setPrograms(Array.isArray(raw) ? raw : []);
@@ -620,7 +620,7 @@ const fetchData = useCallback(async () => {
           setUserData(d.data || d);
           if (!getStoredCompany()?.id_company && d.data?.id_company) {
             const companyData = { id_company: d.data.id_company };
-            localStorage.setItem("company", JSON.stringify(companyData));
+            sessionStorage.setItem("company", JSON.stringify(companyData));
             setStoredCompany(companyData);
           }
         }
@@ -656,7 +656,7 @@ useEffect(() => { fetchData(); }, [fetchData]);
     } catch (e) {
         // tetap logout meski request gagal
     } finally {
-        localStorage.clear();
+        sessionStorage.clear();
         globalLogout();
         navigate("/");
     }

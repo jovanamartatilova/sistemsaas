@@ -817,7 +817,7 @@ export default function PositionsManagement() {
         }
     };
 
-    const comp = (() => { try { return JSON.parse(localStorage.getItem("company")); } catch { return null; } })();
+    const comp = (() => { try { return JSON.parse(sessionStorage.getItem("company")); } catch { return null; } })();
     const companyName = comp?.name || "Admin";
     const initials = companyName.slice(0, 2).toUpperCase();
 

@@ -48,7 +48,7 @@ function TaskCard({ task, onStatusChange, onWorkSubmitted, onReviewSibling, curr
   const norm = task.status?.toLowerCase().replace(" ", "_") || "pending";
   const cfg = STATUS_CONFIG[norm] || STATUS_CONFIG.pending;
   const isSubmitted = !!task.submitted_at;
-  const token = localStorage.getItem("token") || localStorage.getItem("auth_token");
+  const token = sessionStorage.getItem("auth_token");
 console.log("task data:", task);
 
   const handleStatusChange = async (newStatus) => {
@@ -349,7 +349,7 @@ export default function MemberDashboard() {
 
   const fetchUserProfile = async () => {
     try {
-      const token = localStorage.getItem("token") || localStorage.getItem("auth_token");
+      const token = sessionStorage.getItem("auth_token");
       if (!token) return;
 
       const res = await fetch(`${API_BASE_URL}/candidate/profile`, {
@@ -375,7 +375,7 @@ export default function MemberDashboard() {
 const fetchMemberTasks = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem("token") || localStorage.getItem("auth_token");
+      const token = sessionStorage.getItem("auth_token");
       const scopedRole = getScopedRole(user);
       const endpoint = scopedRole === "leader" ? `/leader/tasks` : `/member/tasks`;
       const res = await fetch(`${API_BASE_URL}${endpoint}`, { 
@@ -421,7 +421,7 @@ const fetchMemberTasks = async () => {
   };
 
   const handleStatusChange = async (taskId, newStatus) => {
-    const token = localStorage.getItem("token") || localStorage.getItem("auth_token");
+    const token = sessionStorage.getItem("auth_token");
     const scopedRole = getScopedRole(user);
     const endpoint = scopedRole === "leader" ? `/leader/tasks/${taskId}` : `/member/tasks/${taskId}`;
     const res = await fetch(`${API_BASE_URL}${endpoint}`, {
@@ -434,7 +434,7 @@ const fetchMemberTasks = async () => {
 
   const handleReviewSibling = async (subtaskId, notes) => {
     try {
-      const token = localStorage.getItem("token") || localStorage.getItem("auth_token");
+      const token = sessionStorage.getItem("auth_token");
       const res = await fetch(`${API_BASE_URL}/leader/tasks/${subtaskId}/review`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
@@ -844,7 +844,7 @@ const exportCSV = () => {
               if (file.size > 2 * 1024 * 1024) return alert("File too large (max 2MB)");
               setRowUploading(p => ({ ...p, [i]: true }));
               try {
-                const token = localStorage.getItem("token") || localStorage.getItem("auth_token");
+                const token = sessionStorage.getItem("auth_token");
                 const fd = new FormData();
                 fd.append("file", file);
                 fd.append("label", rowAtts[i].label || file.name);
@@ -863,7 +863,7 @@ const exportCSV = () => {
               if (!valid.length) return alert("Please add at least one attachment.");
               setRowSubmitting(true);
               try {
-                const token = localStorage.getItem("token") || localStorage.getItem("auth_token");
+                const token = sessionStorage.getItem("auth_token");
                 const res = await fetch(`${API_BASE_URL}/intern/tasks/${item.id_task}/work`, {
                   method: "POST",
                   headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
@@ -986,7 +986,7 @@ const exportCSV = () => {
               if (file.size > 2 * 1024 * 1024) return alert("File too large (max 2MB)");
               setRowUploading(p => ({ ...p, [i]: true }));
               try {
-                const token = localStorage.getItem("token") || localStorage.getItem("auth_token");
+                const token = sessionStorage.getItem("auth_token");
                 const fd = new FormData();
                 fd.append("file", file);
                 fd.append("label", rowAtts[i].label || file.name);
@@ -1005,7 +1005,7 @@ const exportCSV = () => {
               if (!valid.length) return alert("Please add at least one attachment.");
               setRowSubmitting(true);
               try {
-                const token = localStorage.getItem("token") || localStorage.getItem("auth_token");
+                const token = sessionStorage.getItem("auth_token");
                 const res = await fetch(`${API_BASE_URL}/intern/tasks/${item.id_task}/work`, {
                   method: "POST",
                   headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },

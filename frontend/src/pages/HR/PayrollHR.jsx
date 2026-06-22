@@ -327,7 +327,7 @@ export default function PayrollHR() {
   };
 
   const handleExport = async () => {
-    window.location.href = `${import.meta.env.VITE_API_BASE_URL}/hr/payroll/export?period=${period}&token=${localStorage.getItem("token")}`;
+    window.location.href = `${import.meta.env.VITE_API_BASE_URL}/hr/payroll/export?period=${period}&token=${sessionStorage.getItem("token")}`;
     pushToast("Exporting payroll data...", "info");
   };
 

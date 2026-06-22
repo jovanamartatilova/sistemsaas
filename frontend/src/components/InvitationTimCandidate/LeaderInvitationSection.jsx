@@ -20,7 +20,7 @@ export default function LeaderInvitationSection({ program, onInvitationCreated }
   const [copied, setCopied] = useState(false);
 
   const API_BASE_URL = import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}`;
-  const token = localStorage.getItem("auth_token") || localStorage.getItem("token");
+  const token = sessionStorage.getItem("auth_token");
 
   const handleCreateInvitation = async (e) => {
     e.preventDefault();

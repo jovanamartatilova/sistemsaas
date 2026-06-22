@@ -536,9 +536,9 @@ const theme = {
 
   // Dashboard link logic
   const getDashboardPath = () => {
-    const user = JSON.parse(localStorage.getItem("user"));
-    const company = authCompany || JSON.parse(localStorage.getItem("company"));
-    const storedUserType = localStorage.getItem("user_type");
+    const user = JSON.parse(sessionStorage.getItem("user"));
+    const company = authCompany || JSON.parse(sessionStorage.getItem("company"));
+    const storedUserType = sessionStorage.getItem("user_type");
     
     // Resolve role without fallback to 'candidate'
     const resolvedRole = user?.role || user?.user_type || storedUserType || company?.role || null;
@@ -561,9 +561,9 @@ const theme = {
 
   // Helper: Check if user has a role
   const userHasRole = () => {
-    const user = JSON.parse(localStorage.getItem("user"));
-    const company = authCompany || JSON.parse(localStorage.getItem("company"));
-    const storedUserType = localStorage.getItem("user_type");
+    const user = JSON.parse(sessionStorage.getItem("user"));
+    const company = authCompany || JSON.parse(sessionStorage.getItem("company"));
+    const storedUserType = sessionStorage.getItem("user_type");
     const resolvedRole = user?.role || user?.user_type || storedUserType || company?.role || null;
     return !!resolvedRole && resolvedRole !== 'null' && resolvedRole !== '';
   };
@@ -763,7 +763,7 @@ const theme = {
           ))}
           <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "8px" }}>
             <button
-              onClick={() => { const next = !isDark; setIsDark(next); localStorage.setItem("theme", next ? "dark" : "light"); }}
+              onClick={() => { const next = !isDark; setIsDark(next); sessionStorage.setItem("theme", next ? "dark" : "light"); }}
               style={{ display: "flex", alignItems: "center", gap: "10px", background: "transparent", border: isDark ? "1px solid rgba(255,255,255,0.2)" : "1px solid rgba(0,0,0,0.15)", color: isDark ? "#fff" : "#1a2332", padding: "10px 16px", borderRadius: "8px", fontSize: "14px", cursor: "pointer" }}
             ><span style={{ display: "flex", alignItems: "center", gap: "8px" }}><span style={{ display: "flex", alignItems: "center", lineHeight: 1 }}>{isDark ? <IconSun /> : <IconMoon />}</span><span>{isDark ? "Light Mode" : "Dark Mode"}</span></span></button>
           {!isAuthenticated ? (
