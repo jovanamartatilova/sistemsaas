@@ -1,12 +1,27 @@
 import { create } from 'zustand';
 import { authService } from '../api/authService';
 
+// ── Semua key auth disimpan di sessionStorage, bukan sessionStorage ──
+// sessionStorage otomatis hilang saat tab/browser ditutup,
+// tapi tetap bertahan saat refresh / reload tab yang sama.
+const AUTH_KEYS = [
+  'auth_token',
+  'hr_token',
+  'company',
+  'user',
+  'candidate_profile',
+  'candidate_user',
+  'user_type',
+  'is_new_user',
+  'selected_submission_id',
+];
+
 const initialState = {
-  company: (() => { try { return JSON.parse(localStorage.getItem('company')) || null; } catch { return null; } })(),
-  user: (() => { try { return JSON.parse(localStorage.getItem('user')) || null; } catch { return null; } })(),
-  candidate_profile: (() => { try { return JSON.parse(localStorage.getItem('candidate_profile')) || null; } catch { return null; } })(),
-  token: localStorage.getItem('auth_token') || null,
-  isAuthenticated: !!localStorage.getItem('auth_token'),
+  company: (() => { try { return JSON.parse(sessionStorage.getItem('company')) || null; } catch { return null; } })(),
+  user: (() => { try { return JSON.parse(sessionStorage.getItem('user')) || null; } catch { return null; } })(),
+  candidate_profile: (() => { try { return JSON.parse(sessionStorage.getItem('candidate_profile')) || null; } catch { return null; } })(),
+  token: sessionStorage.getItem('auth_token') || null,
+  isAuthenticated: !!sessionStorage.getItem('auth_token'),
   loading: false,
   error: null,
 };
@@ -65,22 +80,10 @@ export const useAuthStore = create((set) => ({
       } catch (error) {
           console.warn('Silent logout error:', error);
       } finally {
-          // Clear all auth-related localStorage keys
-          const keysToRemove = [
-            'auth_token',
-            'hr_token',
-            'company',
-            'user',
-            'candidate_profile',
-            'candidate_user',
-            'user_type',
-            'is_new_user'
-          ];
-          
-          keysToRemove.forEach(key => {
-            localStorage.removeItem(key);
+          AUTH_KEYS.forEach((key) => {
+            sessionStorage.removeItem(key);
           });
-          
+
           set({
               company: null,
               user: null,
@@ -94,23 +97,19 @@ export const useAuthStore = create((set) => ({
   },
 
   // Logout tanpa call API (untuk auto-logout)
-logoutSilent: () => {
-  const keysToRemove = [
-    'auth_token', 'hr_token', 'company', 'user',
-    'candidate_profile', 'candidate_user', 'user_type', 'is_new_user'
-  ];
-  keysToRemove.forEach(key => localStorage.removeItem(key));
-  
-  set({
-    company: null,
-    user: null,
-    candidate_profile: null,
-    token: null,
-    isAuthenticated: false,
-    loading: false,
-    error: null,
-  });
-},
+  logoutSilent: () => {
+    AUTH_KEYS.forEach((key) => sessionStorage.removeItem(key));
+
+    set({
+      company: null,
+      user: null,
+      candidate_profile: null,
+      token: null,
+      isAuthenticated: false,
+      loading: false,
+      error: null,
+    });
+  },
 
   // Check auth status
   checkAuth: async () => {
@@ -144,18 +143,18 @@ logoutSilent: () => {
   setUser: (userData) => {
     const currentUser = useAuthStore.getState().user;
     const updatedUser = { ...currentUser, ...userData };
-    localStorage.setItem('user', JSON.stringify(updatedUser));
+    sessionStorage.setItem('user', JSON.stringify(updatedUser));
     set({ user: updatedUser });
   },
 
-  // Hydrate store from localStorage (call on app boot)
+  // Hydrate store from sessionStorage (call on app boot)
   hydrateFromStorage: () => {
     try {
-      const token = localStorage.getItem('auth_token');
-      const user = JSON.parse(localStorage.getItem('user') || 'null');
-      const company = JSON.parse(localStorage.getItem('company') || 'null');
-      const candidate_profile = JSON.parse(localStorage.getItem('candidate_profile') || 'null');
-      
+      const token = sessionStorage.getItem('auth_token');
+      const user = JSON.parse(sessionStorage.getItem('user') || 'null');
+      const company = JSON.parse(sessionStorage.getItem('company') || 'null');
+      const candidate_profile = JSON.parse(sessionStorage.getItem('candidate_profile') || 'null');
+
       set({
         token: token || null,
         user: user || null,
@@ -171,21 +170,20 @@ logoutSilent: () => {
   // Get current role for routing decisions (never null fallback)
   getRoleForRouting: () => {
     const state = useAuthStore.getState();
-    const role = state.user?.role || localStorage.getItem('user_type');
-    // Return role as-is; if null/empty, it means user has no role
+    const role = state.user?.role || sessionStorage.getItem('user_type');
     return role || null;
   },
 
   // Set auth data after registration/login (comprehensive)
   setAuthData: (data) => {
     if (!data.token) throw new Error('Token required');
-    
-    localStorage.setItem('auth_token', data.token);
-    if (data.user) localStorage.setItem('user', JSON.stringify(data.user));
-    if (data.company) localStorage.setItem('company', JSON.stringify(data.company));
-    if (data.candidate_profile) localStorage.setItem('candidate_profile', JSON.stringify(data.candidate_profile));
-    if (data.role || data.user?.role) localStorage.setItem('user_type', data.role || data.user?.role);
-    
+
+    sessionStorage.setItem('auth_token', data.token);
+    if (data.user) sessionStorage.setItem('user', JSON.stringify(data.user));
+    if (data.company) sessionStorage.setItem('company', JSON.stringify(data.company));
+    if (data.candidate_profile) sessionStorage.setItem('candidate_profile', JSON.stringify(data.candidate_profile));
+    if (data.role || data.user?.role) sessionStorage.setItem('user_type', data.role || data.user?.role);
+
     set({
       token: data.token,
       user: data.user || null,

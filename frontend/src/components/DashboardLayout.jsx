@@ -28,9 +28,9 @@ export default function DashboardLayout({
   const displayCompany = company || authCompany || null;
 
 const handleLogout = async () => {
-    const savedTheme = localStorage.getItem("theme");
+    const savedTheme = sessionStorage.getItem("theme");
     await logout();
-    if (savedTheme) localStorage.setItem("theme", savedTheme);
+    if (savedTheme) sessionStorage.setItem("theme", savedTheme);
     navigate("/", { replace: true });
   };
 

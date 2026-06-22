@@ -402,7 +402,7 @@ const showToast = (message, type = "success") => {
   const fetchLeaderData = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem("token") || localStorage.getItem("auth_token");
+      const token = sessionStorage.getItem("auth_token");
       const [membersRes, tasksRes] = await Promise.all([
         fetch(`${API_BASE_URL}/leader/team-members`, { headers: { "Authorization": `Bearer ${token}` } }),
         fetch(`${API_BASE_URL}/leader/tasks`, { headers: { "Authorization": `Bearer ${token}` } })
@@ -415,7 +415,7 @@ const showToast = (message, type = "success") => {
 
   const handleAssignTask = async (data) => {
     try {
-      const token = localStorage.getItem("token") || localStorage.getItem("auth_token");
+      const token = sessionStorage.getItem("auth_token");
       const res = await fetch(`${API_BASE_URL}/leader/tasks`, {
         method: "POST",
         headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
@@ -429,7 +429,7 @@ showToast("Task delegated to member!")
 
   const handleUpdateSubTask = async (taskId, data) => {
     try {
-      const token = localStorage.getItem("token") || localStorage.getItem("auth_token");
+      const token = sessionStorage.getItem("auth_token");
       const res = await fetch(`${API_BASE_URL}/leader/tasks/subtask/${taskId}`, {
         method: "PUT",
         headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
@@ -444,7 +444,7 @@ showToast("Task delegated to member!")
   const handleDeleteSubTask = async (taskId) => {
     if (!confirm("Are you sure you want to delete this subtask?")) return;
     try {
-      const token = localStorage.getItem("token") || localStorage.getItem("auth_token");
+      const token = sessionStorage.getItem("auth_token");
       const res = await fetch(`${API_BASE_URL}/leader/tasks/subtask/${taskId}`, {
         method: "DELETE",
         headers: { "Authorization": `Bearer ${token}` }
@@ -457,7 +457,7 @@ showToast("Task delegated to member!")
 
   const handleReviewTask = async (subtaskId, notes) => {
     try {
-      const token = localStorage.getItem("token") || localStorage.getItem("auth_token");
+      const token = sessionStorage.getItem("auth_token");
       const res = await fetch(`${API_BASE_URL}/leader/tasks/${subtaskId}/review`, {
         method: "POST",
         headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
@@ -473,7 +473,7 @@ showToast("Task delegated to member!")
   const valid = delegationAttachments.filter(a => a.label.trim() && a.value.trim());
   if (!valid.length) return alert("Please add at least one link or file.");
   try {
-    const token = localStorage.getItem("token") || localStorage.getItem("auth_token");
+    const token = sessionStorage.getItem("auth_token");
   const res = await fetch(`${API_BASE_URL}/intern/tasks/${submittingDelegation.id}/work`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
@@ -1018,7 +1018,7 @@ showToast("Task delegated to member!")
                   if (!file) return;
                   const fd = new FormData();
                   fd.append("file", file);
-                  const token = localStorage.getItem("token") || localStorage.getItem("auth_token");
+                  const token = sessionStorage.getItem("auth_token");
                   const res = await fetch(`${API_BASE_URL}/intern/tasks/${submittingDelegation.id}/upload-file`, {
                     method: "POST", headers: { Authorization: `Bearer ${token}` }, body: fd
                   });

@@ -9,9 +9,9 @@ export default function SidebarCandidate({ userName, userPhoto, company, onLogou
   const { user, company: authCompany } = useAuthStore();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   
-  // Fallback: coba dari prop dulu, lalu authStore, lalu localStorage
+  // Fallback: coba dari prop dulu, lalu authStore, lalu sessionStorage
   const resolvedCompany = company || authCompany || (() => {
-    try { return JSON.parse(localStorage.getItem("company")); } catch { return null; }
+    try { return JSON.parse(sessionStorage.getItem("company")); } catch { return null; }
   })();
   
   const resolvedCompanyId = resolvedCompany?.id_company;

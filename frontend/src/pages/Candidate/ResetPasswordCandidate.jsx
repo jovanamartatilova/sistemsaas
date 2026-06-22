@@ -47,7 +47,7 @@ export default function ResetPasswordCandidate() {
   // Fungsi untuk back to login (membersihkan semua data)
   const handleBackToLogin = (e) => {
     e?.preventDefault();
-    localStorage.clear();
+    sessionStorage.clear();
     sessionStorage.clear();
     useAuthStore.setState({ 
       isAuthenticated: false, 
@@ -117,10 +117,10 @@ export default function ResetPasswordCandidate() {
       }
 
       // Auto-login dengan token
-      localStorage.setItem("auth_token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
+      sessionStorage.setItem("auth_token", data.token);
+      sessionStorage.setItem("user", JSON.stringify(data.user));
       if (data.company) {
-        localStorage.setItem("company", JSON.stringify(data.company));
+        sessionStorage.setItem("company", JSON.stringify(data.company));
       }
       useAuthStore.setState({
         isAuthenticated: true,

@@ -44,8 +44,8 @@ export default function Login() {
 
   useEffect(() => {
     if (false && isAuthenticated && !authLoading ) {
-      const storedUser = JSON.parse(localStorage.getItem("user") || "null");
-      const storedRole = storedUser?.role || localStorage.getItem("user_type") || user?.role;
+      const storedUser = JSON.parse(sessionStorage.getItem("user") || "null");
+      const storedRole = storedUser?.role || sessionStorage.getItem("user_type") || user?.role;
       redirectByRole(storedRole);
     }
   }, [isAuthenticated, authLoading, navigate, user]);
@@ -76,25 +76,25 @@ export default function Login() {
       const redirectPath = data.redirect_path;
 
       // Simpan token
-      localStorage.setItem("auth_token", data.token);
+      sessionStorage.setItem("auth_token", data.token);
       
       // Simpan role untuk redirect
-      localStorage.setItem("user_type", resolvedRole);
-      localStorage.setItem("is_new_user", String(!!data.is_new_user));
+      sessionStorage.setItem("user_type", resolvedRole);
+      sessionStorage.setItem("is_new_user", String(!!data.is_new_user));
       
       // Simpan user
       if (data.user) {
-        localStorage.setItem("user", JSON.stringify(data.user));
+        sessionStorage.setItem("user", JSON.stringify(data.user));
       }
       
       // Simpan company jika ada (untuk admin)
       if (data.company) {
-        localStorage.setItem("company", JSON.stringify(data.company));
+        sessionStorage.setItem("company", JSON.stringify(data.company));
       }
       
       // Simpan candidate profile jika ada
       if (data.candidate_profile) {
-        localStorage.setItem("candidate_profile", JSON.stringify(data.candidate_profile));
+        sessionStorage.setItem("candidate_profile", JSON.stringify(data.candidate_profile));
       }
 
       // Update store
@@ -127,11 +127,11 @@ export default function Login() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || "Google login failed");
 
-      localStorage.setItem("auth_token", data.token);
-      localStorage.setItem("user_type", data.redirect_role);
-      localStorage.setItem("is_new_user", String(!!data.is_new_user));
-      if (data.user) localStorage.setItem("user", JSON.stringify(data.user));
-      if (data.company) localStorage.setItem("company", JSON.stringify(data.company));
+      sessionStorage.setItem("auth_token", data.token);
+      sessionStorage.setItem("user_type", data.redirect_role);
+      sessionStorage.setItem("is_new_user", String(!!data.is_new_user));
+      if (data.user) sessionStorage.setItem("user", JSON.stringify(data.user));
+      if (data.company) sessionStorage.setItem("company", JSON.stringify(data.company));
 
       useAuthStore.setState({
         isAuthenticated: true,

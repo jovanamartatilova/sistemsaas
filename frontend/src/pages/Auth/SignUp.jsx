@@ -66,11 +66,11 @@ export default function SignUp() {
         throw new Error(data.message || "Registration failed");
       }
 
-      localStorage.setItem("auth_token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
-      localStorage.removeItem("company");
-      localStorage.setItem("user_type", "new");
-      localStorage.setItem("is_new_user", "true");
+      sessionStorage.setItem("auth_token", data.token);
+      sessionStorage.setItem("user", JSON.stringify(data.user));
+      sessionStorage.removeItem("company");
+      sessionStorage.setItem("user_type", "new");
+      sessionStorage.setItem("is_new_user", "true");
 
       useAuthStore.setState({
         isAuthenticated: true,
@@ -101,10 +101,10 @@ export default function SignUp() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || "Google sign up failed");
 
-      localStorage.setItem("auth_token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
-      localStorage.setItem("user_type", data.redirect_role || "new");
-      localStorage.setItem("is_new_user", String(!!data.is_new_user));
+      sessionStorage.setItem("auth_token", data.token);
+      sessionStorage.setItem("user", JSON.stringify(data.user));
+      sessionStorage.setItem("user_type", data.redirect_role || "new");
+      sessionStorage.setItem("is_new_user", String(!!data.is_new_user));
 
       useAuthStore.setState({
         isAuthenticated: true,

@@ -134,7 +134,7 @@ export default function SettingsAdmin() {
     const [showLogoMenu, setShowLogoMenu] = useState(false);
 
     const [comp, setComp] = useState(() => {
-        try { return JSON.parse(localStorage.getItem("company")) || storeCompany || {}; }
+        try { return JSON.parse(sessionStorage.getItem("company")) || storeCompany || {}; }
         catch { return storeCompany || {}; }
     });
 
@@ -168,7 +168,7 @@ export default function SettingsAdmin() {
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             const updated = res.data.company;
-            localStorage.setItem("company", JSON.stringify(updated));
+            sessionStorage.setItem("company", JSON.stringify(updated));
             setComp(updated);
             showToast("Profile updated successfully!");
         } catch (err) {
@@ -189,7 +189,7 @@ export default function SettingsAdmin() {
                 { headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" } }
             );
             const updated = res.data.company;
-            localStorage.setItem("company", JSON.stringify(updated));
+            sessionStorage.setItem("company", JSON.stringify(updated));
             setComp(updated);
             showToast("Logo updated successfully!");
         } catch (err) {
@@ -206,7 +206,7 @@ export default function SettingsAdmin() {
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             const updated = res.data.company;
-            localStorage.setItem("company", JSON.stringify(updated));
+            sessionStorage.setItem("company", JSON.stringify(updated));
             setComp(updated);
             showToast("Logo removed successfully!");
         } catch (err) {

@@ -12,7 +12,7 @@ const api = axios.create({
 
 // Add token to requests automatically
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('auth_token');
+  const token = sessionStorage.getItem('auth_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -25,9 +25,9 @@ export const authService = {
     try {
       const response = await api.post('/register', userData);
       if (response.data.token) {
-        localStorage.setItem('auth_token', response.data.token);
-        localStorage.setItem('company', JSON.stringify(response.data.company));
-        localStorage.setItem('user', JSON.stringify(response.data.user));
+        sessionStorage.setItem('auth_token', response.data.token);
+        sessionStorage.setItem('company', JSON.stringify(response.data.company));
+        sessionStorage.setItem('user', JSON.stringify(response.data.user));
       }
       return response.data;
     } catch (error) {
@@ -39,10 +39,10 @@ export const authService = {
     try {
       const response = await api.post('/login', { name, password });
       if (response.data.token) {
-        localStorage.setItem('auth_token', response.data.token);
-        localStorage.setItem('company', JSON.stringify(response.data.company));
-	if (response.data.user) localStorage.setItem('user', JSON.stringify(response.data.user));
-	if (response.data.user?.role) localStorage.setItem('user_type', response.data.user.role);
+        sessionStorage.setItem('auth_token', response.data.token);
+        sessionStorage.setItem('company', JSON.stringify(response.data.company));
+	if (response.data.user) sessionStorage.setItem('user', JSON.stringify(response.data.user));
+	if (response.data.user?.role) sessionStorage.setItem('user_type', response.data.user.role);
       }
       return response.data;
     } catch (error) {
@@ -52,16 +52,16 @@ export const authService = {
 
   logout: async () => {
     try {
-      const token = localStorage.getItem('auth_token');
+      const token = sessionStorage.getItem('auth_token');
       if (!token) {
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('hr_token');
-        localStorage.removeItem('company');
-        localStorage.removeItem('user');
-        localStorage.removeItem('candidate_user');
-        localStorage.removeItem('candidate_profile');
-        localStorage.removeItem('user_type');
-        localStorage.removeItem('is_new_user');
+        sessionStorage.removeItem('auth_token');
+        sessionStorage.removeItem('hr_token');
+        sessionStorage.removeItem('company');
+        sessionStorage.removeItem('user');
+        sessionStorage.removeItem('candidate_user');
+        sessionStorage.removeItem('candidate_profile');
+        sessionStorage.removeItem('user_type');
+        sessionStorage.removeItem('is_new_user');
         return;
       }
 
@@ -74,15 +74,15 @@ export const authService = {
         console.error('Logout error:', error.message);
       }
     } finally {
-      // Always clear localStorage regardless of endpoint success/failure
-      localStorage.removeItem('auth_token');
-      localStorage.removeItem('hr_token');
-      localStorage.removeItem('company');
-      localStorage.removeItem('user');
-      localStorage.removeItem('candidate_user');
-      localStorage.removeItem('candidate_profile');
-      localStorage.removeItem('user_type');
-      localStorage.removeItem('is_new_user');
+      // Always clear sessionStorage regardless of endpoint success/failure
+      sessionStorage.removeItem('auth_token');
+      sessionStorage.removeItem('hr_token');
+      sessionStorage.removeItem('company');
+      sessionStorage.removeItem('user');
+      sessionStorage.removeItem('candidate_user');
+      sessionStorage.removeItem('candidate_profile');
+      sessionStorage.removeItem('user_type');
+      sessionStorage.removeItem('is_new_user');
     }
   },
 

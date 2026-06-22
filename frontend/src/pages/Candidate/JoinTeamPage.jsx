@@ -3,11 +3,11 @@ import { useParams, useNavigate } from "react-router-dom";
 import { CheckCircle, AlertCircle, Loader } from "lucide-react";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || "http://localhost:8000/api"}`;
-const getToken = () => localStorage.getItem("auth_token") || localStorage.getItem("token");
+const getToken = () => sessionStorage.getItem("auth_token");
 
 const getCompanyId = () => {
   try {
-    return JSON.parse(localStorage.getItem("company") || "{}")?.id_company || null;
+    return JSON.parse(sessionStorage.getItem("company") || "{}")?.id_company || null;
   } catch {
     return null;
   }
@@ -24,7 +24,7 @@ export default function JoinTeamPage() {
     const join = async () => {
       const authToken = getToken();
       if (!authToken) {
-        localStorage.setItem("redirect_after_login", `/join-team/${token}`);
+        sessionStorage.setItem("redirect_after_login", `/join-team/${token}`);
         setStatus("not_logged_in");
         return;
       }
@@ -41,9 +41,9 @@ export default function JoinTeamPage() {
             setStatus("success");
             setMessage(data.message || "Successfully joined the team!");
 
-            const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+            const currentUser = JSON.parse(sessionStorage.getItem("user") || "{}");
             const updatedUser = { ...currentUser, scoped_role: "member" };
-            localStorage.setItem("user", JSON.stringify(updatedUser));
+            sessionStorage.setItem("user", JSON.stringify(updatedUser));
 
             // Ambil company id dari data response atau dari user
             const companyId = getCompanyId() 
@@ -72,7 +72,7 @@ export default function JoinTeamPage() {
 
   const handleGoToLogin = () => {
     const companyId = getCompanyId();
-    localStorage.setItem("redirect_after_login", `/join-team/${token}`);
+    sessionStorage.setItem("redirect_after_login", `/join-team/${token}`);
     navigate(companyId ? `/c/${companyId}/login` : "/");
   };
 

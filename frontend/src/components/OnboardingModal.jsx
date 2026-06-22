@@ -13,7 +13,7 @@ const IconKey = () => (
 );
 
 export default function OnboardingModal({ isOpen, onClose }) {
-  const isDark = localStorage.getItem("theme") !== "light";
+  const isDark = sessionStorage.getItem("theme") !== "light";
   const navigate = useNavigate();
   const { user, token } = useAuthStore();
 
@@ -85,19 +85,19 @@ export default function OnboardingModal({ isOpen, onClose }) {
         throw new Error('Failed to create company');
       }
 
-      // Update store and localStorage with new role
+      // Update store and sessionStorage with new role
       useAuthStore.setState(state => ({
         ...state,
         company: response.company || null,
         user: response.user || state.user,
       }));
 
-      localStorage.setItem("company", JSON.stringify(response.company));
-      localStorage.setItem("user_type", "admin");
-      localStorage.setItem("is_new_user", "false");
+      sessionStorage.setItem("company", JSON.stringify(response.company));
+      sessionStorage.setItem("user_type", "admin");
+      sessionStorage.setItem("is_new_user", "false");
       
       if (response.user) {
-        localStorage.setItem("user", JSON.stringify(response.user));
+        sessionStorage.setItem("user", JSON.stringify(response.user));
       }
 
       // Close modal and navigate in sequence to avoid race conditions
@@ -134,19 +134,19 @@ export default function OnboardingModal({ isOpen, onClose }) {
         throw new Error('Failed to create candidate profile');
       }
 
-      // Update store and localStorage with new role
+      // Update store and sessionStorage with new role
       useAuthStore.setState(state => ({
         ...state,
         candidate_profile: response.candidate_profile || null,
         user: response.user || state.user,
       }));
 
-      localStorage.setItem("candidate_profile", JSON.stringify(response.candidate_profile));
-      localStorage.setItem("user_type", "candidate");
-      localStorage.setItem("is_new_user", "false");
+      sessionStorage.setItem("candidate_profile", JSON.stringify(response.candidate_profile));
+      sessionStorage.setItem("user_type", "candidate");
+      sessionStorage.setItem("is_new_user", "false");
       
       if (response.user) {
-        localStorage.setItem("user", JSON.stringify(response.user));
+        sessionStorage.setItem("user", JSON.stringify(response.user));
       }
 
       handleClose();

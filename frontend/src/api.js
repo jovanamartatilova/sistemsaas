@@ -17,7 +17,7 @@ const getTestToken = async () => {
     });
     if (res.ok) {
       const data = await res.json();
-      localStorage.setItem(TOKEN_KEY, data.token);
+      sessionStorage.setItem(TOKEN_KEY, data.token);
       return data.token;
     }
   } catch (err) {
@@ -28,44 +28,44 @@ const getTestToken = async () => {
 
 export const api = async (endpoint, options = {}) => {
   // Try hr_token first (for HR pages), then fall back to auth_token
-  let token = localStorage.getItem('hr_token') || localStorage.getItem(TOKEN_KEY);
-  
+  let token = sessionStorage.getItem('hr_token') || sessionStorage.getItem(TOKEN_KEY);
+
   // Try to get test token if in development and no token exists
   if (!token && import.meta.env.DEV) {
     token = await getTestToken();
   }
-  
+
   const url = `${BASE_URL}${endpoint}`;
   const tokenPreview = token ? token.substring(0, 20) + '...' : 'MISSING';
-  const localStorage_keys = Object.keys(localStorage);
-  console.log(`[API] ${options.method || 'GET'} ${url}`, { 
+  const storage_keys = Object.keys(sessionStorage);
+  console.log(`[API] ${options.method || 'GET'} ${url}`, {
     token: tokenPreview,
-    localStorage_has_hr_token: !!localStorage.getItem('hr_token'),
-    localStorage_has_auth_token: !!localStorage.getItem(TOKEN_KEY),
-    all_storage_keys: localStorage_keys
+    sessionStorage_has_hr_token: !!sessionStorage.getItem('hr_token'),
+    sessionStorage_has_auth_token: !!sessionStorage.getItem(TOKEN_KEY),
+    all_storage_keys: storage_keys
   });
-  
-  const isFormData = options.body instanceof FormData || options.data instanceof FormData;
-const bodyData = options.data instanceof FormData ? options.data : options.body;
 
-const fetchOptions = {
-  ...options,
-  method: options.method || 'GET',
-  headers: {
-    ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    ...options.headers,
-  },
-  body: isFormData
-    ? bodyData
-    : options.data
-      ? JSON.stringify(options.data)
-      : options.body,
-};
+  const isFormData = options.body instanceof FormData || options.data instanceof FormData;
+  const bodyData = options.data instanceof FormData ? options.data : options.body;
+
+  const fetchOptions = {
+    ...options,
+    method: options.method || 'GET',
+    headers: {
+      ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...options.headers,
+    },
+    body: isFormData
+      ? bodyData
+      : options.data
+        ? JSON.stringify(options.data)
+        : options.body,
+  };
   const res = await fetch(url, fetchOptions);
-  
+
   console.log(`[API] Response status: ${res.status} ${res.statusText}`);
-  
+
   if (!res.ok) {
     let errData;
     try {
@@ -76,7 +76,7 @@ const fetchOptions = {
     console.error('[API] Error response:', { url, status: res.status, data: errData, token_was_sent: !!token });
     throw errData;
   }
-  
+
   const data = await res.json();
   console.log(`[API] Success:`, data);
   return data;

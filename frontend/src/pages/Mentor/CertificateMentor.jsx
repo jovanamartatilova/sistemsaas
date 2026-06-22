@@ -331,7 +331,7 @@ export default function CertificateMentor() {
       ? `${import.meta.env.VITE_API_URL || "http://localhost:8000"}/storage/${mentor.company.logo_path}`
       : null;
     const qrSrc = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://earlypath.id/verify-certificate/PREVIEW_ONLY";
-    const mentorSigUrl = localStorage.getItem('mentor_signature') || null;
+    const mentorSigUrl = sessionStorage.getItem('mentor_signature') || null;
 
     return (
       <div style={{

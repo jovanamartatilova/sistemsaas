@@ -104,7 +104,7 @@ export default function CertificatesPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const token = localStorage.getItem("auth_token");
+        const token = sessionStorage.getItem("auth_token");
         if (!token) {
           navigate(`/c/${idCompany}/dashboard`);
           return;
@@ -119,11 +119,10 @@ export default function CertificatesPage() {
         });
 
         if (!userResp.ok && userResp.status === 401) {
-          localStorage.removeItem("auth_token");
-          localStorage.removeItem("token");
-          localStorage.removeItem("company");
-          localStorage.removeItem("user");
-          localStorage.removeItem("candidate_user");
+          sessionStorage.removeItem("auth_token");
+          sessionStorage.removeItem("company");
+          sessionStorage.removeItem("user");
+          sessionStorage.removeItem("candidate_user");
           navigate("/");
           return;
         }
@@ -142,11 +141,10 @@ export default function CertificatesPage() {
         });
 
         if (!certResp.ok && certResp.status === 401) {
-          localStorage.removeItem("auth_token");
-          localStorage.removeItem("token");
-          localStorage.removeItem("company");
-          localStorage.removeItem("user");
-          localStorage.removeItem("candidate_user");
+          sessionStorage.removeItem("auth_token");
+          sessionStorage.removeItem("company");
+          sessionStorage.removeItem("user");
+          sessionStorage.removeItem("candidate_user");
           navigate("/");
           return;
         }
@@ -176,7 +174,7 @@ export default function CertificatesPage() {
 
   const confirmLogout = async () => {
     try {
-      const token = localStorage.getItem("auth_token");
+      const token = sessionStorage.getItem("auth_token");
       await fetch(`${API_BASE_URL}/logout`, {
         method: "POST",
         headers: {
@@ -186,10 +184,9 @@ export default function CertificatesPage() {
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
-      localStorage.removeItem("auth_token");
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      localStorage.removeItem("company");
+      sessionStorage.removeItem("auth_token");
+      sessionStorage.removeItem("user");
+      sessionStorage.removeItem("company");
       globalLogout();
       setLogoutModal(false);
       navigate("/");
@@ -213,7 +210,7 @@ export default function CertificatesPage() {
       <SidebarCandidate 
         userName={userData?.full_name} 
         userPhoto={userData?.profile_picture || userData?.photo_url || userData?.photo_path}
-        company={JSON.parse(localStorage.getItem("company"))}
+        company={JSON.parse(sessionStorage.getItem("company"))}
         onLogout={handleLogout} 
       />
 

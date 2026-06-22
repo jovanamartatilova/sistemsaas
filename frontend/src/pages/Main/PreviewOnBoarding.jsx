@@ -254,11 +254,11 @@ const handleEmailChange = async (value) => {
       isAuthenticated: true,
     }));
 
-    localStorage.setItem('auth_token', workingToken);
-    localStorage.setItem('user_type', resolvedRole);
-    if (profileRes.user) localStorage.setItem('user', JSON.stringify(profileRes.user));
-    if (profileRes.company) localStorage.setItem('company', JSON.stringify(profileRes.company));
-    if (profileRes.candidate_profile) localStorage.setItem('candidate_profile', JSON.stringify(profileRes.candidate_profile));
+    sessionStorage.setItem('auth_token', workingToken);
+    sessionStorage.setItem('user_type', resolvedRole);
+    if (profileRes.user) sessionStorage.setItem('user', JSON.stringify(profileRes.user));
+    if (profileRes.company) sessionStorage.setItem('company', JSON.stringify(profileRes.company));
+    if (profileRes.candidate_profile) sessionStorage.setItem('candidate_profile', JSON.stringify(profileRes.candidate_profile));
 
     setShowSuccess(true);
     setTimeout(() => {
@@ -356,10 +356,10 @@ const handleEmailChange = async (value) => {
         });
       }
 
-      localStorage.setItem('auth_token', res.token);
-      localStorage.setItem('user', JSON.stringify(res.user));
-      localStorage.setItem('user_type', res.redirect_role);
-      if (res.company) localStorage.setItem('company', JSON.stringify(res.company));
+      sessionStorage.setItem('auth_token', res.token);
+      sessionStorage.setItem('user', JSON.stringify(res.user));
+      sessionStorage.setItem('user_type', res.redirect_role);
+      if (res.company) sessionStorage.setItem('company', JSON.stringify(res.company));
 
       useAuthStore.setState(state => ({
         ...state,

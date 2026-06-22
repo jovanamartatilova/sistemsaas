@@ -16,8 +16,8 @@ export const broadcastDataRefresh = (type = 'general') => {
     timestamp,
   };
   
-  // Store in localStorage to trigger storage events in other tabs
-  localStorage.setItem(DATA_REFRESH_EVENT, JSON.stringify(event));
+  // Store in sessionStorage to trigger storage events in other tabs
+  sessionStorage.setItem(DATA_REFRESH_EVENT, JSON.stringify(event));
   
   // Also dispatch a custom event for same-tab listeners
   window.dispatchEvent(new CustomEvent('mentorDataRefresh', { detail: event }));

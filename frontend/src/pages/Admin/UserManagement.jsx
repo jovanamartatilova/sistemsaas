@@ -423,7 +423,7 @@ export default function UserManagement() {
   const fetchJobLevels = useCallback(async () => { try { setJlLoading(true);     const r = await axios.get(`${API}/company/config/job-levels`,        { headers: hdrs }); setJobLevels(Array.isArray(r.data) ? r.data : []);     } catch {} finally { setJlLoading(false);     } }, [token]);
 
   useEffect(() => {
-    const s = localStorage.getItem("company");
+    const s = sessionStorage.getItem("company");
     if (s) { try { setCompany(JSON.parse(s)); } catch {} }
     if (token) { fetchCodes(); fetchStaff(); fetchRoles(); fetchDivisions(); fetchPositions(); fetchJobLevels(); }
   }, [token]);

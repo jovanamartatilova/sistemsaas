@@ -66,7 +66,7 @@ function ProfileContent({ userData, setUserData }) {
     setMessage({ type: "", text: "" });
 
     try {
-      const token = localStorage.getItem("auth_token") || localStorage.getItem("token");
+      const token = sessionStorage.getItem("auth_token");
       if (!token) {
         setMessage({ type: "error", text: "Authentication required. Please login again." });
         return;
@@ -125,7 +125,7 @@ function ProfileContent({ userData, setUserData }) {
         const updatedUser = refreshData.data || refreshData;
 
         setUserData(updatedUser);
-        localStorage.setItem("candidate_user", JSON.stringify(updatedUser));
+        sessionStorage.setItem("candidate_user", JSON.stringify(updatedUser));
 
         setFormData({
           full_name: updatedUser?.name || "",
@@ -408,7 +408,7 @@ export default function ProfileSettings() {
 
   const [userData, setUserData] = useState(() => {
     try {
-      const cached = localStorage.getItem("candidate_user");
+      const cached = sessionStorage.getItem("candidate_user");
       return cached ? JSON.parse(cached) : null;
     } catch {
       return null;
@@ -421,7 +421,7 @@ export default function ProfileSettings() {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const token = localStorage.getItem("auth_token");
+        const token = sessionStorage.getItem("auth_token");
         if (!token) {
           navigate(`/c/${idCompany}/dashboard`);
           return;
@@ -437,11 +437,10 @@ export default function ProfileSettings() {
 
         if (!response.ok) {
           if (response.status === 401) {
-            localStorage.removeItem("auth_token");
-            localStorage.removeItem("token");
-            localStorage.removeItem("company");
-            localStorage.removeItem("user");
-            localStorage.removeItem("candidate_user");
+            sessionStorage.removeItem("auth_token");
+            sessionStorage.removeItem("company");
+            sessionStorage.removeItem("user");
+            sessionStorage.removeItem("candidate_user");
             navigate("/");
             return;
           }
@@ -452,7 +451,7 @@ export default function ProfileSettings() {
         const user = data.data || data;
 
         setUserData(user);
-        localStorage.setItem("candidate_user", JSON.stringify(user));
+        sessionStorage.setItem("candidate_user", JSON.stringify(user));
       } catch (error) {
         console.error("Error fetching user data:", error);
         if (!userData) setError(error.message);
@@ -470,7 +469,7 @@ export default function ProfileSettings() {
 
   const confirmLogout = async () => {
     try {
-      const token = localStorage.getItem("auth_token") || localStorage.getItem("token");
+      const token = sessionStorage.getItem("auth_token");
       if (token) {
         await fetch(`${API_BASE_URL}/logout`, {
           method: "POST",
@@ -480,9 +479,8 @@ export default function ProfileSettings() {
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
-      localStorage.removeItem("auth_token");
-      localStorage.removeItem("token");
-      localStorage.removeItem("candidate_user");
+      sessionStorage.removeItem("auth_token");
+      sessionStorage.removeItem("candidate_user");
       globalLogout();
       setLogoutModal(false);
       navigate("/");
@@ -497,7 +495,7 @@ export default function ProfileSettings() {
         <SidebarCandidate 
           userName={userData?.name} 
           userPhoto={userData?.photo_url}
-          company={JSON.parse(localStorage.getItem("company"))}
+          company={JSON.parse(sessionStorage.getItem("company"))}
           onLogout={handleLogout} 
         />
         <main className="md:ml-56 pt-14 md:pt-0 flex-1 flex items-center justify-center">
@@ -513,7 +511,7 @@ if (error && !userData) {
         <SidebarCandidate
           userName={null}
           userPhoto={null}
-          company={JSON.parse(localStorage.getItem("company"))}
+          company={JSON.parse(sessionStorage.getItem("company"))}
           onLogout={handleLogout}
         />
         <main className="md:ml-56 pt-14 md:pt-0 flex-1 flex items-center justify-center p-6">
@@ -556,7 +554,7 @@ if (error && !userData) {
       <SidebarCandidate 
         userName={userData?.name} 
         userPhoto={userData?.photo_url}
-        company={JSON.parse(localStorage.getItem("company"))}
+        company={JSON.parse(sessionStorage.getItem("company"))}
         onLogout={handleLogout} 
       />
       <div className="md:ml-56 pt-14 md:pt-0 flex-1 flex flex-col">

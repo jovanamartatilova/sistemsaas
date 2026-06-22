@@ -377,10 +377,10 @@ export default function DashboardPage() {
 
     useEffect(() => {
         fetchStats();
-        const stored = localStorage.getItem("company");
+        const stored = sessionStorage.getItem("company");
         if (stored) { try { setCompany(JSON.parse(stored)); } catch (_) {} }
         authService.getProfile().then(res => {
-            if (res?.company) { setCompany(res.company); localStorage.setItem("company", JSON.stringify(res.company)); }
+            if (res?.company) { setCompany(res.company); sessionStorage.setItem("company", JSON.stringify(res.company)); }
         }).catch(() => {});
     }, [token]);
 
