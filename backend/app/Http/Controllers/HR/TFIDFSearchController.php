@@ -1025,10 +1025,10 @@ PROMPT;
     }
 
     /**
-     * GET /hr/candidates/slr-evaluate
-     * Automated SLR evaluation run comparing TF-IDF vs Semantic search on accuracy metrics.
+     * GET /hr/candidates/ir-evaluate
+     * Automated IR evaluation run comparing TF-IDF vs Semantic search on accuracy metrics.
      */
-    public function slrEvaluate(Request $request)
+    public function irEvaluate(Request $request)
     {
         $companyId = $request->user()->id_company;
 
@@ -1195,7 +1195,7 @@ PROMPT;
 
         $summary = $this->calculateSummaryStats($results);
 
-        // Generate a beautiful Markdown Table for their SLR paper
+        // Generate a beautiful Markdown Table for their IR paper
         $markdownTable = $this->generateMarkdownTable($results, $summary);
 
         return response()->json([
@@ -1354,7 +1354,7 @@ PROMPT;
 
     private function generateMarkdownTable(array $results, array $summary): string
     {
-        $table = "# SLR JISEBI Evaluation Results Summary\n\n";
+        $table = "# IR Evaluation Results Summary\n\n";
         
         $table .= "## 1. Retrieval Performance Comparison\n\n";
         $table .= "| Retrieval Model | Avg P@1 (%) | Avg P@3 (%) | Avg P@5 (%) | Avg R@5 (%) | Avg MRR | Avg Latency (ms) |\n";

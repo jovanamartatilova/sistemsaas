@@ -409,7 +409,7 @@ Route::middleware(['auth:sanctum'])->prefix('hr')->group(function () {
     Route::post('candidates/classify-batch', [TFIDFSearchController::class, 'classifyBatch']);
     Route::get('candidates/{id}/classify', [TFIDFSearchController::class, 'classify']);
     Route::get('candidates/rag-search', [TFIDFSearchController::class, 'ragSearch']);
-    Route::get('candidates/slr-evaluate', [TFIDFSearchController::class, 'slrEvaluate']);
+    Route::get('candidates/ir-evaluate', [TFIDFSearchController::class, 'irEvaluate']);
 
     // Selection AI
     Route::prefix('selection')->group(function () {
